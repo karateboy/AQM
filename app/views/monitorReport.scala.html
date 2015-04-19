@@ -1,0 +1,260 @@
+@* periodReport Template File *@
+@(title: String)
+
+@outline(title){
+	<div class="row">
+		<div class="col-lg-12">
+			<h1 class="page-header">監測報表</h1>
+		</div>
+	</div>
+	<div class="row">
+    	<div class="col-lg-12">
+    		<div class="panel-group" id="accordion">
+        	<div class="panel panel-primary" id="paramPanel">
+            	<div class="panel-heading panel-title" >
+            		<a data-toggle="collapse" data-parent="#accordion" href="#reportParam">報表參數</a>	
+                </div>
+            	<div class="panel-body panel-collapse in" id="reportParam">
+            		<h5>測站</h5>
+            		<div class="btn-group" data-toggle="buttons">
+            			@for(m<-Monitor.values.toList){
+            				<label class="btn btn-default">
+								<input type="radio" name="monitor" id="@m">@Monitor.getDisplayName(m)</label>		
+            			}
+            		</div>
+					<h5>報表種類</h5>
+					<div class="btn-group" data-toggle="buttons">
+						<label class="btn btn-default">
+							<input type="radio" name="reportType" id="@PeriodReport.DailyReport">日報</label>
+						<label class="btn btn-default">
+							<input type="radio" name="reportType" id="@PeriodReport.MonthlyReport">月報</label>
+						<label class="btn btn-default">
+							<input type="radio" name="reportType" id="@PeriodReport.YearlyReport">年報</label>
+					</div>
+					<h5>查詢日期</h5>
+					<div class="col-lg-2 input-group date">
+  						<input type="text" class="form-control" id="reportDate" required>
+  							<span class="input-group-addon">
+  								<i class="glyphicon glyphicon-th"></i>
+  							</span>
+					</div>
+					</br>
+					<div>
+						<button type="button" class="btn btn-primary btn-block" id="queryReport">查詢</button>
+					</div>
+            	</div>
+        	</div>
+        	<div class="panel panel-success" style="display:none" id="reportPanel">
+            	<div class="panel-heading panel-title"" >
+            		<a data-toggle="collapse" data-parent="#accordion" href="#monitorReport">監測報表</a>	
+                </div>
+            	<div class="panel-body panel-collapse" id="monitorReport">
+            		<table id="reportTable" class="display" cellspacing="0" width="100%">
+            		</table>            		
+            	</div>
+            </div>
+        	</div> <!-- end of panel group -->
+    	</div>
+	</div>
+	<script>
+	$( document ).ready(function() {
+		$('#reportDate').datepicker({
+			format: 'yyyy-mm-dd',
+		    todayBtn: "linked",
+		    language: "zh-TW"
+		});
+
+		var monitor, reportType, reportDate;
+		
+		function validate(){
+			monitor = $("input[name='monitor']:checked").attr('id');
+			if (!monitor) {
+				alert('請選擇測站');
+				return false;
+			}
+			reportType = $("input[name='reportType']:checked").attr('id');
+			if (!reportType) {
+				alert('請選擇報表種類');
+				return false;
+			}
+			reportDate = $('#reportDate').val();
+			if(reportDate.length === 0){
+				alert('請選擇報表日期');
+				return false;
+			}
+			
+			return true;
+		}
+		
+		var dataSet = [
+		               ['0', '1', '2', '3', '4', '5','6', '7', '8','9', '10', 
+		               		'10', '9', '8', '7', '6','5', '4', '3','2', '1',
+		               		'1', '2', '3', '4', '5'
+		               ],
+		               ['1', '1', '2', '3', '4', '5','6', '7', '8','9', '10', 
+		               		'1', '2', '3', '4', '5','6', '7', '8','9', '10',
+		               		'1', '2', '3', '4', '5'
+		               ],
+		               ['2', '1', '2', '3', '4', '5','6', '7', '8','9', '10', 
+		               		'1', '2', '3', '4', '5','6', '7', '8','9', '10',
+		               		'1', '2', '3', '4', '5'
+		               ],
+		               ['3', '1', '2', '3', '4', '5','6', '7', '8','9', '10', 
+		               		'1', '2', '3', '4', '5','6', '7', '8','9', '10',
+		               		'1', '2', '3', '4', '5'
+		               ],
+		               ['4', '1', '2', '3', '4', '5','6', '7', '8','9', '10', 
+		               		'1', '2', '3', '4', '5','6', '7', '8','9', '10',
+		               		'1', '2', '3', '4', '5'
+		               ],
+		               ['5', '1', '2', '3', '4', '5','6', '7', '8','9', '10', 
+		               		'1', '2', '3', '4', '5','6', '7', '8','9', '10',
+		               		'1', '2', '3', '4', '5'
+		               ],
+		               ['6', '1', '2', '3', '4', '5','6', '7', '8','9', '10', 
+		               		'1', '2', '3', '4', '5','6', '7', '8','9', '10',
+		               		'1', '2', '3', '4', '5'
+		               ],
+		               ['7', '1', '2', '3', '4', '5','6', '7', '8','9', '10', 
+		               		'1', '2', '3', '4', '5','6', '7', '8','9', '10',
+		               		'1', '2', '3', '4', '5'
+		               ],
+		               ['8', '1', '2', '3', '4', '5','6', '7', '8','9', '10', 
+		               		'1', '2', '3', '4', '5','6', '7', '8','9', '10',
+		               		'1', '2', '3', '4', '5'
+		               ],
+		               ['9', '1', '2', '3', '4', '5','6', '7', '8','9', '10', 
+		               		'1', '2', '3', '4', '5','6', '7', '8','9', '10',
+		               		'1', '2', '3', '4', '5'
+		               ],
+		               ['10', '1', '2', '3', '4', '5','6', '7', '8','9', '10', 
+		               		'1', '2', '3', '4', '5','6', '7', '8','9', '10',
+		               		'1', '2', '3', '4', '5'
+		               ],
+		               ['11', '1', '2', '3', '4', '5','6', '7', '8','9', '10', 
+		               		'1', '2', '3', '4', '5','6', '7', '8','9', '10',
+		               		'1', '2', '3', '4', '5'
+		               ],	
+		               ['12', '1', '2', '3', '4', '5','6', '7', '8','9', '10', 
+		               		'1', '2', '3', '4', '5','6', '7', '8','9', '10',
+		               		'1', '2', '3', '4', '5'
+		               ],
+		               ['13', '1', '2', '3', '4', '5','6', '7', '8','9', '10', 
+		               		'10', '9', '8', '7', '6','5', '4', '3','2', '1',
+		               		'1', '2', '3', '4', '5'
+		               ],
+		               ['14', '1', '2', '3', '4', '5','6', '7', '8','9', '10', 
+		               		'1', '2', '3', '4', '5','6', '7', '8','9', '10',
+		               		'1', '2', '3', '4', '5'
+		               ],
+		               ['15', '1', '2', '3', '4', '5','6', '7', '8','9', '10', 
+		               		'1', '2', '3', '4', '5','6', '7', '8','9', '10',
+		               		'1', '2', '3', '4', '5'
+		               ],
+		               ['16', '1', '2', '3', '4', '5','6', '7', '8','9', '10', 
+		               		'1', '2', '3', '4', '5','6', '7', '8','9', '10',
+		               		'1', '2', '3', '4', '5'
+		               ],
+		               ['17', '1', '2', '3', '4', '5','6', '7', '8','9', '10', 
+		               		'1', '2', '3', '4', '5','6', '7', '8','9', '10',
+		               		'1', '2', '3', '4', '5'
+		               ],
+		               ['18', '1', '2', '3', '4', '5','6', '7', '8','9', '10', 
+		               		'1', '2', '3', '4', '5','6', '7', '8','9', '10',
+		               		'1', '2', '3', '4', '5'
+		               ],
+		               ['19', '1', '2', '3', '4', '5','6', '7', '8','9', '10', 
+		               		'1', '2', '3', '4', '5','6', '7', '8','9', '10',
+		               		'1', '2', '3', '4', '5'
+		               ],
+		               ['20', '1', '2', '3', '4', '5','6', '7', '8','9', '10', 
+		               		'1', '2', '3', '4', '5','6', '7', '8','9', '10',
+		               		'1', '2', '3', '4', '5'
+		               ],
+		               ['21', '1', '2', '3', '4', '5','6', '7', '8','9', '10', 
+		               		'1', '2', '3', '4', '5','6', '7', '8','9', '10',
+		               		'1', '2', '3', '4', '5'
+		               ],
+		               ['22', '1', '2', '3', '4', '5','6', '7', '8','9', '10', 
+		               		'1', '2', '3', '4', '5','6', '7', '8','9', '10',
+		               		'1', '2', '3', '4', '5'
+		               ],
+		               ['23', '1', '2', '3', '4', '5','6', '7', '8','9', '10', 
+		               		'1', '2', '3', '4', '5','6', '7', '8','9', '10',
+		               		'1', '2', '3', '4', '5'
+		               ]		               	               
+		           ];
+        
+		$('#queryReport').click(function(){
+			if(!validate())
+				return;
+
+			$("#reportPanel").css('display','block');
+			$("#reportParam").collapse();
+			$("#reportPanel").collapse('show');
+
+			var obj = {
+				'monitor':monitor,
+				'reportType':reportType,
+				'startTime':reportDate
+			};
+
+			console.log(JSON.stringify(obj));
+			
+			$.ajax({
+				url: "/monitorReport",
+				data: JSON.stringify(obj),
+				contentType: "application/json; charset=utf-8",
+				type: "POST",
+				dataType: "json",
+				success: function(json){
+				},
+				error: function(xhr, status, errorThrown){
+					console.log("錯誤訊息:" + status + "-" + errorThrown);
+				},
+
+				complete: function(xhr, status){
+				}					
+			});
+			
+			
+			$('#reportTable').dataTable( {
+				language: {
+					url: '@routes.Assets.at("localization/zh_tw.json")'
+				},
+		        "data": dataSet,
+		        "columns": [
+		        	{ "title": "時間"},
+		            { "title": "TSP" },
+		            { "title": "PM10" },
+		            { "title": "PM2.5" },
+		            { "title": "總硫"},
+		            { "title": "二氧化硫", },
+		            { "title": "氮氧化物", },
+		            { "title": "一氧化碳", },
+		            { "title": "周界臭氧", },
+		            { "title": "碳氫化物", },
+		            { "title": "氨", },
+		            { "title": "NOY", },
+		            { "title": "NOY-NO", },
+		            { "title": "NH3", },
+		            { "title": "一氧化氮", },
+		            { "title": "甲烷", },
+		            { "title": "站房濕度", },
+		            { "title": "站房溫度", },
+		            { "title": "二氧化氮", },
+		            { "title": "非甲烷 ", },
+		            { "title": "風速", },
+		            { "title": "風向", },
+		            { "title": "雨量", },
+		            { "title": "溫度", },
+		            { "title": "濕度", },
+		            { "title": "大氣", }     
+		        ]
+		    } );  
+			
+		});
+	});
+	</script>
+}
+

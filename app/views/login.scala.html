@@ -1,0 +1,157 @@
+@* login Template File *@
+<!DOCTYPE html>
+<html lang="zh-tw">
+
+<head>
+
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="">
+    <meta name="author" content="">
+
+    <title>麥寮廠區空氣品質及氣象監測系統</title>
+
+    <!-- Bootstrap Core CSS -->
+    <link href="@routes.Assets.at("bower_components/bootstrap/dist/css/bootstrap.min.css")" rel="stylesheet">
+
+    <!-- MetisMenu CSS -->
+    <link href="@routes.Assets.at("bower_components/metisMenu/dist/metisMenu.min.css")" rel="stylesheet">
+
+    <!-- Custom CSS -->
+    <link href="@routes.Assets.at("stylesheets/sb-admin-2.css")" rel="stylesheet">
+
+    <!-- Custom Fonts -->
+    <link href="@routes.Assets.at("bower_components/font-awesome/css/font-awesome.min.css")" rel="stylesheet" type="text/css">
+
+    <!-- HTML5 Shim and Respond.js IE8 support of HTML5 elements and media queries -->
+    <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
+    <!--[if lt IE 9]>
+        <script src="https://oss.maxcdn.com/libs/html5shiv/3.7.0/html5shiv.js"></script>
+        <script src="https://oss.maxcdn.com/libs/respond.js/1.4.2/respond.min.js"></script>
+    <![endif]-->
+	<style>
+		#prompt {
+			padding-top: 25px;
+			padding-bottom: 25px;
+			padding-right: 50px;
+			padding-left: 50px;
+		}
+	</style>
+</head>
+
+<body>
+
+    <div class="container-fluid">
+        <div class="row">
+			<div class="col-md-4">
+				<img src="@routes.Assets.at("images/left.png")" class="img-responsive">
+			</div>
+            <div class="col-md-4">
+                <div class="login-panel panel panel-default">
+                    <div class="panel-heading">
+                        <h3 id="title" class="panel-title">請登入</h3>                        
+                    </div>
+                    <div class="panel-body">
+                    	<div id="error_msg" style="display:none"></div>
+                        <form id="login_form" role="form">
+                            <fieldset>
+                                <div class="form-group">
+                                    <input class="form-control" placeholder="E-mail帳號" id="account" name="email" type="email" required autofocus>
+                                </div>
+                                <div class="form-group">
+                                    <input class="form-control" placeholder="密碼" id="password" name="password" type="password" required value="">
+                                </div>
+                                <div class="checkbox">
+                                    <label>
+                                        <input name="remember" type="checkbox" value="Remember Me">記住這個帳戶
+                                    </label>
+                                </div>
+                                <!-- Change this to a button or input when using this as a form -->
+                                <button id="login" type="submit" class="btn btn-lg btn-success btn-block">登入</button>
+                                
+                            </fieldset>
+                        </form>
+						<div id="prompt">
+						<p>一、本企業所有監測儀器均有嚴格之品保作業程序以維持資料之準確性與可靠性。惟為縮短上網時間，本網頁查詢之即時資料尚未通過本企業最後品保程序，請以本企業完成品保程序資料之正式月報、年報為準。 
+						</p>
+						<p>二、本網站提供之溫度、風向、風速、雨量及相對溼度等輔助性氣象監測資料，僅作為輔助空氣品質監測結果分析使用。 
+						</p>
+						<p>三、本網站資料僅供一般參考，不得以任何形式轉載及做為任何證明使用。使用時須瞭解因儀器特性、區域環境等因素所可能產生之數據變異。對於未經本企業同意或不當引用本網站資料而引起的任何損失，本企業概不負責。 
+						</p>
+						<p>四、對於本網頁提供之監測資料，如有任何建議請洽 '台塑關係企業 總管理處 安衛環中心'。
+						</p>
+						</div>
+                    </div>
+                </div>
+            </div>
+			<div class="col-md-4" align="right" >
+				<img src="@routes.Assets.at("images/right.png")" class="img-responsive">
+			</div>
+        </div>
+    </div>
+
+    <!-- jQuery -->
+    <script src="@routes.Assets.at("bower_components/jquery/dist/jquery.min.js")"></script>
+	
+    <!-- Bootstrap Core JavaScript -->
+    <script src="@routes.Assets.at("bower_components/bootstrap/dist/js/bootstrap.min.js")"></script>
+
+    <!-- Metis Menu Plugin JavaScript -->
+    <script src="@routes.Assets.at("bower_components/metisMenu/dist/metisMenu.min.js")"></script>
+
+    <!-- Custom Theme JavaScript -->
+    <script src="@routes.Assets.at("javascripts/sb-admin-2.js")"></script>
+
+	<script>
+	$( document ).ready(function() {
+	    console.log( "ready!" );
+
+		$("#login_form").submit(function(){
+			var account = $("#account").val();
+			var password = $("#password").val();
+			console.log(account + ":" + password);
+			var btn = $("#login");
+			btn.attr("disabled", true);
+
+			var obj = {
+				"account":account,
+				"password":password
+			};
+			console.log(JSON.stringify(obj));
+			var error_msg = $("#error_msg");
+			
+			$.ajax({
+				url: "/authenticate",
+				data: JSON.stringify(obj),
+				contentType: "application/json; charset=utf-8",
+				type: "POST",
+				dataType: "json",
+				success: function(json){
+					if(json["ok"]==true){
+						$(location).attr('href',"/");
+					}else{
+						error_msg.css('display','block');
+						error_msg.text(json["msg"]);
+					}
+				},
+				error: function(xhr, status, errorThrown){		
+					error_msg.css('display','block');
+					error_msg.text("錯誤訊息:" + status + "-" + errorThrown);
+				},
+
+				complete: function(xhr, status){
+					btn.attr("disabled", false);
+				}					
+			});
+						
+			event.preventDefault();
+		});
+	    
+	});
+		 
+	</script>
+
+</body>
+
+</html>

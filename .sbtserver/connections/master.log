@@ -1,0 +1,16 @@
+New log file opened at Wed Apr 15 19:51:29 GMT+08:00 2015 by 6112@karateboy-home
+Taking next connection to: 50706
+New client attempting to connect on port: 50727-50706
+  Address = /192.168.37.1:50706
+This client on port 50727 has uuid 4d06b416-355a-450e-ad1a-3c86d97e058f configName play-fork-run humanReadableName Play Fork Run protocolVersion 1 featureTags Vector()
+Connected Clients: play-fork-run-4d06b416-355a-450e-ad1a-3c86d97e058f
+Taking next connection to: 50706
+Checking to see if clients are empty...
+We have 1 non-daemon clients, continuing serving connections.
+Taking next connection to: 50706
+Checking to see if clients are empty...
+No non-daemon clients connected after 3 min. Shutting down.
+Server socket thread exiting.
+0 clients open, will close them...
+All client sockets have been closed.
+Closing the 6112@karateboy-home logs at Wed Apr 15 19:57:29 GMT+08:00 2015, goodbye.
