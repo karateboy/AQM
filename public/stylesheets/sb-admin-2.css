@@ -41,7 +41,7 @@ body {
 
 .navbar-top-links li a {
     padding: 15px;
-    min-height: 50px;
+    min-height: 80px;
 }
 
 .navbar-top-links .dropdown-menu li {
@@ -132,7 +132,7 @@ body {
         z-index: 1;
         position: absolute;
         width: 250px;
-        margin-top: 51px;
+        margin-top: 80px;
     }
 
     .navbar-top-links .dropdown-messages,
