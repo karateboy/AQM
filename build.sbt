@@ -16,7 +16,8 @@ libraryDependencies ++= Seq(
   "org.scalikejdbc" %% "scalikejdbc-config"			% "2.2.5",
   "org.scalikejdbc" %% "scalikejdbc-play-plugin"	% "2.3.6",
   "org.scalikejdbc" %% "scalikejdbc-play-dbplugin-adapter" % "2.3.6",
-  "com.github.nscala-time" %% "nscala-time" % "1.8.0"
+  "com.github.nscala-time" %% "nscala-time" % "1.8.0",
+  "io.github.cloudify" %% "spdf" % "1.3.1"
 )
 
 PlayKeys.playWatchService := play.sbtplugin.run.PlayWatchService.sbt(pollInterval.value)

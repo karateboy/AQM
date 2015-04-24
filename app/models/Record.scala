@@ -6,18 +6,8 @@ import play.api._
 import com.github.nscala_time.time.Imports._
 import models.ModelHelper._
 import scala.collection.Map
-
-case class HourRecord(
-    monitor:String,
-    startTime:Timestamp,
-    monitorType:Int,
-    avgValue:Float,
-    minValue:Float,
-    maxValue:Float,
-    effectPercent:Float
-    )
     
-case class MinRecord(
+case class HourRecord(
     name:String,
     date:Timestamp,
     chk:Option[String],
@@ -74,26 +64,26 @@ case class MinRecord(
     )
     
 case class Stat(
-    avgValue:Float,
-    minValue:Float,
-    maxValue:Float,
-    effectPercent:Float
-    )
-    
-case class HourlyReport(
-    time:DateTime,
-    record:Map[Int,Stat]
-    )
+    avg:Float,
+    min:Float,
+    max:Float,
+    count:Int,
+    total:Int,
+    overCount:Int
+    ){
+  val effectPercent = count.toFloat/total
+  val overPercent = overCount.toFloat/total
+}
  
+case class MonitorTypeRecord(monitorType:MonitorType.Value , dataList:List[(Timestamp, Option[Float], Option[String])], stat:Stat)
 case class DailyReport(
-   data:List[HourlyReport],
-   statMap:Map[Int, Stat]
+   typeList:Array[MonitorTypeRecord]
   )
-    
-object MinRecord {
+
+object HourRecord {
   val table = "P12345678_M1_2014"
-  def mapper(rs: WrappedResultSet)={
-    MinRecord(rs.string(1), rs.timestamp(2), rs.stringOpt(3), rs.floatOpt(4), rs.stringOpt(5), 
+  def mapper(rs: WrappedResultSet) = {
+    HourRecord(rs.string(1), rs.timestamp(2), rs.stringOpt(3), rs.floatOpt(4), rs.stringOpt(5), 
         rs.floatOpt(6), rs.stringOpt(7), rs.floatOpt(8), rs.stringOpt(9), rs.floatOpt(10), 
         rs.stringOpt(11), rs.floatOpt(12), rs.stringOpt(13), rs.floatOpt(14), rs.stringOpt(15), 
         rs.floatOpt(16), rs.stringOpt(17), rs.floatOpt(18), rs.stringOpt(19), rs.floatOpt(20), 
@@ -102,19 +92,9 @@ object MinRecord {
         rs.stringOpt(31), rs.floatOpt(32), rs.stringOpt(33), rs.floatOpt(34), rs.stringOpt(35), 
         rs.floatOpt(36), rs.stringOpt(37), rs.floatOpt(38), rs.stringOpt(39),  rs.floatOpt(40), 
         rs.stringOpt(41), rs.floatOpt(42), rs.stringOpt(43), rs.floatOpt(44), rs.stringOpt(45), 
-        rs.floatOpt(46), rs.stringOpt(47), rs.floatOpt(48), rs.stringOpt(49),  rs.floatOpt(50), 
+        rs.floatOpt(46), rs.stringOpt(47), rs.floatOpt(48), rs.stringOpt(49),  rs.floatOpt(50),
         rs.stringOpt(51), rs.floatOpt(52), rs.stringOpt(53)
     )
-  }
-  
-  def getOneHourMinRecords(monitor:Monitor.Value, startTime:DateTime)(implicit session: DBSession = AutoSession)={
-    val start: Timestamp = startTime
-    val end: Timestamp = startTime + 1.hour
-    val monitorName = monitor.toString()
-    
-    DB readOnly { implicit session =>
-      sql"select * from P1234567_M1_2014 where DP_NO=${monitorName} and M_DateTime >= ${start} and M_DateTime < ${end}".map { mapper }.list().apply()  
-    }
   }
   
   def getCount(start:Timestamp, end:Timestamp)={
@@ -124,124 +104,116 @@ object MinRecord {
       query.map { _.int(1) }.single().apply()  
     }
   }
-   
-  def saveHourRecord(hr:List[HourRecord])(implicit session: DBSession = AutoSession)={
-    hr.foreach { h => 
-      sql"""insert into HourlyReport(monitor, startTime, monitorType, avgValue, 
-        minValue, maxValue, effectPercent) values 
-        (${h.monitor}, ${h.startTime}, ${h.monitorType}, ${h.avgValue}, 
-          ${h.minValue}, ${h.maxValue}, ${h.effectPercent})"""
-        .update.apply()
+  
+  def getHourRecords(monitor:Monitor.Value, startTime:DateTime, endTime:DateTime)(implicit session: DBSession = AutoSession)={
+    val start: Timestamp = startTime
+    val end: Timestamp = endTime
+    val monitorName = monitor.toString()
+    
+    DB readOnly { implicit session =>
+      sql"""
+        Select * From P1234567_M1_2014 
+        Where DP_NO=${monitorName} and M_DateTime >= ${start} and M_DateTime < ${end}
+        ORDER BY M_DateTime ASC
+      """.map { mapper }.list().apply()  
     }
   }
   
-  def putHourlyReport(monitor:Monitor.Value, start:DateTime)(implicit session: DBSession = AutoSession)={
-      val minRecords = getOneHourMinRecords(monitor, start)
-      Logger.debug("# min Record = " + minRecords.length)
-      
-      def genHourRecord(monitorType:MonitorType.Value,f:MinRecord=>Option[Float])={
-        val rs : List[Option[Float]] = minRecords.map(f)
-        var sum = 0.0f
-        var count = 0
-        var min = 1000.0f
-        var max = -1.0f
-        rs.foreach {_ match {
-            case Some(v)=>
-              sum += v
-              count+=1
-              if(min>v)
-                min = v
-              if(max<v)
-                max = v
-            case None=>
-          } 
-        }
-        
-        if(count >= 1)
-          HourRecord(monitor.toString(), start, monitorType.id, sum/count, min, max, count.toFloat/60)
-        else
-          HourRecord(monitor.toString(), start, monitorType.id, 0, 0, 0, 0)
-      }
-      
-      val monitorTypeHandler:List[(MonitorType.Value, MinRecord=>Option[Float])] = List(
-          (MonitorType.A213, rs=>{rs.tsp}),
-          (MonitorType.A214, rs=>{rs.pm10}),
-          (MonitorType.A215, rs=>{rs.pm25}),
-          (MonitorType.A221, rs=>{rs.s}),
-          (MonitorType.A222, rs=>{rs.so2}),
-          (MonitorType.A223, rs=>{rs.nox}),
-          (MonitorType.A224, rs=>{rs.co}),
-          (MonitorType.A225, rs=>{rs.o3}),
-          (MonitorType.A226, rs=>{rs.thc}),
-          (MonitorType.A229, rs=>{rs.ammonia}),
-          (MonitorType.A232, rs=>{rs.noy}),
-          (MonitorType.A233, rs=>{rs.noy_no}),
-          (MonitorType.A235, rs=>{rs.nh3}),
-          (MonitorType.A283, rs=>{rs.no}),
-          (MonitorType.A286, rs=>{rs.ch4}),
-          (MonitorType.A288, rs=>{rs.monitor_humid}),
-          (MonitorType.A289, rs=>{rs.monitor_temp}),
-          (MonitorType.A293, rs=>{rs.no2}),
-          (MonitorType.A296, rs=>{rs.nmhc}),
-          (MonitorType.C211, rs=>{rs.wind_speed}),
-          (MonitorType.C212, rs=>{rs.wind_dir}),
-          (MonitorType.C213, rs=>{rs.rain}),
-          (MonitorType.C214, rs=>{rs.temp}),
-          (MonitorType.C215, rs=>{rs.humid}),
-          (MonitorType.C216, rs=>{rs.air_pressure})
+  val monitorTypeProjection:Map[MonitorType.Value, (HourRecord=>Option[Float], HourRecord=>Option[String])] = Map(
+          MonitorType.A213->(rs=>{rs.tsp}, rs=>{rs.tsp_stat}),
+          MonitorType.A214->(rs=>{rs.pm10}, rs=>{rs.pm10_stat}),
+          MonitorType.A215->(rs=>{rs.pm25}, rs=>{rs.pm25_stat}),
+          MonitorType.A221->(rs=>{rs.s}, rs=>{rs.s_stat}),
+          MonitorType.A222->(rs=>{rs.so2}, rs=>{rs.so2_stat}),
+          MonitorType.A223->(rs=>{rs.nox}, rs=>{rs.nox_stat}),
+          MonitorType.A224->(rs=>{rs.co}, rs=>{rs.co_stat}),
+          MonitorType.A225->(rs=>{rs.o3}, rs=>{rs.o3_stat}),
+          MonitorType.A226->(rs=>{rs.thc}, rs=>{rs.thc_stat}),
+          MonitorType.A229->(rs=>{rs.ammonia}, rs=>{rs.ammonia_stat}),
+          MonitorType.A232->(rs=>{rs.noy}, rs=>{rs.noy_stat}),
+          MonitorType.A233->(rs=>{rs.noy_no}, rs=>{rs.noy_no_stat}),
+          MonitorType.A235->(rs=>{rs.nh3}, rs=>{rs.nh3_stat}),
+          MonitorType.A283->(rs=>{rs.no}, rs=>{rs.no_stat}),
+          MonitorType.A286->(rs=>{rs.ch4}, rs=>{rs.ch4_stat}),
+          MonitorType.A288->(rs=>{rs.monitor_humid}, rs=>{rs.monitor_humid_stat}),
+          MonitorType.A289->(rs=>{rs.monitor_temp}, rs=>{rs.monitor_temp_stat}),
+          MonitorType.A293->(rs=>{rs.no2}, rs=>{rs.no2_stat}),
+          MonitorType.A296->(rs=>{rs.nmhc}, rs=>{rs.nmhc_stat}),
+          MonitorType.C211->(rs=>{rs.wind_speed}, rs=>{rs.wind_speed_stat}),
+          MonitorType.C212->(rs=>{rs.wind_dir}, rs=>{rs.wind_dir_stat}),
+          MonitorType.C213->(rs=>{rs.rain}, rs=>{rs.rain_stat}),
+          MonitorType.C214->(rs=>{rs.temp}, rs=>{rs.temp_stat}),
+          MonitorType.C215->(rs=>{rs.humid}, rs=>{rs.humid_stat}),
+          MonitorType.C216->(rs=>{rs.air_pressure}, rs=>{rs.air_pressure_stat})
       )
-    
-      val hourRecord = monitorTypeHandler.map(t=>genHourRecord(t._1, t._2))
-      saveHourRecord(hourRecord)
-      hourRecord
+
+  def emptyHourRecord(monitor:String, start: DateTime) = {
+      HourRecord(
+    monitor,
+    start,
+    None, None, None, None, None, None,None, None, None, None,
+    None, None, None, None, None, None,None, None, None, None, 
+    None, None, None, None, None, None,None, None, None, None, 
+    None, None, None, None, None, None,None, None, None, None, 
+    None, None, None, None, None, None,None, None, None, None,
+    None)
   }
-  
-  def getHourlyReport(monitor:Monitor.Value, start:DateTime)(implicit session: DBSession = AutoSession)={
-      DB localTx { implicit session =>
-        def getHourRecordFromDB()={
-          val startTime:Timestamp = start
-          val endTime:Timestamp = start + 1.hour
-          sql"""
-            select * from HourlyReport where monitor=${monitor.toString()} and startTime>=${startTime} and startTime<${endTime}
-            """.map{
-              rs=>HourRecord(rs.string(1), rs.timestamp(2), rs.int(3), rs.float(4), rs.float(5), rs.float(6), rs.float(7))}
-            .list.apply()
-        }      
-        
-        val hr = getHourRecordFromDB()
-        if(hr.length == 0)
-          putHourlyReport(monitor, start) 
-        else 
-          hr
-      }
-  } 
-  
-  def convertHourRecordToHourlyReport(hrs:List[HourRecord])={
-    import scala.collection.mutable.HashMap
-    val map = new HashMap[Int, Stat]
-    for(hr<-hrs){
-      map.put(hr.monitorType, Stat(hr.avgValue, hr.minValue, hr.maxValue, hr.effectPercent))
-    }
-    
-    HourlyReport(new DateTime(hrs.head.startTime.getTime), map)
-  }
-  
-  def getDailyReport(monitor:Monitor.Value, start:DateTime)={
+
+  def getDailyReport(monitor: Monitor.Value, start: DateTime) = {
     DB localTx { implicit session =>
-      var t = start
-      import scala.collection.mutable.HashMap
-      var reportList = List[HourlyReport]()
-      do{
-        Logger.info("getHourlyRecord: " + t.toString())
-        val hrs = getHourlyReport(monitor, t)
-        reportList = reportList :+ convertHourRecordToHourlyReport(hrs) 
-        Logger.info("reportList len="+reportList.length)
-        t += 1.hour
-      }while(t < start.plusDays(1));
-      
-      import scala.collection.mutable.HashMap
-      val map = new HashMap[Int, Stat]()
-      DailyReport(reportList, map)
+      val originalHourRecordList = getHourRecords(monitor, start, start + 1.day)
+      val reportList =
+        if (originalHourRecordList.length == 24)
+          originalHourRecordList
+        else {
+          val endTime = start + 1.day
+          def checkHourRecord(checkTime: DateTime, checkList: List[HourRecord]): List[HourRecord] = {
+            if (checkTime >= endTime)
+              Nil
+            else {
+              if(checkList.isEmpty || checkTime != checkList.head.date)
+                emptyHourRecord(monitor.toString(), checkTime) :: checkHourRecord(checkTime + 1.hour, checkList)
+              else
+                checkList.head :: checkHourRecord(checkTime + 1.hour, checkList.tail)
+            }
+          }
+          checkHourRecord(start, originalHourRecordList)
+        }
+
+      val typeResultList =
+        for {
+          t <- monitorTypeProjection
+          total = reportList.size
+          projections = reportList.map(rs => (rs.date, t._2._1(rs), t._2._2(rs)))
+          validStat = { t: (Timestamp, Option[Float], Option[String]) =>
+            {
+              t._3 match {
+                case Some(s) =>
+                  if (s == "010" || s == "011" || s == "012") {
+                    t._2 != None
+                  } else
+                    false
+                case _ => false
+              }
+            }
+          }
+
+          validValues = projections.filter(validStat).map(t => t._2.getOrElse {
+            Logger.error("Unexpected Null value!")
+            0f
+          })
+          count = validValues.length
+          sum = validValues.sum
+          max = if (count != 0) validValues.max else Float.MinValue
+          min = if (count != 0) validValues.min else Float.MaxValue
+          avg = if (count != 0) sum / count else 0
+        } yield {
+          val stat = Stat(avg, min, max, count, total, 0)
+          //Logger.info(MonitorType.map(t._1).toString() + stat.toString())
+          MonitorTypeRecord(t._1, projections, stat)
+        }
+
+      DailyReport(typeResultList.toArray)
     }
   }
 }
@@ -249,6 +221,5 @@ object MinRecord {
 object Record{
   def main(args: Array[String]) {
     val startTime = DateTime.parse("2015-04-01")
-    MinRecord.getHourlyReport(Monitor.A001, startTime)
   }
 }

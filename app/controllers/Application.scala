@@ -11,7 +11,7 @@ object Application extends Controller {
 
   val title = "麥寮廠區空氣品質及氣象監測系統"
   
-  def index = Action {
+  def index = Security.Authenticated{
     implicit request =>
     Ok(views.html.index(title))
   }

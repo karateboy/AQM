@@ -9,7 +9,10 @@ GET     /                           controllers.Application.index
 GET     /assets/*file               controllers.Assets.at(path="/public", file)
 
 GET		/login						controllers.Login.prompt
+GET		/logoff						controllers.Login.logoff
 POST	/authenticate				controllers.Login.authenticate
+
 
 GET		/report/*reporttype			controllers.Report.getReport(reporttype)
 POST	/monitorReport				controllers.Report.monitorReport
+GET		/PDF/monitorReport/:reportType/:monitor/:startDate 	controllers.Report.monitorReportPDF(monitor, reportType, startDate)

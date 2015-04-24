@@ -40,7 +40,7 @@
 					</div>
 					</br>
 					<div>
-						<button type="button" class="btn btn-primary btn-block" id="queryReport">查詢</button>
+						<button type="button" class="btn btn-primary" id="queryReport">查詢</button>
 					</div>
             	</div>
         	</div>
@@ -49,46 +49,45 @@
             		<a data-toggle="collapse" data-parent="#accordion" href="#monitorReport">監測報表</a>	
                 </div>
             	<div class="panel-body panel-collapse" id="monitorReport">
+					<div id="reportDiv" align="center">
+					<h2>監測日報表</h2>
             		<table id="reportTable" class="display" cellspacing="0" width="100%">
             		</table>            		
+            		</div>
             	</div>
-            </div>
         	</div> <!-- end of panel group -->
-    	</div>
-    	<div >
-    	
     	</div>
 	</div>
 	<script>
 	$( document ).ready(function() {
 		$('#reportDate').datepicker({
+			format: 'yyyy-mm-dd',
 		    todayBtn: "linked",
+		    language: "zh-TW"
 		});
 
+		var monitor, reportType, reportDate;
+		
 		function validate(){
-			if (!$("input[name='monitor']:checked").val()) {
+			monitor = $("input[name='monitor']:checked").attr('id');
+			if (!monitor) {
 				alert('請選擇測站');
 				return false;
 			}
-			
-			if (!$("input[name='reportType']:checked").val()) {
+			reportType = $("input[name='reportType']:checked").attr('id');
+			if (!reportType) {
 				alert('請選擇報表種類');
 				return false;
 			}
-
-			if($('#reportDate').val().length === 0){
+			reportDate = $('#reportDate').val();
+			if(reportDate.length === 0){
 				alert('請選擇報表日期');
 				return false;
 			}
+			
 			return true;
 		}
 		
-		var dataSet = [
-		               ['Trident','Internet Explorer 4.0','Win 95+','4','X'],
-		               ['Gecko','Camino 1.5','OSX.3+','1.8','A'],
-		               ['Other browsers','All others','-','-','U']
-		           ];
-        
 		$('#queryReport').click(function(){
 			if(!validate())
 				return;
@@ -97,36 +96,38 @@
 			$("#reportParam").collapse();
 			$("#reportPanel").collapse('show');
 
-			$('#reportTable').dataTable( {
-				language: {
-					url: '@routes.Assets.at("localization/zh_tw.json")'
-					/*
-				    "sProcessing":   "處理中...",
-				    "sLengthMenu":   "顯示 _MENU_ 項結果",
-				    "sZeroRecords":  "沒有匹配結果",
-				    "sInfo":         "顯示第 _START_ 至 _END_ 項結果，共 _TOTAL_ 項",
-				    "sInfoEmpty":    "顯示第 0 至 0 項結果，共 0 項",
-				    "sInfoFiltered": "(從 _MAX_ 項結果過濾)",
-				    "sInfoPostFix":  "",
-				    "sSearch":       "搜索:",
-				    "sUrl":          "",
-				    "oPaginate": {
-				        "sFirst":    "首頁",
-				        "sPrevious": "上頁",
-				        "sNext":     "下頁",
-				        "sLast":     "尾頁"
-				    }*/
-				},
-		        "data": dataSet,
-		        "columns": [
-		            { "title": "Engine" },
-		            { "title": "Browser" },
-		            { "title": "Platform" },
-		            { "title": "Version", "class": "center" },
-		            { "title": "Grade", "class": "center" }
-		        ]
-		    } );  
+			var obj = {
+				'monitor':monitor,
+				'reportType':reportType,
+				'startTime':reportDate
+			};
+
+			console.log(JSON.stringify(obj));
 			
+			$.ajax({
+				url: "/monitorReport",
+				data: JSON.stringify(obj),
+				contentType: "application/json; charset=utf-8",
+				type: "POST",
+				dataType: "html",
+				success: function(result){
+					console.log(result);
+					$('#reportDiv').html(result);
+
+					$('#reportTable').dataTable( {
+						language: {
+							url: '@routes.Assets.at("localization/zh_tw.json")'
+						},
+						"paging":   false
+		    		} );
+				},
+				error: function(xhr, status, errorThrown){
+					console.log("錯誤訊息:" + status + "-" + errorThrown);
+				},
+
+				complete: function(xhr, status){
+				}					
+			});
 		});
 	});
 	</script>

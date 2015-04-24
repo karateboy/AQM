@@ -29,8 +29,7 @@ object Login extends Controller {
           }, 
           userInfo=>{
             if(userInfo.password == "abc123"){
-              Ok(Json.obj("ok"->true))
-              //Redirect(routes.Application.index)
+              Ok(Json.obj("ok"->true)).withSession(Security.setUserinfo(request, userInfo.account))              
             }else
               Ok(Json.obj("ok"->false, "msg"->"密碼或帳戶錯誤"))
           })
@@ -40,5 +39,7 @@ object Login extends Controller {
     Ok(views.html.login())
   }
   
-  
+  def logoff = Action{
+    Redirect(routes.Login.prompt()).withNewSession
+  }
 }
