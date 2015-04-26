@@ -110,13 +110,13 @@ object HourRecord {
     val end: Timestamp = endTime
     val monitorName = monitor.toString()
     
-    DB readOnly { implicit session =>
+    //DB readOnly { implicit session =>
       sql"""
         Select * From P1234567_M1_2014 
         Where DP_NO=${monitorName} and M_DateTime >= ${start} and M_DateTime < ${end}
         ORDER BY M_DateTime ASC
       """.map { mapper }.list().apply()  
-    }
+    //}
   }
   
   val monitorTypeProjection:Map[MonitorType.Value, (HourRecord=>Option[Float], HourRecord=>Option[String])] = Map(
@@ -180,9 +180,10 @@ object HourRecord {
           checkHourRecord(start, originalHourRecordList)
         }
 
+      val usedMonitoredTypes = MonitoredType.getUsedMonitoredType(monitor)
       val typeResultList =
         for {
-          t <- monitorTypeProjection
+          t <- monitorTypeProjection.filter(kv=>usedMonitoredTypes.contains(kv._1))
           total = reportList.size
           projections = reportList.map(rs => (rs.date, t._2._1(rs), t._2._2(rs)))
           validStat = { t: (Timestamp, Option[Float], Option[String]) =>

@@ -58,6 +58,10 @@ object Monitor extends Enumeration{
   }
 }
 
+case class MonitorType(id:MonitorType.Value, desp:String, unit:String, 
+    std_internal:Option[Float], std_law:Option[Float], std_hour:Option[Float],
+    std_day:Option[Float], std_year:Option[Float])
+    
 object MonitorType extends Enumeration{
   val A213 = Value(1)
   val A214 = Value
@@ -78,6 +82,7 @@ object MonitorType extends Enumeration{
   val A289 = Value
   val A293 = Value
   val A296 = Value
+  val A325 = Value
   val C211 = Value
   val C212 = Value
   val C213 = Value
@@ -107,6 +112,7 @@ object MonitorType extends Enumeration{
      A289->"站房溫度",
      A293->"二氧化氮",
      A296->"非甲烷",
+     A325->"臭氧8小時平均",
      C211->"風速",
      C212->"風向",
      C213->"雨量",
@@ -116,4 +122,19 @@ object MonitorType extends Enumeration{
      C911->"六秒風速",
      C912->"六秒風向"
    )
+
+  def getList()(implicit session: DBSession = AutoSession) = {
+    sql"""
+      Select *
+      From MonitorType
+      """.map { r =>  MonitorType(id = MonitorType.withName(r.string(1)), 
+          desp = r.string(2),
+          unit = r.string(3),
+          std_internal = r.floatOpt(5),
+          std_law = r.floatOpt(6), 
+          std_hour = r.floatOpt(7),
+          std_day = r.floatOpt(8), 
+          std_year = r.floatOpt(9)
+          )}.list.apply
+  }
 }

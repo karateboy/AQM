@@ -1,0 +1,40 @@
+@* monitoredTypes Template File *@
+@(monitor: String, monitoredTypes:List[MonitoredType])
+<table id="monitoredTypes" class="table">
+	<thead>
+		<tr>
+			<th>
+				測項代碼
+			</th>
+			<th>名稱</th>
+			<th>單位</th>
+		</tr>
+	</thead>
+	<tbody>
+		@for(mt<-monitoredTypes){
+			<tr>
+				<th>		
+					<input type="checkbox" name="includeType" value="@mt.id"
+						@if(mt.used==true){
+							checked
+						}
+					>@mt.id
+				</th>
+				<td>
+					@mt.desp
+				</td>
+				<td>@mt.unit</td>
+			</tr>
+		}
+	</tbody>
+</table>
+<script>
+$("input[name='includeType']").change(function(){
+	var me = $(this);
+	var monitorType = me.attr('value');
+	var used = me.prop('checked')
+	var url = '/MonitoredType/@monitor/' + monitorType + '/' + used;
+	console.log(url);
+	$.post(url);
+	});
+</script>

@@ -16,3 +16,11 @@ POST	/authenticate				controllers.Login.authenticate
 GET		/report/*reporttype			controllers.Report.getReport(reporttype)
 POST	/monitorReport				controllers.Report.monitorReport
 GET		/PDF/monitorReport/:reportType/:monitor/:startDate 	controllers.Report.monitorReportPDF(monitor, reportType, startDate)
+GET		/HTML/monitorReport/:reportType/:monitor/:startDate 	controllers.Report.monitorReportHtml(monitor, reportType, startDate)
+
+GET		/Monitor					controllers.Application.monitor(monitor = "A001")
+GET		/Monitor/:monitor			controllers.Application.monitor(monitor)
+GET		/MonitoredType/:monitor		controllers.Application.monitoredTypes(monitor)
+POST	/MonitoredType/:monitor/:monitorType/:used	controllers.Application.setMonitoredTypes(monitor, monitorType, used:Boolean)
+
+GET		/MonitorTypeConfig			controllers.Application.monitorTypeConfig

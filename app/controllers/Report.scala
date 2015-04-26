@@ -14,9 +14,9 @@ import java.util.Date
 import play.api.Play.current
 import play.api.db.DB
 object PeriodReport extends Enumeration{
-  val DailyReport = Value("dailyReport")
-  val MonthlyReport = Value("monthlyReport")
-  val YearlyReport = Value("yearlyReport")
+  val DailyReport = Value
+  val MonthlyReport = Value
+  val YearlyReport = Value
 }
 
 object ReportType extends Enumeration{
@@ -104,7 +104,7 @@ object Report extends Controller {
             reportType match{
               case PeriodReport.DailyReport =>                
                 val dailyReport = HourRecord.getDailyReport(monitor, startTime)
-                Ok(views.html.dailyReport(monitorName, startTime, dailyReport))
+                Ok(views.html.dailyReport(monitor, startTime, dailyReport))
               case PeriodReport.MonthlyReport =>
                 val monthlyReport = getMonthlyReport()
                 val nDays = monthlyReport.typeArray(0).dataList.length
@@ -116,6 +116,21 @@ object Report extends Controller {
           })
   }
   
+  def monitorReportHtml(monitorStr: String, reportTypeStr: String, startDateStr:String) =
+    Action { implicit request =>
+    Logger.debug("monitorReportPDF")
+    
+    val monitor = Monitor.withName(monitorStr)
+    val reportType = PeriodReport.withName(reportTypeStr)
+    val startDate = DateTime.parse(startDateStr)
+    
+    if(reportType == PeriodReport.DailyReport){
+      val dailyReport = HourRecord.getDailyReport(monitor, startDate) 
+      Ok(views.html.reportTemplate(views.html.dailyReport(monitor, startDate, dailyReport)))
+    }else
+      Ok("")
+  }
+  
   def monitorReportPDF(monitorStr: String, reportTypeStr: String, startDateStr:String) =
     Security.Authenticated { implicit request =>
     Logger.debug("monitorReportPDF")
@@ -123,34 +138,30 @@ object Report extends Controller {
     val monitor = Monitor.withName(monitorStr)
     val reportType = PeriodReport.withName(reportTypeStr)
     val startDate = DateTime.parse(startDateStr)
-    if(reportType == PeriodReport.DailyReport){
-      Logger.debug(reportType.toString())
-      val dailyReport = HourRecord.getDailyReport(monitor, startDate)
-      val output = views.html.reportTemplate(views.html.dailyReport(Monitor.map(monitor), startDate, dailyReport))
-      Logger.info(output.toString())
-      
-      // Create a new Pdf converter with a custom configuration
-      // run `wkhtmltopdf --extended-help` for a full list of options
+    import play.api.templates._
+    def sendPDF(url:String) = {
       import io.github.cloudify.scala.spdf._
       import java.io._
       import java.net._
     
-      val pdf = Pdf(new PdfConfig {
+      val pdf = Pdf("C:/Program Files/wkhtmltopdf/bin/wkhtmltopdf.exe", new PdfConfig {
           orientation := Landscape
-          pageSize := "Letter"
-          marginTop := "1in"
-          marginBottom := "1in"
-          marginLeft := "1in"
-          marginRight := "1in"
+          pageSize := "A4"
         })
-      val outputStream = new ByteArrayOutputStream
-      val page = <html><body><h1>Hello World</h1></body></html>
+              
+      val tempReportFile = File.createTempFile("report", ".pdf")
+      pdf.run(new URL(url), tempReportFile)
+
+      tempReportFile
+    }
+    
+    if(reportType == PeriodReport.DailyReport){
+      val dailyReport = HourRecord.getDailyReport(monitor, startDate)
+      val output = views.html.reportTemplate(views.html.dailyReport(monitor, startDate, dailyReport))
       
-      val html = views.html.reportTemplate(views.html.dailyReport(Monitor.map(monitor), startDate, dailyReport))
-      
-      pdf.run(html.toString(), new File("google.pdf"))
-      
-      Ok("")
+      val url = "http://" + request.host + routes.Report.monitorReportHtml(monitorStr, reportTypeStr, startDateStr).toString()
+      Logger.info("url=" + url)
+      Ok.sendFile(sendPDF(url),  fileName= _=>"Daily_"+monitor+startDate.toString("YYYYMMDD")+".pdf")
     }else
       Ok("")
   }

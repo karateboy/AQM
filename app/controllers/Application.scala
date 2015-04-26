@@ -15,4 +15,32 @@ object Application extends Controller {
     implicit request =>
     Ok(views.html.index(title))
   }
+  
+  def monitor(monitor:String) = Security.Authenticated{
+    implicit request =>
+      Logger.debug("monitor=>"+monitor)
+      val monitorValue = Monitor.withName(monitor)
+    Ok(views.html.monitor(monitor))
+  }
+  
+  def monitoredTypes(monitorStr:String) = Security.Authenticated{
+    implicit request =>
+      val monitor = Monitor.withName(monitorStr)
+      val monitoredTypes = MonitoredType.getMonitoredTypes(monitor)
+    Ok(views.html.monitoredTypes(monitor.toString(), monitoredTypes))
+  }
+  
+  def setMonitoredTypes(monitorStr:String, monitoredTypeStr:String, used:Boolean) = Security.Authenticated{
+    implicit request =>
+      val monitor = Monitor.withName(monitorStr)
+      val monitorType = MonitorType.withName(monitoredTypeStr)
+      MonitoredType.setMonitoredType(monitor, monitorType, used)
+      Ok("")
+  }
+  
+  
+  def monitorTypeConfig = Security.Authenticated{
+    implicit request =>
+    Ok(views.html.monitorTypeConfig(title, MonitorType.getList()))
+  } 
 }

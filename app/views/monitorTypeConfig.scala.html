@@ -1,0 +1,67 @@
+@* monitorTypeConfig Template File *@
+@(title:String, monitorTypes:List[MonitorType])
+
+
+<div class="row">
+	<div class="col-lg-12">
+		<h1 class="page-header">測項管理</h1>
+	</div>
+</div>
+<div class="row">
+    <div class="col-lg-12">
+    	<div class="panel-group" id="accordion">
+        <div class="panel panel-primary" id="reportPanel">
+        <div class="panel-heading panel-title"" >
+        	<a data-toggle="collapse" data-parent="#accordion" href="#monitorType">監測項目標準值</a>	
+        </div>
+        <div class="panel-body panel-collapse" id="monitorType">    		
+			<div id="monitorTypeDiv" align="center">
+            	<table id="monitorTypeTable" class="table" cellspacing="0" width="100%">
+            		<thead>
+            			<tr>
+            				<td>測項代碼</td><td>名稱</td><td>單位</td><td>內控值</td><td>法規值</td><td>小時標準</td>
+            				<td>日標準</td>
+            			</tr>
+            		</thead>
+            		<tbody>
+            			@for(mt<-monitorTypes){
+            				<tr>
+            					<td>@mt.id</td><td>@mt.desp</td><td>@mt.unit</td>
+            					@if(mt.std_internal == None){
+            						<td>-</td>
+            					}else{
+            						<td>@mt.std_internal</td>
+            					}
+            					
+            					@if(mt.std_law == None){
+            						<td>-</td>
+            					}else{
+            						<td>@mt.std_law</td>
+            					}
+            					
+            					@if(mt.std_hour == None){
+            						<td>-</td>
+            					}else{
+            						<td>@mt.std_hour</td>
+            					}
+            					
+            					@if(mt.std_day == None){
+            						<td>-</td>
+            					}else{
+            						<td>@mt.std_day</td>
+            					}
+            				</tr>
+            			}
+            		</tbody>
+            	</table>          		
+            </div>
+       </div>
+       </div>
+    	</div>
+	</div>
+</div>
+<script>
+	$(document).ready(function() {
+
+	});
+</script>
