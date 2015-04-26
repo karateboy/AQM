@@ -1,17 +1,16 @@
-@* monthlyReport Template File *@
-
+@* yearlyReport Template File *@
 @import com.github.nscala_time.time.Imports._
 @import Report._
-@(monitor: String, reportDate:DateTime, report:MonthlyReport, nDays:Int)
+@(monitor: String, reportDate:DateTime, report:YearlyReport)
 <b>
-<h3>監測月報表</h3>
+<h3>監測年報表</h3>
 <h4>監測站:@monitor</h4>
-<h4>日期:@reportDate.toString("yyyy年MM月")</h4>
+<h4>日期:@reportDate.toString("yyyy年")</h4>
 </b>
 <table id="reportTable" class="display" cellspacing="0" width="100%">
 	<thead>
 		<tr>
-			<th>日期</th>
+			<th>月</th>
 			@for(t<-report.typeArray){
 				<td>@MonitorType.map(t.monitorType)</td>
 			}
@@ -56,7 +55,7 @@
 		</tr>
 	</tfoot>
 	<tbody>
-		@for(i<-0 to (nDays-1)){
+		@for(i<-0 to 11){
 			<tr>
 			<th>@(i+1)</th>
 			@for(t<-report.typeArray){
@@ -72,4 +71,5 @@
 	</tbody>
 </table>            		
  
+
 

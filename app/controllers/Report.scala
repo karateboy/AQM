@@ -63,7 +63,7 @@ object Report extends Controller {
             val reportType = PeriodReport.withName(reportInfo.reportType)
             val startTime = DateTime.parse(reportInfo.startTime)
             Logger.debug(Monitor.map(monitor) + ":" + reportType + ":" + startTime)
-            def getMonthlyReport()={
+            def getMonthlyReport(startTime:DateTime)={
                val endTime = startTime + Period.months(1)
                def getDays(current:DateTime):List[DateTime]={
                  if(current == endTime)
@@ -99,6 +99,42 @@ object Report extends Controller {
                MonthlyReport(typeReport.toArray)
             }            
             
+            def getYearlyReport(startTime:DateTime)={
+               val endTime = startTime + Period.years(1)
+               def getMonths(current:DateTime):List[DateTime]={
+                 if(current == endTime)
+                   Nil
+                 else
+                   current :: getMonths(current + 1.months)
+               }
+               
+               val monthes = getMonths(startTime)
+               val monthlyReports =  
+                 for{month <- monthes}yield{
+                   getMonthlyReport(month)
+                 }
+                 
+               def getTypeStat(i:Int)={
+                 monthlyReports.map { _.typeArray(i).stat}
+               }
+               
+               val typeReport = 
+               for {t<-monthlyReports(0).typeArray
+                 monitorType = t.monitorType
+                 pos = monthlyReports(0).typeArray.indexWhere { x => x.monitorType == monitorType }
+                 typeStat = getTypeStat(pos)
+                 validData = typeStat.filter { _.count !=0 } 
+                 count = validData.length
+                 total = monthlyReports.length
+                 max = if (count != 0) validData.map(_.min).min else Float.MinValue
+                 min = if (count != 0) validData.map(_.max).max else Float.MaxValue
+                 avg = if (count != 0) validData.map(_.avg).sum/count else 0
+                 overCount = validData.map(_.overCount).sum
+               } yield{
+                 MonitorTypeReport(monitorType, typeStat, Stat(avg, min, max, count, total, overCount) )
+               }
+               YearlyReport(typeReport.toArray)
+            }
             
             val monitorName = Monitor.map(monitor)
             reportType match{
@@ -106,12 +142,17 @@ object Report extends Controller {
                 val dailyReport = HourRecord.getDailyReport(monitor, startTime)
                 Ok(views.html.dailyReport(monitor, startTime, dailyReport))
               case PeriodReport.MonthlyReport =>
-                val monthlyReport = getMonthlyReport()
+                val adjustStartDate = DateTime.parse(startTime.toString("YYYY-MM-1"))
+                val monthlyReport = getMonthlyReport(adjustStartDate)
                 val nDays = monthlyReport.typeArray(0).dataList.length
                 //val firstDay = new DateTime(startTime.year, startTime.month, 1)
                 Ok(views.html.monthlyReport(monitorName, startTime, monthlyReport, nDays))
               case PeriodReport.YearlyReport =>
-                Ok("")                
+                val adjustStartDate = DateTime.parse(startTime.toString("YYYY-1-1"))
+                val yearlyReport = getYearlyReport(adjustStartDate)
+                //val firstDay = new DateTime(startTime.year, startTime.month, 1)
+                Ok(views.html.yearlyReport(monitorName, startTime, yearlyReport))
+                
             }
           })
   }
