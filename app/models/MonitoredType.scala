@@ -53,7 +53,6 @@ object MonitoredType {
         From MonitoredType
         Where DP_NO=${monitor.toString()} and Used = 'True'
         """.map { rs=>MonitorType.withName(rs.string(1))}.list.apply
-    Logger.debug("used #=" + used.length)
     used
   }
   

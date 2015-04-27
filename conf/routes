@@ -24,3 +24,6 @@ GET		/MonitoredType/:monitor		controllers.Application.monitoredTypes(monitor)
 POST	/MonitoredType/:monitor/:monitorType/:used	controllers.Application.setMonitoredTypes(monitor, monitorType, used:Boolean)
 
 GET		/MonitorTypeConfig			controllers.Application.monitorTypeConfig
+
+GET		/Trend						controllers.Trend.trendReport
+#GET  	/Trend/:monitor/:monitorType/:start/:end
