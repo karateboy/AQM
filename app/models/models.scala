@@ -1,5 +1,6 @@
 package models
 import com.github.nscala_time.time.Imports._
+import scala.language.implicitConversions
 
 /**
  * @author user

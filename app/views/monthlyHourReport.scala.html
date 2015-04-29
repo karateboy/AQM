@@ -1,0 +1,119 @@
+@* monthlyHourReport Template File *@
+@import controllers.Report._
+@import com.github.nscala_time.time.Imports._
+@(monitor:String, reportDate:DateTime, report: MonthHourReport, nDays:Int)
+<b>
+<h3>監測月分時報表</h3>
+<h4>監測站:@monitor</h4>
+<h4>日期:@reportDate.toString("yyyy年MM月")</h4>
+</b>
+<table id="reportTable" class="display" cellspacing="0" width="100%">
+	<thead>
+		<tr>
+			<th>日期\時間</th>
+			@for(t<- 0 to 23){
+				<td>@t 時</td>
+			}
+			<td>平均</td>
+			<td>最大</td>
+			<td>最小</td>
+			<td>有效筆數</td>
+		</tr>
+	</thead>
+	<tfoot>
+		<tr>
+			<td>平均</td>
+			@for(stat<-report.hourStatArray){
+				@if(stat.count==0){
+					<td>-</td>
+				}else{
+				<td>@("%.2f".format(stat.avg))</td>
+				}
+			}
+			@if(report.StatStat.count != 0){
+				<td>@("%.2f".format(report.StatStat.avg))</td>
+			}else{
+				<td></td>
+			}
+			<td></td>
+			<td></td>
+			<td>@report.StatStat.count</td>
+		</tr>
+		<tr>
+			<td>最大</td>
+			@for(stat<-report.hourStatArray){
+				@if(stat.count==0){
+					<td>-</td>
+				}else{
+				<td>@("%.2f".format(stat.max))</td>
+				}
+			}
+			<td></td>
+			@if(report.StatStat.count != 0){
+				<td>@("%.2f".format(report.StatStat.max))</td>
+			}else{
+				<td></td>
+			}
+			<td></td>
+			<td>@report.StatStat.count</td>
+		</tr>
+		<tr>
+			<td>最小</td>
+			@for(stat<-report.hourStatArray){
+				@if(stat.count==0){
+					<td>-</td>
+				}else{
+				<td>@("%.2f".format(stat.min))</td>
+				}
+			}
+			<td></td>
+			<td></td>
+			@if(report.StatStat.count != 0){
+				<td>@("%.2f".format(report.StatStat.min))</td>	
+			}else{
+				<td>-</td>
+			}
+			<td>@report.StatStat.count</td>
+			
+		</tr>
+	</tfoot>
+	<tbody>
+		@for(d<-0 to (nDays-1)){
+			<tr>
+			<th>@("%02d".format(d+1))日</th>
+			@for(hour<-0 to 23){
+				<td>@if(report.dailyReports(d).typeList(0).dataList(hour)._2 != None && 
+					report.dailyReports(d).typeList(0).dataList(hour)._3 != None){
+						@if(HourRecord.isValidStat(report.dailyReports(d).typeList(0).dataList(hour)._3.get)){
+							@("%.2f".format(report.dailyReports(d).typeList(0).dataList(hour)._2.get))	
+						}else{
+							<del>@("%.2f".format(report.dailyReports(d).typeList(0).dataList(hour)._2.get))</del>
+						}	
+					}else{
+						-
+					}
+				</td>	
+			}
+			@if(report.dailyReports(d).typeList(0).stat.count != 0){
+				<td>@report.dailyReports(d).typeList(0).stat.avg</td>	
+			}else{
+				<td>-</td>
+			}
+			@if(report.dailyReports(d).typeList(0).stat.count != 0){
+				<td>@report.dailyReports(d).typeList(0).stat.max</td>	
+			}else{
+				<td>-</td>
+			}
+			@if(report.dailyReports(d).typeList(0).stat.count != 0){
+				<td>@report.dailyReports(d).typeList(0).stat.min</td>	
+			}else{
+				<td>-</td>
+			}
+			<td>@report.dailyReports(d).typeList(0).stat.count</td>
+			
+			</tr>
+		}
+	</tbody>
+</table>            		
+ 
+

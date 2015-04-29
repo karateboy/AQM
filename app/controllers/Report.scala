@@ -5,39 +5,98 @@ import com.github.nscala_time.time.Imports._
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
 import models._
-
-/**
- * @author user
- */
-
 import java.util.Date
 import play.api.Play.current
 import play.api.db.DB
+
 object PeriodReport extends Enumeration{
   val DailyReport = Value
   val MonthlyReport = Value
+  val MonthlyHourReport = Value
   val YearlyReport = Value
 }
 
 object ReportType extends Enumeration{
   val MonitorReport = Value("monitorReport")
+  val MonthlyHourReport = Value("MonthlyHourReport")
 }
 
 object Report extends Controller {
   
-  def getReport(reportType: String) = Action {
-    if(reportType == ReportType.MonitorReport.toString())
-      Ok(views.html.monitorReport(Application.title))
-    else
-      BadRequest("未知的報表種類:" + reportType)
+  def getReport(reportType: String) = Security.Authenticated { implicit request =>
+    val MR = ReportType.MonitorReport.toString()
+    val MHR = ReportType.MonthlyHourReport.toString()
+    reportType match {
+      case MR=>
+        Ok(views.html.monitorReport(false))
+      case MHR=>
+        Ok(views.html.monthlyHourReportForm())
+      case _=>
+        BadRequest("未知的報表種類:" + reportType)
+    }
   }
-  
-  def periodReport= Action {
-    implicit request =>
-      
-      DB.withConnection("aqmdata") { conn =>  
+
+  def getDays(current:DateTime, endTime: DateTime): List[DateTime] = {
+    if (current == endTime)
+      Nil
+    else
+      current :: getDays(current + 1.days, endTime)
+  }
+   
+  case class MonthHourReport(hourStatArray:Array[Stat], dailyReports:Array[DailyReport], StatStat:Stat)
+  def monthlyHourReportHtml(monitorStr:String, monitorTypeStr:String, startDateStr:String) = Security.Authenticated{ implicit request =>
+    Logger.debug("monthlyHourReportHtml()")
+    val monitor = Monitor.withName(monitorStr)
+    val monitorType = MonitorType.withName(monitorTypeStr)
+    val startDate = DateTime.parse(startDateStr)
+    val adjustStartDate = DateTime.parse(startDate.toString("YYYY-MM-1"))
+    val endDate = startDate + Period.months(1)
+    val days = getDays(startDate, endDate)
+    val nDay = days.length
+    val dailyReports =
+      for { day <- days } yield {
+        HourRecord.getDailyReport(monitor, day, List(monitorType))
       }
-      Ok("")
+
+    Logger.debug("dailyReports=" + dailyReports.length)
+    
+    def getHourRecord(i:Int) = {
+      dailyReports.map { _.typeList(0).dataList(i) }
+    }
+
+    val monthHourStats =
+      for {
+        hour <- 0 to 23
+        hourRecord = getHourRecord(hour)
+        validData = hourRecord.filter {hr=>
+          hr._3 match {
+            case Some(stat)=> HourRecord.isValidStat(stat)
+            case _=>false
+          }
+        }.map(r => r._2.get)
+
+        count = validData.length
+        total = nDay
+        max = if (count != 0) validData.max else Float.MinValue
+        min = if (count != 0) validData.min else Float.MaxValue
+        avg = if (count != 0) validData.sum / count else 0
+        overCount = 0
+      } yield {
+        Stat(avg, min, max, count, total, overCount)
+      }
+      Logger.debug("monthHourStats #=" + monthHourStats.length);
+
+      val stats = monthHourStats.filter(t=>t.count !=0)
+      val count = stats.map(_.count).sum
+      val max = if(count != 0) stats.map {_.max}.max else Float.MinValue
+      val min = if(count != 0) stats.map { _.min}.min else Float.MaxValue
+      val avg = if(count != 0) stats.map {_.avg}.sum/count else 0
+      val total = stats.map{_.total}.sum
+      
+      val result = MonthHourReport(monthHourStats.toArray, dailyReports.toArray, Stat(avg, min, max, count, total, 0))
+      Logger.debug("result is ready!")
+      
+      Ok(views.html.monthlyHourReport(Monitor.map(monitor).name, startDate, result, nDay));
   }
   
   case class ReportInfo(monitor: String, reportType: String, startTime:String)
@@ -48,6 +107,36 @@ object Report extends Controller {
   case class MonitorTypeReport(monitorType:MonitorType.Value , dataList:List[Stat], stat:Stat)
   case class MonthlyReport(typeArray:Array[MonitorTypeReport])
   case class YearlyReport(typeArray:Array[MonitorTypeReport])
+
+  def getMonthlyReport(monitor: Monitor.Value, startTime: DateTime, includeTypes:List[MonitorType.Value]=MonitorType.mtvList) = {
+    val endTime = startTime + Period.months(1)
+    val days = getDays(startTime, endTime)
+    val dailyReports =
+      for { day <- days } yield {
+        HourRecord.getDailyReport(monitor, day, includeTypes)
+      }
+
+    def getTypeStat(i: Int) = {
+      dailyReports.map { _.typeList(i).stat }
+    }
+    val typeReport =
+      for {
+        t <- dailyReports(0).typeList
+        monitorType = t.monitorType
+        pos = dailyReports(0).typeList.indexWhere { x => x.monitorType == monitorType }
+        typeStat = getTypeStat(pos)
+        validData = typeStat.filter { _.count != 0 }
+        count = validData.length
+        total = dailyReports.length
+        max = if (count != 0) validData.map(_.min).min else Float.MinValue
+        min = if (count != 0) validData.map(_.max).max else Float.MaxValue
+        avg = if (count != 0) validData.map(_.avg).sum / count else 0
+        overCount = validData.map(_.overCount).sum
+      } yield {
+        MonitorTypeReport(monitorType, typeStat, Stat(avg, min, max, count, total, overCount))
+      }
+    MonthlyReport(typeReport.toArray)
+  }            
   
   def monitorReport = Security.Authenticated(BodyParsers.parse.json){
     implicit request =>
@@ -59,46 +148,11 @@ object Report extends Controller {
             BadRequest(Json.obj("ok"->false, "msg"->JsError.toFlatJson(error)))
           }, 
           reportInfo=>{
-            val monitor = Monitor.withName(reportInfo.monitor)
+            implicit val monitor = Monitor.withName(reportInfo.monitor)
             val reportType = PeriodReport.withName(reportInfo.reportType)
             val startTime = DateTime.parse(reportInfo.startTime)
             Logger.debug(Monitor.map(monitor) + ":" + reportType + ":" + startTime)
-            def getMonthlyReport(startTime:DateTime)={
-               val endTime = startTime + Period.months(1)
-               def getDays(current:DateTime):List[DateTime]={
-                 if(current == endTime)
-                   Nil
-                 else
-                   current :: getDays(current + 1.days)
-               }
-               
-               val days = getDays(startTime)
-               val dailyReports =  
-                 for{day <- days}yield{
-                   HourRecord.getDailyReport(monitor, day)
-                 }
-                 
-               def getTypeStat(i:Int)={
-                 dailyReports.map { _.typeList(i).stat}
-               }
-               val typeReport = 
-               for {t<-dailyReports(0).typeList
-                 monitorType = t.monitorType
-                 pos = dailyReports(0).typeList.indexWhere { x => x.monitorType == monitorType }
-                 typeStat = getTypeStat(pos)
-                 validData = typeStat.filter { _.count !=0 } 
-                 count = validData.length
-                 total = dailyReports.length
-                 max = if (count != 0) validData.map(_.min).min else Float.MinValue
-                 min = if (count != 0) validData.map(_.max).max else Float.MaxValue
-                 avg = if (count != 0) validData.map(_.avg).sum/count else 0
-                 overCount = validData.map(_.overCount).sum
-               } yield{
-                 MonitorTypeReport(monitorType, typeStat, Stat(avg, min, max, count, total, overCount) )
-               }
-               MonthlyReport(typeReport.toArray)
-            }            
-            
+           
             def getYearlyReport(startTime:DateTime)={
                val endTime = startTime + Period.years(1)
                def getMonths(current:DateTime):List[DateTime]={
@@ -111,7 +165,7 @@ object Report extends Controller {
                val monthes = getMonths(startTime)
                val monthlyReports =  
                  for{month <- monthes}yield{
-                   getMonthlyReport(month)
+                   getMonthlyReport(monitor, month)
                  }
                  
                def getTypeStat(i:Int)={
@@ -136,23 +190,28 @@ object Report extends Controller {
                YearlyReport(typeReport.toArray)
             }
             
-            val monitorName = Monitor.map(monitor)
+            val monitorCase = Monitor.map(monitor)
             reportType match{
               case PeriodReport.DailyReport =>                
                 val dailyReport = HourRecord.getDailyReport(monitor, startTime)
                 Ok(views.html.dailyReport(monitor, startTime, dailyReport))
               case PeriodReport.MonthlyReport =>
                 val adjustStartDate = DateTime.parse(startTime.toString("YYYY-MM-1"))
-                val monthlyReport = getMonthlyReport(adjustStartDate)
+                val monthlyReport = getMonthlyReport(monitor, adjustStartDate)
                 val nDays = monthlyReport.typeArray(0).dataList.length
                 //val firstDay = new DateTime(startTime.year, startTime.month, 1)
-                Ok(views.html.monthlyReport(monitorName, startTime, monthlyReport, nDays))
+                Ok(views.html.monthlyReport(monitorCase.name, startTime, monthlyReport, nDays))
+              case PeriodReport.MonthlyHourReport=>
+                val adjustStartDate = DateTime.parse(startTime.toString("YYYY-MM-1"))
+                val monthlyReport = getMonthlyReport(monitor, adjustStartDate)
+                val nDays = monthlyReport.typeArray(0).dataList.length
+                Ok("")
               case PeriodReport.YearlyReport =>
                 val adjustStartDate = DateTime.parse(startTime.toString("YYYY-1-1"))
                 val yearlyReport = getYearlyReport(adjustStartDate)
                 //val firstDay = new DateTime(startTime.year, startTime.month, 1)
-                Ok(views.html.yearlyReport(monitorName, startTime, yearlyReport))
-                
+                Ok(views.html.yearlyReport(monitorCase.name, startTime, yearlyReport))
+              
             }
           })
   }

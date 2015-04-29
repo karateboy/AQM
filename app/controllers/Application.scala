@@ -41,6 +41,6 @@ object Application extends Controller {
   
   def monitorTypeConfig = Security.Authenticated{
     implicit request =>
-    Ok(views.html.monitorTypeConfig(title, MonitorType.getList()))
+    Ok(views.html.monitorTypeConfig())
   } 
 }

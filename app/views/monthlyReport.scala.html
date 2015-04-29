@@ -13,7 +13,7 @@
 		<tr>
 			<th>日期</th>
 			@for(t<-report.typeArray){
-				<td>@MonitorType.map(t.monitorType)</td>
+				<td>@MonitorType.map(t.monitorType).desp</td>
 			}
 		</tr>
 	</thead>

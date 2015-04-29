@@ -67,11 +67,255 @@
 	
 	<div class="row">
 		<div class="col-lg-12">
-			<div class="panel panel-info">
-				<img src="@routes.Assets.at("images/map.png")" class="img-responsive" >
-			</div
-		<div>
+			<div class="map_container">
+			<!--  <img src="@routes.Assets.at("images/map.png")" class="img-responsive" > -->
+    			<div id="realtimeMap" class="map_canvas"></div>
+			</div>
+		</div>
 	</div>
 	<script src="@routes.Assets.at("javascripts/morris-data.js")"></script>
+<script>
+var mapCenter = new google.maps.LatLng(23.68875446, 120.2805895);
 
+// Define a property to hold the Home state.
+HomeControl.prototype.home_ = null;
+
+// Define setters and getters for this property.
+HomeControl.prototype.getHome = function() {
+  return this.home_;
+}
+
+HomeControl.prototype.setHome = function(home) {
+  this.home_ = home;
+}
+
+function HomeControl(map, div, home) {
+  var controlDiv = div;
+  var control = this;
+  control.home_ = home;
+  controlDiv.style.padding = '10px';
+
+  // Set CSS for the control border.
+  var goHomeUI = document.createElement('div');
+  goHomeUI.title = '回到地圖中心';
+  controlDiv.appendChild(goHomeUI);
+
+  // Set CSS for the control interior.
+  var goHomeText = document.createElement('div');
+  goHomeText.innerHTML = '<h3><button>中心</button><h3>';
+  goHomeUI.appendChild(goHomeText);
+  
+  // Set CSS for the control border.
+  var statusUI = document.createElement('div');
+  statusUI.title = '測站狀態';
+  controlDiv.appendChild(statusUI);
+
+  // Set CSS for the control interior.
+  var statusText = document.createElement('div');
+  statusText.innerHTML = '<h3><button>測站狀態</button><h3>';
+  statusUI.appendChild(statusText);
+
+  // Set CSS for the control border.
+  var windUI = document.createElement('div');
+  windUI.title = '風向';
+  controlDiv.appendChild(windUI);
+
+  // Set CSS for the control interior.
+  var windText = document.createElement('div');
+  windText.innerHTML = '<h3><button>風向</button><h3>';
+  windUI.appendChild(windText);
+
+  // Set CSS for the setHome control border.
+  var mapExampleUI = document.createElement('div');
+  mapExampleUI.title = '圖例';
+  controlDiv.appendChild(mapExampleUI);
+
+  // Set CSS for the control interior.
+  var mapExampleImg = document.createElement('div');
+  mapExampleImg.innerHTML = "<img src='@routes.Assets.at("images/map_label.png")' style='width:50%;height:50%' />";
+  mapExampleUI.appendChild(mapExampleImg);
+
+  // Setup the click event listener for Home:
+  // simply set the map to the control's current home property.
+  google.maps.event.addDomListener(goHomeUI, 'click', function() {
+    var currentHome = control.getHome();
+    map.setCenter(currentHome);
+  });
+  
+  google.maps.event.addDomListener(statusUI, 'click', function() {
+  	statusMarkerArray.map( function(marker) { 
+  		marker.setVisible(true); } );
+  	windMarkerArray.map(function(marker){
+  		marker.setVisible(false);});
+  	windInfoboxArray.map(function(ib){
+  		ib.setVisible(false);}
+  	);
+  });
+  
+  google.maps.event.addDomListener(windUI, 'click', function() {
+  	statusMarkerArray.map( function(marker) { 
+  		marker.setVisible(false); } );
+  	windMarkerArray.map(function(marker){
+  		marker.setVisible(true);});
+  	windInfoboxArray.map(function(ib){
+  		ib.setVisible(true);}
+  	);	
+  });
+  
+}
+
+var markerStaticData = [];
+
+@for(m<-Monitor.monitorList){
+	markerStaticData.push(
+		{
+			id:'@m.id',
+			name:'@m.name',
+			lat:'@m.lat',
+			lng:'@m.lng'
+		});
+}
+
+var statusIconUrl = [
+	"@routes.Assets.at("images/normal.png")",
+	"@routes.Assets.at("images/calbration.png")",
+	"@routes.Assets.at("images/repair.png")",
+	"@routes.Assets.at("images/maintance.png")",
+	"@routes.Assets.at("images/warn.png")"
+]
+
+function getRandomInt(min, max) {
+  return Math.floor(Math.random() * (max - min)) + min;
+}
+
+var statusMarkerArray = [];
+function initMonitorMarker(map){
+	
+	for(var i=0;i<markerStaticData.length;i++){
+		var s = getRandomInt(0, statusIconUrl.length);
+		var monitor = markerStaticData[i];
+		var marker = new google.maps.Marker({
+			position: new google.maps.LatLng(monitor.lat, monitor.lng),
+			map: map,
+			title:monitor.name,
+			icon:{
+				url:statusIconUrl[s],
+				anchor: new google.maps.Point(12, 12),
+				scaledSize:new google.maps.Size(24,24)
+				} 
+			});
+		//if(s == 4)
+		//	marker.setAnimation(google.maps.Animation.BOUNCE);
+			
+		statusMarkerArray.push(marker);
+	}
+}		
+
+var windMarkerArray = [];
+function initWindMarker(map){
+	for(var i=0;i<markerStaticData.length;i++){
+		var monitor = markerStaticData[i];
+		var marker = new google.maps.Marker({
+			position: new google.maps.LatLng(monitor.lat, monitor.lng),
+			map: map,
+			title:monitor.name,
+			icon:{
+				path:google.maps.SymbolPath.BACKWARD_CLOSED_ARROW,
+				fillColor: 'red',
+				strokeColor: "red",
+				strokeWeight: 4,
+				rotation: 90,
+				anchor:google.maps.Point(-20,0),
+				scale:4
+			},
+			visible: false
+			});
+		windMarkerArray.push(marker);
+	}
+}
+
+var windInfoboxArray = [];
+function initWindInfobox(map){
+	for(var i=0;i<markerStaticData.length;i++){
+		var monitor = markerStaticData[i];
+			
+		var myOptions = {
+			 content: getRandomInt(0,10)+"."+getRandomInt(0,10) + "m/s"
+			,boxStyle: {
+			   border: "none"
+			  ,textAlign: "center"
+			  ,fontSize: "12pt"
+			  ,width: "60px"
+			 }
+			,disableAutoPan: true
+			,pixelOffset: new google.maps.Size(20, -10)
+			,position: new google.maps.LatLng(monitor.lat, monitor.lng)
+			,closeBoxURL: ""
+			,visible: false
+			,pane: "mapPane"
+			,enableEventPropagation: true
+		};
+		
+		var ibLabel = new InfoBox(myOptions);
+		windInfoboxArray.push(ibLabel);
+		ibLabel.open(map);
+	}
+}
+
+function initLableInfobox(map){
+	for(var i=0;i<markerStaticData.length;i++){
+		var monitor = markerStaticData[i];
+			
+		var myOptions = {
+			 content: monitor.name
+			,boxStyle: {
+			   border: "none"
+			  ,textAlign: "center"
+			  ,fontSize: "12pt"
+			  ,width: "60px"
+			 }
+			,disableAutoPan: true
+			,pixelOffset: new google.maps.Size(-30, 20)
+			,position: new google.maps.LatLng(monitor.lat, monitor.lng)
+			,closeBoxURL: ""
+			,isHidden: false
+			,pane: "mapPane"
+			,enableEventPropagation: true
+		};
+		
+		var ibLabel = new InfoBox(myOptions);
+		ibLabel.open(map);
+	}
+}
+		
+function initRealtimeMap() {
+	console.log("initRealtimeMap");
+	var mapOptions = {
+		center : new google.maps.LatLng(23.68875446, 120.2805895),
+		zoom : 11,
+		panControl: false,
+	    zoomControl: false,
+	    scaleControl: true,
+		mapTypeId : google.maps.MapTypeId.ROADMAP
+	};
+	var map = new google.maps.Map(document
+			.getElementById("realtimeMap"), mapOptions);
+
+	// Create the DIV to hold the control and call the HomeControl()
+	// constructor passing in this DIV.
+	var homeControlDiv = document.createElement('div');
+	var homeControl = new HomeControl(map, homeControlDiv, mapCenter);
+
+	homeControlDiv.index = 1;
+	map.controls[google.maps.ControlPosition.LEFT_TOP].push(homeControlDiv);
+
+	initMonitorMarker(map);
+	initWindMarker(map);
+	initLableInfobox(map);
+	initWindInfobox(map);
+};
+
+$(document).ready(initRealtimeMap());
+
+</script>
 }

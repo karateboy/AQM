@@ -81,7 +81,14 @@ case class DailyReport(
   )
 
 object HourRecord {
-  val table = "P12345678_M1_2014"
+  val NORMAL_STAT = "010"
+  val OVER_STAT = "011"
+  val BELOW_STAT = "012"
+  val VALID_STATS = List(NORMAL_STAT, OVER_STAT, BELOW_STAT)
+  def isValidStat(s:String)={
+    VALID_STATS.contains(s)
+  }
+  
   def mapper(rs: WrappedResultSet) = {
     HourRecord(rs.string(1), rs.timestamp(2), rs.stringOpt(3), rs.floatOpt(4), rs.stringOpt(5), 
         rs.floatOpt(6), rs.stringOpt(7), rs.floatOpt(8), rs.stringOpt(9), rs.floatOpt(10), 
@@ -120,31 +127,31 @@ object HourRecord {
   }
   
   val monitorTypeProjection:Map[MonitorType.Value, (HourRecord=>Option[Float], HourRecord=>Option[String])] = Map(
-          MonitorType.A213->(rs=>{rs.tsp}, rs=>{rs.tsp_stat}),
-          MonitorType.A214->(rs=>{rs.pm10}, rs=>{rs.pm10_stat}),
-          MonitorType.A215->(rs=>{rs.pm25}, rs=>{rs.pm25_stat}),
-          MonitorType.A221->(rs=>{rs.s}, rs=>{rs.s_stat}),
-          MonitorType.A222->(rs=>{rs.so2}, rs=>{rs.so2_stat}),
-          MonitorType.A223->(rs=>{rs.nox}, rs=>{rs.nox_stat}),
-          MonitorType.A224->(rs=>{rs.co}, rs=>{rs.co_stat}),
-          MonitorType.A225->(rs=>{rs.o3}, rs=>{rs.o3_stat}),
-          MonitorType.A226->(rs=>{rs.thc}, rs=>{rs.thc_stat}),
-          MonitorType.A229->(rs=>{rs.ammonia}, rs=>{rs.ammonia_stat}),
-          MonitorType.A232->(rs=>{rs.noy}, rs=>{rs.noy_stat}),
-          MonitorType.A233->(rs=>{rs.noy_no}, rs=>{rs.noy_no_stat}),
-          MonitorType.A235->(rs=>{rs.nh3}, rs=>{rs.nh3_stat}),
-          MonitorType.A283->(rs=>{rs.no}, rs=>{rs.no_stat}),
-          MonitorType.A286->(rs=>{rs.ch4}, rs=>{rs.ch4_stat}),
-          MonitorType.A288->(rs=>{rs.monitor_humid}, rs=>{rs.monitor_humid_stat}),
-          MonitorType.A289->(rs=>{rs.monitor_temp}, rs=>{rs.monitor_temp_stat}),
-          MonitorType.A293->(rs=>{rs.no2}, rs=>{rs.no2_stat}),
-          MonitorType.A296->(rs=>{rs.nmhc}, rs=>{rs.nmhc_stat}),
-          MonitorType.C211->(rs=>{rs.wind_speed}, rs=>{rs.wind_speed_stat}),
-          MonitorType.C212->(rs=>{rs.wind_dir}, rs=>{rs.wind_dir_stat}),
-          MonitorType.C213->(rs=>{rs.rain}, rs=>{rs.rain_stat}),
-          MonitorType.C214->(rs=>{rs.temp}, rs=>{rs.temp_stat}),
-          MonitorType.C215->(rs=>{rs.humid}, rs=>{rs.humid_stat}),
-          MonitorType.C216->(rs=>{rs.air_pressure}, rs=>{rs.air_pressure_stat})
+          MonitorType.withName("A213")->(rs=>{rs.tsp}, rs=>{rs.tsp_stat}),
+          MonitorType.withName("A214")->(rs=>{rs.pm10}, rs=>{rs.pm10_stat}),
+          MonitorType.withName("A215")->(rs=>{rs.pm25}, rs=>{rs.pm25_stat}),
+          MonitorType.withName("A221")->(rs=>{rs.s}, rs=>{rs.s_stat}),
+          MonitorType.withName("A222")->(rs=>{rs.so2}, rs=>{rs.so2_stat}),
+          MonitorType.withName("A223")->(rs=>{rs.nox}, rs=>{rs.nox_stat}),
+          MonitorType.withName("A224")->(rs=>{rs.co}, rs=>{rs.co_stat}),
+          MonitorType.withName("A225")->(rs=>{rs.o3}, rs=>{rs.o3_stat}),
+          MonitorType.withName("A226")->(rs=>{rs.thc}, rs=>{rs.thc_stat}),
+          MonitorType.withName("A229")->(rs=>{rs.ammonia}, rs=>{rs.ammonia_stat}),
+          MonitorType.withName("A232")->(rs=>{rs.noy}, rs=>{rs.noy_stat}),
+          MonitorType.withName("A233")->(rs=>{rs.noy_no}, rs=>{rs.noy_no_stat}),
+          MonitorType.withName("A235")->(rs=>{rs.nh3}, rs=>{rs.nh3_stat}),
+          MonitorType.withName("A283")->(rs=>{rs.no}, rs=>{rs.no_stat}),
+          MonitorType.withName("A286")->(rs=>{rs.ch4}, rs=>{rs.ch4_stat}),
+          MonitorType.withName("A288")->(rs=>{rs.monitor_humid}, rs=>{rs.monitor_humid_stat}),
+          MonitorType.withName("A289")->(rs=>{rs.monitor_temp}, rs=>{rs.monitor_temp_stat}),
+          MonitorType.withName("A293")->(rs=>{rs.no2}, rs=>{rs.no2_stat}),
+          MonitorType.withName("A296")->(rs=>{rs.nmhc}, rs=>{rs.nmhc_stat}),
+          MonitorType.withName("C211")->(rs=>{rs.wind_speed}, rs=>{rs.wind_speed_stat}),
+          MonitorType.withName("C212")->(rs=>{rs.wind_dir}, rs=>{rs.wind_dir_stat}),
+          MonitorType.withName("C213")->(rs=>{rs.rain}, rs=>{rs.rain_stat}),
+          MonitorType.withName("C214")->(rs=>{rs.temp}, rs=>{rs.temp_stat}),
+          MonitorType.withName("C215")->(rs=>{rs.humid}, rs=>{rs.humid_stat}),
+          MonitorType.withName("C216")->(rs=>{rs.air_pressure}, rs=>{rs.air_pressure_stat})
       )
 
   def emptyHourRecord(monitor:String, start: DateTime) = {
@@ -159,7 +166,7 @@ object HourRecord {
     None)
   }
 
-  def getDailyReport(monitor: Monitor.Value, start: DateTime) = {
+  def getDailyReport(monitor: Monitor.Value, start: DateTime, includeTypes:List[MonitorType.Value]=MonitorType.mtvList) = {
     DB localTx { implicit session =>
       val originalHourRecordList = getHourRecords(monitor, start, start + 1.day)
       val reportList =
@@ -180,17 +187,24 @@ object HourRecord {
           checkHourRecord(start, originalHourRecordList)
         }
 
-      val usedMonitoredTypes = MonitoredType.getUsedMonitoredType(monitor)
+      val usedMonitoredTypes = MonitoredType.getUsedMonitoredType(monitor).filter { includeTypes.contains(_) }
+
+      val actualMonitoredTypes = 
+        if(usedMonitoredTypes.length == 0)
+          includeTypes
+        else
+          usedMonitoredTypes
+          
       val typeResultList =
         for {
-          t <- monitorTypeProjection.filter(kv=>usedMonitoredTypes.contains(kv._1))
+          t <- monitorTypeProjection.filter(kv=>actualMonitoredTypes.contains(kv._1))
           total = reportList.size
           projections = reportList.map(rs => (rs.date, t._2._1(rs), t._2._2(rs)))
           validStat = { t: (Timestamp, Option[Float], Option[String]) =>
             {
               t._3 match {
                 case Some(s) =>
-                  if (s == "010" || s == "011" || s == "012") {
+                  if (isValidStat(s)) {
                     t._2 != None
                   } else
                     false
@@ -213,8 +227,8 @@ object HourRecord {
           //Logger.info(MonitorType.map(t._1).toString() + stat.toString())
           MonitorTypeRecord(t._1, projections, stat)
         }
-
-      DailyReport(typeResultList.toArray)
+        
+        DailyReport(typeResultList.toArray)
     }
   }
 }

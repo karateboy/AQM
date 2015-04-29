@@ -24,4 +24,6 @@ PlayKeys.playWatchService := play.sbtplugin.run.PlayWatchService.sbt(pollInterva
 
 scalikejdbcSettings
 
+scalacOptions += "-feature"
+
 fork in run := false

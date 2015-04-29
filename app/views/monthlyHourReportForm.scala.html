@@ -1,15 +1,13 @@
-@* periodReport Template File *@
-@(isMonthlyHourReport:Boolean)
-
+@* monthlyHourReportForm Template File *@
 
 <div class="row">
 	<div class="col-lg-12">
-		<h1 class="page-header">監測報表</h1>
+		<h1 class="page-header">月份時報表</h1>
 	</div>
 </div>
 <div class="row">
    	<div class="col-lg-12">
-    		<div class="panel-group" id="accordion">
+    	<div class="panel-group" id="accordion">
         	<div class="panel panel-primary" id="paramPanel">
             	<div class="panel-heading panel-title" >
             		<a data-toggle="collapse" data-parent="#accordion" href="#reportParam">報表參數</a>	
@@ -22,21 +20,15 @@
 								<input type="radio" name="monitor" id="@m">@Monitor.getDisplayName(m)</label>		
             			}
             		</div>
-            		<h5>報表種類</h5>
-					<div class="btn-group" data-toggle="buttons">
-					@if(isMonthlyHourReport==false){
-						<label class="btn btn-default">
-							<input type="radio" name="reportType" id="@PeriodReport.DailyReport">日報</label>
-						<label class="btn btn-default">
-							<input type="radio" name="reportType" id="@PeriodReport.MonthlyReport">月報</label>
-						<label class="btn btn-default">
-							<input type="radio" name="reportType" id="@PeriodReport.YearlyReport">年報</label>
-					}else{
-						<label class="btn btn-default active">
-							<input type="radio" name="reportType" id="@PeriodReport.MonthlyHourReport" checked>月份時報表</label>
-					}
-					</div>
-					<h5>查詢日期</h5>
+            		<h5>測項</h5>
+            		<div class="btn-group" data-toggle="buttons">
+            			@for(mt<-MonitorType.mtList){
+            				<label class="btn btn-default">
+								<input type="radio" name="monitorType" id="@mt.id">@mt.desp</label>		
+            			}
+            		</div>
+            		
+ 					<h5>查詢日期</h5>
 					<div class="col-lg-2 input-group date">
   						<input type="text" class="form-control" id="reportDate" required>
   							<span class="input-group-addon">
@@ -51,14 +43,11 @@
         	</div>
         	<div class="panel panel-success" style="display:none" id="reportPanel">
             	<div class="panel-heading panel-title"" >
-            		<a data-toggle="collapse" data-parent="#accordion" href="#monitorReport">監測報表</a>	
+            		<a data-toggle="collapse" data-parent="#accordion" href="#monitorReport">月份時報表</a>	
                 </div>
             	<div class="panel-body panel-collapse" id="monitorReport">
 					<div id="reportDiv" align="center" style="overflow-x:auto">
-					<h2>監測日報表</h2>
-            		<table id="reportTable" class="display" cellspacing="0" width="100%">
-            		</table>            		
-            		</div>
+           		</div>
             	</div>
         	</div> <!-- end of panel group -->
     	</div>
@@ -71,7 +60,7 @@ $( document ).ready(function() {
 	    language: "zh-TW"
 	});
 
-	var monitor, reportType, reportDate;
+	var monitor, monitorType, reportDate;
 	
 	function validate(){
 		monitor = $("input[name='monitor']:checked").attr('id');
@@ -79,9 +68,9 @@ $( document ).ready(function() {
 			alert('請選擇測站');
 			return false;
 		}
-		reportType = $("input[name='reportType']:checked").attr('id');
-		if (!reportType) {
-			alert('請選擇報表種類');
+		monitorType = $("input[name='monitorType']:checked").attr('id');
+		if (!monitorType) {
+			alert('請選擇測項');
 			return false;
 		}
 		reportDate = $('#reportDate').val();
@@ -101,24 +90,19 @@ $( document ).ready(function() {
 		$("#reportParam").collapse();
 		$("#reportPanel").collapse('show');
 
-		var obj = {
-			'monitor':monitor,
-			'reportType':reportType,
-			'startTime':reportDate
-		};
-
-		$('#reportDiv').html('');
 		$("body").css("cursor", "progress");
-		console.log(JSON.stringify(obj));
+		
+		var target_url = "/HTML/monitorMonthlyHourReport/" + monitor + '/' + monitorType + '/' + reportDate;
+		console.log(target_url);
 		
 		$.ajax({
-			url: "/monitorReport",
-			data: JSON.stringify(obj),
+			url: target_url,
+			data: "",
 			contentType: "application/json; charset=utf-8",
-			type: "POST",
+			type: "GET",
 			dataType: "html",
 			success: function(result){
-				console.log(result);
+				
 				$('#reportDiv').html(result);
 
 				$('#reportTable').dataTable( {
@@ -128,7 +112,6 @@ $( document ).ready(function() {
 					"paging":   false
 	    		} );
 	    		
-	    		$("#downloadPDF").css('display','initial');
 			},
 			error: function(xhr, status, errorThrown){
 				console.log("錯誤訊息:" + status + "-" + errorThrown);
@@ -138,7 +121,21 @@ $( document ).ready(function() {
 				$("body").css("cursor", "default");
 			}					
 		});
+		
+		/*
+		$("#reportDiv").load(url);
+		$("body").css("cursor", "default");
+		$( document ).ready(function() {
+			$('#reportTable').dataTable( {
+				language: {
+					url: '@routes.Assets.at("localization/zh_tw.json")'
+				},
+				"paging":   false
+			} );
+		});
+		*/
 	});
 });
 </script>
+
 

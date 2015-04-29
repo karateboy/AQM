@@ -37,6 +37,23 @@
 	<!-- Morris Charts CSS -->
     <link href="@routes.Assets.at("stylesheets/morris.css")" rel="stylesheet">
 	
+	<style>
+	.map_container{
+    	position: relative;
+    	width: 100%;
+    	padding-bottom: 56.25%; /* Ratio 16:9 ( 100%/16*9 = 56.25% ) */
+	}
+	.map_container .map_canvas{
+    	position: absolute;
+    	top: 0;
+    	right: 0;
+    	bottom: 0;
+    	left: 0;
+    	margin: 0;
+    	padding: 0;
+	}
+		
+	</style>
     <!-- HTML5 Shim and Respond.js IE8 support of HTML5 elements and media queries -->
     <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
     <!--[if lt IE 9]>
@@ -62,6 +79,12 @@
     <!-- Datepicker JavaScript -->
     <script src="@routes.Assets.at("javascripts/bootstrap-datepicker.min.js")"></script>
     <script src="@routes.Assets.at("javascripts/bootstrap-datepicker.zh-TW.min.js")" charset="UTF-8"></script>
+    
+    <script type="text/javascript"
+      src="http://maps.googleapis.com/maps/api/js?key=AIzaSyCFuSnApEhdYSANwfU4OZ4tH902Tu3vjFI&sensor=FALSE">
+    </script>
+    
+    <script src="@routes.Assets.at("javascripts/infobox_packed.js")"></script>
     
     <script>
 	function loadPage(url){
@@ -236,7 +259,7 @@
                     		<a href="#">有效率年報表</a>
                     		</li>
                     	<li>
-                    		<a href="#">月份時報表</a>
+                    		<a href="#" onClick="loadPage('/report/@ReportType.MonthlyHourReport')">月份時報表</a>
                     		</li>                    
                		</ul>
                     </li>    

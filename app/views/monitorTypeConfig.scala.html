@@ -1,6 +1,4 @@
 @* monitorTypeConfig Template File *@
-@(title:String, monitorTypes:List[MonitorType])
-
 
 <div class="row">
 	<div class="col-lg-12">
@@ -24,7 +22,7 @@
             			</tr>
             		</thead>
             		<tbody>
-            			@for(mt<-monitorTypes){
+            			@for(mt<-MonitorType.mtList){
             				<tr>
             					<td>@mt.id</td><td>@mt.desp</td><td>@mt.unit</td>
             					@if(mt.std_internal == None){
