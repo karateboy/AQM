@@ -25,25 +25,25 @@
             			@for(mt<-MonitorType.mtList){
             				<tr>
             					<td>@mt.id</td><td>@mt.desp</td><td>@mt.unit</td>
-            					@if(mt.std_internal == None){
+            					@if(mt.std_internal.isEmpty){
             						<td>-</td>
             					}else{
             						<td>@mt.std_internal</td>
             					}
             					
-            					@if(mt.std_law == None){
+            					@if(mt.std_law.isEmpty){
             						<td>-</td>
             					}else{
             						<td>@mt.std_law</td>
             					}
             					
-            					@if(mt.std_hour == None){
+            					@if(mt.std_hour.isEmpty){
             						<td>-</td>
             					}else{
             						<td>@mt.std_hour</td>
             					}
             					
-            					@if(mt.std_day == None){
+            					@if(mt.std_day.isEmpty){
             						<td>-</td>
             					}else{
             						<td>@mt.std_day</td>

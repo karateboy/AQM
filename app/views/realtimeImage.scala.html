@@ -1,0 +1,46 @@
+@* realtimeImage Template File *@
+@(param: Any)
+
+
+<div class="row">
+	<div class="col-lg-12">
+		<h1 class="page-header">即時影像</h1>
+	</div>
+</div>
+<div class="row">
+   	<div class="col-lg-12">
+    		<div class="panel-group" id="accordion">
+        	<div class="panel panel-primary" id="paramPanel">
+            	<div class="panel-heading panel-title" >
+            		<a data-toggle="collapse" data-parent="#accordion" href="#reportParam">選擇測站</a>	
+                </div>
+            	<div class="panel-body panel-collapse in" id="reportParam">
+            		<h5>測站</h5>
+            		<div class="btn-group" data-toggle="buttons">
+            			@for(m<-Monitor.getImageMonitorList){
+            				<label class="btn btn-default" id="@m.id");">
+								<input type="radio" name="monitor" id="@m.id" >@m.name</label>		
+            			}
+            		</div>
+             	</div>
+        	</div>
+        	<div class="panel panel-success" id="reportPanel">
+            	<div class="panel-heading panel-title"" >
+            		<a data-toggle="collapse" data-parent="#accordion" href="#monitorReport">測站影像</a>	
+                </div>
+                <div id="realtimeImage" align='center'></div>
+        	</div> <!-- end of panel group -->
+    	</div>
+	</div>
+<script>
+$( document ).ready(function() {
+	//onClick="$('#realtimeImage').html('<iframe></iframe>'
+	@for(m<-Monitor.getImageMonitorList){
+		$('#@m.id').click(function( event ) {
+    		$('#realtimeImage').html("<iframe height='768px' width='1024px' src='@m.url'></iframe>");
+    	});
+    }
+
+});
+</script>
+

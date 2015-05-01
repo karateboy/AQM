@@ -1,0 +1,132 @@
+@* realtimeTrend Template File *@
+@(param: Any)
+<div class="row">
+	<div class="col-lg-12">
+		<h1 class="page-header">即時趨勢圖</h1>
+	</div>
+</div>
+<div class="row">
+   	<div class="col-lg-12">
+    		<div class="panel-group" id="accordion">
+        	<div class="panel panel-primary" id="paramPanel">
+            	<div class="panel-heading panel-title" >
+            		<a data-toggle="collapse" data-parent="#accordion" href="#reportParam">查詢項目</a>	
+                </div>
+            	<div class="panel-body panel-collapse in" id="reportParam">
+            		<h5>測站</h5>
+            		<div class="btn-group" data-toggle="buttons">
+            			@for(m<-Monitor.monitorList){
+            				<label class="btn btn-default">
+								<input type="checkbox" name="monitor" id="@m.id">@m.name</label>		
+            			}
+            		</div>
+					<h5>監測項目</h5>
+					<div class="btn-group" data-toggle="buttons">
+					    @for(mt<-MonitorType.realtimeList){
+            				<label class="btn btn-default">
+								<input type="checkbox" name="monitorType" id="@MonitorType.map(mt).id">@MonitorType.map(mt).desp</label>		
+            			}
+					</div>
+					</br>
+					</br>
+					<div>
+						<button type="button" class="btn btn-primary" id="queryReport">查詢</button>
+					</div>
+            	</div>
+        	</div>
+        	<div class="panel panel-success" id="reportPanel">
+            	<div class="panel-heading panel-title"" >
+            		<a data-toggle="collapse" data-parent="#accordion" href="#monitorReport">即時趨勢圖</a>	
+                </div>
+            	<div class="panel-body panel-collapse" id="monitorReport">
+					<div id="reportDiv" align="center" style="overflow-x:auto">
+					            		
+            		</div>
+            	</div>
+        	</div> <!-- end of panel group -->
+    	</div>
+	</div>
+</div>
+<script>
+$( document ).ready(function() {
+	$('#reportDate').datepicker({
+		format: 'yyyy-mm-dd',
+	    todayBtn: "linked",
+	    language: "zh-TW"
+	});
+
+	var monitors, monitorTypes;
+	
+	function validate(){
+		monitors = $("input[name='monitor']:checked");
+		console.log('monitor len=' + monitors.length);
+		
+		monitorTypes = $("input[name='monitorType']:checked");
+		console.log('mt len=' + monitorTypes.length);
+		
+		if(monitors.length == 0){
+			alert("請選擇測站");
+			return false;
+		}
+		
+		if(monitorTypes.length == 0){
+			alert("請選擇監測項目");
+			return false;
+		}
+		
+		if(monitors.length >1 && monitorTypes.length >1){
+			alert("測站數和側項數不能同時大於一");
+			return false;
+		} 
+		return true;
+	}
+	
+	$('#queryReport').click(function(){
+		if(!validate())
+			return;
+
+		$("#reportPanel").css('display','block');
+		$("#reportParam").collapse();
+		$("#reportPanel").collapse('show');
+
+		var obj = {
+			'monitor':monitors,
+			'monitorType':monitorTypes
+		};
+
+	/*
+		$("body").css("cursor", "progress");
+		console.log(JSON.stringify(obj));
+		
+		$.ajax({
+			url: "/monitorReport",
+			data: JSON.stringify(obj),
+			contentType: "application/json; charset=utf-8",
+			type: "POST",
+			dataType: "html",
+			success: function(result){
+				console.log(result);
+				$('#reportDiv').html(result);
+
+				$('#reportTable').dataTable( {
+					language: {
+						url: '@routes.Assets.at("localization/zh_tw.json")'
+					},
+					"paging":   false
+	    		} );
+	    		
+	    		$("#downloadPDF").css('display','initial');
+			},
+			error: function(xhr, status, errorThrown){
+				console.log("錯誤訊息:" + status + "-" + errorThrown);
+			},
+
+			complete: function(xhr, status){
+				$("body").css("cursor", "default");
+			}					
+		});
+	*/
+	});
+
+});
+</script>

@@ -5,7 +5,6 @@ import scalikejdbc._
 import play.api._
 import com.github.nscala_time.time.Imports._
 import models.ModelHelper._
-import scala.collection.Map
     
 case class HourRecord(
     name:String,
@@ -154,6 +153,34 @@ object HourRecord {
           MonitorType.withName("C216")->(rs=>{rs.air_pressure}, rs=>{rs.air_pressure_stat})
       )
 
+  val monitorTypeProject2:Map[MonitorType.Value, HourRecord=>(Option[Float], Option[String])] = Map(
+          MonitorType.withName("A213")->(rs=>(rs.tsp, rs.tsp_stat)),
+          MonitorType.withName("A214")->(rs=>(rs.pm10, rs.pm10_stat)),
+          MonitorType.withName("A215")->(rs=>(rs.pm25,rs.pm25_stat)),
+          MonitorType.withName("A221")->(rs=>(rs.s, rs.s_stat)),
+          MonitorType.withName("A222")->(rs=>(rs.so2, rs.so2_stat)),
+          MonitorType.withName("A223")->(rs=>(rs.nox, rs.nox_stat)),
+          MonitorType.withName("A224")->(rs=>(rs.co, rs.co_stat)),
+          MonitorType.withName("A225")->(rs=>(rs.o3, rs.o3_stat)),
+          MonitorType.withName("A226")->(rs=>(rs.thc, rs.thc_stat)),
+          MonitorType.withName("A229")->(rs=>(rs.ammonia, rs.ammonia_stat)),
+          MonitorType.withName("A232")->(rs=>(rs.noy, rs.noy_stat)),
+          MonitorType.withName("A233")->(rs=>(rs.noy_no, rs.noy_no_stat)),
+          MonitorType.withName("A235")->(rs=>(rs.nh3, rs.nh3_stat)),
+          MonitorType.withName("A283")->(rs=>(rs.no, rs.no_stat)),
+          MonitorType.withName("A286")->(rs=>(rs.ch4, rs.ch4_stat)),
+          MonitorType.withName("A288")->(rs=>(rs.monitor_humid, rs.monitor_humid_stat)),
+          MonitorType.withName("A289")->(rs=>(rs.monitor_temp, rs.monitor_temp_stat)),
+          MonitorType.withName("A293")->(rs=>(rs.no2, rs.no2_stat)),
+          MonitorType.withName("A296")->(rs=>(rs.nmhc, rs.nmhc_stat)),
+          MonitorType.withName("C211")->(rs=>(rs.wind_speed, rs.wind_speed_stat)),
+          MonitorType.withName("C212")->(rs=>(rs.wind_dir, rs.wind_dir_stat)),
+          MonitorType.withName("C213")->(rs=>(rs.rain, rs.rain_stat)),
+          MonitorType.withName("C214")->(rs=>(rs.temp, rs.temp_stat)),
+          MonitorType.withName("C215")->(rs=>(rs.humid, rs.humid_stat)),
+          MonitorType.withName("C216")->(rs=>(rs.air_pressure, rs.air_pressure_stat))
+      )
+      
   def emptyHourRecord(monitor:String, start: DateTime) = {
       HourRecord(
     monitor,
@@ -231,10 +258,5 @@ object HourRecord {
         DailyReport(typeResultList.toArray)
     }
   }
-}
-
-object Record{
-  def main(args: Array[String]) {
-    val startTime = DateTime.parse("2015-04-01")
-  }
+  
 }

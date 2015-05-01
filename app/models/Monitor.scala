@@ -4,9 +4,10 @@ import java.sql.Date
 import play.api.Logger
 import scalikejdbc._
 import scalikejdbc.config._
-
+case class Monitor(id:String, name:String, lat:Double, lng:Double)
+case class MonitorWithImageUrl(id:String, name:String, url:String)
 object Monitor extends Enumeration{
-  case class Monitor(id:String, name:String, lat:Double, lng:Double)
+  
   val monitorList:List[Monitor] =
     DB readOnly{ implicit session =>
       sql"""
@@ -17,6 +18,8 @@ object Monitor extends Enumeration{
     
   val map:Map[Value, Monitor] = Map(monitorList.map{e=>Value(e.id)->e}:_*)
 
+  val mvList = monitorList.map{m=>Monitor.withName(m.id)}
+  
   def getDisplayName(monitor:Value):String ={
     map.get(monitor) match{
       case Some(m) => m.name 
@@ -25,16 +28,24 @@ object Monitor extends Enumeration{
         ""
     }
   }
+
+  def getImageMonitorList = {
+    DB readOnly{ implicit session =>
+      val monitorList =
+      sql"""
+        Select * 
+        From Monitor
+        """.map { r => MonitorWithImageUrl(r.string(1), r.string(2), r.string("imageUrl"))}.list.apply
+        
+      monitorList.filter { m => !m.url.isEmpty() }
+    }
+  }
   
   def main(args: Array[String]) {
     for(p<-MonitorType.values.toList){
         println(p + ":" + p.id + ":" + MonitorType.map.get(p).get)
     }
       
-  }
-  
-  def insertHourlyReport(monitor:Value, date:Date)={
- 
   }
 }
 
@@ -59,6 +70,8 @@ object MonitorType extends Enumeration{
           )}.list.apply
     }
   
-  val map:Map[Value, MonitorType] = Map(mtList.map{e=>Value(e.id)->e}:_*)
-  val mtvList = mtList.map(mt=>MonitorType.withName(mt.id))
+  val map:Map[Value, MonitorType] = Map(mtList.map{e=>Value(e.id)->e}:_*) - MonitorType.withName("A325")
+  val mtvList = mtList.map(mt=>MonitorType.withName(mt.id)).filter { _ != MonitorType.withName("A325") }
+  val realtimeList = mtvList.filter { !List(MonitorType.withName("C911"), MonitorType.withName("C912")).contains(_)} 
+  val psiList = List(MonitorType.withName("A214"),MonitorType.withName("A222"), MonitorType.withName("A224"), MonitorType.withName("A225"), MonitorType.withName("A293") )
 }

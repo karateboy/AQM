@@ -82,8 +82,8 @@
 			<tr>
 			<th>@("%02d".format(d+1))日</th>
 			@for(hour<-0 to 23){
-				<td>@if(report.dailyReports(d).typeList(0).dataList(hour)._2 != None && 
-					report.dailyReports(d).typeList(0).dataList(hour)._3 != None){
+				<td>@if(!report.dailyReports(d).typeList(0).dataList(hour)._2.isEmpty && 
+					!report.dailyReports(d).typeList(0).dataList(hour)._3.isEmpty){
 						@if(HourRecord.isValidStat(report.dailyReports(d).typeList(0).dataList(hour)._3.get)){
 							@("%.2f".format(report.dailyReports(d).typeList(0).dataList(hour)._2.get))	
 						}else{

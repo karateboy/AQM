@@ -12,6 +12,9 @@ GET		/login						controllers.Login.prompt
 GET		/logoff						controllers.Login.logoff
 POST	/authenticate				controllers.Login.authenticate
 
+GET		/realtimeStatus				controllers.Application.realtimeStat
+GET		/realtimeImage				controllers.Application.realtimeImg
+GET		/realtimeTrend				controllers.Application.realtimeTrend
 
 GET		/report/*reporttype			controllers.Report.getReport(reporttype)
 POST	/monitorReport				controllers.Report.monitorReport
@@ -20,7 +23,7 @@ GET		/PDF/monitorReport/:reportType/:monitor/:startDate 	controllers.Report.moni
 GET		/HTML/monitorReport/:reportType/:monitor/:startDate 	controllers.Report.monitorReportHtml(monitor, reportType, startDate)
 GET		/HTML/monitorMonthlyHourReport/:monitor/:monitorType/:startDate	controllers.Report.monthlyHourReportHtml(monitor, monitorType, startDate)
 
-
+GET		/JSON/realtime/weather		controllers.Application.realtimeWeather
 
 GET		/Monitor					controllers.Application.monitor(monitor = "A001")
 GET		/Monitor/:monitor			controllers.Application.monitor(monitor)

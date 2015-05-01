@@ -1,0 +1,110 @@
+@* realtimeStatus Template File *@
+@(rt_status: Map[Monitor.Value, Map[MonitorType.Value, (Option[Float], Option[String])]], psiList:List[MonitorType.Value], rt_psi: Map[Monitor.Value, Option[(Float, Map[MonitorType.Value, (Float, Float)])]])
+<div class="row">
+	<div class="col-lg-12">
+		<h1 class="page-header">即時數據</h1>
+	</div>
+</div>
+<div class="row">
+<ul class="nav nav-tabs">
+<li class="active"><a href="#" onClick="$('#psiDiv').css('display','none'); $('#reportDiv').css('display','initial');" data-toggle="tab"> <span class="glyphicons glyphicons-hotspot"></span>空氣品質/氣象 即時數據</a>
+</li>
+<li><a href="#" onClick="$('#psiDiv').css('display','initial'); $('#reportDiv').css('display','none');" data-toggle="tab"> <span class="glyphicons glyphicons-hotspot"></span>PSI即時數據</a></li>
+</ul>
+<div class="col-lg-12">
+<div id="reportDiv" align="center" style="overflow-x:auto">
+<table id="reportTable" class="display" cellspacing="0" width="100%">
+	<thead>
+		<tr>
+			<th>測項</th>
+			<td>法規值</td>
+			@for(m <- Monitor.monitorList){
+				<td>@m.name</td>
+			}
+		</tr>
+	</thead>
+	<tbody>
+		@for(mt <- MonitorType.realtimeList){
+			<tr>
+				<td>@MonitorType.map(mt).desp (@MonitorType.map(mt).unit)</td>
+				@if(MonitorType.map(mt).std_law.isEmpty){
+					<td>-</td>	
+				}else{
+					<td>@MonitorType.map(mt).std_law</td>
+				}
+				
+				@for(m<-Monitor.mvList){
+					@if(rt_status(m)(mt)._1.isEmpty){
+						<td>-</td>						
+					}else{
+						<td>@rt_status(m)(mt)._1.get</td>
+					}
+				}
+			</tr>
+		}
+	</tbody>
+</table> 
+</div>
+<div id="psiDiv" align="center" style="display:none;overflow-x:auto">
+<table id="psiTable" class="display" cellspacing="0" width="100%">
+<thead>
+	<tr>
+		<td rowspan='2'>測站</td>
+		<td rowspan='2'>PSI指標</td>
+		@for(mtv<-psiList){
+			<td colspan='2'>@MonitorType.map(mtv).desp</td>		
+		}		
+	</tr>
+	<tr>
+		@for(mtv<-psiList){
+			<td>副指標</td>
+			<td>數值(@MonitorType.map(mtv).unit)</td>	
+		}
+	</tr>
+<tbody>
+	@for(m<-Monitor.mvList){
+		<tr>
+		@if(rt_psi(m).isDefined){
+			<td>@Monitor.map(m).name</td>
+			<td>@rt_psi(m).get._1</td>
+			@for(mtv<-psiList){
+				<td>@rt_psi(m).get._2(mtv)._2</td>
+				<td>@rt_psi(m).get._2(mtv)._1</td>
+			}
+		}else{
+			<td>@Monitor.map(m).name</td>
+			<td>-</td>
+			@for(mtv<-psiList){
+				<td>-</td>
+				<td>-</td>
+			}
+		}
+		</tr>	
+	}
+	
+</tbody>
+</thead>
+</table>
+</div>
+</div>
+</div>
+<script>
+$( document ).ready(function() {
+	$('#reportTable').dataTable( {
+		language: {
+			url: '@routes.Assets.at("localization/zh_tw.json")'
+		},
+		paging:   false,
+		searching: false
+	    } );
+	
+	$('#psiTable').dataTable( {
+		language: {
+			url: '@routes.Assets.at("localization/zh_tw.json")'
+		},
+		paging:   false,
+		searching: false
+	    } );
+});
+</script>
+
