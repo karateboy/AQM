@@ -18,6 +18,7 @@ GET		/realtimeTrend				controllers.Application.realtimeTrend
 
 GET		/report/*reporttype			controllers.Report.getReport(reporttype)
 POST	/monitorReport				controllers.Report.monitorReport
+POST	/JSON/realtimeTrend			controllers.Application.realtimeTrendJSON
 
 GET		/PDF/monitorReport/:reportType/:monitor/:startDate 	controllers.Report.monitorReportPDF(monitor, reportType, startDate)
 GET		/HTML/monitorReport/:reportType/:monitor/:startDate 	controllers.Report.monitorReportHtml(monitor, reportType, startDate)

@@ -232,7 +232,7 @@ object Realtime {
     Map(result: _*)
   }
   
-  def realtimeMonitorTrend(monitors:List[Monitor.Value], monitorType:MonitorType.Value)(implicit session: DBSession = AutoSession)={
+  def realtimeMonitorTrend(monitors:Seq[Monitor.Value], monitorType:MonitorType.Value)(implicit session: DBSession = AutoSession)={
     val result = 
     for{m<-monitors
       hrList =
