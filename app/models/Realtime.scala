@@ -5,6 +5,7 @@ import java.sql.Timestamp
 import scalikejdbc._
 import play.api._
 import com.github.nscala_time.time.Imports._
+import com.github.nscala_time.time._
 import models.ModelHelper._
 import HourRecord._
 
@@ -233,6 +234,23 @@ object Realtime {
   }
   
   def realtimeMonitorTrend(monitors:Seq[Monitor.Value], monitorType:MonitorType.Value)(implicit session: DBSession = AutoSession)={
+    val current = DateTime.parse("2014-10-31 23:00:00", StaticDateTimeFormat.forPattern("yyyy-MM-dd HH:mm:ss"))
+    def fillMissingRecord(monitor:Monitor.Value ,data:List[HourRecord], expected:DateTime):List[HourRecord]={
+      if(expected > current)
+        Nil
+      else if(data.isEmpty || data.head.date.millis != expected.getMillis){
+        if(!data.isEmpty){
+          Logger.debug("expected:"+ expected +"original:"+data.head.date.toString())          
+        }
+        
+        HourRecord.emptyHourRecord(Monitor.map(monitor).id, expected) :: 
+          fillMissingRecord(monitor, data, expected + 1.hour)
+      }else{
+        Logger.debug("as expected")
+        data.head :: fillMissingRecord(monitor, data.tail, expected + 1.hour)
+      }
+    }
+    
     val result = 
     for{m<-monitors
       hrList =
@@ -242,8 +260,9 @@ object Realtime {
       WHERE DP_NO = ${Monitor.map(m).id}
       ORDER BY M_DateTime  DESC
       """.map {HourRecord.mapper }.list.apply
-      v = hrList.map{ monitorTypeProject2(monitorType)}
-    }yield{
+      filledList = fillMissingRecord(m, hrList.reverse, current - 8.hour)
+      v = filledList.map{ monitorTypeProject2(monitorType)}
+    }yield{ 
       m->v
     }
     

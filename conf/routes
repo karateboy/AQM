@@ -12,19 +12,19 @@ GET		/login						controllers.Login.prompt
 GET		/logoff						controllers.Login.logoff
 POST	/authenticate				controllers.Login.authenticate
 
-GET		/realtimeStatus				controllers.Application.realtimeStat
-GET		/realtimeImage				controllers.Application.realtimeImg
-GET		/realtimeTrend				controllers.Application.realtimeTrend
-
 GET		/report/*reporttype			controllers.Report.getReport(reporttype)
 POST	/monitorReport				controllers.Report.monitorReport
-POST	/JSON/realtimeTrend			controllers.Application.realtimeTrendJSON
+
 
 GET		/PDF/monitorReport/:reportType/:monitor/:startDate 	controllers.Report.monitorReportPDF(monitor, reportType, startDate)
 GET		/HTML/monitorReport/:reportType/:monitor/:startDate 	controllers.Report.monitorReportHtml(monitor, reportType, startDate)
 GET		/HTML/monitorMonthlyHourReport/:monitor/:monitorType/:startDate	controllers.Report.monthlyHourReportHtml(monitor, monitorType, startDate)
 
-GET		/JSON/realtime/weather		controllers.Application.realtimeWeather
+GET		/realtimeStatus				controllers.Realtime.realtimeStat
+GET		/realtimeImage				controllers.Realtime.realtimeImg
+GET		/realtimeTrend				controllers.Realtime.realtimeTrend
+GET		/JSON/realtime/map			controllers.Realtime.realtimeMap
+POST	/JSON/realtimeTrend			controllers.Realtime.realtimeTrendJSON
 
 GET		/Monitor					controllers.Application.monitor(monitor = "A001")
 GET		/Monitor/:monitor			controllers.Application.monitor(monitor)
@@ -33,5 +33,5 @@ POST	/MonitoredType/:monitor/:monitorType/:used	controllers.Application.setMonit
 
 GET		/MonitorTypeConfig			controllers.Application.monitorTypeConfig
 
-GET		/Trend						controllers.Trend.trendReport
+GET		/Trend						controllers.Realtime.trendReport
 #GET  	/Trend/:monitor/:monitorType/:start/:end

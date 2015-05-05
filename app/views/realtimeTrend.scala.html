@@ -27,6 +27,16 @@
 								<input type="checkbox" name="monitorType" id="@MonitorType.map(mt).id">@MonitorType.map(mt).desp</label>		
             			}
 					</div>
+					<h5>圖形種類</h5>
+					<div class="btn-group" data-toggle="buttons">
+						<label class="btn btn-default active">
+							<input type="radio" name="chartType" id="1" checked>柱狀圖</label>
+						<label class="btn btn-default">
+							<input type="radio" name="chartType" id="2">折線圖</label>
+						<label class="btn btn-default">
+							<input type="radio" name="chartType" id="3">折線面積圖</label>
+							
+					</div>
 					</br>
 					</br>
 					<div>
@@ -39,8 +49,10 @@
             		<a data-toggle="collapse" data-parent="#accordion" href="#monitorReport">即時趨勢圖</a>	
                 </div>
             	<div class="panel-body panel-collapse" id="monitorReport">
-					<div id="reportDiv" align="center" style="overflow-x:auto">
-					            		
+					<div id="reportWell" align="center" style="overflow-x:auto">
+						  <h3></h3>
+					      <div id="reportDiv">
+					      </div>      		
             		</div>
             	</div>
         	</div> <!-- end of panel group -->
@@ -89,33 +101,43 @@ $( document ).ready(function() {
 		$("#reportParam").collapse();
 		$("#reportPanel").collapse('show');
 
+		var monitorParam = [];
+		for(var i=0;i<monitors.length;i++){
+			var obj = {};
+			obj.id = monitors[i].id;
+			monitorParam.push(obj);
+		}
+		
+		var monitorTypeParam = [];
+		for(var i=0;i<monitorTypes.length;i++){
+			var obj = {};
+			obj.id = monitorTypes[i].id
+			monitorTypeParam.push(obj);
+		}
+		
 		var obj = {
-			'monitor':monitors,
-			'monitorType':monitorTypes
+			'monitor':monitorParam,
+			'monitorType':monitorTypeParam
 		};
 
 	
 		$("body").css("cursor", "progress");
-		console.log(JSON.stringify(obj));
 		
 		$.ajax({
-			url: "/monitorReport",
+			url: "/JSON/realtimeTrend",
 			data: JSON.stringify(obj),
 			contentType: "application/json; charset=utf-8",
 			type: "POST",
-			dataType: "html",
+			dataType: "json",
 			success: function(result){
-				console.log(result);
-				$('#reportDiv').html(result);
-
-				$('#reportTable').dataTable( {
-					language: {
-						url: '@routes.Assets.at("localization/zh_tw.json")'
-					},
-					"paging":   false
-	    		} );
-	    		
-	    		$("#downloadPDF").css('display','initial');
+				result.resize=true;				
+				$('#reportWell').find("h3").text(result.title);				
+				$('#reportDiv').html('');
+				result.element='reportDiv';
+				var chartType;
+				chartType = $("input[name='chartType']:checked")
+				console.log(chartType[0].id);
+				Morris.Bar(result);
 			},
 			error: function(xhr, status, errorThrown){
 				console.log("錯誤訊息:" + status + "-" + errorThrown);
@@ -125,7 +147,6 @@ $( document ).ready(function() {
 				$("body").css("cursor", "default");
 			}					
 		});
-	*/
 	});
 
 });
