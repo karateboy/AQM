@@ -67,7 +67,7 @@
 						@if(isValidStat(t.dataList(i)._3.get)){
 							@("%.1f".format(t.dataList(i)._2.get))	
 						}else{
-							<del>@("%.1f".format(t.dataList(i)._2.get))</del>
+							<span style="background-color:yellow">@("%.1f".format(t.dataList(i)._2.get))</span>
 						}
 						
 					}else{

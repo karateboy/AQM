@@ -87,7 +87,7 @@
 						@if(HourRecord.isValidStat(report.dailyReports(d).typeList(0).dataList(hour)._3.get)){
 							@("%.2f".format(report.dailyReports(d).typeList(0).dataList(hour)._2.get))	
 						}else{
-							<del>@("%.2f".format(report.dailyReports(d).typeList(0).dataList(hour)._2.get))</del>
+							<span style="background-color:yellow">@("%.2f".format(report.dailyReports(d).typeList(0).dataList(hour)._2.get))</span>
 						}	
 					}else{
 						-

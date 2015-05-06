@@ -1,5 +1,6 @@
 @* realtimeStatus Template File *@
-@(rt_status: Map[Monitor.Value, Map[MonitorType.Value, (Option[Float], Option[String])]], psiList:List[MonitorType.Value], rt_psi: Map[Monitor.Value, Option[(Float, Map[MonitorType.Value, (Float, Float)])]])
+@import models.Realtime._
+@(rt_status: Map[Monitor.Value, Map[MonitorType.Value, (Option[Float], Option[String])]], psiList:List[MonitorType.Value], rt_psi: Map[Monitor.Value, (Option[Float], Map[MonitorType.Value, (Option[Float], Option[Float])])])
 <div class="row">
 	<div class="col-lg-12">
 		<h1 class="page-header">即時數據</h1>
@@ -37,7 +38,7 @@
 					@if(rt_status(m)(mt)._1.isEmpty){
 						<td>-</td>						
 					}else{
-						<td>@rt_status(m)(mt)._1.get</td>
+						<td>@("%.2f".format(rt_status(m)(mt)._1.get))</td>
 					}
 				}
 			</tr>
@@ -64,12 +65,25 @@
 <tbody>
 	@for(m<-Monitor.mvList){
 		<tr>
-		@if(rt_psi(m).isDefined){
+		@if(rt_psi(m)._1.isDefined){
 			<td>@Monitor.map(m).name</td>
-			<td>@rt_psi(m).get._1</td>
+			@if(rt_psi(m)._1.isDefined){
+				<td class="@getPsiLevel(rt_psi(m)._1.get)">@("%.0f".format(rt_psi(m)._1.get))</td>
+			}else{
+				<td>-</td>			
+			}
+			
 			@for(mtv<-psiList){
-				<td>@rt_psi(m).get._2(mtv)._2</td>
-				<td>@rt_psi(m).get._2(mtv)._1</td>
+				@if(rt_psi(m)._2(mtv)._2.isDefined){
+					<td>@("%.0f".format(rt_psi(m)._2(mtv)._2.get))</td>	
+				}else{
+					<td>-</td>
+				}
+				@if(rt_psi(m)._2(mtv)._1.isDefined){
+					<td>@("%.2f".format(rt_psi(m)._2(mtv)._1.get))</td>	
+				}else{
+					<td>-</td>
+				}				
 			}
 		}else{
 			<td>@Monitor.map(m).name</td>
@@ -85,6 +99,51 @@
 </tbody>
 </thead>
 </table>
+
+<br/>
+<br/>
+<table border="1" class="DIV_CENTER ALT_TABLE_EVENT">
+	<tbody><tr class="ALT">
+		<th>空氣污染指標<br>
+		(PSI)</th>
+		<th nowrap="">0～50</th>
+		<th>51～100</th>
+		<th>101～199</th>
+		<th>200～299</th>
+		<th>&gt;=300</th>
+	</tr>
+	<tr>
+		<th rowspan="2" nowrap="">對健康的影響</th>
+		<td><p align="center">良好</p></td>
+		<td><p align="center">普通</p></td>
+		<td><p align="center">不良</p></td>
+		<td><p align="center">非常不良</p></td>
+		<td><p align="center">有害</p></td>
+	</tr>
+	<tr class="ALT">
+		<td><p align="center">Good</p></td>
+		<td><p align="center">Moderate </p></td>
+		<td><p align="center">Unhealthful </p></td>
+		<td><p align="center">Very Unhealthful </p></td>
+		<td><p align="center">Hazardous</p></td>
+	</tr>
+	<tr>
+		<th>狀態色塊</th>
+		<td class="PSI1">&nbsp;</td>
+		<td class="PSI2">&nbsp;</td>
+		<td class="PSI3">&nbsp;</td>
+		<td class="PSI4">&nbsp;</td>
+		<td class="PSI5">&nbsp;</td>
+	</tr>
+	<tr class="ALT">
+		<th>人體健康影響</th>
+		<td>對一般民眾身體健康無影響。</td>
+		<td>對敏感族群健康無立即影響。</td>
+		<td>對敏感族群會有輕微症狀惡化的現象，如臭氧濃度在此範圍，眼鼻會略有刺激感。</td>
+		<td>對敏感族群會有明顯惡化的現象，降低其運動能力；一般大眾則視身體狀況，可能產生各種不同的症狀。</td>
+		<td>對敏感族群除了 不適症狀顯著惡化並造成某些疾病提早開始；減低正常人的運動能力。</td>
+	</tr>
+	</tbody></table>
 </div>
 </div>
 </div>

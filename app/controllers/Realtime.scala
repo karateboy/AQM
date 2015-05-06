@@ -96,21 +96,23 @@ object Realtime extends Controller {
                       record = trend.get(m).get(i)
                     } yield {
                        val value =
-                         if(record._1.isDefined)
-                           "%.2f".format(record._1.get)
+                         if(record._2.isDefined)
+                           "%.2f".format(record._2.get)
                          else
                            "0"
                            
                       (m.toString() -> value)
                     }
+                  //val time = trend.get(param.monitors.head).get(i)._1  
+                  //MorrisBarChartDataElem(hour_data :+("time", time.getTime.toString))
+                    
                   if(i != 0)
                     MorrisBarChartDataElem(hour_data :+("time", "%d 小時前".format(i)))
                   else
                     MorrisBarChartDataElem(hour_data :+("time", "即時"))
+                    
                 }
                 
-              Logger.debug(data.toString)
-
               val xkey = "time"
               val ykeys = param.monitors.map(_.toString)
               val labels = param.monitors.map(Monitor.map(_).name)

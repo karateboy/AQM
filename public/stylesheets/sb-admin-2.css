@@ -352,3 +352,39 @@ table.dataTable thead .sorting:after {
 .panel-yellow a:hover {
     color: #df8a13;
 }
+
+.PSI1 {
+	COLOR: #000000; BACKGROUND-COLOR: #00ff00;
+}
+.PSI1 A {
+	COLOR: #000000
+}
+.PSI2 {
+	COLOR: #000000; BACKGROUND-COLOR: #ffff00;
+}
+.PSI2 A {
+	COLOR: #000000
+}
+.PSI3 {
+	COLOR: #ffffff; BACKGROUND-COLOR: #ff0000;
+}
+.PSI3 A {
+	COLOR: #ffffff
+}
+.PSI4 {
+	COLOR: #ffffff; BACKGROUND-COLOR: #800080;
+}
+.PSI4 A {
+	COLOR: #ffffff
+}
+.PSI5 {
+	COLOR: #ffffff; BACKGROUND-COLOR: #633300;
+}
+.PSI5 A {
+	COLOR: #ffffff
+}
+.PSI1_BG {border: outset 1px #a0a0a0}
+.PSI2_BG {border: outset 1px #a0a0a0}
+.PSI3_BG {border: outset 1px #a0a0a0}
+.PSI4_BG {border: outset 1px #a0a0a0}
+.PSI5_BG {border: outset 1px #a0a0a0}

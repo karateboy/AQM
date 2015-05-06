@@ -79,9 +79,17 @@ object Report extends Controller {
         total = nDay
         max = if (count != 0) validData.max else Float.MinValue
         min = if (count != 0) validData.min else Float.MaxValue
-        avg = if (count != 0) validData.sum / count else 0
         overCount = 0
       } yield {
+        val avg = if(MonitorType.windDirList.contains(monitorType)){
+            val sum_sin = validData.map(v=>Math.sin(Math.toRadians(v))).sum
+            val sum_cos = validData.map(v=>Math.cos(Math.toRadians(v))).sum
+            Math.toDegrees(Math.atan (sum_sin/sum_cos)).toFloat
+          } else{
+            val sum = validData.sum
+            if (count != 0) sum / count else 0
+          }
+        
         Stat(avg, min, max, count, total, overCount)
       }
       Logger.debug("monthHourStats #=" + monthHourStats.length);
@@ -90,9 +98,14 @@ object Report extends Controller {
       val count = stats.map(_.count).sum
       val max = if(count != 0) stats.map {_.max}.max else Float.MinValue
       val min = if(count != 0) stats.map { _.min}.min else Float.MaxValue
-      val avg = if(count != 0) stats.map {_.avg}.sum/count else 0
       val total = stats.map{_.total}.sum
-      
+      val avg = if(MonitorType.windDirList.contains(monitorType)){
+            val sum_sin = stats.map(v=>Math.sin(Math.toRadians(v.avg))).sum
+            val sum_cos = stats.map(v=>Math.cos(Math.toRadians(v.avg))).sum
+            Math.toDegrees(Math.atan (sum_sin/sum_cos)).toFloat
+          } else{
+            if(count != 0) stats.map {_.avg}.sum/count else 0
+          }
       val result = MonthHourReport(monthHourStats.toArray, dailyReports.toArray, Stat(avg, min, max, count, total, 0))
       Logger.debug("result is ready!")
       
@@ -130,9 +143,15 @@ object Report extends Controller {
         total = dailyReports.length
         max = if (count != 0) validData.map(_.min).min else Float.MinValue
         min = if (count != 0) validData.map(_.max).max else Float.MaxValue
-        avg = if (count != 0) validData.map(_.avg).sum / count else 0
         overCount = validData.map(_.overCount).sum
       } yield {
+        val avg = if(MonitorType.windDirList.contains(monitorType)){
+            val sum_sin = validData.map(v=>Math.sin(Math.toRadians(v.avg))).sum
+            val sum_cos = validData.map(v=>Math.cos(Math.toRadians(v.avg))).sum
+            Math.toDegrees(Math.atan (sum_sin/sum_cos)).toFloat
+          } else{
+            if(count != 0) validData.map {_.avg}.sum/count else 0
+          }
         MonitorTypeReport(monitorType, typeStat, Stat(avg, min, max, count, total, overCount))
       }
     MonthlyReport(typeReport.toArray)
@@ -182,9 +201,15 @@ object Report extends Controller {
                  total = monthlyReports.length
                  max = if (count != 0) validData.map(_.min).min else Float.MinValue
                  min = if (count != 0) validData.map(_.max).max else Float.MaxValue
-                 avg = if (count != 0) validData.map(_.avg).sum/count else 0
                  overCount = validData.map(_.overCount).sum
                } yield{
+                val avg = if (MonitorType.windDirList.contains(monitorType)) {
+                  val sum_sin = validData.map(v => Math.sin(Math.toRadians(v.avg))).sum
+                  val sum_cos = validData.map(v => Math.cos(Math.toRadians(v.avg))).sum
+                  Math.toDegrees(Math.atan(sum_sin / sum_cos)).toFloat
+                } else {
+                  if (count != 0) validData.map { _.avg }.sum / count else 0
+                }
                  MonitorTypeReport(monitorType, typeStat, Stat(avg, min, max, count, total, overCount) )
                }
                YearlyReport(typeReport.toArray)

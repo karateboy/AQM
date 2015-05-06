@@ -124,6 +124,9 @@ object HourRecord {
       """.map { mapper }.list().apply()  
     //}
   }
+  val timeProjection:(HourRecord=>Timestamp) ={
+    rs=>rs.date
+  }
   
   val monitorTypeProjection:Map[MonitorType.Value, (HourRecord=>Option[Float], HourRecord=>Option[String])] = Map(
           MonitorType.withName("A213")->(rs=>{rs.tsp}, rs=>{rs.tsp_stat}),
@@ -225,6 +228,7 @@ object HourRecord {
       val typeResultList =
         for {
           t <- monitorTypeProjection.filter(kv=>actualMonitoredTypes.contains(kv._1))
+          monitorType = t._1
           total = reportList.size
           projections = reportList.map(rs => (rs.date, t._2._1(rs), t._2._2(rs)))
           validStat = { t: (Timestamp, Option[Float], Option[String]) =>
@@ -245,11 +249,19 @@ object HourRecord {
             0f
           })
           count = validValues.length
-          sum = validValues.sum
+          
           max = if (count != 0) validValues.max else Float.MinValue
-          min = if (count != 0) validValues.min else Float.MaxValue
-          avg = if (count != 0) sum / count else 0
-        } yield {
+          min = if (count != 0) validValues.min else Float.MaxValue          
+        } yield {          
+          val avg = if(MonitorType.windDirList.contains(monitorType)){
+            val sum_sin = validValues.map(v=>Math.sin(Math.toRadians(v))).sum
+            val sum_cos = validValues.map(v=>Math.cos(Math.toRadians(v))).sum
+            Math.toDegrees(Math.atan (sum_sin/sum_cos)).toFloat
+          } else{
+            val sum = validValues.sum
+            if (count != 0) sum / count else 0
+          }
+            
           val stat = Stat(avg, min, max, count, total, 0)
           //Logger.info(MonitorType.map(t._1).toString() + stat.toString())
           MonitorTypeRecord(t._1, projections, stat)

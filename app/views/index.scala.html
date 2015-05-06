@@ -96,44 +96,44 @@ function HomeControl(map, div, home) {
   controlDiv.style.padding = '10px';
 
   // Set CSS for the control border.
-  var goHomeUI = document.createElement('div');
-  goHomeUI.title = '回到地圖中心';
+  var goHomeUI = document.createElement('span');
+  goHomeUI.title = '回到中心';
   controlDiv.appendChild(goHomeUI);
 
   // Set CSS for the control interior.
-  var goHomeText = document.createElement('div');
-  goHomeText.innerHTML = '<h3><button>中心</button><h3>';
+  var goHomeText = document.createElement('span');
+  goHomeText.innerHTML = '<button>中心</button>';
   goHomeUI.appendChild(goHomeText);
   
   // Set CSS for the control border.
-  var statusUI = document.createElement('div');
+  var statusUI = document.createElement('span');
   statusUI.title = '測站狀態';
   controlDiv.appendChild(statusUI);
 
   // Set CSS for the control interior.
-  var statusText = document.createElement('div');
-  statusText.innerHTML = '<h3><button>測站狀態</button><h3>';
+  var statusText = document.createElement('span');
+  statusText.innerHTML = '<button>測站狀態</button>';
   statusUI.appendChild(statusText);
 
   // Set CSS for the control border.
-  var windUI = document.createElement('div');
+  var windUI = document.createElement('span');
   windUI.title = '風向';
   controlDiv.appendChild(windUI);
 
   // Set CSS for the control interior.
-  var windText = document.createElement('div');
-  windText.innerHTML = '<h3><button>風向</button><h3>';
+  var windText = document.createElement('span');
+  windText.innerHTML = '<button>風向</button>';
   windUI.appendChild(windText);
 
   // Set CSS for the setHome control border.
-  var mapExampleUI = document.createElement('div');
-  mapExampleUI.title = '圖例';
-  controlDiv.appendChild(mapExampleUI);
+  var mapLegendUI = document.createElement('div');
+  mapLegendUI.title = '圖例';
+  controlDiv.appendChild(mapLegendUI);
 
   // Set CSS for the control interior.
-  var mapExampleImg = document.createElement('div');
-  mapExampleImg.innerHTML = "<img src='@routes.Assets.at("images/map_label.png")' style='width:50%;height:50%' />";
-  mapExampleUI.appendChild(mapExampleImg);
+  var mapLegendImg = document.createElement('div');
+  mapLegendImg.innerHTML = "<br/><img src='@routes.Assets.at("images/map_label.png")' style='width:50%;height:50%' />";
+  mapLegendUI.appendChild(mapLegendImg);
 
   // Setup the click event listener for Home:
   // simply set the map to the control's current home property.
@@ -204,8 +204,8 @@ function initMonitorMarker(map){
 				scaledSize:new google.maps.Size(24,24)
 				} 
 			});
-		//if(s == 4)
-		//	marker.setAnimation(google.maps.Animation.BOUNCE);
+		if(s == 4)
+			marker.setAnimation(google.maps.Animation.BOUNCE);
 			
 		statusMarkerArray.push(marker);
 	}
@@ -224,8 +224,8 @@ function initWindMarker(map){
 				fillColor: 'red',
 				strokeColor: "red",
 				strokeWeight: 4,
-				rotation: 90,
-				anchor:google.maps.Point(-20,0),
+				rotation: getRandomInt(0,365),
+				//anchor:google.maps.Point(-20,0),
 				scale:4
 			},
 			visible: false
@@ -290,12 +290,30 @@ function initLableInfobox(map){
 		
 function initRealtimeMap() {
 	console.log("initRealtimeMap");
+	var styles = [
+   {
+    featureType: "road",
+    elementType: "geometry",
+    stylers: [
+      { lightness: 100 },
+      { visibility: "simplified" }
+    ]
+  },{
+    featureType: "road",
+    elementType: "labels",
+    stylers: [
+      { visibility: "off" }
+    ]
+  }
+];
+	
 	var mapOptions = {
 		center : new google.maps.LatLng(23.68875446, 120.2805895),
 		zoom : 11,
 		panControl: false,
 	    zoomControl: false,
 	    scaleControl: true,
+	    styles:styles,
 		mapTypeId : google.maps.MapTypeId.ROADMAP
 	};
 	var map = new google.maps.Map(document
@@ -307,7 +325,7 @@ function initRealtimeMap() {
 	var homeControl = new HomeControl(map, homeControlDiv, mapCenter);
 
 	homeControlDiv.index = 1;
-	map.controls[google.maps.ControlPosition.LEFT_TOP].push(homeControlDiv);
+	map.controls[google.maps.ControlPosition.TOP_LEFT].push(homeControlDiv);
 
 	initMonitorMarker(map);
 	initWindMarker(map);
