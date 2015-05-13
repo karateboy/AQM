@@ -31,7 +31,7 @@ object Realtime {
       val top13 =
             sql"""
               SELECT TOP 13 *
-              FROM [AQMDB_M1_2014].[dbo].[P1234567_M1_2014]
+              FROM [AQMSDB].[dbo].[P1234567_Hr_2015]
               ORDER BY M_DateTime  DESC
              """.map { HourRecord.mapper }.list.apply
 
@@ -64,7 +64,7 @@ object Realtime {
           val optHr =
             sql"""
               SELECT TOP 1 *
-              FROM [AQMDB_M1_2014].[dbo].[P1234567_M1_2014]
+              FROM [AQMSDB].[dbo].[P1234567_Hr_2015]
               WHERE DP_NO = ${m.id}
               ORDER BY M_DateTime  DESC
              """.map { HourRecord.mapper }.single.apply
@@ -80,7 +80,7 @@ object Realtime {
           val wind_record =
             sql"""
             SELECT TOP 1 *
-            FROM [AQMDB_M1_2014].[dbo].[P1234567_S6_2014]
+            FROM [AQMSDB].[dbo].[P1234567_S6_2014]
             WHERE DP_NO = ${m.id}
             ORDER BY M_DateTime  DESC
            """.map { SixSecRecordMapper }.single.apply.getOrElse(
@@ -303,7 +303,7 @@ object Realtime {
         m <- monitors
         hrList = sql"""
       SELECT TOP 9 *
-      FROM [AQMDB_M1_2014].[dbo].[P1234567_M1_2014]
+      FROM [AQMSDB].[dbo].[P1234567_Hr_2015]
       WHERE DP_NO = ${Monitor.map(m).id}
       ORDER BY M_DateTime  DESC
       """.map { HourRecord.mapper }.list.apply

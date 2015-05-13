@@ -105,7 +105,7 @@ object HourRecord {
   
   def getCount(start:Timestamp, end:Timestamp)={
     DB readOnly { implicit session =>
-      val query = sql"select count(*) from P1234567_M1_2014 where M_DateTime >= ${start} and M_DateTime < ${end}"
+      val query = sql"select count(*) from P1234567_Hr_2015 where M_DateTime >= ${start} and M_DateTime < ${end}"
       Logger.info(query.toString)
       query.map { _.int(1) }.single().apply()  
     }
@@ -118,7 +118,7 @@ object HourRecord {
     
     //DB readOnly { implicit session =>
       sql"""
-        Select * From P1234567_M1_2014 
+        Select * From P1234567_Hr_2015 
         Where DP_NO=${monitorName} and M_DateTime >= ${start} and M_DateTime < ${end}
         ORDER BY M_DateTime ASC
       """.map { mapper }.list().apply()  
