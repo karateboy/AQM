@@ -1,0 +1,57 @@
+@* epaRealtimeData Template File *@
+@import Application._
+@(url:String, dataList: Seq[EpaRealtimeData])
+<div class="row">
+	<div class="col-lg-12">
+		<h1 class="page-header">環保署即時資料</h1>
+		<h3><a>@url</a></h3>
+	</div>
+</div>
+
+<table id="epaData" class="table">
+	<thead>
+		<tr>
+			<th>測站名稱</th>
+			<th>縣市</th>
+			<th>PSI</th>
+			<th>SO2</th>
+			<th>CO</th>
+			<th>O3</th>
+			<th>PM10</th>
+			<th>PM2.5</th>
+			<th>NO2</th>
+			<th>風速</th>
+			<th>風向</th>
+			<th>發布時間</th>
+		</tr>
+	</thead>
+	<tbody>
+		@for(data<-dataList){
+			<tr>
+				<td>@data.siteName</td>
+				<td>@data.county</td>
+				<td>@data.psi</td>
+				<td>@data.so2</td>
+				<td>@data.co</td>
+				<td>@data.o3</td>
+				<td>@data.pm10</td>
+				<td>@data.pm25</td>
+				<td>@data.no2</td>
+				<td>@data.windSpeed</td>
+				<td>@data.windDir</td>
+				<td>@data.publishTime</td>
+			</tr>
+		}
+	</tbody>
+</table>
+<script>
+$( document ).ready(function() {
+	$('#epaData').dataTable( {
+		language: {
+			url: '@routes.Assets.at("localization/zh_tw.json")'
+		},
+		"paging":   false,
+		"searching": false
+	} );		
+});
+</script>

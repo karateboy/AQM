@@ -1,0 +1,62 @@
+@* calibrationQueryResult Template File *@
+@import Calibration._
+@(report:Seq[CalibrationItem])
+
+<div class="row">
+	<div class="col-lg-12">
+		<h1 class="page-header">校正資料查詢</h1>
+		<h3><a></a></h3>
+	</div>
+</div>
+
+<table id="calibrationReport" class="table">
+	<thead>
+		<tr>
+			<th>測站名稱</th>
+			<th>測項</th>
+			<th>開始</th>
+			<th>結束</th>
+			<th>零點標準</th>
+			<th>零點讀值</th>
+			<th>零點偏移</th>
+			<th>零點偏移內控</th>
+			<th>全幅標準值</th>
+			<th>全幅讀值</th>
+			<th>全幅偏移率</th>
+			<th>全幅內控值偏移率</th>
+			<th>全幅標準值偏移率</th>
+			<th>校正狀態</th>
+		</tr>
+	</thead>
+	<tbody>
+		@for(item<-report){
+			<tr>
+				<td>@Monitor.map(item.monitor).name</td>
+				<td>@MonitorType.map(item.monitorType).desp</td>
+				<td>@item.startTime.toString("yyyy年MM月dd日 hh:mm")</td>
+				<td>@item.endTime.toString("yyyy年MM月dd日 hh:mm")</td>
+				<td>@item.z_std</td>
+				<td>@item.z_val</td>
+				<td>@item.zd_val</td>
+				<td>@item.zd_pnt</td>
+				<td>@item.s_std</td>
+				<td>@item.s_sval</td>
+				<td>@item.span</td>
+				<td>@item.sd_val</td>
+				<td>@item.sd_pnt</td>
+				<td>-</td>
+			</tr>
+		}
+	</tbody>
+</table>
+<script>
+$( document ).ready(function() {
+	$('#calibrationReport').dataTable( {
+		language: {
+			url: '@routes.Assets.at("localization/zh_tw.json")'
+		},
+		"paging":   true,
+		"searching": false
+	} );		
+});
+</script>

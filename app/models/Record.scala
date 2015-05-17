@@ -6,7 +6,26 @@ import play.api._
 import com.github.nscala_time.time.Imports._
 import models.ModelHelper._
     
-case class HourRecord(
+    
+case class Stat(
+    avg:Float,
+    min:Float,
+    max:Float,
+    count:Int,
+    total:Int,
+    overCount:Int
+    ){
+  val effectPercent = count.toFloat/total
+  val overPercent = overCount.toFloat/total
+}
+ 
+case class MonitorTypeRecord(monitorType:MonitorType.Value , dataList:List[(Timestamp, Option[Float], Option[String])], stat:Stat)
+case class DailyReport(
+   typeList:Array[MonitorTypeRecord]
+  )
+
+object Record {
+  case class HourRecord(
     name:String,
     date:Timestamp,
     chk:Option[String],
@@ -61,25 +80,8 @@ case class HourRecord(
     air_pressure:Option[Float],
     air_pressure_stat:Option[String]
     )
-    
-case class Stat(
-    avg:Float,
-    min:Float,
-    max:Float,
-    count:Int,
-    total:Int,
-    overCount:Int
-    ){
-  val effectPercent = count.toFloat/total
-  val overPercent = overCount.toFloat/total
-}
- 
-case class MonitorTypeRecord(monitorType:MonitorType.Value , dataList:List[(Timestamp, Option[Float], Option[String])], stat:Stat)
-case class DailyReport(
-   typeList:Array[MonitorTypeRecord]
-  )
 
-object HourRecord {
+  type SixMinRecord = HourRecord
   val NORMAL_STAT = "010"
   val OVER_STAT = "011"
   val BELOW_STAT = "012"
@@ -184,7 +186,7 @@ object HourRecord {
           MonitorType.withName("C216")->(rs=>(rs.air_pressure, rs.air_pressure_stat))
       )
       
-  def emptyHourRecord(monitor:String, start: DateTime) = {
+  def emptyRecord(monitor:String, start: DateTime) = {
       HourRecord(
     monitor,
     start,
@@ -196,6 +198,47 @@ object HourRecord {
     None)
   }
 
+  case class RecordValidationReport(start:DateTime, end:DateTime, 
+      hourReport:Map[Monitor.Value, Int], 
+      minReport:Map[Monitor.Value, Int],
+      SixSecReport:Map[Monitor.Value,Int])
+
+  def getRecordValidationReport(start: DateTime, end: DateTime) = {
+    DB readOnly { implicit session =>
+      val hrRecords =
+        sql"""
+        SELECT DP_NO, count(DP_NO)
+        FROM [AQMSDB].[dbo].[P1234567_Hr_2015]
+        Where M_DateTime >= ${start} and M_DateTime < ${end}
+        GROUP BY DP_NO
+      """.map { rs => (Monitor.withName(rs.string(1)), rs.int(2)) }.list().apply()
+
+      val hourReport = Map(hrRecords: _*)
+
+      val minRecords = 
+        sql"""
+        SELECT DP_NO, count(DP_NO)
+        FROM [AQMSDB].[dbo].[P1234567_M1_2015]
+        Where M_DateTime >= ${start} and M_DateTime < ${end}
+        GROUP BY DP_NO
+      """.map { rs => (Monitor.withName(rs.string(1)), rs.int(2)) }.list().apply()
+      
+      val minReport = Map(minRecords: _*)
+      
+      val sixSecRecords = 
+        sql"""
+        SELECT DP_NO, count(DP_NO)
+        FROM [AQMSDB].[dbo].[P1234567_S6_2015]
+        Where M_DateTime >= ${start} and M_DateTime < ${end}
+        GROUP BY DP_NO
+      """.map { rs => (Monitor.withName(rs.string(1)), rs.int(2)) }.list().apply()
+      
+      val sixSecReport = Map(sixSecRecords: _*)
+      
+      RecordValidationReport(start, end, hourReport, minReport, sixSecReport)
+    }
+  }
+  
   def getDailyReport(monitor: Monitor.Value, start: DateTime, includeTypes:List[MonitorType.Value]=MonitorType.mtvList) = {
     DB localTx { implicit session =>
       val originalHourRecordList = getHourRecords(monitor, start, start + 1.day)
@@ -208,8 +251,8 @@ object HourRecord {
             if (checkTime >= endTime)
               Nil
             else {
-              if(checkList.isEmpty || checkTime != checkList.head.date)
-                emptyHourRecord(monitor.toString(), checkTime) :: checkHourRecord(checkTime + 1.hour, checkList)
+              if(checkList.isEmpty || checkTime != checkList.head.date.toDateTime())
+                emptyRecord(monitor.toString(), checkTime) :: checkHourRecord(checkTime + 1.hour, checkList)
               else
                 checkList.head :: checkHourRecord(checkTime + 1.hour, checkList.tail)
             }

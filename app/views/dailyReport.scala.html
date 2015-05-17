@@ -1,6 +1,5 @@
 @* dailyReport Template File *@
 @import com.github.nscala_time.time.Imports._
-@import HourRecord._
 @(monitor: Monitor.Value, reportDate:DateTime, report:DailyReport)
 <div>
 <a href="/PDF/monitorReport/DailyReport/@(monitor)/@reportDate.toString("yyyy-MM-dd")" class="btn btn-lg btn-success" style="display:none" id="downloadPDF"><span class="fa fa-file-pdf-o"></span>下載PDF</a>
@@ -64,7 +63,7 @@
 			<th>@("%02d:00".format(i))</th>
 			@for(t<-report.typeList){
 				<td>@if(!t.dataList(i)._2.isEmpty && !t.dataList(i)._3.isEmpty){
-						@if(isValidStat(t.dataList(i)._3.get)){
+						@if(Record.isValidStat(t.dataList(i)._3.get)){
 							@("%.1f".format(t.dataList(i)._2.get))	
 						}else{
 							<span style="background-color:yellow">@("%.1f".format(t.dataList(i)._2.get))</span>
