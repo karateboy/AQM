@@ -7,7 +7,7 @@ import play.api._
 import com.github.nscala_time.time.Imports._
 import com.github.nscala_time.time._
 import models.ModelHelper._
-import HourRecord._
+import models.Record._
 
 case class RealtimeStatus(data: Map[Monitor.Value, Map[MonitorType.Value, (Option[Float], Option[String])]])
 case class SixSecRecord(c911: Array[(Option[Float], Option[String])], c912: Array[(Option[Float], Option[String])])
@@ -33,7 +33,7 @@ object Realtime {
               SELECT TOP 13 *
               FROM [AQMSDB].[dbo].[P1234567_Hr_2015]
               ORDER BY M_DateTime  DESC
-             """.map { HourRecord.mapper }.list.apply
+             """.map { Record.mapper }.list.apply
 
       val rt_result =
         for { m <- Monitor.mvList } yield {
@@ -46,7 +46,7 @@ object Realtime {
               topMap += (m -> hr)
           }
 
-          val hr = topMap.getOrElse(m, emptyHourRecord(Monitor.map(m).id, DateTime.now))
+          val hr = topMap.getOrElse(m, emptyRecord(Monitor.map(m).id, DateTime.now))
           val type_record = monitorTypeProjection.map(
             t => (t._1 -> (t._2._1(hr), t._2._2(hr))))
           (m -> type_record)
@@ -67,9 +67,9 @@ object Realtime {
               FROM [AQMSDB].[dbo].[P1234567_Hr_2015]
               WHERE DP_NO = ${m.id}
               ORDER BY M_DateTime  DESC
-             """.map { HourRecord.mapper }.single.apply
+             """.map { Record.mapper }.single.apply
 
-          val hr = optHr.getOrElse(emptyHourRecord(m.id, DateTime.now))
+          val hr = optHr.getOrElse(emptyRecord(m.id, DateTime.now))
           val type_record = monitorTypeProjection.map(
             t => (t._1 -> (t._2._1(hr), t._2._2(hr))))
           (Monitor.withName(m.id) -> type_record)
@@ -109,7 +109,7 @@ object Realtime {
   def getMonitorTypeAvg(monitor: Monitor.Value, monitorType: MonitorType.Value, start: DateTime, end: DateTime)(implicit session: DBSession = AutoSession) = {
     val records = getHourRecords(monitor, start, end)
     val typeValues = records.map { hr => monitorTypeProject2(monitorType)(hr) }
-    val validValues = typeValues.filter(v => (!v._2.isEmpty) && (HourRecord.isValidStat(v._2.get))).map(_._1.get)
+    val validValues = typeValues.filter(v => (!v._2.isEmpty) && (Record.isValidStat(v._2.get))).map(_._1.get)
     val total = validValues.length
     if (total == 0)
       None
@@ -291,7 +291,7 @@ object Realtime {
       if (expected > current)
         Nil
       else if (data.isEmpty || data.head.date.millis != expected.getMillis) {
-        HourRecord.emptyHourRecord(Monitor.map(monitor).id, expected) ::
+        Record.emptyRecord(Monitor.map(monitor).id, expected) ::
           fillMissingRecord(monitor, data, expected + 1.hour)
       } else {
         data.head :: fillMissingRecord(monitor, data.tail, expected + 1.hour)
@@ -306,7 +306,7 @@ object Realtime {
       FROM [AQMSDB].[dbo].[P1234567_Hr_2015]
       WHERE DP_NO = ${Monitor.map(m).id}
       ORDER BY M_DateTime  DESC
-      """.map { HourRecord.mapper }.list.apply
+      """.map { Record.mapper }.list.apply
         filledList = fillMissingRecord(m, hrList.reverse, current - 8.hour)
         v = filledList.map { rs=>{
           val t = timeProjection(rs)

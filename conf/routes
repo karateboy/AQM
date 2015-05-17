@@ -34,4 +34,10 @@ POST	/MonitoredType/:monitor/:monitorType/:used	controllers.Application.setMonit
 GET		/MonitorTypeConfig			controllers.Application.monitorTypeConfig
 
 GET		/Trend						controllers.Realtime.trendReport
+GET 	/RecordValidation			controllers.Application.recordValidation
+GET		/HTML/RecordValidation/:start	controllers.Application.recordValidationHtml(start)
+GET		/RealtimeEpaRecord			controllers.Application.realtimeEpaRecord
+
+GET		/CalibrationQuery			controllers.Application.calibrationQueryForm
+GET		/HTML/CalibrationQuery/:monitor/:start/:end controllers.Application.calibrationQueryResult(monitor, start, end)
 #GET  	/Trend/:monitor/:monitorType/:start/:end

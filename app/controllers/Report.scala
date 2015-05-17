@@ -55,7 +55,7 @@ object Report extends Controller {
     val nDay = days.length
     val dailyReports =
       for { day <- days } yield {
-        HourRecord.getDailyReport(monitor, day, List(monitorType))
+        Record.getDailyReport(monitor, day, List(monitorType))
       }
 
     Logger.debug("dailyReports=" + dailyReports.length)
@@ -70,7 +70,7 @@ object Report extends Controller {
         hourRecord = getHourRecord(hour)
         validData = hourRecord.filter {hr=>
           hr._3 match {
-            case Some(stat)=> HourRecord.isValidStat(stat)
+            case Some(stat)=> Record.isValidStat(stat)
             case _=>false
           }
         }.map(r => r._2.get)
@@ -126,7 +126,7 @@ object Report extends Controller {
     val days = getDays(startTime, endTime)
     val dailyReports =
       for { day <- days } yield {
-        HourRecord.getDailyReport(monitor, day, includeTypes)
+        Record.getDailyReport(monitor, day, includeTypes)
       }
 
     def getTypeStat(i: Int) = {
@@ -218,7 +218,7 @@ object Report extends Controller {
             val monitorCase = Monitor.map(monitor)
             reportType match{
               case PeriodReport.DailyReport =>                
-                val dailyReport = HourRecord.getDailyReport(monitor, startTime)
+                val dailyReport = Record.getDailyReport(monitor, startTime)
                 Ok(views.html.dailyReport(monitor, startTime, dailyReport))
               case PeriodReport.MonthlyReport =>
                 val adjustStartDate = DateTime.parse(startTime.toString("YYYY-MM-1"))
@@ -250,7 +250,7 @@ object Report extends Controller {
     val startDate = DateTime.parse(startDateStr)
     
     if(reportType == PeriodReport.DailyReport){
-      val dailyReport = HourRecord.getDailyReport(monitor, startDate) 
+      val dailyReport = Record.getDailyReport(monitor, startDate) 
       Ok(views.html.reportTemplate(views.html.dailyReport(monitor, startDate, dailyReport)))
     }else
       Ok("")
@@ -281,7 +281,7 @@ object Report extends Controller {
     }
     
     if(reportType == PeriodReport.DailyReport){
-      val dailyReport = HourRecord.getDailyReport(monitor, startDate)
+      val dailyReport = Record.getDailyReport(monitor, startDate)
       val output = views.html.reportTemplate(views.html.dailyReport(monitor, startDate, dailyReport))
       
       val url = "http://" + request.host + routes.Report.monitorReportHtml(monitorStr, reportTypeStr, startDateStr).toString()

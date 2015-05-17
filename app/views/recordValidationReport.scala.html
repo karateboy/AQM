@@ -1,0 +1,30 @@
+@* recordValidationReport Template File *@
+@import com.github.nscala_time.time.Imports._
+@import Record._
+@(start: DateTime, end: DateTime, report:RecordValidationReport)
+<h2>測站資料驗證</h2>
+<table id="reportTable" class="display" cellspacing="0" width="100%">
+<thead>
+	<th>測站</th>
+	@for(m<-Monitor.mvList){
+		<th>@Monitor.map(m).name</th>
+	}
+</thead>
+<tbody>
+	<tr><td>小時筆數</td>
+	@for(m<-Monitor.mvList){
+		<td>@report.hourReport.getOrElse(m,0)</td>
+	}
+	</tr>
+	<tr><td>每分鐘筆數</td>
+	@for(m<-Monitor.mvList){
+		<td>@report.minReport.getOrElse(m,0)</td>
+	}
+	</tr>
+	<tr><td>六秒筆數</td>
+	@for(m<-Monitor.mvList){
+		<td>@report.hourReport.getOrElse(m,0)</td>
+	}
+	</tr>
+</tbody>
+</table>            		
