@@ -201,7 +201,7 @@ object Record {
   case class RecordValidationReport(start:DateTime, end:DateTime, 
       hourReport:Map[Monitor.Value, Int], 
       minReport:Map[Monitor.Value, Int],
-      SixSecReport:Map[Monitor.Value,Int])
+      sixSecReport:Map[Monitor.Value,Int])
 
   def getRecordValidationReport(start: DateTime, end: DateTime) = {
     DB readOnly { implicit session =>
