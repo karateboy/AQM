@@ -107,6 +107,7 @@ $( document ).ready(function() {
 		$("body").css("cursor", "progress");
 		console.log(JSON.stringify(obj));
 		var url = "/HTML/CalibrationQuery/" + monitor + "/" + reportStart + "/" + reportEnd;
+		console.log(url);
 		$.ajax({
 			url: url,
 			data: '',
@@ -116,13 +117,6 @@ $( document ).ready(function() {
 			success: function(result){
 				$('#reportDiv').html(result);
 
-				$('#reportTable').dataTable( {
-					language: {
-						url: '@routes.Assets.at("localization/zh_tw.json")'
-					},
-					"paging":   true,
-					"searching": false
-	    		} );	    		
 			},
 			error: function(xhr, status, errorThrown){
 				console.log("錯誤訊息:" + status + "-" + errorThrown);

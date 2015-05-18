@@ -127,11 +127,13 @@ object Application extends Controller {
 
   def calibrationQueryForm = Security.Authenticated {
     implicit request =>
+      Logger.info("calibrationQueryForm")
       Ok(views.html.calibration())
   }
   
   def calibrationQueryResult(monitorStr:String, startStr:String, endStr:String) = Security.Authenticated {
     implicit request =>
+      Logger.info("calibrationQueryResult")
       val monitor = Monitor.withName(monitorStr)
       val start = DateTime.parse(startStr)
       val end = DateTime.parse(endStr)
