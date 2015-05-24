@@ -1,79 +1,175 @@
 @(title: String)
 
 @outline(title){
-	<div class="row">
-		<div class="col-lg-2">
-        	<div class="panel panel-info">
-            	<div class="panel-heading">
-                	PM2.5 即時資料
-                </div>
-                <div class="panel-body">
-                	<div id="morris-bar-chart"></div>
-                </div>
-            </div>
-        </div>
-		<div class="col-lg-2">
-			<div class="panel panel-info">
-            	<div class="panel-heading">
-                	PM10 即時資料
-                </div>
-                <div class="panel-body">
-                	<div id="morris-bar-chart1"></div>
-                </div>
-            </div>
-		</div>
-		<div class="col-lg-2">
-			<div class="panel panel-info">
-            	<div class="panel-heading">
-                	二氧化硫 即時資料
-                </div>
-                <div class="panel-body">
-                	<div id="morris-bar-chart2"></div>
-                </div>
-            </div>			
-		</div>
-		<div class="col-lg-2">
-			<div class="panel panel-info">
-            	<div class="panel-heading">
-                	二氧化氮 即時資料
-                </div>
-                <div class="panel-body">
-                	<div id="morris-bar-chart3"></div>
-                </div>
-            </div>
-		</div>
-		<div class="col-lg-2">
-			<div class="panel panel-info">
-            	<div class="panel-heading">
-                	臭氧 即時資料
-                </div>
-                <div class="panel-body">
-                	<div id="morris-bar-chart4"></div>
-                </div>
-            </div>
-		</div>
-		<div class="col-lg-2">
-			<div class="panel panel-info">
-            	<div class="panel-heading">
-                	一氧化碳 即時資料
-                </div>
-                <div class="panel-body">
-                	<div id="morris-bar-chart5"></div>
-                </div>
-            </div>
-		</div>
+<div class="row">
+	<div class="col-lg-3">
+		<div class="ibox float-e-margins">
+               <div class="ibox-title">
+               	<h5>PM2.5 即時資料</h5>
+                       <div class="ibox-tools">
+                           <a class="collapse-link">
+                               <i class="fa fa-chevron-up"></i>
+                           </a>
+                           <a class="dropdown-toggle" data-toggle="dropdown" href="#">
+                               <i class="fa fa-wrench"></i>
+                           </a>
+                           <ul class="dropdown-menu dropdown-user">
+                               <li><a href="#">設定</a>
+                               </li>                                
+                           </ul>
+                           <a class="close-link">
+                               <i class="fa fa-times"></i>
+                           </a>
+                       </div>
+                   </div>
+               <div class="ibox-content">
+				<div id="pm25_realtimChart"></div>                        
+           	</div>
+           </div>
+       </div>
+	<div class="col-lg-3">
+		<div class="ibox float-e-margins">
+               <div class="ibox-title">
+               	<h5>PM10 即時資料</h5>
+                       <div class="ibox-tools">
+                           <a class="collapse-link">
+                               <i class="fa fa-chevron-up"></i>
+                           </a>
+                           <a class="dropdown-toggle" data-toggle="dropdown" href="#">
+                               <i class="fa fa-wrench"></i>
+                           </a>
+                           <ul class="dropdown-menu dropdown-user">
+                               <li><a href="#">設定</a>
+                               </li>                                
+                           </ul>
+                           <a class="close-link">
+                               <i class="fa fa-times"></i>
+                           </a>
+                       </div>
+                   </div>
+               <div class="ibox-content">
+				<div id="pm10_realtimChart"></div>                       
+           	</div>
+           </div>
+	</div>
+	<div class="col-lg-3">
+		<div class="ibox float-e-margins">
+               <div class="ibox-title">
+               	<h5>二氧化硫 即時資料</h5>
+                       <div class="ibox-tools">
+                           <a class="collapse-link">
+                               <i class="fa fa-chevron-up"></i>
+                           </a>
+                           <a class="dropdown-toggle" data-toggle="dropdown" href="#">
+                               <i class="fa fa-wrench"></i>
+                           </a>
+                           <ul class="dropdown-menu dropdown-user">
+                               <li><a href="#">設定</a>
+                               </li>                                
+                           </ul>
+                           <a class="close-link">
+                               <i class="fa fa-times"></i>
+                           </a>
+                       </div>
+                   </div>
+               <div class="ibox-content">
+				<div id="so2_realtimChart"></div>                       
+           	</div>
+           </div>		
+	</div>
+	<div class="col-lg-3">
+		<div class="ibox float-e-margins">
+               <div class="ibox-title">
+               	<h5>二氧化氮 即時資料</h5>
+                       <div class="ibox-tools">
+                           <a class="collapse-link">
+                               <i class="fa fa-chevron-up"></i>
+                           </a>
+                           <a class="dropdown-toggle" data-toggle="dropdown" href="#">
+                               <i class="fa fa-wrench"></i>
+                           </a>
+                           <ul class="dropdown-menu dropdown-user">
+                               <li><a href="#">設定</a>
+                               </li>                                
+                           </ul>
+                           <a class="close-link">
+                               <i class="fa fa-times"></i>
+                           </a>
+                       </div>
+                   </div>
+               <div class="ibox-content">
+				<div id="no2_realtimChart"></div>                       
+           	</div>
+           </div>
+	</div>
+	<div class="col-lg-3">
+		<div class="ibox float-e-margins">
+               <div class="ibox-title">
+               	<h5>臭氧 即時資料</h5>
+                       <div class="ibox-tools">
+                           <a class="collapse-link">
+                               <i class="fa fa-chevron-up"></i>
+                           </a>
+                           <a class="dropdown-toggle" data-toggle="dropdown" href="#">
+                               <i class="fa fa-wrench"></i>
+                           </a>
+                           <ul class="dropdown-menu dropdown-user">
+                               <li><a href="#">設定</a>
+                               </li>                                
+                           </ul>
+                           <a class="close-link">
+                               <i class="fa fa-times"></i>
+                           </a>
+                       </div>
+                   </div>
+               <div class="ibox-content">
+				<div id="o3_realtimChart"></div>                       
+           	</div>
+           </div>
+	</div>
+	<div class="col-lg-3">
+		<div class="ibox float-e-margins">
+               <div class="ibox-title">
+               	<h5>一氧化碳 即時資料</h5>
+                       <div class="ibox-tools">
+                           <a class="collapse-link">
+                               <i class="fa fa-chevron-up"></i>
+                           </a>
+                           <a class="dropdown-toggle" data-toggle="dropdown" href="#">
+                               <i class="fa fa-wrench"></i>
+                           </a>
+                           <ul class="dropdown-menu dropdown-user">
+                               <li><a href="#">設定</a>
+                               </li>                                
+                           </ul>
+                           <a class="close-link">
+                               <i class="fa fa-times"></i>
+                           </a>
+                       </div>
+                   </div>
+               <div class="ibox-content">
+				<div id="no_realtimChart"></div>                       
+           	</div>
+           </div>
+	</div>
+</div>
 
+<div class="row">
+	<div class="col-md-12">
+       	<div class="ibox ">
+           	<div class="ibox-title">
+               	<h5>即時資訊地圖</h5>
+               </div>
+               <div class="ibox-content">
+               	<div class="map_container">
+   					<div id="realtimeMap" class="map_canvas"></div>
+				</div>
+               </div>
+           </div>
 	</div>
-	
-	<div class="row">
-		<div class="col-lg-12">
-			<div class="map_container">
-			<!--  <img src="@routes.Assets.at("images/map.png")" class="img-responsive" > -->
-    			<div id="realtimeMap" class="map_canvas"></div>
-			</div>
-		</div>
-	</div>
-	<script src="@routes.Assets.at("javascripts/morris-data.js")"></script>
+</div>
+<script src="@routes.Assets.at("js/plugins/morris/raphael-2.1.0.min.js")"></script>
+<script src="@routes.Assets.at("js/plugins/morris/morris.js")"></script>
 <script>
 var mapCenter = new google.maps.LatLng(23.68875446, 120.2805895);
 
@@ -287,6 +383,36 @@ function initLableInfobox(map){
 		ibLabel.open(map);
 	}
 }
+
+function getRealtimChart(id, monitorType){
+	$.ajax({
+		url : "/JSON/realtimeHighchart/"+monitorType,
+		data : "",
+		contentType : "application/json; charset=utf-8",
+		type : "GET",
+		dataType : "json",
+		success : function(result) {
+			$(id).highcharts(result);
+		},
+		error : function(xhr, status, errorThrown) {
+			console.log("錯誤訊息:" + status + "-" + errorThrown);
+		},
+
+		complete : function(xhr, status) {
+			
+		}
+	});
+}
+
+function initRealtimeChart(){
+	getRealtimChart('#pm25_realtimChart', "A215");
+	getRealtimChart('#pm10_realtimChart', "A214");
+	getRealtimChart('#so2_realtimChart', "A222");
+	getRealtimChart('#no2_realtimChart', "A293");
+	getRealtimChart('#o3_realtimChart', "A225");
+	getRealtimChart('#no_realtimChart', "A283");
+	
+}
 		
 function initRealtimeMap() {
 	console.log("initRealtimeMap");
@@ -333,7 +459,12 @@ function initRealtimeMap() {
 	initWindInfobox(map);
 };
 
-$(document).ready(initRealtimeMap());
+function initRealtime(){
+	initRealtimeChart();
+	initRealtimeMap();
+}
+
+$(document).ready(initRealtime());
 
 </script>
 }

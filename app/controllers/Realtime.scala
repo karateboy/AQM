@@ -124,4 +124,58 @@ object Realtime extends Controller {
           Ok(json)
         })
   }
+
+  case class XAxis(categories: Option[Seq[String]])
+  case class AxisLineLabel(align:String, text:String)
+  case class AxisLine(color:String, width:Int, value:Float, label:AxisLineLabel)
+  case class AxisTitle(text:Option[String])
+  case class YAxis(labels:Option[String], title:AxisTitle, plotLines:Option[Seq[AxisLine]])
+  case class Legend(enabled: Boolean)
+  case class seqData(name:String, data: Seq[Float])
+  case class HighchartData(chart: Map[String, String],
+                           title: Map[String, String],
+                           xAxis: XAxis,
+                           yAxis: YAxis,
+                           series: Seq[seqData])
+
+  implicit val xaWrite = Json.writes[XAxis]
+  implicit val axisLineLabelWrite = Json.writes[AxisLineLabel]
+  implicit val axisLineWrite = Json.writes[AxisLine]
+  implicit val axisTitleWrite = Json.writes[AxisTitle]
+  implicit val yaWrite = Json.writes[YAxis]
+  implicit val seqDataWrite = Json.writes[seqData]
+  implicit val hcWrite = Json.writes[HighchartData]
+
+  def highchartJson(monitorTypeStr: String) = Security.Authenticated {
+    implicit request =>
+      val monitorType = MonitorType.withName(monitorTypeStr)
+      val mtCase = MonitorType.map(monitorType)
+      
+       val series = for(m <- Monitor.mvList)
+          yield{
+           if(!mtCase.std_law.isEmpty)
+             seqData(Monitor.map(m).name, Seq(Math.random().toFloat * 2 * mtCase.std_law.get))
+           else
+             seqData(Monitor.map(m).name, Seq(Math.random().toFloat))
+         }
+      
+       
+       val title = mtCase.desp + " 即時資料"
+       val axisLines = if(mtCase.std_internal.isEmpty || mtCase.std_law.isEmpty)
+         None     
+       else{
+         Some(Seq(AxisLine("#0000FF", 2, mtCase.std_internal.get, AxisLineLabel("left", "內控值")),
+             AxisLine("#FF0000", 2, mtCase.std_law.get, AxisLineLabel("right","法規值"))
+             ))
+       }
+       
+       val c = HighchartData(
+          Map("type"->"column"),
+          Map("text"->title),
+          XAxis(Some(Seq("即時"))),
+          YAxis(None, AxisTitle(Some(mtCase.unit)), axisLines),
+          series)
+        
+      Ok(Json.toJson(c))
+  }
 }

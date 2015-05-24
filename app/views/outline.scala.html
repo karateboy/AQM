@@ -9,51 +9,50 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="description" content="">
-    <meta name="author" content="">
-
+    <meta name="author" content="Aragorn Huang">
     <title>@title</title>
 
-    <!-- Bootstrap Core CSS -->
-    <link href="@routes.Assets.at("stylesheets/bootstrap.min.css")" rel="stylesheet">
+    <link href='@routes.Assets.at("css/bootstrap.min.css")' rel="stylesheet">
+    <link href='@routes.Assets.at("font-awesome/css/font-awesome.css")' rel="stylesheet">
 
-    <!-- MetisMenu CSS -->
-    <link href="@routes.Assets.at("stylesheets/metisMenu.min.css")" rel="stylesheet">
+    <!-- Data Tables -->
+    <link href='@routes.Assets.at("css/plugins/dataTables/dataTables.bootstrap.css")' rel="stylesheet">
+    <link href='@routes.Assets.at("css/plugins/dataTables/dataTables.responsive.css")' rel="stylesheet">
+    <link href='@routes.Assets.at("css/plugins/dataTables/dataTables.tableTools.min.css")' rel="stylesheet">
 
-    <!-- Timeline CSS -->
-    <link href="@routes.Assets.at("stylesheets/timeline.css")" rel="stylesheet">
+	<!-- Datepicker --> 
+	<link href="@routes.Assets.at("css/plugins/datepicker/datepicker3.css")" rel="stylesheet">
+	<link href="@routes.Assets.at("css/plugins/morris/morris-0.4.3.min.css")" rel="stylesheet">
 
-    <!-- Custom CSS -->
-    <link href="@routes.Assets.at("stylesheets/sb-admin-2.css")" rel="stylesheet">
+    <link href='@routes.Assets.at("css/animate.css")' rel="stylesheet">
+    <link href='@routes.Assets.at("css/style.css")' rel="stylesheet">
+	<link href='@routes.Assets.at("css/aqm.css")' rel="stylesheet">
 
-    <!-- Custom Fonts -->
-    <link href="@routes.Assets.at("stylesheets/font-awesome.min.css")" rel="stylesheet" type="text/css">
+	<!-- Mainly scripts -->
+	<script src='@routes.Assets.at("js/jquery-2.1.4.min.js")'></script>
+	<script src='@routes.Assets.at("js/bootstrap.min.js")'></script>
+	<script src='@routes.Assets.at("js/plugins/metisMenu/jquery.metisMenu.js")'></script>
+	<script src='@routes.Assets.at("js/plugins/slimscroll/jquery.slimscroll.min.js")'></script>
 
-	<!-- Datatable -->
-	<link href="@routes.Assets.at("stylesheets/jquery.dataTables.min.css")" rel="stylesheet" type="text/css" >
-	
-	<!-- Datepicker -->
-	<link href="@routes.Assets.at("stylesheets/bootstrap-datepicker.min.css")" rel="stylesheet">
-	
+    <!-- Data Tables -->
+    <script src='@routes.Assets.at("js/plugins/dataTables/jquery.dataTables.js")'></script>
+    <script src='@routes.Assets.at("js/plugins/dataTables/dataTables.bootstrap.js")'></script>
+    <script src='@routes.Assets.at("js/plugins/dataTables/dataTables.responsive.js")'></script>
+    <script src='@routes.Assets.at("js/plugins/dataTables/dataTables.tableTools.min.js")'></script>
+    <script src='@routes.Assets.at("js/plugins/datepicker/bootstrap-datepicker.min.js")'></script>
+	<script src='@routes.Assets.at("js/plugins/datepicker/bootstrap-datepicker.zh-TW.min.js")'></script>
+	<!-- Custom and plugin javascript -->
+	<script src='@routes.Assets.at("js/inspinia.js")'></script>
+	<script src='@routes.Assets.at("js/plugins/pace/pace.min.js")'></script>
+
+	<script src='@routes.Assets.at("js/plugins/slimscroll/jquery.slimscroll.min.js")'></script>
+
+	<!--  Highchart -->
+	<script src='@routes.Assets.at("js/highcharts/highcharts.js")'></script>
+	<script src='@routes.Assets.at("js/highcharts/modules/exporting.js")'></script>
 	<!-- Morris Charts CSS -->
-    <link href="@routes.Assets.at("stylesheets/morris.css")" rel="stylesheet">
+    
 	
-	<style>
-	.map_container{
-    	position: relative;
-    	width: 100%;
-    	padding-bottom: 56.25%; /* Ratio 16:9 ( 100%/16*9 = 56.25% ) */
-	}
-	.map_container .map_canvas{
-    	position: absolute;
-    	top: 0;
-    	right: 0;
-    	bottom: 0;
-    	left: 0;
-    	margin: 0;
-    	padding: 0;
-	}
-		
-	</style>
     <!-- HTML5 Shim and Respond.js IE8 support of HTML5 elements and media queries -->
     <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
     <!--[if lt IE 9]>
@@ -61,260 +60,262 @@
         <script src="https://oss.maxcdn.com/libs/respond.js/1.4.2/respond.min.js"></script>
     <![endif]-->
     
-    <!-- jQuery -->
-    <script src="@routes.Assets.at("javascripts/jquery.min.js")"></script>
-
-    <!-- Bootstrap Core JavaScript -->
-    <script src="@routes.Assets.at("javascripts/bootstrap.min.js")"></script>
-    
-    <!-- Metis Menu Plugin JavaScript -->
-    <script src="@routes.Assets.at("javascripts/metisMenu.min.js")"></script>
-   
-    <!-- Datatable JavaScript -->
-    <script src="@routes.Assets.at("javascripts/jquery.dataTables.min.js")"></script>
-    
-    <!-- Custom Theme JavaScript -->
-    <script src="@routes.Assets.at("javascripts/sb-admin-2.js")"></script>    
-    
-    <!-- Datepicker JavaScript -->
-    <script src="@routes.Assets.at("javascripts/bootstrap-datepicker.min.js")"></script>
-    <script src="@routes.Assets.at("javascripts/bootstrap-datepicker.zh-TW.min.js")" charset="UTF-8"></script>
-    
+            
     <script type="text/javascript"
       src="http://maps.googleapis.com/maps/api/js?key=AIzaSyCFuSnApEhdYSANwfU4OZ4tH902Tu3vjFI&sensor=FALSE">
     </script>
     
-    <script src="@routes.Assets.at("javascripts/infobox_packed.js")"></script>
+    <script src="@routes.Assets.at("js/plugins/infobox/infobox_packed.js")"></script>
     
     <script>
-	function loadPage(url){
-		$("#page-wrapper").load(url);
+	function loadPage(url, root, title){
+		//var elem = $( this );
+		//console.log(elem);
+		$("#breadcrumb-title").text(title);
+		$("#breadcrumb-root").text(root);
+		$("#breadcrumb-level1").text(title);
+		$("#wrapper-content").load(url);
 	}
     </script>
 </head>
 
 <body>
-	
+<!--New UI -->
 <div id="wrapper">
-<nav class="navbar navbar-default navbar-static-top" role="navigation" style="margin-bottom:0">
-	<div class="navbar-header">
-    	<button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-collapse">
-        	<span class="sr-only">Toggle navigation</span>
-        	<span class="icon-bar"></span>
-        	<span class="icon-bar"></span>
-        	<span class="icon-bar"></span>
-        </button>
-    	<a class="navbar-brand" href="/" style="height:80px">
-    		<span>
-    			<img src="@routes.Assets.at("images/title/logo.png")" alt="@title"/>	
-    		</span>
-    	</a>
-	</div>
-    <!-- /.navbar-header -->
-    <ul class="nav navbar-top-links navbar-right" style="height:80px">
-		<!-- alert -->
-        <li class="dropdown">
-                    <a class="dropdown-toggle" data-toggle="dropdown" href="#">
-                        <i class="fa fa-bell fa-fw fa-2x"></i>  <i class="fa fa-caret-down"></i>
-                    </a>
-                    <ul class="dropdown-menu dropdown-alerts">
-                        <li>
-                            <a href="#">
-                                <div>
-                                    <i class="fa fa-comment fa-fw"></i> New Comment
-                                    <span class="pull-right text-muted small">4 minutes ago</span>
-                                </div>
-                            </a>
-                        </li>
+
+<nav class="navbar-default navbar-static-side" role="navigation">
+    <div class="sidebar-collapse">
+        <ul class="nav" id="side-menu">
+            <li class="nav-header">
+                <div class="dropdown profile-element"> <span>
+                            <img alt="image" class="img-circle" src='@routes.Assets.at("img/profile_small.jpg")' />
+                             </span>
+                    <a data-toggle="dropdown" class="dropdown-toggle" href="#">
+                            <span class="clear"> <span class="block m-t-xs"> <strong class="font-bold">David Williams</strong>
+                             </span> <span class="text-muted text-xs block">Art Director <b class="caret"></b></span> </span> </a>
+                    <ul class="dropdown-menu animated fadeInRight m-t-xs">
+                        <li><a href="profile.html">Profile</a></li>
+                        <li><a href="contacts.html">Contacts</a></li>
+                        <li><a href="mailbox.html">Mailbox</a></li>
                         <li class="divider"></li>
-                        <li>
-                            <a href="#">
-                                <div>
-                                    <i class="fa fa-twitter fa-fw"></i> 3 New Followers
-                                    <span class="pull-right text-muted small">12 minutes ago</span>
-                                </div>
+                        <li><a href="login.html">Logout</a></li>
+                    </ul>
+                </div>
+                <div class="logo-element">
+                    
+                </div>
+            </li>
+            <li class="active">
+                <a href="index.html"><i class="fa fa-th-large"></i> <span class="nav-label">即時資訊</span> <span class="fa arrow"></span></a>
+                <ul class="nav nav-second-level">
+                    <li ><a href="/">即時畫面</a></li>
+                    <li ><a href="#" onClick="loadPage('/realtimeStatus','即時資訊','即時數據')">即時數據</a></li>
+                    <li ><a href="#" onClick="loadPage('/realtimeTrend','即時資訊','即時趨勢圖')">即時趨勢圖</a></li>
+                    <li ><a href="#" onClick="loadPage('/realtimeImage','即時資訊','即時影像')">即時影像</a></li>
+                </ul>
+            </li>
+            <li>
+                <a href="#"><i class="fa fa-bar-chart-o"></i> <span class="nav-label">數據查詢</span><span class="fa arrow"></span></a>
+                <ul class="nav nav-second-level">
+                    <li><a href="#">歷史資料查詢</a></li>
+                    <li><a href="#" onClick="loadPage('/Trend','數據查詢','歷史趨勢圖')">歷史趨勢圖</a></li>
+                    <li><a href="#">PSI查詢</a></li>
+                    <li><a href="#">各年同期比較</a></li>
+                    <li><a href="#">超過法規值查詢</a></li>
+                    <li><a href="#">有效數據百分比</a></li>
+                    <li><a href="#">風瑰圖</a></li>
+                    <li><a href="#" onClick="loadPage('/CalibrationQuery','數據查詢','校正資料查詢')">校正資料查詢</a></li>
+                    <li><a href="#">警報記錄查詢</a></li>
+                </ul>
+            </li>
+            <li>
+                <a href="#"><i class="fa fa-table"></i> <span class="nav-label">報表查詢 </span><span class="label label-warning pull-right">16/24</span></a>
+                <ul class="nav nav-second-level">
+                    <li><a href="#" onClick="loadPage('/report/@ReportType.MonitorReport','報表查詢','監測報表')">監測報表</a></li>
+                    <li><a href="#">測站數據比較報表</a></li>
+                    <li><a href="#" onClick="loadPage('/CalibrationQuery','報表查詢','校正報表')">校正報表</a></li>
+                    <li><a href="#">空氣品質PSI報表</a></li>
+                    <li><a href="#">有效率年報表</a></li>
+                    <li><a href="#" onClick="loadPage('/report/@ReportType.MonthlyHourReport', '報表查詢','月份時報表')">月份時報表</a></li> 
+                </ul>
+            </li>
+            <li>
+                <a href="#"><i class="fa fa-university"></i> <span class="nav-label">統計分析</span><span class="fa arrow"></span></a>
+                <ul class="nav nav-second-level">
+                    <li><a href="#">數據統計</a></li>
+                    <li><a href="#">有效率數據判斷</a></li>
+                    <li><a href="#">趨勢分析</a></li>
+                </ul>
+            </li>
+            <li>
+                <a href="#"><i class="fa fa-desktop"></i> <span class="nav-label">系統管理</span>  <span class="pull-right label label-primary">SPECIAL</span></a>
+                <ul class="nav nav-second-level">
+                    <li><a href="#">管理權限</a></li>
+                    <li><a href="#" onClick="loadPage('/MonitorTypeConfig','系統管理','測項參數')">測項參數</a></li>
+                    <li><a href="#" onClick="loadPage('/Monitor','系統管理','測站管理')">測站管理</a></li>
+                    <li><a href="#">使用者管理</a></li>
+                    <li><a href="#" onClick="loadPage('/RecordValidation','系統管理','測站資料驗證')">測站資料驗證</a></li>
+                    <li><a href="#" onClick="loadPage('/RealtimeEpaRecord','系統管理','擷取環保署及時資料')">擷取環保署及時資料</a></li>
+                 </ul>
+            </li>
+        </ul>
+
+    </div>
+</nav>
+
+<div id="page-wrapper" class="gray-bg">
+<div class="row border-bottom">
+    <nav class="navbar navbar-static-top" role="navigation" style="margin-bottom: 0">
+        <div class="navbar-header">
+        	<span style="display:inline">
+        		<a class="navbar-minimalize minimalize-styl-2 btn btn-primary " href="#"><i class="fa fa-bars"></i> </a>
+            	<img src='@routes.Assets.at("images/title/logo.png")' width='458' height='38'>
+        	</span>            
+        </div>
+        <ul class="nav navbar-top-links navbar-right">
+            <li>            	
+                <span class="m-r-sm text-muted welcome-message"></span>
+            </li>
+            <li class="dropdown">
+                <a class="dropdown-toggle count-info" data-toggle="dropdown" href="#">
+                    <i class="fa fa-envelope"></i>  <span class="label label-warning">16</span>
+                </a>
+                <ul class="dropdown-menu dropdown-messages">
+                    <li>
+                        <div class="dropdown-messages-box">
+                            <a href="profile.html" class="pull-left">
+                                <img alt="image" class="img-circle" src='@routes.Assets.at("img/a7.jpg")'>
                             </a>
-                        </li>
-                        <li class="divider"></li>
-                        <li>
-                            <a href="#">
-                                <div>
-                                    <i class="fa fa-envelope fa-fw"></i> Message Sent
-                                    <span class="pull-right text-muted small">4 minutes ago</span>
-                                </div>
+                            <div class="media-body">
+                                <small class="pull-right">46h ago</small>
+                                <strong>Mike Loreipsum</strong> started following <strong>Monica Smith</strong>. <br>
+                                <small class="text-muted">3 days ago at 7:58 pm - 10.06.2014</small>
+                            </div>
+                        </div>
+                    </li>
+                    <li class="divider"></li>
+                    <li>
+                        <div class="dropdown-messages-box">
+                            <a href="profile.html" class="pull-left">
+                                <img alt="image" class="img-circle" src='@routes.Assets.at("img/a4.jpg")'>
                             </a>
-                        </li>
-                        <li class="divider"></li>
-                        <li>
-                            <a href="#">
-                                <div>
-                                    <i class="fa fa-tasks fa-fw"></i> New Task
-                                    <span class="pull-right text-muted small">4 minutes ago</span>
-                                </div>
+                            <div class="media-body ">
+                                <small class="pull-right text-navy">5h ago</small>
+                                <strong>Chris Johnatan Overtunk</strong> started following <strong>Monica Smith</strong>. <br>
+                                <small class="text-muted">Yesterday 1:21 pm - 11.06.2014</small>
+                            </div>
+                        </div>
+                    </li>
+                    <li class="divider"></li>
+                    <li>
+                        <div class="dropdown-messages-box">
+                            <a href="profile.html" class="pull-left">
+                                <img alt="image" class="img-circle" src='@routes.Assets.at("img/profile.jpg")'>
                             </a>
-                        </li>
-                        <li class="divider"></li>
-                        <li>
-                            <a href="#">
-                                <div>
-                                    <i class="fa fa-upload fa-fw"></i> Server Rebooted
-                                    <span class="pull-right text-muted small">4 minutes ago</span>
-                                </div>
+                            <div class="media-body ">
+                                <small class="pull-right">23h ago</small>
+                                <strong>Monica Smith</strong> love <strong>Kim Smith</strong>. <br>
+                                <small class="text-muted">2 days ago at 2:30 am - 11.06.2014</small>
+                            </div>
+                        </div>
+                    </li>
+                    <li class="divider"></li>
+                    <li>
+                        <div class="text-center link-block">
+                            <a href="mailbox.html">
+                                <i class="fa fa-envelope"></i> <strong>Read All Messages</strong>
                             </a>
-                        </li>
-                        <li class="divider"></li>
-                        <li>
-                            <a class="text-center" href="#">
+                        </div>
+                    </li>
+                </ul>
+            </li>
+            <li class="dropdown">
+                <a class="dropdown-toggle count-info" data-toggle="dropdown" href="#">
+                    <i class="fa fa-bell"></i>  <span class="label label-primary">8</span>
+                </a>
+                <ul class="dropdown-menu dropdown-alerts">
+                    <li>
+                        <a href="mailbox.html">
+                            <div>
+                                <i class="fa fa-envelope fa-fw"></i> You have 16 messages
+                                <span class="pull-right text-muted small">4 minutes ago</span>
+                            </div>
+                        </a>
+                    </li>
+                    <li class="divider"></li>
+                    <li>
+                        <a href="profile.html">
+                            <div>
+                                <i class="fa fa-twitter fa-fw"></i> 3 New Followers
+                                <span class="pull-right text-muted small">12 minutes ago</span>
+                            </div>
+                        </a>
+                    </li>
+                    <li class="divider"></li>
+                    <li>
+                        <a href="grid_options.html">
+                            <div>
+                                <i class="fa fa-upload fa-fw"></i> Server Rebooted
+                                <span class="pull-right text-muted small">4 minutes ago</span>
+                            </div>
+                        </a>
+                    </li>
+                    <li class="divider"></li>
+                    <li>
+                        <div class="text-center link-block">
+                            <a href="notifications.html">
                                 <strong>See All Alerts</strong>
                                 <i class="fa fa-angle-right"></i>
                             </a>
-                        </li>
-                    </ul>
-                    <!-- /.dropdown-alerts -->
-                </li>
-   		<!-- user... -->
-        <li class="dropdown">
-        	<a class="dropdown-toggle" data-toggle="dropdown" href="#">
-            	<i class="fa fa-user fa-fw fa-2x"></i>  <i class="fa fa-caret-down"></i>
-            </a>
-            <ul class="dropdown-menu dropdown-user">
-            <li><a href="/"><i class="fa fa-user fa-fw"></i>帳戶設定</a>
+                        </div>
+                    </li>
+                </ul>
             </li>
-            <li class="divider"></li>
-            <li><a href="/logoff"><i class="fa fa-sign-out fa-fw"></i>登出</a>
-            </li>
-            </ul>
-		</li>
-    </ul>
-    <!-- /.navbar-top-links -->
-    
-    <div class="navbar-default sidebar" role="navigation" style="margin-top: 80px">
-    	<div class="sidebar-nav navbar-collapse" style="font-size: 18px">
-        	<ul class="nav" id="side-menu">
-                 <li>
-                	<a href="#"><i class="fa fa-dashboard fa-fw"></i>即時資訊<span class="fa arrow"></span></a>
-                    <ul class="nav nav-second-level">
-                    	<li>
-                    		<a href="/">即時畫面</a>
-                    		</li>
-                    	<li>
-                    		<a href="#" onClick="loadPage('/realtimeStatus')">即時數據</a>
-                    		</li>
-                    	<li>
-                    		<a href="#" onClick="loadPage('/realtimeTrend')">即時趨勢圖</a>
-                    		</li>
-                    	<li>
-                    		<a href="#" onClick="loadPage('/realtimeImage')">即時影像</a>
-                    		</li>                    		
-               		</ul>
-                    </li>
-                <li>
-                	<a href="#"><i class="fa fa-bar-chart-o fa-fw"></i>數據查詢<span class="fa arrow"></span></a>
-                    <ul class="nav nav-second-level">
-                    	<li>
-                    		<a href="#">歷史資料查詢</a>
-                    		</li>
-                    	<li>
-                    		<a href="#" onClick="loadPage('/Trend')">歷史趨勢圖</a>
-                    		</li>
-                    	<li>
-                    		<a href="#">PSI查詢</a>
-                    		</li>
-                    	<li>
-                    		<a href="#">各年同期比較</a>
-                    		</li>
-                    	<li>
-                    		<a href="#">超過法規值查詢</a>
-                    		</li>
-                    	<li>
-                    		<a href="#">有效數據百分比</a>
-                    		</li>                    
-                    	<li>
-                    		<a href="#">風瑰圖</a>
-                    		</li>		
-                    	<li>
-                    		<a href="#" onClick="loadPage('/CalibrationQuery')">校正資料查詢</a>
-                    		</li>
-                    	<li>
-                    		<a href="#">警報記錄查詢</a>
-                    		</li>
-               		</ul>
-                    </li>
-                <li>
-                	<a href="#"><i class="fa fa-table fa-fw"></i>監測報表<span class="fa arrow"></span></a>
-                    <ul class="nav nav-second-level">
-                    	<li>
-                    		<a href="#" onClick="loadPage('/report/@ReportType.MonitorReport')">監測報表</a>
-                    		</li>
-                    	<li>
-                    		<a href="#">測站數據比較報表</a>
-                    		</li>
-                    	<li>
-                    		<a href="#" onClick="loadPage('/CalibrationQuery')">校正報表</a>
-                    		</li>
-                    	<li>
-                    		<a href="#">空氣品質PSI報表</a>
-                    		</li>
-                    	<li>
-                    		<a href="#">有效率年報表</a>
-                    		</li>
-                    	<li>
-                    		<a href="#" onClick="loadPage('/report/@ReportType.MonthlyHourReport')">月份時報表</a>
-                    		</li>                    
-               		</ul>
-                    </li>    
-                    <li>
-                	<a href="#"><i class="fa fa-university fa-fw"></i>統計分析<span class="fa arrow"></span></a>
-                    <ul class="nav nav-second-level">
-                    	<li>
-                    		<a href="#">數據統計</a>
-                    		</li>
-                    	<li>
-                    		<a href="#">有效率數據判斷</a>
-                    		</li>
-                    	<li>
-                    		<a href="#">趨勢分析</a>
-                    		</li>
-               		</ul>
-                    </li>
-            	<li>
-                	<a href="#"><i class="fa fa-gears fa-fw"></i>系統管理<span class="fa arrow"></span></a>
-                    <ul class="nav nav-second-level">
-                    	<li>
-                    		<a href="#">管理權限</a>
-                    		</li>
-                    	<li>
-                    		<a href="#" onClick="loadPage('/MonitorTypeConfig')">測項參數</a>
-                    		</li>
-                    	<li>
-                    		<a href="#" onClick="loadPage('/Monitor')">測站管理</a>
-                    		</li>
-                    	<li>
-                    		<a href="#">使用者管理</a>
-                    		</li>
-                    	<li>
-                    		<a href="#" onClick="loadPage('/RecordValidation')">測站資料驗證</a>
-                    		</li>
-                    	<li>
-                    		<a href="#" onClick="loadPage('/RealtimeEpaRecord')">擷取環保署及時資料</a>
-                    		</li>	                    		
-               		</ul>
-            	</li>
-        	</ul>
-    	</div>
-	</div>    
-</nav>
 
 
-<div id="page-wrapper">
+            <li>
+                <a href="/logout">
+                    <i class="fa fa-sign-out"></i> 登出
+                </a>
+            </li>
+        </ul>
+
+    </nav>
+</div>
+<div class="row wrapper border-bottom white-bg page-heading">
+    <div class="col-lg-10">
+        <h2 id='breadcrumb-title'>即時畫面</h2>
+        <ol class="breadcrumb">
+            <li>
+                <a href="#" id='breadcrumb-root'>即時資訊</a>
+            </li>
+            <li class="active">
+                <strong id='breadcrumb-level1'>即時畫面</strong>
+            </li>
+        </ol>
+    </div>
+    <div class="col-lg-2">
+
+    </div>
+</div>
+
+
+<div class="wrapper wrapper-content animated fadeInRight" id="wrapper-content">
 @content
 </div>
 
+<div class="footer fixed" id="footer">
+    <div class="pull-right">
+        <strong>環保署資訊</strong>
+    </div>
+    <div>
+        <strong>Copyright</strong> WECC &copy; 2014-2015
+    </div>
 </div>
 
-    <!-- Morris Charts JavaScript -->
-    <script src="@routes.Assets.at("javascripts/raphael-min.js")"></script>
-    <script src="@routes.Assets.at("javascripts/morris.min.js")"></script>
+</div>
+</div>
+
 </body>
 
 </html>
