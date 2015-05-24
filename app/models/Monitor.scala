@@ -51,7 +51,9 @@ object Monitor extends Enumeration{
 
 case class MonitorType(id:String, desp:String, unit:String, 
     std_internal:Option[Float], std_law:Option[Float], std_hour:Option[Float],
-    std_day:Option[Float], std_year:Option[Float])
+    std_day:Option[Float], std_year:Option[Float], 
+    zd_internal:Option[Float], zd_law:Option[Float],
+    sd_internal:Option[Float], sd_law:Option[Float])
     
 object MonitorType extends Enumeration{
   val mtList:List[MonitorType] =
@@ -66,7 +68,11 @@ object MonitorType extends Enumeration{
           std_law = r.floatOpt(6), 
           std_hour = r.floatOpt(7),
           std_day = r.floatOpt(8), 
-          std_year = r.floatOpt(9)
+          std_year = r.floatOpt(9),
+          zd_internal = r.floatOpt(10),
+          zd_law = r.floatOpt(11),
+          sd_internal = r.floatOpt(12),
+          sd_law = r.floatOpt(13)
           )}.list.apply
     }
   

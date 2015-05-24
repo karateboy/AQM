@@ -12,19 +12,22 @@
 <table id="calibrationReport" class="table">
 	<thead>
 		<tr>
-			<th>測站名稱</th>
-			<th>測項</th>
-			<th>開始</th>
-			<th>結束</th>
-			<th>零點標準</th>
-			<th>零點讀值</th>
-			<th>零點偏移</th>
-			<th>零點偏移內控</th>
-			<th>全幅標準值</th>
-			<th>全幅讀值</th>
-			<th>全幅偏移率</th>
-			<th>全幅內控值偏移率</th>
-			<th>全幅標準值偏移率</th>
+			<th rowspan='2'>測站名稱</th>
+			<th rowspan='2'>測項</th>
+			<th rowspan='2'>開始</th>
+			<th rowspan='2'>結束</th>
+			<th colspan='3' style="text-align: center">零點</th>
+			<th colspan='5' style="text-align: center">全幅</th>	
+		</tr>
+		<tr>
+			<th>讀值</th>
+			<th>偏移內控</th>
+			<th>偏移法規</th>
+			<th>讀值</th>
+			<th>標準值</th>
+			<th>偏移率</th>
+			<th>內控值偏移率</th>
+			<th>標準值偏移率</th>
 			<th>校正狀態</th>
 		</tr>
 	</thead>
@@ -35,15 +38,14 @@
 				<td>@MonitorType.map(item.monitorType).desp</td>
 				<td>@item.startTime.toString("yyyy年MM月dd日 hh:mm")</td>
 				<td>@item.endTime.toString("yyyy年MM月dd日 hh:mm")</td>
-				<td>@item.z_std</td>
 				<td>@item.z_val</td>
-				<td>@item.zd_val</td>
-				<td>@item.zd_pnt</td>
-				<td>@item.s_std</td>
+				<td>@MonitorType.map(item.monitorType).zd_internal</td>
+				<td>@MonitorType.map(item.monitorType).zd_law</td>
 				<td>@item.s_sval</td>
-				<td>@item.span</td>
 				<td>@item.sd_val</td>
 				<td>@item.sd_pnt</td>
+				<td>@MonitorType.map(item.monitorType).sd_internal</td>
+				<td>@MonitorType.map(item.monitorType).sd_law</td>
 				<td>-</td>
 			</tr>
 		}

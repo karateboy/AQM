@@ -39,7 +39,7 @@ object Login extends Controller {
     Ok(views.html.login())
   }
   
-  def logoff = Action{
+  def logout = Action{
     Redirect(routes.Login.prompt()).withNewSession
   }
 }

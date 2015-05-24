@@ -3,18 +3,18 @@
 @(rt_status: Map[Monitor.Value, Map[MonitorType.Value, (Option[Float], Option[String])]], psiList:List[MonitorType.Value], rt_psi: Map[Monitor.Value, (Option[Float], Map[MonitorType.Value, (Option[Float], Option[Float])])])
 <div class="row">
 	<div class="col-lg-12">
-		<h1 class="page-header">即時數據</h1>
-	</div>
-</div>
-<div class="row">
+		<div class="ibox float-e-margins">
+        	<div class="ibox-title">
+            	<h5>即時數據</h5>
+            </div>
+<div class="ibox-content">
 <ul class="nav nav-tabs">
 <li class="active"><a href="#" onClick="$('#psiDiv').css('display','none'); $('#reportDiv').css('display','initial');" data-toggle="tab"> <span class="glyphicons glyphicons-hotspot"></span>空氣品質/氣象 即時數據</a>
 </li>
 <li><a href="#" onClick="$('#psiDiv').css('display','initial'); $('#reportDiv').css('display','none');" data-toggle="tab"> <span class="glyphicons glyphicons-hotspot"></span>PSI即時數據</a></li>
 </ul>
-<div class="col-lg-12">
 <div id="reportDiv" align="center" style="overflow-x:auto">
-<table id="reportTable" class="display" cellspacing="0" width="100%">
+<table id="reportTable" cellspacing="0" width="100%">
 	<thead>
 		<tr>
 			<th>測項</th>
@@ -47,7 +47,7 @@
 </table> 
 </div>
 <div id="psiDiv" align="center" style="display:none;overflow-x:auto">
-<table id="psiTable" class="display" cellspacing="0" width="100%">
+<table id="psiTable" cellspacing="0" width="100%">
 <thead>
 	<tr>
 		<td rowspan='2'>測站</td>
@@ -62,6 +62,7 @@
 			<td>數值(@MonitorType.map(mtv).unit)</td>	
 		}
 	</tr>
+</thead>
 <tbody>
 	@for(m<-Monitor.mvList){
 		<tr>
@@ -97,10 +98,7 @@
 	}
 	
 </tbody>
-</thead>
 </table>
-
-<br/>
 <br/>
 <table border="1" class="DIV_CENTER ALT_TABLE_EVENT">
 	<tbody><tr class="ALT">
@@ -147,6 +145,10 @@
 </div>
 </div>
 </div>
+                       
+</div>
+</div>
+
 <script>
 $( document ).ready(function() {
 	$('#reportTable').dataTable( {
