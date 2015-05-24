@@ -35,5 +35,9 @@ object Security {
       request.session + (credentialKey -> userinfo)
     else
       request.session - credentialKey
-  }  
+  }
+  
+  def getUserInfo[A]()(implicit request:Request[A]){
+    request.session.get(credentialKey)
+  }
 }

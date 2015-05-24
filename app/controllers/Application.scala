@@ -21,7 +21,11 @@ object Application extends Controller {
   
   def index = Security.Authenticated{
     implicit request =>
-    Ok(views.html.index(title))
+      val userID = Security.getUserinfo(request)
+      if(userID.isEmpty)
+        Ok(views.html.index(title, ""))
+      else
+        Ok(views.html.index(title, userID.get))
   }
   
   def monitor(monitor:String) = Security.Authenticated{
