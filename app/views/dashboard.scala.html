@@ -1,6 +1,5 @@
-@(title: String, userID:String)
+@* dashboard Template File *@
 
-@outline(title, userID){
 <div class="row">
 	<div class="col-lg-3">
 		<div class="ibox float-e-margins">
@@ -168,8 +167,6 @@
            </div>
 	</div>
 </div>
-<script src="@routes.Assets.at("js/plugins/morris/raphael-2.1.0.min.js")"></script>
-<script src="@routes.Assets.at("js/plugins/morris/morris.js")"></script>
 <script>
 var mapCenter = new google.maps.LatLng(23.68875446, 120.2805895);
 
@@ -467,4 +464,3 @@ function initRealtime(){
 $(document).ready(initRealtime());
 
 </script>
-}
