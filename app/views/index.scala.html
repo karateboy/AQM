@@ -392,6 +392,8 @@ function getRealtimChart(id, monitorType){
 		type : "GET",
 		dataType : "json",
 		success : function(result) {
+		    result.legend = { enabled: false};
+			result.title={text:null};
 			$(id).highcharts(result);
 		},
 		error : function(xhr, status, errorThrown) {

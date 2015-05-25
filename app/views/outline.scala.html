@@ -49,7 +49,8 @@
 
 	<!--  Highchart -->
 	<script src='@routes.Assets.at("js/highcharts/highcharts.js")'></script>
-	<script src='@routes.Assets.at("js/highcharts/modules/exporting.js")'></script>
+	<!-- <script src='@routes.Assets.at("js/highcharts/modules/exporting.js")'></script>
+	-->
 	<!-- Morris Charts CSS -->
     
 	
@@ -79,7 +80,7 @@
     </script>
 </head>
 
-<body>
+<body class="skin-1">
 <!--New UI -->
 <div id="wrapper">
 
@@ -88,7 +89,7 @@
         <ul class="nav" id="side-menu">
             <li class="nav-header">
                 <div class="dropdown profile-element"> <span>
-                            <img alt="image" class="img-circle" src='@routes.Assets.at("images/logo.png")' height='70%' width='70%' />
+                             <img alt="image" class="img-circle" src='@routes.Assets.at("images/logo1.png")' height='60%' width='60%' />
                              </span>
                     <a data-toggle="dropdown" class="dropdown-toggle" href="#">
                             <span class="clear"> <span class="block m-t-xs"> <strong class="font-bold">@userID</strong>
@@ -127,7 +128,7 @@
                 </ul>
             </li>
             <li>
-                <a href="#"><i class="fa fa-table"></i> <span class="nav-label">報表查詢 </span><span class="label label-warning pull-right">16/24</span></a>
+                <a href="#"><i class="fa fa-table"></i> <span class="nav-label">報表查詢 </span></a>
                 <ul class="nav nav-second-level">
                     <li><a href="#" onClick="loadPage('/report/@ReportType.MonitorReport','報表查詢','監測報表')">監測報表</a></li>
                     <li><a href="#">測站數據比較報表</a></li>
@@ -146,7 +147,7 @@
                 </ul>
             </li>
             <li>
-                <a href="#"><i class="fa fa-desktop"></i> <span class="nav-label">系統管理</span>  <span class="pull-right label label-primary">SPECIAL</span></a>
+                <a href="#"><i class="fa fa-desktop"></i> <span class="nav-label">系統管理</span></a>
                 <ul class="nav nav-second-level">
                     <li><a href="#">管理權限</a></li>
                     <li><a href="#" onClick="loadPage('/MonitorTypeConfig','系統管理','測項參數')">測項參數</a></li>
@@ -167,7 +168,9 @@
         <div class="navbar-header">
         	<span style="display:inline">
         		<a class="navbar-minimalize minimalize-styl-2 btn btn-primary " href="#"><i class="fa fa-bars"></i> </a>
-            	<img src='@routes.Assets.at("images/title/logo.png")' width='458' height='38'>
+				
+            	<img src='@routes.Assets.at("images/title.png")' width='70%' height='70%'>
+				
         	</span>            
         </div>
         <ul class="nav navbar-top-links navbar-right">
@@ -224,20 +227,11 @@
 
     </nav>
 </div>
-<div class="row wrapper border-bottom white-bg page-heading">
+<div class="row wrapper border-bottom white-bg">
     <div class="col-lg-10">
-        <h2 id='breadcrumb-title'>即時畫面</h2>
-        <ol class="breadcrumb">
-            <li>
-                <a href="#" id='breadcrumb-root'>即時資訊</a>
-            </li>
-            <li class="active">
-                <strong id='breadcrumb-level1'>即時畫面</strong>
-            </li>
-        </ol>
-    </div>
-    <div class="col-lg-2">
-
+		
+        <h5 id='breadcrumb-title'>即時畫面</h2>
+		
     </div>
 </div>
 

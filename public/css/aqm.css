@@ -15,9 +15,12 @@
 		
 	.realtimeChart_container{
     	position: relative;
-    	width: 100%;
-    	padding-bottom: 100%;
+    	width: 120%;
 	}
+
+.login-panel {
+    margin-top: 25%;
+}
 	
 .PSI1 {
 	COLOR: #000000; BACKGROUND-COLOR: #00ff00;

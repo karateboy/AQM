@@ -127,7 +127,7 @@ object Realtime extends Controller {
 
   case class XAxis(categories: Option[Seq[String]])
   case class AxisLineLabel(align:String, text:String)
-  case class AxisLine(color:String, width:Int, value:Float, label:AxisLineLabel)
+  case class AxisLine(color:String, width:Int, value:Float, label:Option[AxisLineLabel])
   case class AxisTitle(text:Option[String])
   case class YAxis(labels:Option[String], title:AxisTitle, plotLines:Option[Seq[AxisLine]])
   case class Legend(enabled: Boolean)
@@ -164,15 +164,15 @@ object Realtime extends Controller {
        val axisLines = if(mtCase.std_internal.isEmpty || mtCase.std_law.isEmpty)
          None     
        else{
-         Some(Seq(AxisLine("#0000FF", 2, mtCase.std_internal.get, AxisLineLabel("left", "內控值")),
-             AxisLine("#FF0000", 2, mtCase.std_law.get, AxisLineLabel("right","法規值"))
+         Some(Seq(AxisLine("#0000FF", 2, mtCase.std_internal.get, None),
+             AxisLine("#FF0000", 2, mtCase.std_law.get, None)
              ))
        }
        
        val c = HighchartData(
           Map("type"->"column"),
           Map("text"->title),
-          XAxis(Some(Seq("即時"))),
+          XAxis(Some(Seq(""))),
           YAxis(None, AxisTitle(Some(mtCase.unit)), axisLines),
           series)
         
