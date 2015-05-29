@@ -5,6 +5,8 @@ import play.api.Logger
 import models._
 import models.Realtime._
 import com.github.nscala_time.time.Imports._
+import models.ModelHelper._
+
 
 object Realtime extends Controller {
   def trendReport = Security.Authenticated {
@@ -13,9 +15,10 @@ object Realtime extends Controller {
 
   def realtimeStat = Security.Authenticated {
     implicit request =>
-      val rt_status = getRealtimeStatusHour()
-      val rt_psi = getRealtimePSI
-      Ok(views.html.realtimeStatus(rt_status, MonitorType.psiList, rt_psi))
+      val current = getLatestRecordTime(TableType.Min).get
+      val rt_status = getRealtimeMinStatus(current)
+      val rt_psi = getRealtimePSI(current)
+      Ok(views.html.realtimeStatus(current, rt_status, MonitorType.psiList, rt_psi))
   }
 
   def realtimeImg = Security.Authenticated {
@@ -85,8 +88,9 @@ object Realtime extends Controller {
             if (param.monitorTypes.length != 1) {
               Json.toJson("more than 1 types")
             } else {
+              val current = getLatestRecordTime(TableType.Hour).get
               val trend =
-                realtimeMonitorTrend(param.monitors, param.monitorTypes(0))
+                realtimeMonitorTrend(current, param.monitors, param.monitorTypes(0))
                 
               val data = 
                 for { i <- 8 to 0 by -1 } yield {
@@ -130,10 +134,8 @@ object Realtime extends Controller {
   case class AxisLine(color:String, width:Int, value:Float, label:Option[AxisLineLabel])
   case class AxisTitle(text:Option[String])
   case class YAxis(labels:Option[String], title:AxisTitle, plotLines:Option[Seq[AxisLine]])
-  case class Legend(enabled: Boolean)
   case class seqData(name:String, data: Seq[Float])
   case class HighchartData(chart: Map[String, String],
-                           title: Map[String, String],
                            xAxis: XAxis,
                            yAxis: YAxis,
                            series: Seq[seqData])
@@ -148,34 +150,31 @@ object Realtime extends Controller {
 
   def highchartJson(monitorTypeStr: String) = Security.Authenticated {
     implicit request =>
-      val monitorType = MonitorType.withName(monitorTypeStr)
-      val mtCase = MonitorType.map(monitorType)
+      val mt = MonitorType.withName(monitorTypeStr)
+      val mtCase = MonitorType.map(mt)
+
+      val latestRecordTime = getLatestRecordTime(TableType.Min).get      
       
-       val series = for(m <- Monitor.mvList)
-          yield{
-           if(!mtCase.std_law.isEmpty)
-             seqData(Monitor.map(m).name, Seq(Math.random().toFloat * 2 * mtCase.std_law.get))
-           else
-             seqData(Monitor.map(m).name, Seq(Math.random().toFloat))
-         }
-      
-       
-       val title = mtCase.desp + " 即時資料"
-       val axisLines = if(mtCase.std_internal.isEmpty || mtCase.std_law.isEmpty)
-         None     
-       else{
-         Some(Seq(AxisLine("#0000FF", 2, mtCase.std_internal.get, None),
-             AxisLine("#FF0000", 2, mtCase.std_law.get, None)
-             ))
-       }
-       
-       val c = HighchartData(
-          Map("type"->"column"),
-          Map("text"->title),
-          XAxis(Some(Seq(""))),
-          YAxis(None, AxisTitle(Some(mtCase.unit)), axisLines),
-          series)
-        
+      val realtimeValueMap = getRealtimeMonitorValueMap(mt, latestRecordTime)
+
+      val series = for (m <- Monitor.mvList) yield {
+        seqData(Monitor.map(m).name, Seq(realtimeValueMap.getOrElse(m, 0f)))
+      }
+
+      val title = mtCase.desp + " 即時資料"
+      val axisLines = if (mtCase.std_internal.isEmpty || mtCase.std_law.isEmpty)
+        None
+      else {
+        Some(Seq(AxisLine("#0000FF", 2, mtCase.std_internal.get, None),
+          AxisLine("#FF0000", 2, mtCase.std_law.get, None)))
+      }
+
+      val c = HighchartData(
+        Map("type" -> "column"),
+        XAxis(Some(Seq(latestRecordTime.toString("yyyy:MM:DD HH:mm")))),
+        YAxis(None, AxisTitle(Some(mtCase.unit)), axisLines),
+        series)
+
       Ok(Json.toJson(c))
   }
 }

@@ -18,7 +18,7 @@
             		<h5>測站</h5>
             		<div class="btn-group" data-toggle="buttons">
             			@for(m<-Monitor.getImageMonitorList){
-            				<label class="btn btn-default" id="@m.id");">
+            				<label class="btn btn-outline btn-primary dim" id="@m.id");">
 								<input type="radio" name="monitor" id="@m.id" >@m.name</label>		
             			}
             		</div>

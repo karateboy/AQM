@@ -24,6 +24,12 @@ case class DailyReport(
    typeList:Array[MonitorTypeRecord]
   )
 
+object TableType extends Enumeration{
+  val Hour = Value("Hour")
+  val Min = Value("Min")
+  val SixSec = Value("SixSec")
+}
+
 object Record {
   case class HourRecord(
     name:String,
@@ -117,10 +123,10 @@ object Record {
     val start: Timestamp = startTime
     val end: Timestamp = endTime
     val monitorName = monitor.toString()
-    
-    //DB readOnly { implicit session =>
+    val tab_name = getTabName(TableType.Hour, startTime.getYear)
       sql"""
-        Select * From P1234567_Hr_2015 
+        Select * 
+        From ${tab_name}
         Where DP_NO=${monitorName} and M_DateTime >= ${start} and M_DateTime < ${end}
         ORDER BY M_DateTime ASC
       """.map { mapper }.list().apply()  
@@ -314,4 +320,14 @@ object Record {
     }
   }
   
+  def getTabName(tab:TableType.Value, year:Int)={
+    tab match {
+      case TableType.Hour =>
+        SQLSyntax.createUnsafely(s"[AQMSDB].[dbo].[P1234567_Hr_${DateTime.now.getYear}]")
+      case TableType.Min=>
+        SQLSyntax.createUnsafely(s"[AQMSDB].[dbo].[P1234567_M1_${DateTime.now.getYear}]")
+      case TableType.SixSec=>
+        SQLSyntax.createUnsafely(s"[AQMSDB].[dbo].[P1234567_S6_${DateTime.now.getYear}]")
+    }     
+  }
 }

@@ -18,3 +18,4 @@ server.pid
 .project
 .classpath
 /.settings
+/conf/application.conf

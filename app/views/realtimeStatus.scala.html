@@ -1,52 +1,68 @@
 @* realtimeStatus Template File *@
 @import models.Realtime._
-@(rt_status: Map[Monitor.Value, Map[MonitorType.Value, (Option[Float], Option[String])]], psiList:List[MonitorType.Value], rt_psi: Map[Monitor.Value, (Option[Float], Map[MonitorType.Value, (Option[Float], Option[Float])])])
+@import com.github.nscala_time.time.Imports._
+@(current:DateTime, rt_status: Map[Monitor.Value, Map[MonitorType.Value, (Option[Float], Option[String])]], psiList:List[MonitorType.Value], rt_psi: Map[Monitor.Value, (Option[Float], Map[MonitorType.Value, (Option[Float], Option[Float])])])
 <div class="row">
 	<div class="col-lg-12">
 		<div class="ibox float-e-margins">
         	<div class="ibox-title">
-            	<h5>即時數據</h5>
+            	<h5>@current.toString("YYYY-MM-dd HH:mm")</h5>
             </div>
 <div class="ibox-content">
 <ul class="nav nav-tabs">
-<li class="active"><a href="#" onClick="$('#psiDiv').css('display','none'); $('#reportDiv').css('display','initial');" data-toggle="tab"> <span class="glyphicons glyphicons-hotspot"></span>空氣品質/氣象 即時數據</a>
+<li class="active">
+	<a data-toggle="tab" href="#reportDiv"> <span class="glyphicons glyphicons-hotspot"></span>空氣品質/氣象 即時數據</a>
 </li>
-<li><a href="#" onClick="$('#psiDiv').css('display','initial'); $('#reportDiv').css('display','none');" data-toggle="tab"> <span class="glyphicons glyphicons-hotspot"></span>PSI即時數據</a></li>
+<li>
+	<a data-toggle="tab" href="#psiDiv"> <span class="glyphicons glyphicons-hotspot"></span>PSI即時數據</a>
+</li>
 </ul>
-<div id="reportDiv" align="center" style="overflow-x:auto">
+<div class="tab-content">
+<div id="reportDiv" class="tab-pane active">
 <table id="reportTable" cellspacing="0" width="100%">
 	<thead>
 		<tr>
-			<th>測項</th>
-			<td>法規值</td>
-			@for(m <- Monitor.monitorList){
-				<td>@m.name</td>
+			  
+			<th>測站</th>
+			
+			@for(mt <- MonitorType.realtimeList){
+				<th>@MonitorType.map(mt).desp</th>
 			}
 		</tr>
 	</thead>
 	<tbody>
-		@for(mt <- MonitorType.realtimeList){
-			<tr>
-				<td>@MonitorType.map(mt).desp (@MonitorType.map(mt).unit)</td>
-				@if(MonitorType.map(mt).std_law.isEmpty){
-					<td>-</td>	
-				}else{
-					<td>@MonitorType.map(mt).std_law</td>
+		<!--  
+	
+		<tr>
+			<td>法規值</td>
+				@for(mt <- MonitorType.realtimeList){
+					@if(MonitorType.map(mt).std_law.isEmpty){
+						<td>-</td>	
+					}else{
+						<td>@MonitorType.map(mt).std_law</td>
+					}
 				}
+			
+		</tr>
+		-->
+		@for(m <- Monitor.mvList){
+			<tr>
+				<td>@Monitor.map(m).name</td> 
 				
-				@for(m<-Monitor.mvList){
-					@if(rt_status(m)(mt)._1.isEmpty){
+			@for(mt <- MonitorType.realtimeList){
+				@if(rt_status(m)(mt)._1.isEmpty){
 						<td>-</td>						
 					}else{
 						<td>@("%.2f".format(rt_status(m)(mt)._1.get))</td>
 					}
-				}
+			}
+			
 			</tr>
 		}
 	</tbody>
 </table> 
 </div>
-<div id="psiDiv" align="center" style="display:none;overflow-x:auto">
+<div id="psiDiv" class="tab-pane" align="center">
 <table id="psiTable" cellspacing="0" width="100%">
 <thead>
 	<tr>
@@ -145,10 +161,12 @@
 </div>
 </div>
 </div>
+</div>
                        
 </div>
 </div>
 
+<script src='@routes.Assets.at("js/inspinia.js")'></script>
 <script>
 $( document ).ready(function() {
 	$('#reportTable').dataTable( {

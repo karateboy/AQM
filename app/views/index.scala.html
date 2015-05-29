@@ -9,14 +9,7 @@
                        <div class="ibox-tools">
                            <a class="collapse-link">
                                <i class="fa fa-chevron-up"></i>
-                           </a>
-                           <a class="dropdown-toggle" data-toggle="dropdown" href="#">
-                               <i class="fa fa-wrench"></i>
-                           </a>
-                           <ul class="dropdown-menu dropdown-user">
-                               <li><a href="#">設定</a>
-                               </li>                                
-                           </ul>
+                           </a>                                                     
                            <a class="close-link">
                                <i class="fa fa-times"></i>
                            </a>
@@ -34,14 +27,7 @@
                        <div class="ibox-tools">
                            <a class="collapse-link">
                                <i class="fa fa-chevron-up"></i>
-                           </a>
-                           <a class="dropdown-toggle" data-toggle="dropdown" href="#">
-                               <i class="fa fa-wrench"></i>
-                           </a>
-                           <ul class="dropdown-menu dropdown-user">
-                               <li><a href="#">設定</a>
-                               </li>                                
-                           </ul>
+                           </a>                                                      
                            <a class="close-link">
                                <i class="fa fa-times"></i>
                            </a>
@@ -59,14 +45,7 @@
                        <div class="ibox-tools">
                            <a class="collapse-link">
                                <i class="fa fa-chevron-up"></i>
-                           </a>
-                           <a class="dropdown-toggle" data-toggle="dropdown" href="#">
-                               <i class="fa fa-wrench"></i>
-                           </a>
-                           <ul class="dropdown-menu dropdown-user">
-                               <li><a href="#">設定</a>
-                               </li>                                
-                           </ul>
+                           </a>                                                     
                            <a class="close-link">
                                <i class="fa fa-times"></i>
                            </a>
@@ -84,14 +63,7 @@
                        <div class="ibox-tools">
                            <a class="collapse-link">
                                <i class="fa fa-chevron-up"></i>
-                           </a>
-                           <a class="dropdown-toggle" data-toggle="dropdown" href="#">
-                               <i class="fa fa-wrench"></i>
-                           </a>
-                           <ul class="dropdown-menu dropdown-user">
-                               <li><a href="#">設定</a>
-                               </li>                                
-                           </ul>
+                           </a>                                                   
                            <a class="close-link">
                                <i class="fa fa-times"></i>
                            </a>
@@ -109,14 +81,7 @@
                        <div class="ibox-tools">
                            <a class="collapse-link">
                                <i class="fa fa-chevron-up"></i>
-                           </a>
-                           <a class="dropdown-toggle" data-toggle="dropdown" href="#">
-                               <i class="fa fa-wrench"></i>
-                           </a>
-                           <ul class="dropdown-menu dropdown-user">
-                               <li><a href="#">設定</a>
-                               </li>                                
-                           </ul>
+                           </a>                                                  
                            <a class="close-link">
                                <i class="fa fa-times"></i>
                            </a>
@@ -134,14 +99,7 @@
                        <div class="ibox-tools">
                            <a class="collapse-link">
                                <i class="fa fa-chevron-up"></i>
-                           </a>
-                           <a class="dropdown-toggle" data-toggle="dropdown" href="#">
-                               <i class="fa fa-wrench"></i>
-                           </a>
-                           <ul class="dropdown-menu dropdown-user">
-                               <li><a href="#">設定</a>
-                               </li>                                
-                           </ul>
+                           </a>                           
                            <a class="close-link">
                                <i class="fa fa-times"></i>
                            </a>
@@ -168,8 +126,6 @@
            </div>
 	</div>
 </div>
-<script src="@routes.Assets.at("js/plugins/morris/raphael-2.1.0.min.js")"></script>
-<script src="@routes.Assets.at("js/plugins/morris/morris.js")"></script>
 <script>
 var mapCenter = new google.maps.LatLng(23.68875446, 120.2805895);
 
@@ -392,7 +348,9 @@ function getRealtimChart(id, monitorType){
 		type : "GET",
 		dataType : "json",
 		success : function(result) {
-		    result.legend = { enabled: false};
+			result.tooltip ={
+            	valueDecimals: 2};
+            result.legend={enabled:false};
 			result.title={text:null};
 			$(id).highcharts(result);
 		},

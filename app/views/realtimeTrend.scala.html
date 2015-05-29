@@ -5,43 +5,41 @@
        	<div class="panel panel-primary" id="paramPanel">
            	<div class="panel-heading panel-title" >
            		<a data-toggle="collapse" href="#reportParam">查詢項目</a>	
-               </div>
+            </div>
            	<div class="panel-body panel-collapse in" id="reportParam">
            		<h5>測站</h5>
            		<div class="btn-group" data-toggle="buttons">
            			@for(m<-Monitor.monitorList){
-           				<label class="btn btn-default">
+           				<label class="btn btn-outline btn-primary dim">
 							<input type="checkbox" name="monitor" id="@m.id">@m.name</label>		
            			}
            		</div>
 				<h5>監測項目</h5>
 				<div class="btn-group" data-toggle="buttons">
 				    @for(mt<-MonitorType.realtimeList){
-           				<label class="btn btn-default">
+           				<label class="btn btn-outline btn-primary dim">
 							<input type="checkbox" name="monitorType" id="@MonitorType.map(mt).id">@MonitorType.map(mt).desp</label>		
            			}
 				</div>
 				<h5>圖形種類</h5>
 				<div class="btn-group" data-toggle="buttons">
-					<label class="btn btn-default active">
+					<label class="btn btn-outline btn-primary dim active">
 						<input type="radio" name="chartType" id="1" checked>柱狀圖</label>
-					<label class="btn btn-default">
+					<label class="btn btn-outline btn-primary dim">
 						<input type="radio" name="chartType" id="2">折線圖</label>
-					<label class="btn btn-default">
+					<label class="btn btn-outline btn-primary dim">
 						<input type="radio" name="chartType" id="3">折線面積圖</label>
 						
 				</div>
 				</br>
 				</br>
-				<div>
-					<button type="button" class="btn btn-primary" id="queryReport">查詢</button>
-				</div>
+				<button type="button" class="btn btn-primary" id="queryReport">查詢</button>				
            	</div>
        	</div>
        	<div class="panel panel-success" style="display:none" id="reportPanel">
            	<div class="panel-heading panel-title"" >
            		<a data-toggle="collapse" href="#monitorReport">即時趨勢圖</a>	
-               </div>
+            </div>
            	<div class="panel-body panel-collapse collapse" id="monitorReport">
 				<div id="reportWell" align="center" style="overflow-x:auto">
 					  <h3></h3>
@@ -52,14 +50,11 @@
        	</div> <!-- end of panel group -->
 	</div>
 </div>
+
+<script src='@routes.Assets.at("js/plugins/morris/raphael-2.1.0.min.js")'></script>
+<script src='@routes.Assets.at("js/plugins/morris/morris.js")'></script>
 <script>
 	$(document).ready(function() {
-		$('#reportDate').datepicker({
-			format : 'yyyy-mm-dd',
-			todayBtn : "linked",
-			language : "zh-TW"
-		});
-
 		var monitors, monitorTypes;
 
 		function validate() {

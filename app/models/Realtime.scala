@@ -24,34 +24,33 @@ object Realtime {
     SixSecRecord(c911.toArray, c912.toArray)
   }
 
-  def getRealtimeStatusHour() = {
+  def getRealtimeMinStatus(current:DateTime) = {
 
     DB readOnly { implicit session =>
-      Logger.debug("RealtimeStatus=>" + DateTime.now)
-      val top13 =
+      val tab_name = Record.getTabName(TableType.Min, current.getYear)
+      val hrs =
             sql"""
-              SELECT TOP 13 *
-              FROM [AQMSDB].[dbo].[P1234567_Hr_2015]
-              ORDER BY M_DateTime  DESC
+              SELECT *
+              FROM ${tab_name}
+              WHERE M_DateTime = ${current}
              """.map { Record.mapper }.list.apply
 
       val rt_result =
         for { m <- Monitor.mvList } yield {
           import scala.collection.mutable.Map
-          val topMap: Map[Monitor.Value, HourRecord] = Map()
+          val hrMap: Map[Monitor.Value, HourRecord] = Map()
 
-          for (hr <- top13) {
+          for (hr <- hrs) {
             val m = Monitor.withName(hr.name)
-            if (!topMap.contains(m))
-              topMap += (m -> hr)
+            if (!hrMap.contains(m))
+              hrMap += (m -> hr)
           }
 
-          val hr = topMap.getOrElse(m, emptyRecord(Monitor.map(m).id, DateTime.now))
+          val hr = hrMap.getOrElse(m, emptyRecord(Monitor.map(m).id, current))
           val type_record = monitorTypeProjection.map(
             t => (t._1 -> (t._2._1(hr), t._2._2(hr))))
           (m -> type_record)
         }
-      Logger.debug("RealtimeStatus=>" + DateTime.now)   
       Map(rt_result: _*)
     }
   }
@@ -108,8 +107,10 @@ object Realtime {
     
   def getMonitorTypeAvg(monitor: Monitor.Value, monitorType: MonitorType.Value, start: DateTime, end: DateTime)(implicit session: DBSession = AutoSession) = {
     val records = getHourRecords(monitor, start, end)
+    Logger.info("#="+records.length)
     val typeValues = records.map { hr => monitorTypeProject2(monitorType)(hr) }
-    val validValues = typeValues.filter(v => (!v._2.isEmpty) && (Record.isValidStat(v._2.get))).map(_._1.get)
+    //val validValues = typeValues.filter(v => (!v._2.isEmpty) && (Record.isValidStat(v._2.get))).map(_._1.get)
+    val validValues = typeValues.filter(v => (!v._2.isEmpty)).map(_._1.get)
     val total = validValues.length
     if (total == 0)
       None
@@ -229,9 +230,7 @@ object Realtime {
       }
   }
   
-  def getMonitorRealtimePSI(monitor: Monitor.Value)(implicit session: DBSession = AutoSession) = {
-    val current = DateTime.parse("2014-10-31 23:00:00", StaticDateTimeFormat.forPattern("yyyy-MM-dd HH:mm:ss"))
-
+  def getMonitorRealtimePSI(monitor: Monitor.Value, current:DateTime)(implicit session: DBSession = AutoSession) = {
     val end = current + 1.hour
     val start = current - 11.hour
 
@@ -243,11 +242,8 @@ object Realtime {
           None
           
     val so2_24 = getMonitorTypeAvg(monitor, MonitorType.withName("A222"), current - 23.hour, current + 1.hour)
-
     val co_8 = getMonitorTypeAvg(monitor, MonitorType.withName("A224"), current - 7.hour, current + 1.hour)
-
     val o3 = getMonitorTypeAvg(monitor, MonitorType.withName("A225"), current, current + 1.hour)
-
     val no2 = getMonitorTypeAvg(monitor, MonitorType.withName("A293"), current, current + 1.hour)
     val result = Map[MonitorType.Value, (Option[Float], Option[Float])](
       MonitorType.withName("A214") -> (pm10, pm10PSI(pm10)),
@@ -256,9 +252,8 @@ object Realtime {
       MonitorType.withName("A225") -> (o3, o3PSI(o3)),
       MonitorType.withName("A293") -> (no2, no2PSI(no2)))
     val sub_psi = result.values.map(_._2)
-    Logger.debug("sub_psi:" + sub_psi)
     val psi = sub_psi.toList.max
-    Logger.debug("psi:"+psi)
+    
     (psi, result)
   }
   
@@ -275,18 +270,28 @@ object Realtime {
       "PSI5"      
   }
   
-  def getRealtimePSI(implicit session: DBSession = AutoSession) = {
+  def getRealtimePSI(current:DateTime)(implicit session: DBSession = AutoSession) = {
     val result =
       for {
         m <- Monitor.mvList
       } yield {
-        m -> getMonitorRealtimePSI(m)
+        m -> getMonitorRealtimePSI(m, current)
       }
     Map(result: _*)
   }
 
-  def realtimeMonitorTrend(monitors: Seq[Monitor.Value], monitorType: MonitorType.Value)(implicit session: DBSession = AutoSession) = {
-    val current = DateTime.parse("2014-10-31 23:00:00", StaticDateTimeFormat.forPattern("yyyy-MM-dd HH:mm:ss"))
+  def getLatestRecordTime(tabType:TableType.Value)(implicit session: DBSession = AutoSession) = {
+    val tab_name = Record.getTabName(tabType, DateTime.now.getYear)
+    sql"""
+      SELECT TOP 1 M_DateTime
+      FROM ${tab_name}
+      ORDER BY M_DateTime  DESC
+      """.map { r=>r.timestamp(1) }.single.apply  
+  }
+  
+  def realtimeMonitorTrend(current:DateTime, monitors: Seq[Monitor.Value], monitorType: MonitorType.Value)(implicit session: DBSession = AutoSession) = {
+    val tab_name = Record.getTabName(TableType.Hour, current.getYear)
+
     def fillMissingRecord(monitor: Monitor.Value, data: List[HourRecord], expected: DateTime): List[HourRecord] = {
       if (expected > current)
         Nil
@@ -302,9 +307,9 @@ object Realtime {
       for {
         m <- monitors
         hrList = sql"""
-      SELECT TOP 9 *
-      FROM [AQMSDB].[dbo].[P1234567_Hr_2015]
-      WHERE DP_NO = ${Monitor.map(m).id}
+      SELECT *
+      FROM ${tab_name}
+      WHERE DP_NO = ${Monitor.map(m).id} and M_DateTime >= ${current - 8.hour}
       ORDER BY M_DateTime  DESC
       """.map { Record.mapper }.list.apply
         filledList = fillMissingRecord(m, hrList.reverse, current - 8.hour)
@@ -315,9 +320,28 @@ object Realtime {
           } 
         }
       } yield {
+        Logger.info("hr#="+hrList.length)
         m -> v
       }
 
     Map(result: _*)
+  }
+  
+  def getRealtimeMonitorValueMap(mt:MonitorType.Value, current:Timestamp)(implicit session: DBSession = AutoSession) = {
+    val datetime = current.toDateTime 
+    val tab = Record.getTabName(TableType.Min, datetime.getYear)
+    val records = sql"""
+      SELECT *
+      FROM ${tab}
+      WHERE M_DateTime = ${current}
+      """.map { Record.mapper }.list.apply
+
+    val kvs =
+      for { r <- records } yield {
+        val (v, s) = Record.monitorTypeProject2(mt)(r)
+        Monitor.withName(r.name) -> v.getOrElse(0f)
+      }
+    
+    Map( kvs :_*)
   }
 }
