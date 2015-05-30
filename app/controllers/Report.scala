@@ -290,6 +290,31 @@ object Report extends Controller {
     }else
       Ok("")
   }
+  
+  def psiReportPrompt() = Security.Authenticated { 
+    implicit request =>
+      Ok(views.html.psiReport())
+  }
+  
+  def psiReportReport(monitorStr:String, reportTypeStr:String, startDateStr:String) = Security.Authenticated {
+    implicit request =>
+      import models.Realtime._
+
+      val monitor = Monitor.withName(monitorStr)
+      val reportType = PeriodReport.withName(reportTypeStr)
+      val startDate = DateTime.parse(startDateStr)
+      reportType match {
+        case PeriodReport.DailyReport=>
+          val psiList = getDailyPSI(monitor, startDate)
+          Ok(views.html.psiDailyReport(monitor, startDate, psiList))
+        case PeriodReport.MonthlyReport=>
+          Ok("")
+        case PeriodReport.YearlyReport=>
+          Ok("")
+      }
+      
+  }
+  
 }
 
 

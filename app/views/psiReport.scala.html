@@ -1,39 +1,36 @@
-@* trendReport Template File *@
-<div class="row">
-	<div class="col-lg-12">
-		<h1 class="page-header">歷史趨勢圖</h1>
-	</div>
-</div>
+@* periodReport Template File *@
+
 <div class="row">
    	<div class="col-lg-12">
-    		<div class="panel-group" id="accordion">
+    	<div class="panel-group" id="accordion">
         	<div class="panel panel-primary" id="paramPanel">
             	<div class="panel-heading panel-title" >
-            		<a data-toggle="collapse" data-parent="#accordion" href="#reportParam">趨勢參數</a>	
+            		<a data-toggle="collapse" data-parent="#accordion" href="#reportParam">報表參數</a>	
                 </div>
             	<div class="panel-body panel-collapse in" id="reportParam">
             		<h5>測站</h5>
             		<div class="btn-group" data-toggle="buttons">
             			@for(m<-Monitor.values.toList){
             				<label class="btn btn-outline btn-primary dim">
-								<input type="checkbox" name="monitor" id="@m">@Monitor.getDisplayName(m)</label>		
+								<input type="radio" name="monitor" id="@m">@Monitor.getDisplayName(m)</label>		
             			}
             		</div>
-					<h5>監測項目</h5>
+            		<h5>報表種類</h5>
 					<div class="btn-group" data-toggle="buttons">
-					    @for(mt<-MonitorType.mtvList){
-            				<label class="btn btn-outline btn-primary dim">
-								<input type="checkbox" name="monitorType" id="@mt">@MonitorType.map(mt).desp</label>		
-            			}
-  
+						<label class="btn btn-outline btn-primary dim">
+							<input type="radio" name="reportType" id="@PeriodReport.DailyReport">日報</label>
+						<label class="btn btn-outline btn-primary dim">
+							<input type="radio" name="reportType" id="@PeriodReport.MonthlyReport">月報</label>
+						<label class="btn btn-outline btn-primary dim">
+							<input type="radio" name="reportType" id="@PeriodReport.YearlyReport">年報</label>
 					</div>
- 					<h5>查詢區間</h5>
- 					<div class="input-daterange input-group" id="datepicker">
-                    	<span class="input-group-addon"><i class="fa fa-calendar"></i></span><input type="text" class="input-sm form-control" name="start" id="reportStart" required/>
-                       	<span class="input-group-addon">至</span>
-                        <input type="text" class="input-sm form-control" name="end" id="reportEnd" required/>                        
-                    </div>
-					<br/>
+					<h5>查詢日期</h5>
+					<div class="col-lg-2 input-group date" id="reportDateDiv">
+						<div class="input-group date">
+  							<span class="input-group-addon"><i class="fa fa-calendar"></i></span><input type="text" class="form-control" id="reportDate" required>
+  						</div>  							
+					</div>
+					</br>
 					<div>
 						<button type="button" class="btn btn-primary" id="queryReport">查詢</button>
 					</div>
@@ -41,27 +38,28 @@
         	</div>
         	<div class="panel panel-success" style="display:none" id="reportPanel">
             	<div class="panel-heading panel-title"" >
-            		<a data-toggle="collapse" data-parent="#accordion" href="#monitorReport">歷史趨勢圖</a>	
+            		<a data-toggle="collapse" data-parent="#accordion" href="#monitorReport">監測報表</a>	
                 </div>
             	<div class="panel-body panel-collapse" id="monitorReport">
 					<div id="reportDiv" align="center" style="overflow-x:auto">
-					            		
+					<h2>監測日報表</h2>
+            		<table id="reportTable" class="display" cellspacing="0" width="100%">
+            		</table>            		
             		</div>
             	</div>
-        	</div> <!-- end of panel group -->
+        	</div>
     	</div>
 	</div>
 </div>
 <script>
-$( document ).ready(function() {
-	
-	$('#datepicker').datepicker({
+$(document).ready(function() {
+	$('#reportDateDiv').datepicker({
 		format: 'yyyy-mm-dd',
 	    todayBtn: "linked",
 	    language: "zh-TW"
 	});
 
-	var monitor, reportStart, reportEnd;
+	var monitor, reportType, reportDate;
 	
 	function validate(){
 		monitor = $("input[name='monitor']:checked").attr('id');
@@ -69,16 +67,14 @@ $( document ).ready(function() {
 			alert('請選擇測站');
 			return false;
 		}
-		
-		reportStart = $('#reportStart').val();
-		if(reportStart.length === 0){
-			alert('請選擇開始日期');
+		reportType = $("input[name='reportType']:checked").attr('id');
+		if (!reportType) {
+			alert('請選擇報表種類');
 			return false;
 		}
-		
-		reportEnd = $('#reportEnd').val();
-		if(reportStart.length === 0){
-			alert('請選擇結束日期');
+		reportDate = $('#reportDate').val();
+		if(reportDate.length === 0){
+			alert('請選擇報表日期');
 			return false;
 		}
 		
@@ -95,17 +91,24 @@ $( document ).ready(function() {
 
 		$('#reportDiv').html('');
 		$("body").css("cursor", "progress");
-		var url = "/HTML/CalibrationQuery/" + monitor + "/" + reportStart + "/" + reportEnd;
-		console.log(url);
+		var url = "/PsiQueryReport/"+monitor+"/"+reportType+"/"+reportDate;
+		 
 		$.ajax({
-			url: url,
-			data: '',
+			url:url,
+			data: "",
 			contentType: "application/json; charset=utf-8",
 			type: "GET",
 			dataType: "html",
 			success: function(result){
+				console.log(result);
 				$('#reportDiv').html(result);
-
+				$('#reportTable').dataTable( {
+					language: {
+						url: '@routes.Assets.at("localization/zh_tw.json")'
+					},
+					"paging":   false,
+					"searching": false
+				} );
 			},
 			error: function(xhr, status, errorThrown){
 				console.log("錯誤訊息:" + status + "-" + errorThrown);
@@ -118,5 +121,4 @@ $( document ).ready(function() {
 	});
 });
 </script>
-
 

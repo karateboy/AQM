@@ -87,7 +87,15 @@ object Record {
     air_pressure_stat:Option[String]
     )
 
-  type SixMinRecord = HourRecord
+  case class SixSecRecord(
+    monitor:Monitor.Value,
+    time:DateTime,
+    winSpeed:Float,
+    winDir:Float,
+    status:String
+  )
+  
+  type MinRecord = HourRecord
   val NORMAL_STAT = "010"
   val OVER_STAT = "011"
   val BELOW_STAT = "012"
@@ -95,6 +103,8 @@ object Record {
   def isValidStat(s:String)={
     VALID_STATS.contains(s)
   }
+  
+  def emptySixSecRecord(m:Monitor.Value, t:DateTime) = SixSecRecord(m, t, 0f, 0f, NORMAL_STAT)  
   
   def mapper(rs: WrappedResultSet) = {
     HourRecord(rs.string(1), rs.timestamp(2), rs.stringOpt(3), rs.floatOpt(4), rs.stringOpt(5), 
@@ -109,6 +119,22 @@ object Record {
         rs.floatOpt(46), rs.stringOpt(47), rs.floatOpt(48), rs.stringOpt(49),  rs.floatOpt(50),
         rs.stringOpt(51), rs.floatOpt(52), rs.stringOpt(53)
     )
+  }
+  
+  def sixSecMapper(rs: WrappedResultSet) = {
+    val windSpeed = rs.floatOpt(4).getOrElse(0f)      
+    
+    val windDir = rs.floatOpt(24).getOrElse(0f)
+
+    val status = rs.stringOpt(5).getOrElse("010")
+    
+    SixSecRecord(
+        Monitor.withName(rs.string(1)),
+        rs.timestamp(2),
+        windSpeed,
+        windDir,
+        status
+        )
   }
   
   def getCount(start:Timestamp, end:Timestamp)={

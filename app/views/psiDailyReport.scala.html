@@ -1,0 +1,60 @@
+@* dailyReport Template File *@
+@import models.Realtime._
+@import com.github.nscala_time.time.Imports._
+@(monitor: Monitor.Value, reportDate:DateTime, psiHourRecords: List[(Option[Float], Map[MonitorType.Value, (Option[Float], Option[Float])])])
+
+<b>
+<h3>空氣品質PSI報表</h3>
+<h4>監測站:@Monitor.map(monitor).name</h4>
+<h4>日期:@reportDate.toString("yyyy年MM月dd日")</h4>
+</b>
+<table id="reportTable" class="table" cellspacing="0" width="100%">
+<thead>
+	<tr>
+		<td rowspan='2'>小時</td>
+		<td rowspan='2'>PSI指標</td>
+		@for(mtv<-MonitorType.psiList){
+			<td colspan='2'>@MonitorType.map(mtv).desp</td>		
+		}		
+	</tr>
+	<tr>
+		@for(mtv<-MonitorType.psiList){
+			<td>副指標</td>
+			<td>數值(@MonitorType.map(mtv).unit)</td>	
+		}
+	</tr>
+</thead>
+<tbody>
+	@for(i<-0 to 23){
+		<tr>
+			<th>@("%02d:00".format(i))</th>
+		@if(psiHourRecords(i)._1.isDefined){
+			<td class="@getPsiLevel(psiHourRecords(i)._1.get)">@("%.0f".format(psiHourRecords(i)._1.get))</td>
+			
+			@for(mtv<-MonitorType.psiList){
+				@if(psiHourRecords(i)._2(mtv)._2.isDefined){
+					<td>@("%.0f".format(psiHourRecords(i)._2(mtv)._2.get))</td>	
+				}else{
+					<td>-</td>
+				}
+				@if(psiHourRecords(i)._2(mtv)._1.isDefined){
+					<td>@("%.2f".format(psiHourRecords(i)._2(mtv)._1.get))</td>	
+				}else{
+					<td>-</td>
+				}				
+			}
+		}else{
+			<td>-</td>
+			@for(mtv<-MonitorType.psiList){
+				<td>-</td>
+				<td>-</td>
+			}
+		}
+		</tr>	
+	}	
+</tbody>
+</table> 
+<script>
+
+</script>           		
+ 

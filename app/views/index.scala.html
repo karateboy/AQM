@@ -234,24 +234,56 @@ var statusIconUrl = [
 	"@routes.Assets.at("images/repair.png")",
 	"@routes.Assets.at("images/maintance.png")",
 	"@routes.Assets.at("images/warn.png")"
-]
+];
+
 
 function getRandomInt(min, max) {
   return Math.floor(Math.random() * (max - min)) + min;
 }
 
+function refreshMarker(realtime){
+	for(var i=0;i<markerStaticData.length;i++){
+		var info = realtime.info[i];
+		statusMarkerArray[i].icon.url = statusIconUrl[info.status];
+		windMarkerArray[i].icon.rotation = info.winDir;
+		windInfoboxArray[i].setContent(Math.round(info.winSpeed*100)/100 + "m/s");
+	}
+}
+
+function refreshRealtimeInfo(){
+	$.ajax({
+		url : "/JSON/realtime/map",
+		data : "",
+		contentType : "application/json; charset=utf-8",
+		type : "GET",
+		dataType : "json",
+		success : function(result) {
+			console.log(result);
+			refreshMarker(result);
+		},
+		error : function(xhr, status, errorThrown) {
+			console.log("錯誤訊息:" + status + "-" + errorThrown);
+		},
+
+		complete : function(xhr, status) {
+			
+		}
+	});
+}
+
+
 var statusMarkerArray = [];
 function initMonitorMarker(map){
 	
 	for(var i=0;i<markerStaticData.length;i++){
-		var s = getRandomInt(0, statusIconUrl.length);
+		var s = 0;
 		var monitor = markerStaticData[i];
 		var marker = new google.maps.Marker({
 			position: new google.maps.LatLng(monitor.lat, monitor.lng),
 			map: map,
 			title:monitor.name,
 			icon:{
-				url:statusIconUrl[s],
+				url:statusIconUrl[0],
 				anchor: new google.maps.Point(12, 12),
 				scaledSize:new google.maps.Size(24,24)
 				} 
@@ -276,7 +308,7 @@ function initWindMarker(map){
 				fillColor: 'red',
 				strokeColor: "red",
 				strokeWeight: 4,
-				rotation: getRandomInt(0,365),
+				rotation: 0,
 				//anchor:google.maps.Point(-20,0),
 				scale:4
 			},
@@ -292,7 +324,7 @@ function initWindInfobox(map){
 		var monitor = markerStaticData[i];
 			
 		var myOptions = {
-			 content: getRandomInt(0,10)+"."+getRandomInt(0,10) + "m/s"
+			 content: "0.0" + "m/s"
 			,boxStyle: {
 			   border: "none"
 			  ,textAlign: "center"
@@ -422,6 +454,7 @@ function initRealtimeMap() {
 function initRealtime(){
 	initRealtimeChart();
 	initRealtimeMap();
+	refreshRealtimeInfo();
 }
 
 $(document).ready(initRealtime());

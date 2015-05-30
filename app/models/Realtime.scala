@@ -107,7 +107,6 @@ object Realtime {
     
   def getMonitorTypeAvg(monitor: Monitor.Value, monitorType: MonitorType.Value, start: DateTime, end: DateTime)(implicit session: DBSession = AutoSession) = {
     val records = getHourRecords(monitor, start, end)
-    Logger.info("#="+records.length)
     val typeValues = records.map { hr => monitorTypeProject2(monitorType)(hr) }
     //val validValues = typeValues.filter(v => (!v._2.isEmpty) && (Record.isValidStat(v._2.get))).map(_._1.get)
     val validValues = typeValues.filter(v => (!v._2.isEmpty)).map(_._1.get)
@@ -280,6 +279,22 @@ object Realtime {
     Map(result: _*)
   }
 
+  def getDailyPSI(m: Monitor.Value, start: DateTime)(implicit session: DBSession = AutoSession) = {
+    val end = start + 1.day
+    def hourRange(start: DateTime): List[DateTime] = {
+      if (start >= end)
+        Nil
+      else
+        start :: hourRange(start + 1.hours)
+    }
+
+    for {
+      hr <- hourRange(start)
+    } yield {
+      getMonitorRealtimePSI(m, hr)
+    }
+  }
+  
   def getLatestRecordTime(tabType:TableType.Value)(implicit session: DBSession = AutoSession) = {
     val tab_name = Record.getTabName(tabType, DateTime.now.getYear)
     sql"""
@@ -344,4 +359,22 @@ object Realtime {
     
     Map( kvs :_*)
   }
+  
+  def getRealtimeWeatherMap(current:Timestamp)(implicit session: DBSession = AutoSession) = {
+    val datetime = current.toDateTime 
+    val tab = Record.getTabName(TableType.SixSec, datetime.getYear)
+    val records = sql"""
+      SELECT *
+      FROM ${tab}
+      WHERE M_DateTime = ${current}
+      """.map { Record.sixSecMapper }.list.apply
+
+    val kvs =
+      for { r <- records } yield {
+        r.monitor -> r
+      }
+    
+    Map( kvs :_*)
+  }
+  
 }

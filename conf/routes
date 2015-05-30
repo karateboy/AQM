@@ -41,4 +41,6 @@ GET		/RealtimeEpaRecord			controllers.Application.realtimeEpaRecord
 
 GET		/CalibrationQuery			controllers.Application.calibrationQueryForm
 GET		/HTML/CalibrationQuery/:monitor/:start/:end controllers.Application.calibrationQueryResult(monitor, start, end)
-#GET  	/Trend/:monitor/:monitorType/:start/:end
+
+GET		/PsiQuery					controllers.Report.psiReportPrompt
+GET		/PsiQueryReport/:monitor/:reportType/:start	controllers.Report.psiReportReport(monitor, reportType, start)
