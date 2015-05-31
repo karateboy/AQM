@@ -1,0 +1,159 @@
+@* periodReport Template File *@
+@import controllers.Report._
+<div class="row">
+   	<div class="col-lg-12">
+    	<div class="panel-group" id="accordion">
+        	<div class="panel panel-primary" id="paramPanel">
+            	<div class="panel-heading panel-title" >
+            		<a data-toggle="collapse" data-parent="#accordion" href="#reportParam">報表參數</a>	
+                </div>
+            	<div class="panel-body panel-collapse in" id="reportParam">
+            		<h5>報表種類</h5>
+					<div class="btn-group" data-toggle="buttons">
+						<label class="btn btn-outline btn-primary dim active">
+							<input type="radio" name="reportType" id="@EffectiveReportType.singleSite" checked>單一測站年報</label>
+						<label class="btn btn-outline btn-primary dim">
+							<input type="radio" name="reportType" id="@EffectiveReportType.multipleSites">多測站年報</label>
+					</div>
+					<div id="monitorSelection">
+						<h5>測站</h5>
+            			<div class="btn-group" data-toggle="buttons">
+            				@for(m<-Monitor.values.toList){
+            					<label class="btn btn-outline btn-primary dim">
+									<input type="radio" name="monitor" id="@m">@Monitor.getDisplayName(m)</label>		
+            				}
+            			</div>
+					</div>
+					<div id="monitorTypeSelection" style="display:none">
+						<h5>監測項目</h5>
+						<div class="btn-group" data-toggle="buttons">
+				    		@for(mt<-MonitorType.realtimeList){
+           						<label class="btn btn-outline btn-primary dim">
+								<input type="radio" name="monitorType" id="@MonitorType.map(mt).id">@MonitorType.map(mt).desp</label>		
+           				}
+						</div>
+					</div>
+					
+					<h5>查詢年度</h5>
+					<div class="col-lg-2 input-group date" id="reportDateDiv">
+						<div class="input-group date">
+  							<span class="input-group-addon"><i class="fa fa-calendar"></i></span><input type="text" class="form-control" id="reportDate" required>
+  						</div>  							
+					</div>
+					</br>
+					<div>
+						<button type="button" class="btn btn-primary" id="queryReport">查詢</button>
+					</div>
+            	</div>
+        	</div>
+        	<div class="panel panel-success" style="display:none" id="reportPanel">
+            	<div class="panel-heading panel-title"" >
+            		<a data-toggle="collapse" data-parent="#accordion" href="#monitorReport">監測報表</a>	
+                </div>
+            	<div class="panel-body panel-collapse" id="monitorReport">
+					<div id="reportDiv" align="center" style="overflow-x:auto">
+            		</div>
+            	</div>
+        	</div>
+    	</div>
+	</div>
+</div>
+<script>
+$( document ).ready(function() {
+	$('#@EffectiveReportType.singleSite').change(function(){
+		$("#monitorSelection").css('display','block');
+		$("#monitorTypeSelection").css('display','none');		
+	});
+	
+	
+	$('#@EffectiveReportType.multipleSites').change(function(){
+		$("#monitorSelection").css('display','none');
+		$("#monitorTypeSelection").css('display','block');		
+	});
+	
+	$('#reportDateDiv').datepicker({
+		format: 'yyyy-mm-dd',
+	    todayBtn: "linked",
+	    language: "zh-TW"
+	});
+
+	var monitor, monitorTypes, reportType, reportDate;
+	
+	function validate(){
+		if(reportType == "@EffectiveReportType.singleSite"){
+			monitor = $("input[name='monitor']:checked").attr('id');
+			if (!monitor) {
+				alert('請選擇測站');
+				return false;
+			}		
+		}else{
+			reportType = $("input[name='reportType']:checked").attr('id');
+			if (!reportType) {
+				alert('請選擇報表種類');
+				return false;
+			}
+		}
+		
+		reportDate = $('#reportDate').val();
+		if(reportDate.length === 0){
+			alert('請選擇報表日期');
+			return false;
+		}
+		
+		monitorTypes = $("input[name='monitorType']:checked");
+		console.log('mt len=' + monitorTypes.length);
+		if (monitorTypes.length == 0) {
+			alert("請選擇監測項目");
+			return false;
+		}
+		
+		return true;
+	}
+	
+	$('#queryReport').click(function(){
+		if(!validate())
+			return;
+
+		$("#reportPanel").css('display','block');
+		$("#reportParam").collapse();
+		$("#reportPanel").collapse('show');
+
+		$('#reportDiv').html('');
+		$("body").css("cursor", "progress");
+
+		var url="/EffectiveAnnualReport/" + reportType;
+		if(reportType == "@EffectiveReportType.singleSite"){
+			url += "/" + monitor;
+		}else{
+			url += "/" + monitorTypes[0].id;
+		}
+		
+		$.ajax({
+			url: "/monitorReport",
+			data: "",
+			contentType: "application/json; charset=utf-8",
+			type: "GET",
+			dataType: "html",
+			success: function(result){
+				$('#reportDiv').html(result);
+
+				$('#reportTable').dataTable( {
+					language: {
+						url: '@routes.Assets.at("localization/zh_tw.json")'
+					},
+					"paging":   false,
+					"searching": false
+	    		} );	    		
+			},
+			error: function(xhr, status, errorThrown){
+				console.log("錯誤訊息:" + status + "-" + errorThrown);
+			},
+
+			complete: function(xhr, status){
+				$("body").css("cursor", "default");
+			}					
+		});
+	});
+});
+</script>
+

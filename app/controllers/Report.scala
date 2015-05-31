@@ -305,16 +305,40 @@ object Report extends Controller {
       val startDate = DateTime.parse(startDateStr)
       reportType match {
         case PeriodReport.DailyReport=>
-          val psiList = getDailyPSI(monitor, startDate)
+          val psiList = getDailyPsiReport(monitor, startDate)
           Ok(views.html.psiDailyReport(monitor, startDate, psiList))
         case PeriodReport.MonthlyReport=>
-          Ok("")
+          val adjustStartDate = DateTime.parse(startDate.toString("YYYY-MM-1"))
+          val monthlyPsiList = getMonitorMonthlyPSI(monitor, adjustStartDate)
+          val nDays = monthlyPsiList.length
+          Ok(views.html.psiMonthlyReport(monitor, adjustStartDate, monthlyPsiList, nDays))
         case PeriodReport.YearlyReport=>
           Ok("")
-      }
-      
+      }      
   }
   
+  def effectiveQuery() = Security.Authenticated {
+    implicit request =>
+      Ok(views.html.effectiveReport())
+  }
+  
+  object EffectiveReportType extends Enumeration{
+    val singleSite  = Value("singleSite")
+    val multipleSites = Value("multipleSites")
+  }
+  
+  def effectiveAnnualReport(reportTypeStr:String, param:String) = Security.Authenticated{
+    implicit request =>
+      val reportType = EffectiveReportType.withName(reportTypeStr)
+      reportType match {
+        case EffectiveReportType.singleSite=>
+          val monitor = Monitor.withName(param)
+          Ok("")
+        case EffectiveReportType.multipleSites=>
+          val monitorType = MonitorType.withName(param)
+          Ok("")
+      }      
+  }
 }
 
 

@@ -119,6 +119,42 @@ object Realtime {
     }
   }
 
+  def getMonitorTypeAvg(records: List[HourRecord], monitorType: MonitorType.Value) = {
+    val typeValues = records.map { hr => monitorTypeProject2(monitorType)(hr) }
+    val validValues = typeValues.filter(v => (!v._2.isEmpty)).map(_._1.get)
+    val total = validValues.length
+    if (total == 0)
+      None
+    else {
+      Some(validValues.sum / total)
+    }
+  }
+
+  def getMonitorTypeMax(records: List[HourRecord], monitorType: MonitorType.Value) = {
+    val typeValues = records.map { hr => monitorTypeProject2(monitorType)(hr) }
+    val validValues = typeValues.filter(v => (!v._2.isEmpty)).map(_._1.get)
+    val total = validValues.length
+    if (total == 0)
+      None
+    else {
+      Some(validValues.max)
+    }
+  }
+
+  def getMonitorType8HourAvgMax(monitor: Monitor.Value, monitorType: MonitorType.Value, start: DateTime, end: DateTime)(implicit session: DBSession = AutoSession) = {
+    def EightHourAvg(start: DateTime): List[Option[Float]] = {
+      if (start + 8.hour>= end)
+        Nil
+      else
+        getMonitorTypeAvg(monitor, monitorType, start, end) :: EightHourAvg(start + 1.hours)
+    }
+
+    val avgs = EightHourAvg(start)
+    
+    avgs.max
+  }
+  
+
   def pm10PSI(ov: Option[Float]) = {
     if (ov.isEmpty)
       None
@@ -230,9 +266,6 @@ object Realtime {
   }
   
   def getMonitorRealtimePSI(monitor: Monitor.Value, current:DateTime)(implicit session: DBSession = AutoSession) = {
-    val end = current + 1.hour
-    val start = current - 11.hour
-
     val pm10_12 = getMonitorTypeAvg(monitor, MonitorType.withName("A214"), current - 11.hour, current + 1.hour)
     val pm10_4 = getMonitorTypeAvg(monitor, MonitorType.withName("A214"), current - 3.hour, current + 1.hour)
     val pm10 = if(pm10_12.isDefined && pm10_4.isDefined)
@@ -254,6 +287,41 @@ object Realtime {
     val psi = sub_psi.toList.max
     
     (psi, result)
+  }
+  
+  case class PsiReport(psi:Option[Float], sub_map:Map[MonitorType.Value, (Option[Float], Option[Float])])
+  
+  def getMonitorMonthlyPSI(monitor: Monitor.Value, start:DateTime)={
+    val end = start + 1.month
+    
+    def helper(day:DateTime):List[PsiReport]={
+      if(day >= end)
+        Nil
+      else
+        getMonitorDailyPSI(monitor, day)::helper(day + 1.day)
+    }
+    
+    helper(start)
+  }
+  
+  def getMonitorDailyPSI(monitor: Monitor.Value, current:DateTime)(implicit session: DBSession = AutoSession) = {
+    val day_hr_records = getHourRecords(monitor, current, current+1.day)
+    val pm10_24 = getMonitorTypeAvg(day_hr_records, MonitorType.withName("A214"))          
+    val so2_24 = getMonitorTypeAvg(day_hr_records, MonitorType.withName("A222"))
+    val o3 = getMonitorTypeMax(day_hr_records, MonitorType.withName("A225"))
+    val no2 = getMonitorTypeMax(day_hr_records, MonitorType.withName("A293"))
+    
+    val co_8 = getMonitorType8HourAvgMax(monitor, MonitorType.withName("A224"), current, current+1.day)
+    val result = Map[MonitorType.Value, (Option[Float], Option[Float])](
+      MonitorType.withName("A214") -> (pm10_24, pm10PSI(pm10_24)),
+      MonitorType.withName("A222") -> (so2_24, so2PSI(so2_24)),
+      MonitorType.withName("A224") -> (co_8, coPSI(co_8)),
+      MonitorType.withName("A225") -> (o3, o3PSI(o3)),
+      MonitorType.withName("A293") -> (no2, no2PSI(no2)))
+    val sub_psi = result.values.map(_._2)
+    val psi = sub_psi.toList.max
+    
+    PsiReport(psi, result)
   }
   
   def getPsiLevel(v:Float)={
@@ -279,7 +347,7 @@ object Realtime {
     Map(result: _*)
   }
 
-  def getDailyPSI(m: Monitor.Value, start: DateTime)(implicit session: DBSession = AutoSession) = {
+  def getDailyPsiReport(m: Monitor.Value, start: DateTime)(implicit session: DBSession = AutoSession) = {
     val end = start + 1.day
     def hourRange(start: DateTime): List[DateTime] = {
       if (start >= end)

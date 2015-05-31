@@ -380,6 +380,8 @@ function getRealtimChart(id, monitorType){
 		type : "GET",
 		dataType : "json",
 		success : function(result) {
+			result.colors=['#FF9900','#00CC00','#CCB400','#9900FF','#FFFA00',
+				'#99CCFF','#009900','#FF7C80','#154DFF','#F9F666','#B0EE00','#DA00A1','#30C5C2'];
 			result.tooltip ={
             	valueDecimals: 2};
             result.legend={enabled:false};

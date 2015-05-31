@@ -44,3 +44,6 @@ GET		/HTML/CalibrationQuery/:monitor/:start/:end controllers.Application.calibra
 
 GET		/PsiQuery					controllers.Report.psiReportPrompt
 GET		/PsiQueryReport/:monitor/:reportType/:start	controllers.Report.psiReportReport(monitor, reportType, start)
+
+GET		/EffectiveQuery			controllers.Report.effectiveQuery
+GET		/EffectiveAnnualReport/:reportType/:param	controllers.Report.effectiveAnnualReport(reportType, param)		

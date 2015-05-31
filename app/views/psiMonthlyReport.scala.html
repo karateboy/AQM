@@ -1,0 +1,60 @@
+@* dailyReport Template File *@
+@import models.Realtime._
+@import com.github.nscala_time.time.Imports._
+@(monitor: Monitor.Value, reportDate:DateTime, psiDailyList: List[PsiReport], nDays: Int)
+
+<b>
+<h3>空氣品質PSI月報表</h3>
+<h4>監測站:@Monitor.map(monitor).name</h4>
+<h4>日期:@reportDate.toString("yyyy年MM月")</h4>
+</b>
+<table id="reportTable" class="table" cellspacing="0" width="100%">
+<thead>
+	<tr>
+		<td rowspan='2'>日</td>
+		<td rowspan='2'>PSI指標</td>
+		@for(mtv<-MonitorType.psiList){
+			<td colspan='2'>@MonitorType.map(mtv).desp</td>		
+		}		
+	</tr>
+	<tr>
+		@for(mtv<-MonitorType.psiList){
+			<td>副指標</td>
+			<td>數值(@MonitorType.map(mtv).unit)</td>	
+		}
+	</tr>
+</thead>
+<tbody>
+	@for(i<-0 to nDays-1){
+		<tr>
+			<th>@(i+1)</th>
+		@if(psiDailyList(i).psi.isDefined){
+			<td class="@getPsiLevel(psiDailyList(i).psi.get)">@("%.0f".format(psiDailyList(i).psi.get))</td>
+			
+			@for(mtv<-MonitorType.psiList){
+				@if(psiDailyList(i).sub_map(mtv)._2.isDefined){
+					<td>@("%.0f".format(psiDailyList(i).sub_map(mtv)._2.get))</td>	
+				}else{
+					<td>-</td>
+				}
+				@if(psiDailyList(i).sub_map(mtv)._1.isDefined){
+					<td>@("%.2f".format(psiDailyList(i).sub_map(mtv)._1.get))</td>	
+				}else{
+					<td>-</td>
+				}				
+			}
+		}else{
+			<td>-</td>
+			@for(mtv<-MonitorType.psiList){
+				<td>-</td>
+				<td>-</td>
+			}
+		}
+		</tr>	
+	}	
+</tbody>
+</table> 
+<script>
+
+</script>           		
+ 

@@ -1,12 +1,5 @@
 @* realtimeImage Template File *@
 @(param: Any)
-
-
-<div class="row">
-	<div class="col-lg-12">
-		<h1 class="page-header">即時影像</h1>
-	</div>
-</div>
 <div class="row">
    	<div class="col-lg-12">
     		<div class="panel-group" id="accordion">
@@ -15,6 +8,7 @@
             		<a data-toggle="collapse" data-parent="#accordion" href="#reportParam">選擇測站</a>	
                 </div>
             	<div class="panel-body panel-collapse in" id="reportParam">
+            		<img alt="image" class="img-circle" src='@routes.Assets.at("images/cctv.png")' />
             		<h5>測站</h5>
             		<div class="btn-group" data-toggle="buttons">
             			@for(m<-Monitor.getImageMonitorList){
@@ -32,6 +26,7 @@
         	</div> <!-- end of panel group -->
     	</div>
 	</div>
+</div>
 <script>
 $( document ).ready(function() {
 	//onClick="$('#realtimeImage').html('<iframe></iframe>'
