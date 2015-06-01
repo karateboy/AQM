@@ -79,7 +79,14 @@ $( document ).ready(function() {
 
 	var monitor, monitorTypes, reportType, reportDate;
 	
+	
 	function validate(){
+		reportType = $("input[name='reportType']:checked").attr('id');
+		if (!reportType) {
+			alert('請選擇報表種類');
+			return false;
+		}	
+	
 		if(reportType == "@EffectiveReportType.singleSite"){
 			monitor = $("input[name='monitor']:checked").attr('id');
 			if (!monitor) {
@@ -87,25 +94,20 @@ $( document ).ready(function() {
 				return false;
 			}		
 		}else{
-			reportType = $("input[name='reportType']:checked").attr('id');
-			if (!reportType) {
-				alert('請選擇報表種類');
+			monitorTypes = $("input[name='monitorType']:checked");
+			console.log('mt len=' + monitorTypes.length);
+			if (monitorTypes.length == 0) {
+				alert("請選擇監測項目");
 				return false;
 			}
+			
 		}
 		
 		reportDate = $('#reportDate').val();
 		if(reportDate.length === 0){
 			alert('請選擇報表日期');
 			return false;
-		}
-		
-		monitorTypes = $("input[name='monitorType']:checked");
-		console.log('mt len=' + monitorTypes.length);
-		if (monitorTypes.length == 0) {
-			alert("請選擇監測項目");
-			return false;
-		}
+		}		
 		
 		return true;
 	}
@@ -121,7 +123,7 @@ $( document ).ready(function() {
 		$('#reportDiv').html('');
 		$("body").css("cursor", "progress");
 
-		var url="/EffectiveAnnualReport/" + reportType;
+		var url="/EffectiveAnnualReport/" + reportType + "/" + reportDate;
 		if(reportType == "@EffectiveReportType.singleSite"){
 			url += "/" + monitor;
 		}else{
@@ -129,7 +131,7 @@ $( document ).ready(function() {
 		}
 		
 		$.ajax({
-			url: "/monitorReport",
+			url: url,
 			data: "",
 			contentType: "application/json; charset=utf-8",
 			type: "GET",

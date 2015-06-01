@@ -327,16 +327,26 @@ object Report extends Controller {
     val multipleSites = Value("multipleSites")
   }
   
-  def effectiveAnnualReport(reportTypeStr:String, param:String) = Security.Authenticated{
+  def effectiveAnnualReport(reportTypeStr:String, startStr:String, param:String) = Security.Authenticated{
     implicit request =>
+      import Record._
       val reportType = EffectiveReportType.withName(reportTypeStr)
+      val start = DateTime.parse(startStr)
+      val adjustedStart = DateTime.parse(start.toString("YYYY-1-1"))
+
       reportType match {
         case EffectiveReportType.singleSite=>
           val monitor = Monitor.withName(param)
-          Ok("")
+          val rateList = getMonitorYearlyEffectiveRate(monitor, adjustedStart)
+          val statMap = getStatMonitorEffectiveRate(rateList)
+          Ok(views.html.singleSiteEffectiveRateYearlyReport(monitor, adjustedStart, rateList, statMap))
+          
         case EffectiveReportType.multipleSites=>
           val monitorType = MonitorType.withName(param)
-          Ok("")
+          val rateList = getMonitorTypeYearlyEffectiveRate(monitorType, adjustedStart)
+          val statMap = getStatYearlyMonthlyEffectiveRate(rateList)
+          
+          Ok(views.html.multipleSiteEffectiveRateYearlyReport(monitorType, adjustedStart, rateList, statMap))
       }      
   }
 }

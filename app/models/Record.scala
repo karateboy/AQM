@@ -5,7 +5,7 @@ import scalikejdbc._
 import play.api._
 import com.github.nscala_time.time.Imports._
 import models.ModelHelper._
-    
+import models._    
     
 case class Stat(
     avg:Float,
@@ -237,10 +237,11 @@ object Record {
 
   def getRecordValidationReport(start: DateTime, end: DateTime) = {
     DB readOnly { implicit session =>
+      val tab_name = getTabName(TableType.Hour, start.getYear)
       val hrRecords =
         sql"""
         SELECT DP_NO, count(DP_NO)
-        FROM [AQMSDB].[dbo].[P1234567_Hr_2015]
+        FROM ${tab_name}
         Where M_DateTime >= ${start} and M_DateTime < ${end}
         GROUP BY DP_NO
       """.map { rs => (Monitor.withName(rs.string(1)), rs.int(2)) }.list().apply()
@@ -346,6 +347,91 @@ object Record {
     }
   }
   
+  case class MonitorEffectiveRate(monitor:Monitor.Value, rateMap:Map[MonitorType.Value,Float])
+  def getMonitorEffectiveRate(monitor:Monitor.Value, start:DateTime)={
+    val end = start + 1.month
+    
+    val records = Record.getHourRecords(monitor, start, end)
+    val duration = new Interval(start, end).toDuration()
+    val expected_count = duration.getStandardHours
+    val ratePair = 
+      for{mt <- MonitorType.mtvList
+        mtList = records.map(monitorTypeProject2(mt))  
+        count = mtList.count(r=>(r._1.isDefined && r._2.isDefined && isValidStat(r._2.get)))
+        }yield{
+          (mt -> count.toFloat/expected_count)
+        }
+    val rateMap = Map(ratePair :_*)
+    MonitorEffectiveRate(monitor, rateMap)
+  }
+  case class MonitorTypeEffectiveRate(monitorType:MonitorType.Value, rateMap:Map[Monitor.Value, Float])
+  def getMonitorTypeEffectiveRate(monitorType:MonitorType.Value, start:DateTime)={
+    val end = start + 1.month
+    
+    val duration = new Interval(start, end).toDuration()
+    val expected_count = duration.getStandardHours
+    val ratePair = 
+      for{m <- Monitor.mvList
+        records = Record.getHourRecords(m, start, end)
+        mtList = records.map(monitorTypeProject2(monitorType))  
+        count = mtList.count(r=>(r._1.isDefined && r._2.isDefined && isValidStat(r._2.get)))
+        }yield{
+          (m -> count.toFloat/expected_count)
+        }
+    val rateMap = Map(ratePair :_*)
+    MonitorTypeEffectiveRate(monitorType, rateMap)
+  }
+  def getMonitorTypeYearlyEffectiveRate(monitorType:MonitorType.Value, start:DateTime)={
+    val end = start + 1.year
+    var current = start
+    import scala.collection.mutable.ListBuffer
+    val result = ListBuffer[MonitorTypeEffectiveRate]() 
+    while(current < end){
+      result += getMonitorTypeEffectiveRate(monitorType, current)
+      current += 1.month
+    }
+    result.toList
+  }
+  
+  def getMonitorYearlyEffectiveRate(monitor:Monitor.Value, start:DateTime)={
+    val end = start + 1.year
+    var current = start
+    import scala.collection.mutable.ListBuffer
+    val result = ListBuffer[MonitorEffectiveRate]() 
+    while(current < end){
+      result += getMonitorEffectiveRate(monitor, current)
+      current += 1.month
+    }
+    result.toList
+  }
+  
+  def getStatMonitorEffectiveRate(rateList:List[MonitorEffectiveRate])={
+    val statList = 
+    for{mt <- MonitorType.mtvList
+      mtRateList = rateList.map(r=>r.rateMap(mt))
+      count = mtRateList.length
+      sum = mtRateList.sum
+      avg = sum/count
+    }
+    yield
+      (mt->Stat(avg, mtRateList.min, mtRateList.max, mtRateList.length, 12, 0))
+      
+    Map(statList :_*)
+  }
+  
+  def getStatYearlyMonthlyEffectiveRate(rateList:List[MonitorTypeEffectiveRate])={
+    val statList = 
+    for{m <- Monitor.mvList
+      mRateList = rateList.map(r=>r.rateMap(m))
+      count = mRateList.length
+      sum = mRateList.sum
+      avg = sum/count
+    }
+    yield
+      (m->Stat(avg, mRateList.min, mRateList.max, mRateList.length, 12, 0))
+      
+    Map(statList :_*)
+  }
   def getTabName(tab:TableType.Value, year:Int)={
     tab match {
       case TableType.Hour =>

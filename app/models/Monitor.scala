@@ -77,7 +77,7 @@ object MonitorType extends Enumeration{
     }
   
   val map:Map[Value, MonitorType] = Map(mtList.map{e=>Value(e.id)->e}:_*) - MonitorType.withName("A325")
-  val mtvList = mtList.map(mt=>MonitorType.withName(mt.id)).filter { _ != MonitorType.withName("A325") }
+  val mtvList = mtList.map(mt=>MonitorType.withName(mt.id)).filter { !List(MonitorType.withName("A325"), MonitorType.withName("C911"), MonitorType.withName("C912")).contains(_) }
   val realtimeList = mtvList.filter { !List(MonitorType.withName("C911"), MonitorType.withName("C912")).contains(_)} 
   val psiList = List(MonitorType.withName("A214"),MonitorType.withName("A222"), MonitorType.withName("A224"), MonitorType.withName("A225"), MonitorType.withName("A293") )
   val windDirList = List(MonitorType.withName("C212"), MonitorType.withName("C912")) 

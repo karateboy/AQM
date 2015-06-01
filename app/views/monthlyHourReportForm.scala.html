@@ -16,14 +16,14 @@
             		<h5>測站</h5>
             		<div class="btn-group" data-toggle="buttons">
             			@for(m<-Monitor.values.toList){
-            				<label class="btn btn-default">
+            				<label class="btn btn-outline btn-primary dim">
 								<input type="radio" name="monitor" id="@m">@Monitor.getDisplayName(m)</label>		
             			}
             		</div>
             		<h5>測項</h5>
             		<div class="btn-group" data-toggle="buttons">
             			@for(mt<-MonitorType.mtList){
-            				<label class="btn btn-default">
+            				<label class="btn btn-outline btn-primary dim">
 								<input type="radio" name="monitorType" id="@mt.id">@mt.desp</label>		
             			}
             		</div>

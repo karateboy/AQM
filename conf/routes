@@ -46,4 +46,4 @@ GET		/PsiQuery					controllers.Report.psiReportPrompt
 GET		/PsiQueryReport/:monitor/:reportType/:start	controllers.Report.psiReportReport(monitor, reportType, start)
 
 GET		/EffectiveQuery			controllers.Report.effectiveQuery
-GET		/EffectiveAnnualReport/:reportType/:param	controllers.Report.effectiveAnnualReport(reportType, param)		
+GET		/EffectiveAnnualReport/:reportType/:start/:param	controllers.Report.effectiveAnnualReport(reportType, start, param)		
