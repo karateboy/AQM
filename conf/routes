@@ -34,7 +34,6 @@ POST	/MonitoredType/:monitor/:monitorType/:used	controllers.Application.setMonit
 
 GET		/MonitorTypeConfig			controllers.Application.monitorTypeConfig
 
-GET		/Trend						controllers.Realtime.trendReport
 GET 	/RecordValidation			controllers.Application.recordValidation
 GET		/HTML/RecordValidation/:start	controllers.Application.recordValidationHtml(start)
 GET		/RealtimeEpaRecord			controllers.Application.realtimeEpaRecord
@@ -46,4 +45,9 @@ GET		/PsiQuery					controllers.Report.psiReportPrompt
 GET		/PsiQueryReport/:monitor/:reportType/:start	controllers.Report.psiReportReport(monitor, reportType, start)
 
 GET		/EffectiveQuery			controllers.Report.effectiveQuery
-GET		/EffectiveAnnualReport/:reportType/:start/:param	controllers.Report.effectiveAnnualReport(reportType, start, param)		
+GET		/EffectiveAnnualReport/:reportType/:start/:param	controllers.Report.effectiveAnnualReport(reportType, start, param)
+
+GET		/HistoryQuery			controllers.Query.history
+GET		/HistoryQueryReport/:monitor/:monitorType/:start/:end	controllers.Query.historyReport(monitor, monitorType, start, end)
+
+GET		/HistoryTrend			controllers.Query.trend		

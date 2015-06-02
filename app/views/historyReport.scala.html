@@ -1,0 +1,44 @@
+@* historyReport Template File *@
+@import com.github.nscala_time.time.Imports._
+@(monitor:Monitor.Value, monitorType:MonitorType.Value, start:DateTime, end:DateTime, mtRecords: List[(DateTime, (Option[Float], Option[String]))])
+
+<H3>測站:@Monitor.map(monitor).name</H3>
+<H3>測項:@MonitorType.map(monitorType).desp</H3>
+<H5>開始:@start.toString("YYYY-MM-dd")</H5>
+<H5>開始:@end.toString("YYYY-MM-dd")</H5>
+
+<table id="historyReport" class="table">
+<thead>
+	<tr>
+		<th>時間</th>
+		<th>測值 (@MonitorType.map(monitorType).unit)</th>
+		<th>狀態</th>
+	</tr>
+</thead>
+<tbody>
+	@for(r <- mtRecords){
+		<tr>
+			<th>@r._1.toString("YYYY-MM-dd hh:mm")</th>
+			@if(r._2._1.isEmpty){
+				<td>-</td>
+			}else{
+				<td>@("%.2f".format(r._2._1.get))</td>
+			}
+			@if(r._2._2.isEmpty){
+				<td>-</td>
+			}else{
+				<td>@MonitorStatus.map(MonitorStatus.withName(MonitorStatus.getValidId(r._2._2.get))).desp</td>
+			}
+		</tr>
+	}
+</tbody>
+</table>
+<script>
+$( document ).ready(function() {
+	$('#historyReport').dataTable( {
+		language: {
+			url: '@routes.Assets.at("localization/zh_tw.json")'
+		}
+	} );
+});
+</script>

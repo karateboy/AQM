@@ -10,10 +10,6 @@ import play.api.libs.json._
 import play.api.libs.functional.syntax._
 
 object Realtime extends Controller {
-  def trendReport = Security.Authenticated {
-    Ok(views.html.trendReport())
-  }
-
   def realtimeStat = Security.Authenticated {
     implicit request =>
       val current = getLatestRecordTime(TableType.Min).get

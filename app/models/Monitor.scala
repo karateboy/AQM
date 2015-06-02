@@ -82,3 +82,25 @@ object MonitorType extends Enumeration{
   val psiList = List(MonitorType.withName("A214"),MonitorType.withName("A222"), MonitorType.withName("A224"), MonitorType.withName("A225"), MonitorType.withName("A293") )
   val windDirList = List(MonitorType.withName("C212"), MonitorType.withName("C912")) 
 }
+
+case class MonitorStatus(id:String, desp:String, outage:Boolean, valid:Boolean)
+object MonitorStatus extends Enumeration{
+  private val msList:List[MonitorStatus] =
+    DB readOnly{ implicit session =>
+      sql"""
+        SELECT [statusNo],[statusName],[isOutage],[isValid]
+        FROM [AQMSDB].[dbo].[Infor_Status]
+      """.map { r =>  MonitorStatus(
+      r.string(1), r.string(2), r.boolean(3), r.boolean(4)    
+      )}.list.apply
+    }
+  
+  def getValidId(tag:String)= {
+    if(tag.charAt(0)=='0')
+      tag.substring(1)
+    else
+      tag
+  }
+  
+  val map:Map[Value, MonitorStatus] = Map(msList.map{e=>Value(e.id.substring(1))->e}:_*)
+}
