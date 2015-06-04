@@ -387,6 +387,10 @@ function getRealtimChart(id, monitorType){
             	valueDecimals: 2};
             result.legend={enabled:false};
 			result.title={text:null};
+			result.credits={
+				enabled:false,
+				href:'http://www.wecc.com.tw/'
+			};
 			$(id).highcharts(result);
 		},
 		error : function(xhr, status, errorThrown) {

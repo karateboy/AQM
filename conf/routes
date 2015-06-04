@@ -50,4 +50,14 @@ GET		/EffectiveAnnualReport/:reportType/:start/:param	controllers.Report.effecti
 GET		/HistoryQuery			controllers.Query.history
 GET		/HistoryQueryReport/:monitor/:monitorType/:start/:end	controllers.Query.historyReport(monitor, monitorType, start, end)
 
-GET		/HistoryTrend			controllers.Query.trend		
+GET		/HistoryTrend			controllers.Query.historyTrend
+GET		/JSON/HistoryTrend/:monitor/:monitorType/:start/:end	controllers.Query.historyTrendChart(monitor, monitorType, start, end)
+
+GET		/PsiTrend				controllers.Query.psiTrend
+GET		/JSON/PsiTrend/:monitor/:start/:end	controllers.Query.psiTrendChart(monitor, start, end)
+
+GET		/OverLawStd				controllers.Query.overLawStd
+GET		/OverLawStdReport/:monitor/:monitorType/:start/:end	controllers.Query.overLawStdReport(monitor, monitorType, start, end)
+
+GET		/EffectivePercentage	controllers.Query.effectivePercentage
+GET		/EffectivePercentage/:start/:end	controllers.Query.effectivePercentageReport(start, end)

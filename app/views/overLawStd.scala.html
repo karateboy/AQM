@@ -18,8 +18,10 @@
             		<h5>測項</h5>
             		<div class="btn-group" data-toggle="buttons">
             			@for(m<-MonitorType.mtvList){
+            				@if(MonitorType.map(m).sd_law.isDefined){
             				<label class="btn btn-outline btn-primary dim">
-								<input type="radio" name="monitorType" id="@m">@MonitorType.map(m).desp</label>		
+								<input type="radio" name="monitorType" id="@m">@MonitorType.map(m).desp</label>
+							}		
             			}
             		</div>
             		<br/>
@@ -37,7 +39,7 @@
         	</div>
         	<div class="panel panel-success" style="display:none" id="reportPanel">
             	<div class="panel-heading panel-title"" >
-            		<a data-toggle="collapse" data-parent="#accordion" href="#monitorReport">歷史資料報表</a>	
+            		<a data-toggle="collapse" data-parent="#accordion" href="#monitorReport">超過法規報表</a>	
                 </div>
             	<div class="panel-body panel-collapse" id="monitorReport">
 					<div id="reportDiv" align="center" style="overflow-x:auto">
@@ -106,7 +108,7 @@ $( document ).ready(function() {
 				monitorParam += ':' + monitors[i].id;
 		}
 			
-		var url = "/HistoryQueryReport/" + monitorParam + "/" + monitorType + "/" + reportStart + "/" + reportEnd;
+		var url = "/OverLawStdReport/" + monitorParam + "/" + monitorType + "/" + reportStart + "/" + reportEnd;
 		console.log(url);
 		$.ajax({
 			url: url,

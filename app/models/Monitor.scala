@@ -102,5 +102,13 @@ object MonitorStatus extends Enumeration{
       tag
   }
   
+  val NORMAL_STAT = "10"
+  val OVER_STAT = "11"
+  val BELOW_STAT = "12"
+  val VALID_STATS = List(NORMAL_STAT, OVER_STAT, BELOW_STAT)
+  def isValidStat(s:String)={
+    VALID_STATS.contains(getValidId(s))
+  }
+
   val map:Map[Value, MonitorStatus] = Map(msList.map{e=>Value(e.id.substring(1))->e}:_*)
 }

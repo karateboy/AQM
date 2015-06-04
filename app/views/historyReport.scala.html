@@ -1,33 +1,36 @@
 @* historyReport Template File *@
 @import com.github.nscala_time.time.Imports._
-@(monitor:Monitor.Value, monitorType:MonitorType.Value, start:DateTime, end:DateTime, mtRecords: List[(DateTime, (Option[Float], Option[String]))])
+@import MonitorStatus._
+@(monitors:Seq[Monitor.Value], monitorType:MonitorType.Value, start:DateTime, end:DateTime, timeSeq:Seq[DateTime], recordMap: Map[Monitor.Value, Map[DateTime, (Option[Float], Option[String])]])
 
-<H3>測站:@Monitor.map(monitor).name</H3>
-<H3>測項:@MonitorType.map(monitorType).desp</H3>
+<H3>測項:@MonitorType.map(monitorType).desp (@MonitorType.map(monitorType).unit)</H3>
 <H5>開始:@start.toString("YYYY-MM-dd")</H5>
-<H5>開始:@end.toString("YYYY-MM-dd")</H5>
+<H5>結束:@end.toString("YYYY-MM-dd")</H5>
 
 <table id="historyReport" class="table">
 <thead>
 	<tr>
 		<th>時間</th>
-		<th>測值 (@MonitorType.map(monitorType).unit)</th>
-		<th>狀態</th>
+		@for(m<-monitors){
+			<th>@Monitor.map(m).name</th>	
+		}
+		
 	</tr>
 </thead>
 <tbody>
-	@for(r <- mtRecords){
+	@for(t <- timeSeq){
 		<tr>
-			<th>@r._1.toString("YYYY-MM-dd hh:mm")</th>
-			@if(r._2._1.isEmpty){
-				<td>-</td>
-			}else{
-				<td>@("%.2f".format(r._2._1.get))</td>
-			}
-			@if(r._2._2.isEmpty){
-				<td>-</td>
-			}else{
-				<td>@MonitorStatus.map(MonitorStatus.withName(MonitorStatus.getValidId(r._2._2.get))).desp</td>
+			<th>@t.toString("YYYY-MM-dd hh:mm")</th>
+			@for(m<-monitors){
+				@if(recordMap(m).get(t).isEmpty||recordMap(m)(t)._1.isEmpty||recordMap(m)(t)._2.isEmpty){
+					<td>-</td>
+				}else{
+					@if(MonitorStatus.isValidStat(getValidId(recordMap(m)(t)._2.get))){
+						<td>@("%.2f".format(recordMap(m)(t)._1.get))</td>
+					}else{
+						<td style="background-color:yellow">@("%.2f".format(recordMap(m)(t)._1.get))</td>
+					}
+				}				
 			}
 		</tr>
 	}

@@ -63,7 +63,7 @@
 			<th>@("%02d:00".format(i))</th>
 			@for(t<-report.typeList){
 				<td>@if(!t.dataList(i)._2.isEmpty && !t.dataList(i)._3.isEmpty){
-						@if(Record.isValidStat(t.dataList(i)._3.get)){
+						@if(MonitorStatus.isValidStat(t.dataList(i)._3.get)){
 							@("%.1f".format(t.dataList(i)._2.get))	
 						}else{
 							<span style="background-color:yellow">@("%.1f".format(t.dataList(i)._2.get))</span>

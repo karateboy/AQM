@@ -1,0 +1,48 @@
+@* yearlyReport Template File *@
+@import com.github.nscala_time.time.Imports._
+@import Report._
+@import Record._
+@(start:DateTime, end:DateTime, rateList:List[MonitorEffectiveRate])
+<b>
+<h3>有效率報表</h3>
+<h4>開始日期:@start.toString("yyyy年MM月dd日")</h4>
+<h4>結束日期:@end.toString("yyyy年MM月dd日")</h4>
+<h4 style="color:blue">有效率低於75%</h4>
+</b>
+<table id="reportTable" class="display" cellspacing="0" width="100%">
+	<thead>
+		<tr>
+			<th>測站</th>
+			@for(mt<-MonitorType.mtvList){
+				<td>@MonitorType.map(mt).desp</td>
+			}
+		</tr>
+	</thead>
+	<tbody>
+		@for(r<-rateList){
+			<tr>
+			<th>@Monitor.map(r.monitor).name</th>
+			@for(mt<-MonitorType.mtvList){
+				@if(r.rateMap(mt)*100 < 75){
+					<td style="color:blue">@("%.1f".format(r.rateMap(mt)*100))</td>	
+				}else{
+					<td>@("%.1f".format(r.rateMap(mt)*100))</td>
+				}
+					
+			}
+			</tr>
+		}
+	</tbody>
+</table>            		
+<script>
+$( document ).ready(function() {
+	$('#reportTable').dataTable( {
+		language: {
+			url: '@routes.Assets.at("localization/zh_tw.json")'
+		},
+		"paging":   false,
+		"searching": false
+	} );
+});
+</script>
+

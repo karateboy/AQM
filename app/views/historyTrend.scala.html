@@ -18,7 +18,7 @@
 					<div class="btn-group" data-toggle="buttons">
 					    @for(mt<-MonitorType.mtvList){
             				<label class="btn btn-outline btn-primary dim">
-								<input type="checkbox" name="monitorType" id="@mt">@MonitorType.map(mt).desp</label>		
+								<input type="radio" name="monitorType" id="@mt">@MonitorType.map(mt).desp</label>		
             			}
   
 					</div>
@@ -47,6 +47,7 @@
     	</div>
 	</div>
 </div>
+<script src='@routes.Assets.at("js/highcharts/modules/exporting.js")'></script>
 <script>
 $( document ).ready(function() {
 	
@@ -56,12 +57,21 @@ $( document ).ready(function() {
 	    language: "zh-TW"
 	});
 
-	var monitor, reportStart, reportEnd;
+
+	var monitors, monitorType, reportStart, reportEnd;
 	
 	function validate(){
-		monitor = $("input[name='monitor']:checked").attr('id');
-		if (!monitor) {
-			alert('請選擇測站');
+		monitors = $("input[name='monitor']:checked");
+
+		if (monitors.length == 0) {
+			alert("請選擇測站");
+			return false;
+		}
+
+
+		monitorType = $("input[name='monitorType']:checked").attr('id');
+		if(!monitorType) {
+			alert('請選擇測項');
 			return false;
 		}
 		
@@ -76,39 +86,57 @@ $( document ).ready(function() {
 			alert('請選擇結束日期');
 			return false;
 		}
-		
+
 		return true;
 	}
 	
 	$('#queryReport').click(function(){
 		if(!validate())
 			return;
-
+			
 		$("#reportPanel").css('display','block');
 		$("#reportParam").collapse();
 		$("#reportPanel").collapse('show');
 
 		$('#reportDiv').html('');
 		$("body").css("cursor", "progress");
-		var url = "/HTML/CalibrationQuery/" + monitor + "/" + reportStart + "/" + reportEnd;
-		console.log(url);
-		$.ajax({
-			url: url,
-			data: '',
-			contentType: "application/json; charset=utf-8",
-			type: "GET",
-			dataType: "html",
-			success: function(result){
-				$('#reportDiv').html(result);
 
+		var monitorParam='';
+		for (var i = 0; i < monitors.length; i++) {
+			if(monitorParam=='')
+				monitorParam = monitors[i].id;
+			else
+				monitorParam += ':' + monitors[i].id;
+		}	
+			
+		var url = "/JSON/HistoryTrend/" + monitorParam + "/" + monitorType + "/" + reportStart + "/" + reportEnd;
+		
+		$.ajax({
+			url : url,
+			data : "",
+			contentType : "application/json; charset=utf-8",
+			type : "GET",
+			dataType : "json",
+			success : function(result) {
+				result.colors=[
+				'#7CB5EC','#434348','#90ED7D','#F7A35C','#8085E9','#F15C80',
+				'#E4D354','#2B908F','#FB9FA8','#91E8E1','#7CB5EC','#80C535','#969696'];
+				result.tooltip ={
+	            	valueDecimals: 2};
+	            result.legend={enabled:true};
+				result.credits={
+					enabled:false,
+					href:'http://www.wecc.com.tw/'
+				};
+				$('#reportDiv').highcharts(result);
 			},
-			error: function(xhr, status, errorThrown){
+			error : function(xhr, status, errorThrown) {
 				console.log("錯誤訊息:" + status + "-" + errorThrown);
 			},
 
-			complete: function(xhr, status){
+			complete : function(xhr, status) {
 				$("body").css("cursor", "default");
-			}					
+			}
 		});
 	});
 });

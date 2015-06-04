@@ -118,6 +118,7 @@ object Realtime extends Controller {
   case class YAxis(labels: Option[String], title: AxisTitle, plotLines: Option[Seq[AxisLine]])
   case class seqData(name: String, data: Seq[Float])
   case class HighchartData(chart: Map[String, String],
+                           title: Map[String, String],
                            xAxis: XAxis,
                            yAxis: YAxis,
                            series: Seq[seqData])
@@ -153,6 +154,7 @@ object Realtime extends Controller {
 
       val c = HighchartData(
         Map("type" -> "column"),
+        Map("text" -> title),
         XAxis(Some(Seq(latestRecordTime.toString("yyyy:MM:DD HH:mm")))),
         YAxis(None, AxisTitle(Some(mtCase.unit)), axisLines),
         series)

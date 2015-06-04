@@ -18,7 +18,7 @@
 				<div class="btn-group" data-toggle="buttons">
 				    @for(mt<-MonitorType.realtimeList){
            				<label class="btn btn-outline btn-primary dim">
-							<input type="checkbox" name="monitorType" id="@MonitorType.map(mt).id">@MonitorType.map(mt).desp</label>		
+							<input type="radio" name="monitorType" id="@MonitorType.map(mt).id">@MonitorType.map(mt).desp</label>		
            			}
 				</div>
 				<h5>圖形種類</h5>

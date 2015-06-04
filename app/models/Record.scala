@@ -96,15 +96,8 @@ object Record {
   )
   
   type MinRecord = HourRecord
-  val NORMAL_STAT = "010"
-  val OVER_STAT = "011"
-  val BELOW_STAT = "012"
-  val VALID_STATS = List(NORMAL_STAT, OVER_STAT, BELOW_STAT)
-  def isValidStat(s:String)={
-    VALID_STATS.contains(s)
-  }
   
-  def emptySixSecRecord(m:Monitor.Value, t:DateTime) = SixSecRecord(m, t, 0f, 0f, NORMAL_STAT)  
+  def emptySixSecRecord(m:Monitor.Value, t:DateTime) = SixSecRecord(m, t, 0f, 0f, MonitorStatus.NORMAL_STAT)  
   
   def mapper(rs: WrappedResultSet) = {
     HourRecord(rs.string(1), rs.timestamp(2), rs.stringOpt(3), rs.floatOpt(4), rs.stringOpt(5), 
@@ -311,7 +304,7 @@ object Record {
             {
               t._3 match {
                 case Some(s) =>
-                  if (isValidStat(s)) {
+                  if (MonitorStatus.isValidStat(s)) {
                     t._2 != None
                   } else
                     false
@@ -348,22 +341,26 @@ object Record {
   }
   
   case class MonitorEffectiveRate(monitor:Monitor.Value, rateMap:Map[MonitorType.Value,Float])
-  def getMonitorEffectiveRate(monitor:Monitor.Value, start:DateTime)={
-    val end = start + 1.month
-    
+  def getMonitorEffectiveRate(monitor:Monitor.Value, start:DateTime):MonitorEffectiveRate={
+    val end = start + 1.month    
+    getMonitorEffectiveRate(monitor, start, end)
+  }
+  
+  def getMonitorEffectiveRate(monitor:Monitor.Value, start:DateTime, end:DateTime)={
     val records = Record.getHourRecords(monitor, start, end)
     val duration = new Interval(start, end).toDuration()
     val expected_count = duration.getStandardHours
     val ratePair = 
       for{mt <- MonitorType.mtvList
         mtList = records.map(monitorTypeProject2(mt))  
-        count = mtList.count(r=>(r._1.isDefined && r._2.isDefined && isValidStat(r._2.get)))
+        count = mtList.count(r=>(r._1.isDefined && r._2.isDefined && MonitorStatus.isValidStat(r._2.get)))
         }yield{
           (mt -> count.toFloat/expected_count)
         }
     val rateMap = Map(ratePair :_*)
     MonitorEffectiveRate(monitor, rateMap)
   }
+
   case class MonitorTypeEffectiveRate(monitorType:MonitorType.Value, rateMap:Map[Monitor.Value, Float])
   def getMonitorTypeEffectiveRate(monitorType:MonitorType.Value, start:DateTime)={
     val end = start + 1.month
@@ -374,7 +371,7 @@ object Record {
       for{m <- Monitor.mvList
         records = Record.getHourRecords(m, start, end)
         mtList = records.map(monitorTypeProject2(monitorType))  
-        count = mtList.count(r=>(r._1.isDefined && r._2.isDefined && isValidStat(r._2.get)))
+        count = mtList.count(r=>(r._1.isDefined && r._2.isDefined && MonitorStatus.isValidStat(r._2.get)))
         }yield{
           (m -> count.toFloat/expected_count)
         }

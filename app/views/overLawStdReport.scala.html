@@ -1,0 +1,36 @@
+@* historyReport Template File *@
+@import com.github.nscala_time.time.Imports._
+@import Query._
+@(monitorType:MonitorType.Value, start:DateTime, end:DateTime, report:Seq[OverLawStdEntry])
+
+<H3>測項:@MonitorType.map(monitorType).desp (@MonitorType.map(monitorType).unit)</H3>
+<H5>開始:@start.toString("YYYY-MM-dd")</H5>
+<H5>結束:@end.toString("YYYY-MM-dd")</H5>
+
+<table id="historyReport" class="table">
+<thead>
+	<tr>
+		<th>測站</th>
+		<th>時間</th>
+		<th>測值</th>		
+	</tr>
+</thead>
+<tbody>
+	@for(r <- report){
+		<tr>
+			<td>@Monitor.map(r.monitor).name</td>
+			<td>@r.time.toString("YYYY/MM/dd hh:mm")</td>
+			<td>@("%.2f".format(r.value))</td>
+		</tr>
+	}
+</tbody>
+</table>
+<script>
+$( document ).ready(function() {
+	$('#historyReport').dataTable( {
+		language: {
+			url: '@routes.Assets.at("localization/zh_tw.json")'
+		}
+	} );
+});
+</script>
