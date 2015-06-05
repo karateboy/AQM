@@ -230,4 +230,55 @@ object Query extends Controller{
     
     Ok(views.html.alarmReport(start, end, records))
   }
+  
+  def windRose() = Security.Authenticated {
+    implicit request =>
+    Ok(views.html.windRose())
+  }
+  
+  def windRoseReport(monitorStr: String, startStr: String, endStr: String) = Security.Authenticated {
+    val monitor = Monitor.withName(monitorStr)
+    val start = DateTime.parse(startStr)
+    val end = DateTime.parse(endStr)
+   
+    val windMap = Record.getWindRose(monitor, start, end)
+    val dirMap = Map(
+      (0->"北"), (1->"北北東"), (2->"東北"), (3->"東北東"), (4->"東"),
+      (5->"東南東"), (6->"東南"), (7->"南南東"), (8->"南"),
+      (9->"南南西"), (10->"西南"), (11->"西西南"), (12->"西"),
+      (13->"西北西"), (14->"西北"), (15->"北北西")
+    )
+    val dirStrSeq = 
+      for(dir <- 0 to 15)
+        yield
+        dirMap(dir)
+    
+    val speedLevel = Array(
+        "<0.5 m/s", "0.5-2 m/s", "2-4 m/s", "4-6 m/s", "6-8 m/s","8-10 m/s", ">10 m/s"
+    )
+      
+      import Realtime._
+      
+      val series = for {
+        level <- 0 to 6
+      } yield {
+        val data =
+          for( dir <- 0 to 15)
+            yield
+            windMap(dir)(level)
+            
+        seqData(speedLevel(level), data)
+      }
+
+      val title="風瑰圖"
+      val c = HighchartData(
+        scala.collection.immutable.Map("polar" -> "true", "type"->"column"),
+        scala.collection.immutable.Map("text" -> title),
+        XAxis(Some(dirStrSeq)),
+        YAxis(None, AxisTitle(Some("")), None),
+        series)
+
+      Results.Ok(Json.toJson(c))
+
+  }
 }

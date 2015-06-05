@@ -429,6 +429,53 @@ object Record {
       
     Map(statList :_*)
   }
+  
+  def getWindRose(monitor:Monitor.Value, start:DateTime, end:DateTime, nDiv:Int=16)={
+    val records = getHourRecords(monitor, start, end)
+    val windRecords = records.map { r => (r.wind_dir, r.wind_speed)}
+    val step = 360f/nDiv
+    import scala.collection.mutable.ListBuffer
+    val windDirPair = 
+      for(d <- 0 to nDiv -1)
+        yield{
+        (d -> ListBuffer[Float]())
+      }
+    val windMap = Map(windDirPair :_*)
+    
+    var total = 0
+    for(w <- windRecords){
+      if(w._1.isDefined && w._2.isDefined){
+        val dir = (w._1.get/step).toInt
+        windMap(dir)+=w._2.get
+        total+=1
+      }
+    }
+    
+    def winSpeedPercent(winSpeedList:ListBuffer[Float])={
+      val count = new Array[Float](7)
+      for(w <- winSpeedList){
+        if(w<0.5)
+          count(0)+=1
+        else if(w<2)
+          count(1)+=1
+        else if(w<4)
+          count(2)+=1
+        else if(w<6)
+          count(3)+=1
+        else if(w<8)
+          count(4)+=1
+        else if(w<10)
+          count(5)+=1
+        else
+          count(6)+=1
+      }
+      
+      count.map(_*100/total)
+    }
+    
+    windMap.map(kv=>(kv._1, winSpeedPercent(kv._2)))
+  }
+  
   def getTabName(tab:TableType.Value, year:Int)={
     tab match {
       case TableType.Hour =>

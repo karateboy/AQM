@@ -64,3 +64,6 @@ GET		/EffectivePercentage/:start/:end	controllers.Query.effectivePercentageRepor
 
 GET		/Alarm					controllers.Query.alarm
 GET		/AlarmReport/:monitor/:status/:start/:end	controllers.Query.alarmReport(monitor, status, start, end)
+
+GET		/WindRose				controllers.Query.windRose
+GET		/WindRoseReport/:monitor/:start/:end	controllers.Query.windRoseReport(monitor, start, end)
