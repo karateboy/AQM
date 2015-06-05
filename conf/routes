@@ -61,3 +61,6 @@ GET		/OverLawStdReport/:monitor/:monitorType/:start/:end	controllers.Query.overL
 
 GET		/EffectivePercentage	controllers.Query.effectivePercentage
 GET		/EffectivePercentage/:start/:end	controllers.Query.effectivePercentageReport(start, end)
+
+GET		/Alarm					controllers.Query.alarm
+GET		/AlarmReport/:monitor/:status/:start/:end	controllers.Query.alarmReport(monitor, status, start, end)

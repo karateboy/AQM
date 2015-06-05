@@ -432,11 +432,11 @@ object Record {
   def getTabName(tab:TableType.Value, year:Int)={
     tab match {
       case TableType.Hour =>
-        SQLSyntax.createUnsafely(s"[AQMSDB].[dbo].[P1234567_Hr_${DateTime.now.getYear}]")
+        SQLSyntax.createUnsafely(s"[AQMSDB].[dbo].[P1234567_Hr_${year}]")
       case TableType.Min=>
-        SQLSyntax.createUnsafely(s"[AQMSDB].[dbo].[P1234567_M1_${DateTime.now.getYear}]")
+        SQLSyntax.createUnsafely(s"[AQMSDB].[dbo].[P1234567_M1_${year}]")
       case TableType.SixSec=>
-        SQLSyntax.createUnsafely(s"[AQMSDB].[dbo].[P1234567_S6_${DateTime.now.getYear}]")
+        SQLSyntax.createUnsafely(s"[AQMSDB].[dbo].[P1234567_S6_${year}]")
     }     
   }
 }

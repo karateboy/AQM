@@ -91,7 +91,7 @@ object MonitorStatus extends Enumeration{
         SELECT [statusNo],[statusName],[isOutage],[isValid]
         FROM [AQMSDB].[dbo].[Infor_Status]
       """.map { r =>  MonitorStatus(
-      r.string(1), r.string(2), r.boolean(3), r.boolean(4)    
+      getValidId(r.string(1)), r.string(2), r.boolean(3), r.boolean(4)    
       )}.list.apply
     }
   
@@ -105,10 +105,12 @@ object MonitorStatus extends Enumeration{
   val NORMAL_STAT = "10"
   val OVER_STAT = "11"
   val BELOW_STAT = "12"
-  val VALID_STATS = List(NORMAL_STAT, OVER_STAT, BELOW_STAT)
+  val VALID_STATS = List(NORMAL_STAT, OVER_STAT, BELOW_STAT).map(getValidId)
   def isValidStat(s:String)={
     VALID_STATS.contains(getValidId(s))
   }
 
-  val map:Map[Value, MonitorStatus] = Map(msList.map{e=>Value(e.id.substring(1))->e}:_*)
+  val map:Map[Value, MonitorStatus] = Map(msList.map{s=>Value(s.id)->s}:_*)
+  val msvList = msList.map {r=>MonitorStatus.withName(r.id)}
+  val alarmList = msvList.filter { _ != MonitorStatus.withName(getValidId(NORMAL_STAT)) }
 }

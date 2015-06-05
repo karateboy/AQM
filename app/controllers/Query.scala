@@ -209,4 +209,25 @@ object Query extends Controller{
     }
     Ok(views.html.effectivePercentageReport(start, end, reports))
   }
+  
+  def alarm() = Security.Authenticated {
+    implicit request =>
+    Ok(views.html.alarm())
+  }
+
+  def alarmReport(monitorStr: String, statusStr: String, startStr: String, endStr: String) = Security.Authenticated {
+    val monitorStrArray = monitorStr.split(':')
+    val monitors = monitorStrArray.map { Monitor.withName }
+    val statusFilter = if (statusStr.equalsIgnoreCase("none")) {
+      None
+    } else {
+      Some(statusStr.split(':').toList.map { MonitorStatus.withName })
+    }
+    val start = DateTime.parse(startStr)
+    val end = DateTime.parse(endStr)
+   
+    val records = Alarm.getAlarm(monitors, statusFilter, start, end)
+    
+    Ok(views.html.alarmReport(start, end, records))
+  }
 }

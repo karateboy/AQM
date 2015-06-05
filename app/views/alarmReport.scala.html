@@ -1,0 +1,33 @@
+@* historyReport Template File *@
+@import com.github.nscala_time.time.Imports._
+@import MonitorStatus._
+@import models.Alarm._
+@(start:DateTime, end:DateTime, report:List[Alarm])
+
+<H3>警告報表</H3>
+<H5>開始:@start.toString("YYYY-MM-dd")</H5>
+<H5>結束:@end.toString("YYYY-MM-dd")</H5>
+
+<table id="alarmReport" class="table">
+<thead>
+	<tr>		
+		<th>測站</th>
+		<th>時間</th>
+		<th>項目</th>
+		<th>警報</th>
+	</tr>
+</thead>
+<tbody>
+	@for(a <- report){
+		<tr>
+			<td>@Monitor.map(a.monitor).name</td>
+			<td>@a.time.toString("YYYY/MM/dd")</td>
+			<td>@models.Alarm.map(a.mItem)</td>
+			<td>@MonitorStatus.map(a.code).desp</td>
+		</tr>
+	}
+</tbody>
+</table>
+<script>
+
+</script>

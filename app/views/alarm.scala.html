@@ -1,0 +1,146 @@
+@* calibration Template File *@
+<div class="row">
+   	<div class="col-lg-12">
+    	<div class="panel-group" id="accordion">
+        	<div class="panel panel-primary" id="paramPanel">
+            	<div class="panel-heading panel-title" >
+            		<a data-toggle="collapse" data-parent="#accordion" href="#reportParam">報表參數</a>	
+                </div>
+            	<div class="panel-body panel-collapse in" id="reportParam">
+            		<h5>測站</h5>
+            		<div class="btn-group" data-toggle="buttons">
+            			@for(m<-Monitor.values.toList){
+            				<label class="btn btn-outline btn-primary dim">
+								<input type="checkbox" name="monitor" id="@m">@Monitor.getDisplayName(m)</label>		
+            			}
+            		</div>
+            		<br/>
+            		<h5>警報項目篩選</h5>
+            		<div class="btn-group" data-toggle="buttons">
+            			@for(a<-MonitorStatus.alarmList){
+            				<label class="btn btn-outline btn-primary dim">
+								<input type="checkbox" name="monitorStatus" id="@a">@MonitorStatus.map(a).desp</label>		
+            			}
+            		</div>
+            		<br/>
+ 					<h5>查詢區間</h5>
+ 					<div class="input-daterange input-group" id="datepicker">
+                    	<span class="input-group-addon"><i class="fa fa-calendar"></i></span><input type="text" class="input-sm form-control" name="start" id="reportStart" required/>
+                       	<span class="input-group-addon">至</span>
+                        <input type="text" class="input-sm form-control" name="end" id="reportEnd" required/>                        
+                    </div>
+					<br/>
+					<div>
+						<button type="button" class="btn btn-primary" id="queryReport">查詢</button>
+					</div>
+            	</div>
+        	</div>
+        	<div class="panel panel-success" style="display:none" id="reportPanel">
+            	<div class="panel-heading panel-title"" >
+            		<a data-toggle="collapse" data-parent="#accordion" href="#monitorReport">警告報表</a>	
+                </div>
+            	<div class="panel-body panel-collapse" id="monitorReport">
+					<div id="reportDiv" align="center" style="overflow-x:auto">
+            		</div>
+            	</div>
+        	</div> <!-- end of panel group -->
+    	</div>
+	</div>
+</div>
+<script>
+$( document ).ready(function() {
+	$('#datepicker').datepicker({
+		format: 'yyyy-mm-dd',
+	    todayBtn: "linked",
+	    language: "zh-TW"
+	});
+
+	var monitors, statusFilter, reportStart, reportEnd;
+	
+	function validate(){
+		monitors = $("input[name='monitor']:checked");
+
+		if (monitors.length == 0) {
+			alert("請選擇測站");
+			return false;
+		}
+
+		statusFilter = $("input[name='monitorStatus']:checked");
+		console.log(statusFilter);
+		
+		reportStart = $('#reportStart').val();
+		if(reportStart.length === 0){
+			alert('請選擇開始日期');
+			return false;
+		}
+		
+		reportEnd = $('#reportEnd').val();
+		if(reportStart.length === 0){
+			alert('請選擇結束日期');
+			return false;
+		}
+		
+		return true;
+	}
+	
+	$('#queryReport').click(function(){
+		if(!validate())
+			return;
+
+		$("#reportPanel").css('display','block');
+		$("#reportParam").collapse();
+		$("#reportPanel").collapse('show');
+
+		$('#reportDiv').html('');
+		$("body").css("cursor", "progress");
+
+		var monitorParam='';
+		for (var i = 0; i < monitors.length; i++) {
+			if(monitorParam=='')
+				monitorParam = monitors[i].id;
+			else
+				monitorParam += ':' + monitors[i].id;
+		}
+		
+		var statusFilterParam='';
+		if(statusFilter.length==0){
+			statusFilterParam='None';
+		}else{
+			for (var i = 0; i < statusFilter.length; i++) {
+				if(statusFilterParam=='')
+					statusFilterParam = statusFilter[i].id;
+				else
+					statusFilterParam += ':' + statusFilter[i].id;
+			}			
+		}
+		
+		var url = "/AlarmReport/" + monitorParam + "/" + statusFilterParam + "/" + reportStart + "/" + reportEnd;
+		console.log(url);
+		$.ajax({
+			url: url,
+			data: '',
+			contentType: "application/json; charset=utf-8",
+			type: "GET",
+			dataType: "html",
+			success: function(result){
+				$('#reportDiv').html(result);
+				$( document ).ready(function() {
+					$('#alarmReport').dataTable( {
+						language: {
+							url: '@routes.Assets.at("localization/zh_tw.json")',
+							"searching": false
+						}
+					} );
+				});
+			},
+			error: function(xhr, status, errorThrown){
+				console.log("錯誤訊息:" + status + "-" + errorThrown);
+			},
+
+			complete: function(xhr, status){
+				$("body").css("cursor", "default");
+			}					
+		});
+	});
+});
+</script>
