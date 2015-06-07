@@ -200,7 +200,9 @@ function HomeControl(map, div, home) {
   	windMarkerArray.map(function(marker){
   		marker.setVisible(false);});
   	windInfoboxArray.map(function(ib){
-  		ib.setVisible(false);}
+  		ib.setVisible(false);
+  	refreshRealtimeInfo();	
+  		}
   	);
   });
   
@@ -244,7 +246,15 @@ function getRandomInt(min, max) {
 function refreshMarker(realtime){
 	for(var i=0;i<markerStaticData.length;i++){
 		var info = realtime.info[i];
-		statusMarkerArray[i].icon.url = statusIconUrl[info.status];
+		var icon = {
+				url:statusIconUrl[info.status],
+				anchor: new google.maps.Point(12, 12),
+				scaledSize:new google.maps.Size(24,24) 
+			};
+		statusMarkerArray[i].setIcon(icon); 
+		if(info.status == 4)
+			statusMarkerArray[i].setAnimation(google.maps.Animation.BOUNCE);
+		
 		windMarkerArray[i].icon.rotation = info.winDir;
 		windInfoboxArray[i].setContent(Math.round(info.winSpeed*100)/100 + "m/s");
 	}
@@ -258,6 +268,7 @@ function refreshRealtimeInfo(){
 		type : "GET",
 		dataType : "json",
 		success : function(result) {
+			console.log(result);
 			refreshMarker(result);
 		},
 		error : function(xhr, status, errorThrown) {
