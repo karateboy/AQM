@@ -97,7 +97,7 @@ object Record {
   
   type MinRecord = HourRecord
   
-  def emptySixSecRecord(m:Monitor.Value, t:DateTime) = SixSecRecord(m, t, 0f, 0f, MonitorStatus.NORMAL_STAT)  
+  def emptySixSecRecord(m:Monitor.Value, t:DateTime, status:String) = SixSecRecord(m, t, 0f, 0f, status)  
   
   def mapper(rs: WrappedResultSet) = {
     HourRecord(rs.string(1), rs.timestamp(2), rs.stringOpt(3), rs.floatOpt(4), rs.stringOpt(5), 
@@ -119,7 +119,7 @@ object Record {
     
     val windDir = rs.floatOpt(24).getOrElse(0f)
 
-    val status = rs.stringOpt(5).getOrElse("010")
+    val status = rs.stringOpt(5).getOrElse(MonitorStatus.DATA_LOSS_STAT)
     
     SixSecRecord(
         Monitor.withName(rs.string(1)),
@@ -304,7 +304,7 @@ object Record {
             {
               t._3 match {
                 case Some(s) =>
-                  if (MonitorStatus.isValidStat(s)) {
+                  if (MonitorStatus.isNormalStat(s)) {
                     t._2 != None
                   } else
                     false
@@ -353,7 +353,7 @@ object Record {
     val ratePair = 
       for{mt <- MonitorType.mtvList
         mtList = records.map(monitorTypeProject2(mt))  
-        count = mtList.count(r=>(r._1.isDefined && r._2.isDefined && MonitorStatus.isValidStat(r._2.get)))
+        count = mtList.count(r=>(r._1.isDefined && r._2.isDefined && MonitorStatus.isNormalStat(r._2.get)))
         }yield{
           (mt -> count.toFloat/expected_count)
         }
@@ -371,7 +371,7 @@ object Record {
       for{m <- Monitor.mvList
         records = Record.getHourRecords(m, start, end)
         mtList = records.map(monitorTypeProject2(monitorType))  
-        count = mtList.count(r=>(r._1.isDefined && r._2.isDefined && MonitorStatus.isValidStat(r._2.get)))
+        count = mtList.count(r=>(r._1.isDefined && r._2.isDefined && MonitorStatus.isNormalStat(r._2.get)))
         }yield{
           (m -> count.toFloat/expected_count)
         }

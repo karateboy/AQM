@@ -258,7 +258,6 @@ function refreshRealtimeInfo(){
 		type : "GET",
 		dataType : "json",
 		success : function(result) {
-			console.log(result);
 			refreshMarker(result);
 		},
 		error : function(xhr, status, errorThrown) {

@@ -25,7 +25,7 @@
 				@if(recordMap(m).get(t).isEmpty||recordMap(m)(t)._1.isEmpty||recordMap(m)(t)._2.isEmpty){
 					<td>-</td>
 				}else{
-					@if(MonitorStatus.isValidStat(getValidId(recordMap(m)(t)._2.get))){
+					@if(MonitorStatus.isNormalStat(getValidId(recordMap(m)(t)._2.get))){
 						<td>@("%.2f".format(recordMap(m)(t)._1.get))</td>
 					}else{
 						<td style="background-color:yellow">@("%.2f".format(recordMap(m)(t)._1.get))</td>

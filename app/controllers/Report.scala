@@ -70,7 +70,7 @@ object Report extends Controller {
         hourRecord = getHourRecord(hour)
         validData = hourRecord.filter {hr=>
           hr._3 match {
-            case Some(stat)=> MonitorStatus.isValidStat(stat)
+            case Some(stat)=> MonitorStatus.isNormalStat(stat)
             case _=>false
           }
         }.map(r => r._2.get)

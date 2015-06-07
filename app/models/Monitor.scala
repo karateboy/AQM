@@ -101,15 +101,40 @@ object MonitorStatus extends Enumeration{
     else
       tag
   }
-  
+
   val NORMAL_STAT = "10"
-  val OVER_STAT = "11"
-  val BELOW_STAT = "12"
-  val VALID_STATS = List(NORMAL_STAT, OVER_STAT, BELOW_STAT).map(getValidId)
-  def isValidStat(s:String)={
+
+  def isNormalStat(s: String) = {
+    val OVER_STAT = "11"
+    val BELOW_STAT = "12"
+
+    val VALID_STATS = List(NORMAL_STAT, OVER_STAT, BELOW_STAT).map(getValidId)
     VALID_STATS.contains(getValidId(s))
   }
 
+  def isCalbration(s: String) = {
+    val CALBRATION_STAT = "20"
+    val CALBRATION_DIVERSION_STAT = "22"
+
+    val CALBRATION_STATS = List(CALBRATION_STAT, CALBRATION_DIVERSION_STAT).map(getValidId)
+    CALBRATION_STATS.contains(getValidId(s))
+  }
+  
+  def isRepairing(s: String)={
+    val REPAIR = "31"
+    REPAIR == getValidId(s)
+  }
+  
+  val DATA_LOSS_STAT = "36"
+  val REPAIR_STAT = "31"
+  def isMaintance(s: String)={
+    REPAIR_STAT == getValidId(s)
+  }
+  
+  def isError(s: String)={
+    !(isNormalStat(s)||isCalbration(s)||isRepairing(s)||isMaintance(s))  
+  }
+  
   val map:Map[Value, MonitorStatus] = Map(msList.map{s=>Value(s.id)->s}:_*)
   val msvList = msList.map {r=>MonitorStatus.withName(r.id)}
   val alarmList = msvList.filter { _ != MonitorStatus.withName(getValidId(NORMAL_STAT)) }

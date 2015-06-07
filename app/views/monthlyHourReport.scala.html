@@ -84,7 +84,7 @@
 			@for(hour<-0 to 23){
 				<td>@if(!report.dailyReports(d).typeList(0).dataList(hour)._2.isEmpty && 
 					!report.dailyReports(d).typeList(0).dataList(hour)._3.isEmpty){
-						@if(MonitorStatus.isValidStat(report.dailyReports(d).typeList(0).dataList(hour)._3.get)){
+						@if(MonitorStatus.isNormalStat(report.dailyReports(d).typeList(0).dataList(hour)._3.get)){
 							@("%.2f".format(report.dailyReports(d).typeList(0).dataList(hour)._2.get))	
 						}else{
 							<span style="background-color:yellow">@("%.2f".format(report.dailyReports(d).typeList(0).dataList(hour)._2.get))</span>

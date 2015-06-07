@@ -173,13 +173,25 @@ object Realtime extends Controller {
     val current = getLatestRecordTime(TableType.SixSec).get 
     val map = getRealtimeWeatherMap(current)
     
+    def getStatusIndex(s:String)={
+      if(MonitorStatus.isNormalStat(s))
+        0
+      else if(MonitorStatus.isCalbration(s))
+        1
+      else if(MonitorStatus.isRepairing(s))
+        2
+      else if(MonitorStatus.isMaintance(s))
+        3
+      else
+        4
+    }
     val mapInfos =
     for{m <- Monitor.mvList
-      s = map.getOrElse(m, Record.emptySixSecRecord(m, current))
+      s = map.getOrElse(m, Record.emptySixSecRecord(m, current, MonitorStatus.DATA_LOSS_STAT))
       }
       yield
     {
-      MonitorInfo(m.toString(), 0, s.winDir, s.winSpeed)
+      MonitorInfo(m.toString(), getStatusIndex(s.status), s.winDir, s.winSpeed)
     }
     
     Ok(Json.toJson(RealtimeMapInfo(mapInfos)))
