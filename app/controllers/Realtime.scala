@@ -14,7 +14,8 @@ object Realtime extends Controller {
     implicit request =>
       val current = getLatestRecordTime(TableType.Min).get
       val rt_status = getRealtimeMinStatus(current)
-      val rt_psi = getRealtimePSI(current)
+      val currentHr = getLatestRecordTime(TableType.Hour).get
+      val rt_psi = getRealtimePSI(currentHr)
       Ok(views.html.realtimeStatus(current, rt_status, MonitorType.psiList, rt_psi))
   }
 

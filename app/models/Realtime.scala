@@ -341,7 +341,7 @@ object Realtime {
     val result =
       for {
         m <- Monitor.mvList
-      } yield {
+      } yield {        
         m -> getMonitorRealtimePSI(m, current)
       }
     Map(result: _*)
