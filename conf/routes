@@ -67,3 +67,12 @@ GET		/AlarmReport/:monitor/:status/:start/:end	controllers.Query.alarmReport(mon
 
 GET		/WindRose				controllers.Query.windRose
 GET		/WindRoseReport/:monitor/:start/:end	controllers.Query.windRoseReport(monitor, start, end)
+
+GET		/CompareLastYear		controllers.Query.compareLastYear
+GET		/JSON/CompareLastYearChart/:monitor/:monitorType/:start/:end	controllers.Query.compareLastYearChart(monitor, monitorType, start, end)
+
+GET		/CalculateStat			controllers.Query.calculateStat
+GET		/CalculateStatReport/:monitor/:monitorType/:start/:end	controllers.Query.calculateStatReport(monitor, monitorType, start, end)
+
+GET		/Regression				controllers.Query.regression
+GET		/JSON/RegressionChart/:monitor/:monitorType/:start/:end	controllers.Query.regressionChart(monitor, monitorType, start, end)

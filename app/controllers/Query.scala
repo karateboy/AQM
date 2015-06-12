@@ -92,7 +92,7 @@ object Query extends Controller{
 
       val timeStrSeq = timeSeq.map(_.toString("YYYY/MM/dd HH:mm"))
       val c = HighchartData(
-        Map("type" -> "column"),
+        Map("type" -> "line"),
         Map("text"->title),
         XAxis(Some(timeStrSeq)),
         YAxis(None, AxisTitle(Some(mtCase.unit)), axisLines),
@@ -281,4 +281,133 @@ object Query extends Controller{
       Results.Ok(Json.toJson(c))
 
   }
+  
+  def compareLastYear() = Security.Authenticated {
+    implicit request =>
+    Ok(views.html.compareLastYear())
+  }
+  
+  def compareLastYearChart(monitorStr:String, monitorTypeStr:String, startStr:String, endStr:String)=Security.Authenticated {
+    implicit request =>
+    import scala.collection.JavaConverters._
+    val monitor = Monitor.withName(monitorStr)
+    val monitorType = MonitorType.withName(monitorTypeStr)
+    val mtCase = MonitorType.map(monitorType)
+    val start = DateTime.parse(startStr)
+    val end = DateTime.parse(endStr)
+        
+    val (thisYearRecord, lastYearRecord) = Record.getLastYearCompareList(monitor, monitorType, start, end)
+    
+    val title=s"${Monitor.map(monitor).name} ${MonitorType.map(monitorType).desp}同期比較圖"
+    
+    val timeStrSeq = thisYearRecord.map(_._1.toDateTime.toString("MM-dd hh:00"))
+    val (t1, v1) = thisYearRecord.unzip
+    val (t2, v2) = lastYearRecord.unzip
+    
+    import Realtime._
+    
+    val series = Seq( seqData(start.getYear.toString(), v1), seqData((start-1.year).getYear.toString(), v2))
+
+      
+    val c = HighchartData(
+        scala.collection.immutable.Map("type" -> "line"),
+        scala.collection.immutable.Map("text" -> title),
+        XAxis(Some(timeStrSeq)),
+        YAxis(None, AxisTitle(Some("")), None),
+        series)
+
+      Results.Ok(Json.toJson(c))
+  }
+
+  def calculateStat() = Security.Authenticated {
+    implicit request =>
+    Ok(views.html.calculateStat())
+  }
+  
+  case class Stat(avg:Float, min:Float, max:Float, sd:Float)
+  def calculateStatReport(monitorStr:String, monitorTypeStr:String, startStr:String, endStr:String)=Security.Authenticated {
+    implicit request =>
+    import scala.collection.JavaConverters._
+    val monitorStrArray = monitorStr.split(':')
+    val monitors = monitorStrArray.map{Monitor.withName}
+    val monitorType = MonitorType.withName(monitorTypeStr)
+    val start = DateTime.parse(startStr)
+    val end = DateTime.parse(endStr)
+    
+    import models.Record._
+    import MonitorStatus._
+    import scala.collection.mutable.ListBuffer
+    val result =
+    for{m<-monitors
+      records = Record.getHourRecords(m, start, end)
+      typeRecords = records.map{r=>Record.monitorTypeProject2(monitorType)(r)}
+      normalRecords = typeRecords.filter{
+        r=>(r._1.isDefined && r._2.isDefined && MonitorStatus.isNormalStat(getValidId(r._2.get)))
+      }.map(_._1.get)
+      len = normalRecords.length
+      avg = normalRecords.sum/len
+      max = normalRecords.max
+      min = normalRecords.min
+      dev = normalRecords.map(r=>(r-avg)*(r-avg))
+      sd = Math.sqrt(dev.sum/len)
+    }
+    yield
+    {
+      (m -> Stat(avg, max, min, sd.toFloat))
+    }  
+    
+    val statMap = Map(result :_*)
+    
+    Ok(views.html.calculateStatReport(monitorType, start, end, statMap))
+  }
+  
+  def regression() = Security.Authenticated {
+    implicit request =>
+    Ok(views.html.regression())
+  }
+
+  import Realtime._
+
+  case class seqData2(name: String, data: Seq[Seq[Float]])
+  case class RegressionChartData(chart: Map[String, String],
+                           title: Map[String, String],
+                           xAxis: XAxis,
+                           yAxis: YAxis,
+                           series: Seq[seqData2])
+
+  implicit val seqDataWrite = Json.writes[seqData2]
+  implicit val hcWrite = Json.writes[RegressionChartData]
+                           
+  def regressionChart(monitorStr: String, monitorTypeStr: String, startStr: String, endStr: String) = Security.Authenticated {
+    implicit request =>
+      import scala.collection.JavaConverters._
+      val monitor = Monitor.withName(monitorStr)
+      val monitorType = MonitorType.withName(monitorTypeStr)
+      val mtCase = MonitorType.map(monitorType)
+      val start = DateTime.parse(startStr)
+      val end = DateTime.parse(endStr)
+
+      val thisYearRecord = Record.getRegressionData(monitor, monitorType, start, end)
+
+      val title = s"${Monitor.map(monitor).name} ${MonitorType.map(monitorType).desp}趨勢分析"
+
+      val timeStrSeq = thisYearRecord.map(_._1.toDateTime.toString("MM-dd hh:00"))
+      val (t1, v1) = thisYearRecord.unzip
+
+      val v2 = v1.zipWithIndex
+      val v3 = v2.map{v=>Seq(v._2, v._1)}
+
+      val series = Seq(seqData2(start.getYear.toString(), v3))
+
+      val c = RegressionChartData(
+        Map(("type"->"scatter"),
+                ("zoomType"->"xy")),
+        Map("text" -> title),
+        XAxis(Some(timeStrSeq)),
+        YAxis(None, AxisTitle(Some("")), None),
+        series)
+
+      Results.Ok(Json.toJson(c))
+  }
+
 }

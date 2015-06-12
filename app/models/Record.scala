@@ -475,7 +475,60 @@ object Record {
     
     windMap.map(kv=>(kv._1, winSpeedPercent(kv._2)))
   }
+
+  def getLastYearCompareList(monitor: Monitor.Value, monitorType: MonitorType.Value, start: DateTime, end: DateTime) = {
+    val lastYearStart = start - 1.year
+    val lastYearEnd = end - 1.year
+
+    def checkHourRecord(checkTime: DateTime, endTime: DateTime, checkList: List[HourRecord]): List[HourRecord] = {
+      if (checkTime >= endTime)
+        Nil
+      else {
+        if (checkList.isEmpty || checkTime != checkList.head.date.toDateTime())
+          emptyRecord(monitor.toString(), checkTime) :: checkHourRecord(checkTime + 1.hour, endTime, checkList)
+        else
+          checkList.head :: checkHourRecord(checkTime + 1.hour, endTime, checkList.tail)
+      }
+    }
+    
+    val records = checkHourRecord(start, end, getHourRecords(monitor, start, end))
+    
+    val typeRecords =  records.map {
+      r => (timeProjection(r), monitorTypeProject2(monitorType)(r)._1.getOrElse(0f))
+    }
+
+
+    
+    val lastYearRecords = checkHourRecord(start, end, getHourRecords(monitor, lastYearStart, lastYearEnd))
+    val typeLastYearRecords = lastYearRecords.map {
+      r => (timeProjection(r), monitorTypeProject2(monitorType)(r)._1.getOrElse(0f))
+    }
+
+    (typeRecords, typeLastYearRecords)
+  }
   
+  def getRegressionData(monitor: Monitor.Value, monitorType: MonitorType.Value, start: DateTime, end: DateTime) = {
+
+    def checkHourRecord(checkTime: DateTime, endTime: DateTime, checkList: List[HourRecord]): List[HourRecord] = {
+      if (checkTime >= endTime)
+        Nil
+      else {
+        if (checkList.isEmpty || checkTime != checkList.head.date.toDateTime())
+          emptyRecord(monitor.toString(), checkTime) :: checkHourRecord(checkTime + 1.hour, endTime, checkList)
+        else
+          checkList.head :: checkHourRecord(checkTime + 1.hour, endTime, checkList.tail)
+      }
+    }
+    
+    val records = checkHourRecord(start, end, getHourRecords(monitor, start, end))
+    
+    val typeRecords =  records.map {
+      r => (timeProjection(r), monitorTypeProject2(monitorType)(r)._1.getOrElse(0f))
+    }
+
+    typeRecords
+  }
+    
   def getTabName(tab:TableType.Value, year:Int)={
     tab match {
       case TableType.Hour =>

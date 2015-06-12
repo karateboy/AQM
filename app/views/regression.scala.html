@@ -1,0 +1,144 @@
+@* trendReport Template File *@
+<div class="row">
+   	<div class="col-lg-12">
+    		<div class="panel-group" id="accordion">
+        	<div class="panel panel-primary" id="paramPanel">
+            	<div class="panel-heading panel-title" >
+            		<a data-toggle="collapse" data-parent="#accordion" href="#reportParam">查詢參數</a>	
+                </div>
+            	<div class="panel-body panel-collapse in" id="reportParam">
+            		<h5>測站</h5>
+            		<div class="btn-group" data-toggle="buttons">
+            			@for(m<-Monitor.values.toList){
+            				<label class="btn btn-outline btn-primary dim">
+								<input type="radio" name="monitor" id="@m">@Monitor.getDisplayName(m)</label>		
+            			}
+            		</div>
+					<h5>監測項目</h5>
+					<div class="btn-group" data-toggle="buttons">
+					    @for(mt<-MonitorType.mtvList){
+            				<label class="btn btn-outline btn-primary dim">
+								<input type="radio" name="monitorType" id="@mt">@MonitorType.map(mt).desp</label>		
+            			}
+  
+					</div>
+ 					<h5>查詢區間</h5>
+ 					<div class="input-daterange input-group" id="datepicker">
+                    	<span class="input-group-addon"><i class="fa fa-calendar"></i></span><input type="text" class="input-sm form-control" name="start" id="reportStart" required/>
+                       	<span class="input-group-addon">至</span>
+                        <input type="text" class="input-sm form-control" name="end" id="reportEnd" required/>                        
+                    </div>
+					<br/>
+					<div>
+						<button type="button" class="btn btn-primary" id="queryReport">查詢</button>
+					</div>
+            	</div>
+        	</div>
+        	<div class="panel panel-success" style="display:none" id="reportPanel">
+            	<div class="panel-heading panel-title"" >
+            		<a data-toggle="collapse" data-parent="#accordion" href="#monitorReport">歷史趨勢圖</a>	
+                </div>
+            	<div class="panel-body panel-collapse" id="monitorReport">
+					<div id="reportDiv" align="center" style="overflow-x:auto">
+					            		
+            		</div>
+            	</div>
+        	</div> <!-- end of panel group -->
+    	</div>
+	</div>
+</div>
+<script src='@routes.Assets.at("js/highcharts/modules/exporting.js")'></script>
+<script src='@routes.Assets.at("js/highcharts/highcharts-regression.js")'></script>
+<script>
+$( document ).ready(function() {
+	
+	$('#datepicker').datepicker({
+		format: 'yyyy-mm-dd',
+	    todayBtn: "linked",
+	    language: "zh-TW"
+	});
+
+
+	var monitor, monitorType, reportStart, reportEnd;
+	
+	function validate(){
+		monitor = $("input[name='monitor']:checked").attr('id');
+
+		if (!monitor) {
+			alert("請選擇測站");
+			return false;
+		}
+
+
+		monitorType = $("input[name='monitorType']:checked").attr('id');
+		if(!monitorType) {
+			alert('請選擇測項');
+			return false;
+		}
+		
+		reportStart = $('#reportStart').val();
+		if(reportStart.length === 0){
+			alert('請選擇開始日期');
+			return false;
+		}
+		
+		reportEnd = $('#reportEnd').val();
+		if(reportStart.length === 0){
+			alert('請選擇結束日期');
+			return false;
+		}
+
+		return true;
+	}
+	
+	$('#queryReport').click(function(){
+		if(!validate())
+			return;
+			
+		$("#reportPanel").css('display','block');
+		$("#reportParam").collapse();
+		$("#reportPanel").collapse('show');
+
+		$('#reportDiv').html('');
+		$("body").css("cursor", "progress");
+			
+		var url = "/JSON/RegressionChart/" + monitor + "/" + monitorType + "/" + reportStart + "/" + reportEnd;
+		
+		$.ajax({
+			url : url,
+			data : "",
+			contentType : "application/json; charset=utf-8",
+			type : "GET",
+			dataType : "json",
+			success : function(result) {
+				result.colors=[
+				'#7CB5EC','#434348','#90ED7D','#F7A35C','#8085E9','#F15C80',
+				'#E4D354','#2B908F','#FB9FA8','#91E8E1','#7CB5EC','#80C535','#969696'];
+				result.tooltip ={
+	            	valueDecimals: 2};
+	            result.legend={enabled:true};
+				result.credits={
+					enabled:false,
+					href:'http://www.wecc.com.tw/'
+				};
+				result.series[0].regression=true;
+				result.series[0].regressionSettings={
+                    type: 'linear',
+                    color:  'rgba(223, 83, 83, .9)'
+                };
+                console.log(result);
+				$('#reportDiv').highcharts(result);
+			},
+			error : function(xhr, status, errorThrown) {
+				console.log("錯誤訊息:" + status + "-" + errorThrown);
+			},
+
+			complete : function(xhr, status) {
+				$("body").css("cursor", "default");
+			}
+		});
+	});
+});
+</script>
+
+
