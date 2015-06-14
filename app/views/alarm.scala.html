@@ -126,10 +126,15 @@ $( document ).ready(function() {
 				$('#reportDiv').html(result);
 				$( document ).ready(function() {
 					$('#alarmReport').dataTable( {
+						responsive: true,
+						"dom": 'T<"clear">lfrtip',
 						language: {
-							url: '@routes.Assets.at("localization/zh_tw.json")',
-							"searching": false
-						}
+							url: '@routes.Assets.at("localization/zh_tw.json")',							
+						},
+						"tableTools": {
+            				"sSwfPath": "@routes.Assets.at("js/plugins/dataTables/swf/copy_csv_xls_pdf.swf")"
+        				},
+        				"searching": false
 					} );
 				});
 			},

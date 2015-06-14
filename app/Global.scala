@@ -14,6 +14,6 @@ object Global extends GlobalSettings {
   override def onStop(app: Application) {
     Logger.info("Application shutdown...")
     //DBs.closeAll()
-    super.onStart(app)
+    super.onStop(app)
   }
 }

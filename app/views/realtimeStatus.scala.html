@@ -170,19 +170,42 @@
 <script>
 $( document ).ready(function() {
 	$('#reportTable').dataTable( {
+		responsive: true,
+		"dom": 'T<"clear">lfrtip',
 		language: {
-			url: '@routes.Assets.at("localization/zh_tw.json")'
+			url: '@routes.Assets.at("localization/zh_tw.json")',							
 		},
-		paging:   false,
-		searching: false
+		"tableTools": {
+        	"sSwfPath": "@routes.Assets.at("js/plugins/dataTables/swf/copy_csv_xls_pdf.swf")"
+        },
+		"paging":   false,
+		"searching": false
 	    } );
 	
 	$('#psiTable').dataTable( {
+		responsive: true,
+		"dom": 'T<"clear">lfrtip',
 		language: {
-			url: '@routes.Assets.at("localization/zh_tw.json")'
+			url: '@routes.Assets.at("localization/zh_tw.json")',							
 		},
-		paging:   false,
-		searching: false
+		"tableTools": {
+        	"sSwfPath": "@routes.Assets.at("js/plugins/dataTables/swf/copy_csv_xls_pdf.swf")"
+        },
+        "oTableTools": {
+            "aButtons": [
+                "copy",
+                "csv",
+                "xls",
+                {
+                    "sExtends": "pdf",
+                    "sPdfOrientation": "landscape",
+                    "sCharSet": "utf16le"
+                },
+                "print"
+            ]
+        },
+		"paging":   false,
+		"searching": false
 	    } );
 });
 </script>

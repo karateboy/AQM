@@ -115,9 +115,14 @@ $( document ).ready(function() {
 				$('#reportDiv').html(result);
 
 				$('#reportTable').dataTable( {
+					responsive: true,
+					"dom": 'T<"clear">lfrtip',
 					language: {
-						url: '@routes.Assets.at("localization/zh_tw.json")'
+						url: '@routes.Assets.at("localization/zh_tw.json")',							
 					},
+					"tableTools": {
+        				"sSwfPath": "@routes.Assets.at("js/plugins/dataTables/swf/copy_csv_xls_pdf.swf")"
+        			},
 					"paging":   false,
 					"searching": false
 	    		} );

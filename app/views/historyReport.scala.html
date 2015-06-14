@@ -6,7 +6,6 @@
 <H3>測項:@MonitorType.map(monitorType).desp (@MonitorType.map(monitorType).unit)</H3>
 <H5>開始:@start.toString("YYYY-MM-dd")</H5>
 <H5>結束:@end.toString("YYYY-MM-dd")</H5>
-
 <table id="historyReport" class="table">
 <thead>
 	<tr>
@@ -39,9 +38,15 @@
 <script>
 $( document ).ready(function() {
 	$('#historyReport').dataTable( {
+		responsive: true,
+		"dom": 'T<"clear">lfrtip',
 		language: {
-			url: '@routes.Assets.at("localization/zh_tw.json")'
-		}
+			url: '@routes.Assets.at("localization/zh_tw.json")',							
+		},
+		"tableTools": {
+        	"sSwfPath": "@routes.Assets.at("js/plugins/dataTables/swf/copy_csv_xls_pdf.swf")"
+        },
+		"paging":   false
 	} );
 });
 </script>
