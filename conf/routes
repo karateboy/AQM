@@ -12,10 +12,6 @@ GET		/login						controllers.Login.prompt
 GET		/logout						controllers.Login.logout
 POST	/authenticate				controllers.Login.authenticate
 
-GET		/report/*reporttype			controllers.Report.getReport(reporttype)
-POST	/monitorReport				controllers.Report.monitorReport
-
-
 GET		/PDF/monitorReport/:reportType/:monitor/:startDate 	controllers.Report.monitorReportPDF(monitor, reportType, startDate)
 GET		/HTML/monitorReport/:reportType/:monitor/:startDate 	controllers.Report.monitorReportHtml(monitor, reportType, startDate)
 GET		/HTML/monitorMonthlyHourReport/:monitor/:monitorType/:startDate	controllers.Report.monthlyHourReportHtml(monitor, monitorType, startDate)
@@ -27,52 +23,48 @@ GET		/JSON/realtime/map			controllers.Realtime.realtimeMap
 POST	/JSON/realtimeTrend			controllers.Realtime.realtimeTrendJSON
 GET 	/JSON/realtimeHighchart/:monitorType controllers.Realtime.highchartJson(monitorType)	
 
-GET		/Monitor					controllers.Application.monitor(monitor = "A001")
-GET		/Monitor/:monitor			controllers.Application.monitor(monitor)
-GET		/MonitoredType/:monitor		controllers.Application.monitoredTypes(monitor)
-POST	/MonitoredType/:monitor/:monitorType/:used	controllers.Application.setMonitoredTypes(monitor, monitorType, used:Boolean)
-
-GET		/MonitorTypeConfig			controllers.Application.monitorTypeConfig
-
-GET 	/RecordValidation			controllers.Application.recordValidation
-GET		/HTML/RecordValidation/:start	controllers.Application.recordValidationHtml(start)
-GET		/RealtimeEpaRecord			controllers.Application.realtimeEpaRecord
-
-GET		/CalibrationQuery			controllers.Application.calibrationQueryForm
-GET		/HTML/CalibrationQuery/:monitor/:start/:end controllers.Application.calibrationQueryResult(monitor, start, end)
-
+GET		/report/*reporttype			controllers.Report.getReport(reporttype)
+POST	/monitorReport				controllers.Report.monitorReport
 GET		/PsiQuery					controllers.Report.psiReportPrompt
 GET		/PsiQueryReport/:monitor/:reportType/:start	controllers.Report.psiReportReport(monitor, reportType, start)
-
 GET		/EffectiveQuery			controllers.Report.effectiveQuery
 GET		/EffectiveAnnualReport/:reportType/:start/:param	controllers.Report.effectiveAnnualReport(reportType, start, param)
 
 GET		/HistoryQuery			controllers.Query.history
 GET		/HistoryQueryReport/:monitor/:monitorType/:start/:end	controllers.Query.historyReport(monitor, monitorType, start, end)
-
 GET		/HistoryTrend			controllers.Query.historyTrend
 GET		/JSON/HistoryTrend/:monitor/:monitorType/:start/:end	controllers.Query.historyTrendChart(monitor, monitorType, start, end)
-
 GET		/PsiTrend				controllers.Query.psiTrend
 GET		/JSON/PsiTrend/:monitor/:start/:end	controllers.Query.psiTrendChart(monitor, start, end)
-
 GET		/OverLawStd				controllers.Query.overLawStd
 GET		/OverLawStdReport/:monitor/:monitorType/:start/:end	controllers.Query.overLawStdReport(monitor, monitorType, start, end)
-
 GET		/EffectivePercentage	controllers.Query.effectivePercentage
 GET		/EffectivePercentage/:start/:end	controllers.Query.effectivePercentageReport(start, end)
-
 GET		/Alarm					controllers.Query.alarm
 GET		/AlarmReport/:monitor/:status/:start/:end	controllers.Query.alarmReport(monitor, status, start, end)
-
 GET		/WindRose				controllers.Query.windRose
 GET		/WindRoseReport/:monitor/:start/:end	controllers.Query.windRoseReport(monitor, start, end)
-
 GET		/CompareLastYear		controllers.Query.compareLastYear
 GET		/JSON/CompareLastYearChart/:monitor/:monitorType/:start/:end	controllers.Query.compareLastYearChart(monitor, monitorType, start, end)
-
 GET		/CalculateStat			controllers.Query.calculateStat
 GET		/CalculateStatReport/:monitor/:monitorType/:start/:end	controllers.Query.calculateStatReport(monitor, monitorType, start, end)
-
 GET		/Regression				controllers.Query.regression
 GET		/JSON/RegressionChart/:monitor/:monitorType/:start/:end	controllers.Query.regressionChart(monitor, monitorType, start, end)
+GET		/CalibrationQuery			controllers.Query.calibrationQuery
+GET		/HTML/CalibrationQuery/:monitor/:start/:end controllers.Query.calibrationQueryReport(monitor, start, end)
+
+GET		/Monitor					controllers.Application.monitor(monitor = "A001")
+GET		/Monitor/:monitor			controllers.Application.monitor(monitor)
+GET		/MonitoredType/:monitor		controllers.Application.monitoredTypes(monitor)
+POST	/MonitoredType/:monitor/:monitorType/:used	controllers.Application.setMonitoredTypes(monitor, monitorType, used:Boolean)
+GET		/MonitorTypeConfig			controllers.Application.monitorTypeConfig
+GET 	/RecordValidation			controllers.Application.recordValidation
+GET		/HTML/RecordValidation/:start	controllers.Application.recordValidationHtml(start)
+GET		/RealtimeEpaRecord			controllers.Application.realtimeEpaRecord
+
+GET		/UserManagement		controllers.Application.userManagement
+PUT		/User				controllers.Application.newUser
+GET		/User				controllers.Application.getAllUsers
+POST	/User/:id			controllers.Application.updateUser(id:Int)
+GET		/User/:id			controllers.Application.getUser(id:Int)
+DELETE  /User/:id			controllers.Application.deleteUser(id:Int)	

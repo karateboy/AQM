@@ -5,33 +5,32 @@ import play.api.mvc._
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
 import play.api.Logger
-
-case class UserInfo(account: String, password: String)
+import models.User
+case class Credential(account: String, password: String)
 
 /**
  * @author user
  */
 object Login extends Controller {
-  implicit val readsUserInfo: Reads[UserInfo] = 
-    ((__ \ "account").read[String] and (__ \ "password").read[String])(UserInfo.apply _)
-
-  implicit val userInfoWrites: Writes[UserInfo] =
-    ((JsPath \ "account").write[String] and 
-        (JsPath \ "password").write[String])(unlift(UserInfo.unapply))
-    
+  implicit val credentialReads = Json.reads[Credential]    
         
   def authenticate = Action(BodyParsers.parse.json){
     implicit request =>
-      val userInfo = request.body.validate[UserInfo]      
-      userInfo.fold(
+      val credentail = request.body.validate[Credential]      
+      credentail.fold(
           error=>{
             BadRequest(Json.obj("ok"->false, "msg"->JsError.toFlatJson(error)))
           }, 
-          userInfo=>{
-            if(userInfo.password == "abc123"){
-              Ok(Json.obj("ok"->true)).withSession(Security.setUserinfo(request, userInfo.account))              
-            }else
+          crd=>{
+            val optUser = User.getUserByEmail(crd.account)
+            if(optUser.isEmpty || optUser.get.password != crd.password)
               Ok(Json.obj("ok"->false, "msg"->"密碼或帳戶錯誤"))
+            else {
+              val user = optUser.get
+              import Security._
+              val userInfo = UserInfo(user.id.get, user.name, user.isAdmin)
+              Ok(Json.obj("ok"->true)).withSession(Security.setUserinfo(request, userInfo))              
+            }              
           })
   }
   

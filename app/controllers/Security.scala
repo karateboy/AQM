@@ -6,11 +6,27 @@ import scala.concurrent._
 
 class AuthenticatedRequest[A](val userinfo:String, request: Request[A]) extends WrappedRequest[A](request)
 
-object Security {    
-  val credentialKey = "credential"
+object Security {
+  val idKey = "ID"
+  val nameKey = "Name"
+  val adminKey = "Admin"
+  case class UserInfo(id:Int, name:String, admin:Boolean)
   
-  def getUserinfo(request: RequestHeader) = {
-    request.session.get(credentialKey)
+
+  def getUserinfo(request: RequestHeader):Option[UserInfo] = {
+    val optId = request.session.get(idKey)
+    if(optId.isEmpty)
+      return None
+      
+    val optAdmin = request.session.get(adminKey)
+    if(optAdmin.isEmpty)
+      return None
+      
+    val optName = request.session.get(nameKey)
+    if(optName.isEmpty)
+      return None
+    
+    Some(UserInfo(optId.get.toInt, optName.get, optAdmin.get.toBoolean))
   }
   
   def onUnauthorized(request: RequestHeader) = {
@@ -28,16 +44,14 @@ object Security {
   //  }
   // }
   
+  def setUserinfo[A](request: Request[A], userInfo:UserInfo)={
+    request.session + 
+      (idKey->userInfo.id.toString()) + (adminKey->userInfo.admin.toString()) + (nameKey->userInfo.name)  
+  }
+  
+  def getUserInfo[A]()(implicit request:Request[A]):Option[UserInfo]={
+    getUserinfo(request)
+  }
+  
   def Authenticated = new AuthenticatedBuilder(getUserinfo, onUnauthorized)
-  
-  def setUserinfo[A](request: Request[A], userinfo:String)={
-    if(userinfo.length() != 0)
-      request.session + (credentialKey -> userinfo)
-    else
-      request.session - credentialKey
-  }
-  
-  def getUserInfo[A]()(implicit request:Request[A]){
-    request.session.get(credentialKey)
-  }
 }

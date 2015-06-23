@@ -21,11 +21,15 @@ object Application extends Controller {
   
   def index = Security.Authenticated{
     implicit request =>
-      val userID = Security.getUserinfo(request)
-      if(userID.isEmpty)
+      val userInfoOpt = Security.getUserinfo(request)
+      if(userInfoOpt.isEmpty){
         Ok(views.html.index(title, ""))
-      else
-        Ok(views.html.index(title, userID.get))
+      }else{
+        val userInfo = userInfoOpt.get
+        Logger.info(userInfo.toString)
+        Ok(views.html.index(title, userInfo.name))
+      }
+        
   }
   
   def monitor(monitor:String) = Security.Authenticated{
@@ -128,21 +132,74 @@ object Application extends Controller {
        }
     }
   }
+  
+  def userManagement() = Security.Authenticated{
+    implicit request =>
+    val userInfo = Security.getUserinfo(request)
+    if(userInfo.isEmpty)
+      Forbidden("No such user!")
+    else{
+      val user = User.getUserById(userInfo.get.id).get
+      val (userList, groupList) =
+        if(!user.isAdmin)
+          (List[User](), List[Group]())
+        else
+          (User.getAllUsers, Group.getAllGroups)
+          
+      Ok(views.html.userManagement(userInfo.get, user, userList, groupList))
+    }
+      
+  }
+  
+  import models.User._
+  implicit val userParamRead = Json.reads[User]
 
-  def calibrationQueryForm = Security.Authenticated {
+  def newUser = Security.Authenticated(BodyParsers.parse.json) {
     implicit request =>
-      Logger.info("calibrationQueryForm")
-      Ok(views.html.calibration())
+      val newUserParam = request.body.validate[User]
+
+      newUserParam.fold(
+        error => {
+          Logger.error(JsError.toFlatJson(error).toString())
+          BadRequest(Json.obj("ok" -> false, "msg" -> JsError.toFlatJson(error)))
+        },
+        param => {
+            User.newUser(param)
+            Ok(Json.obj("ok" -> true))
+        })
   }
   
-  def calibrationQueryResult(monitorStr:String, startStr:String, endStr:String) = Security.Authenticated {
+  def deleteUser(id:Int) = Security.Authenticated{
     implicit request =>
-      Logger.info("calibrationQueryResult")
-      val monitor = Monitor.withName(monitorStr)
-      val start = DateTime.parse(startStr)
-      val end = DateTime.parse(endStr)
-      val result = Calibration.calibrationQueryReport(monitor, start, end)
-      Ok(views.html.calibrationQueryResult(result))
+    Logger.info("deleteUser")
+    User.deleteUser(id)
+    Ok(Json.obj("ok" -> true))
   }
   
+  def getUser(id:Int) = Security.Authenticated{
+    Ok("")
+  }
+    
+  def updateUser(id:Int) = Security.Authenticated(BodyParsers.parse.json){
+    implicit request =>
+      val userParam = request.body.validate[User]
+
+      userParam.fold(
+        error => {
+          Logger.error(JsError.toFlatJson(error).toString())
+          BadRequest(Json.obj("ok" -> false, "msg" -> JsError.toFlatJson(error)))
+        },
+        param => {
+          User.updateUser(param)
+          Ok(Json.obj("ok" -> true))
+        })
+  }
+  
+  
+  def getAllUsers=Security.Authenticated{
+    val users = User.getAllUsers()
+    implicit val userWrites = Json.writes[User]
+    
+    Ok(Json.toJson(users))
+  }
 }

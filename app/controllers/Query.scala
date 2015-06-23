@@ -410,4 +410,19 @@ object Query extends Controller{
       Results.Ok(Json.toJson(c))
   }
 
+  def calibrationQuery = Security.Authenticated {
+    implicit request =>
+      Ok(views.html.calibration())
+  }
+  
+  def calibrationQueryReport(monitorStr:String, startStr:String, endStr:String) = Security.Authenticated {
+    implicit request =>
+      Logger.info("calibrationQueryResult")
+      val monitor = Monitor.withName(monitorStr)
+      val start = DateTime.parse(startStr)
+      val end = DateTime.parse(endStr)
+      val result = Calibration.calibrationQueryReport(monitor, start, end)
+      Ok(views.html.calibrationQueryResult(result))
+  }
+  
 }
