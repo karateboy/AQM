@@ -6,7 +6,7 @@
 		<div class="ibox float-e-margins">
 <div class="ibox-content">
 <ul class="nav nav-tabs">
-@if(userInfo.admin){
+@if(userInfo.isAdmin){
 <li>
 	<a data-toggle="tab" href="#newUser"> <span class="glyphicons glyphicons-hotspot"></span>新增使用者</a>
 </li>
@@ -19,7 +19,7 @@
 </li>
 </ul>
 <div class="tab-content">
-@if(userInfo.admin){
+@if(userInfo.isAdmin){
 <div id="newUser" class="tab-pane" align="left">
 <br/>
    		<form id="newUser" class="form-horizontal">
@@ -142,7 +142,7 @@
                 	@if(user.isAdmin){
                 		<input name='admin' type="checkbox" class="form-control" checked>	
                 	}else{
-                		<input name='admin' type="checkbox" class="form-control">
+                		<input name='admin' type="checkbox" class="form-control disabled">
                 	}                	
                 </div>
             </div>
@@ -199,31 +199,7 @@ $( document ).ready(function(){
 	});
 
 	var userInfos={};
-	$.ajax({
-		url: "/User",
-		data: "",
-		contentType: "application/json; charset=utf-8",
-		method: "GET",
-		dataType: "json",
-		success: function(users){
-			$('#userToBeUpdated').empty();
-			
-			for(var i=0;i<users.length;i++){
-				userInfos[users[i].id] = users[i];
-				$("#userToBeUpdated").append("<option value='"+users[i].id+ "' >" + users[i].name + 
-						"(" +users[i].email + ")</option>");					
-			}
-			console.log(userInfos);												
-		},
-		error: function(xhr, status, errorThrown){
-			alert("失敗:"+ errorThrown);
-		},
-
-		complete: function(xhr, status){
-		}
-	});
-	
-	$('#updateUsrTab').on("show.bs.tab", function(){		
+	function refreshUserInfo(callback){
 		$.ajax({
 			url: "/User",
 			data: "",
@@ -231,22 +207,30 @@ $( document ).ready(function(){
 			method: "GET",
 			dataType: "json",
 			success: function(users){
-				console.log(users);
-				$('#userToBeUpdated').empty();
-				
+				userInfos={};
 				for(var i=0;i<users.length;i++){
 					userInfos[users[i].id] = users[i];
-					$("#userToBeUpdated").append("<option value='"+users[i].id+ "' >" + users[i].name + 
-							"(" +users[i].email + ")</option>");					
-				}												
+				}
+				if(callback)
+					callback(userInfos);											
 			},
 			error: function(xhr, status, errorThrown){
 				alert("失敗:"+ errorThrown);
 			},
 
 			complete: function(xhr, status){
-			}					
-		});						
+			}
+		});			
+	}
+	refreshUserInfo();
+
+	$('#updateUsrTab').on("show.bs.tab", function(evt){
+		refreshUserInfo(function(userInfos){
+			$('#userToBeUpdated').empty();
+			for(id in userInfos){
+				$("#userToBeUpdated").append("<option value='"+ id+ "' >" + userInfos[id].name + "(" +userInfos[id].email + ")</option>");
+			}
+		});
 	});
 	
 	$('#userToBeUpdated').change(function(){
@@ -277,11 +261,11 @@ $( document ).ready(function(){
 			method: "PUT",
 			dataType: "json",
 			success: function(result){
-				console.log(result);
 				alert("成功");
+				refreshUserInfo();
 			},
 			error: function(xhr, status, errorThrown){
-				alert("失敗:"+"登入email重複");
+				alert("失敗:"+errorThrown);
 			},
 
 			complete: function(xhr, status){
@@ -307,8 +291,8 @@ $( document ).ready(function(){
 			method: "POST",
 			dataType: "json",
 			success: function(result){
-				console.log(result);
 				alert("成功");
+				refreshUserInfo();
 			},
 			error: function(xhr, status, errorThrown){
 				alert("失敗:"+ errorThrown);

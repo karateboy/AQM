@@ -10,7 +10,8 @@ object Security {
   val idKey = "ID"
   val nameKey = "Name"
   val adminKey = "Admin"
-  case class UserInfo(id:Int, name:String, admin:Boolean)
+  val groupIdKey = "GroupID"
+  case class UserInfo(id:Int, name:String, isAdmin:Boolean, groupID:Int)
   
 
   def getUserinfo(request: RequestHeader):Option[UserInfo] = {
@@ -26,7 +27,11 @@ object Security {
     if(optName.isEmpty)
       return None
     
-    Some(UserInfo(optId.get.toInt, optName.get, optAdmin.get.toBoolean))
+    val optGroupID = request.session.get(groupIdKey)
+    if(optGroupID.isEmpty)
+      return None
+      
+    Some(UserInfo(optId.get.toInt, optName.get, optAdmin.get.toBoolean, optGroupID.get.toInt))
   }
   
   def onUnauthorized(request: RequestHeader) = {
@@ -46,7 +51,8 @@ object Security {
   
   def setUserinfo[A](request: Request[A], userInfo:UserInfo)={
     request.session + 
-      (idKey->userInfo.id.toString()) + (adminKey->userInfo.admin.toString()) + (nameKey->userInfo.name)  
+      (idKey->userInfo.id.toString()) + (adminKey->userInfo.isAdmin.toString()) + 
+      (nameKey->userInfo.name) + (groupIdKey->userInfo.groupID.toString()) 
   }
   
   def getUserInfo[A]()(implicit request:Request[A]):Option[UserInfo]={

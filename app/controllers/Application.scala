@@ -23,11 +23,11 @@ object Application extends Controller {
     implicit request =>
       val userInfoOpt = Security.getUserinfo(request)
       if(userInfoOpt.isEmpty){
-        Ok(views.html.index(title, ""))
+        Forbidden("Invalid access!")
       }else{
         val userInfo = userInfoOpt.get
-        Logger.info(userInfo.toString)
-        Ok(views.html.index(title, userInfo.name))
+        
+        Ok(views.html.index(title, userInfo))
       }
         
   }
@@ -135,20 +135,21 @@ object Application extends Controller {
   
   def userManagement() = Security.Authenticated{
     implicit request =>
-    val userInfo = Security.getUserinfo(request)
-    if(userInfo.isEmpty)
+    val userInfoOpt = Security.getUserinfo(request)
+    if(userInfoOpt.isEmpty)
       Forbidden("No such user!")
     else{
-      val user = User.getUserById(userInfo.get.id).get
+      val userInfo = userInfoOpt.get
+      Logger.info("id="+userInfo.id)
+      val user = User.getUserById(userInfo.id).get
       val (userList, groupList) =
         if(!user.isAdmin)
           (List[User](), List[Group]())
         else
           (User.getAllUsers, Group.getAllGroups)
           
-      Ok(views.html.userManagement(userInfo.get, user, userList, groupList))
+      Ok(views.html.userManagement(userInfo, user, userList, groupList))
     }
-      
   }
   
   import models.User._
@@ -202,4 +203,75 @@ object Application extends Controller {
     
     Ok(Json.toJson(users))
   }
+  
+  def groupManagement() = Security.Authenticated{
+    implicit request =>
+    val userInfoOpt = Security.getUserinfo(request)
+    if(userInfoOpt.isEmpty)
+      Forbidden("No such user!")
+    else{
+      val userInfo = userInfoOpt.get
+      if(!userInfo.isAdmin){
+        Forbidden("Only administrator can manage group!")
+      }else{
+        val group = Group.getGroup(userInfo.groupID)
+        val groupList = Group.getAllGroups()
+        Ok(views.html.groupManagement(userInfo, group.get, groupList))        
+      }      
+    }
+  }
+  
+  import Privilege._
+  implicit val groupParamRead = Json.reads[Group]
+  def newGroup = Security.Authenticated(BodyParsers.parse.json) {
+    implicit request =>
+      
+      val newGroupParam = request.body.validate[Group]
+
+      newGroupParam.fold(
+        error => {
+          Logger.error(JsError.toFlatJson(error).toString())
+          BadRequest(Json.obj("ok" -> false, "msg" -> JsError.toFlatJson(error)))
+        },
+        param => {
+            Logger.debug(param.toString)
+            Group.newGroup(param)
+            Ok(Json.obj("ok" -> true))
+        })
+  }
+
+  def deleteGroup(id: Int) = Security.Authenticated {
+    implicit request =>
+      if (User.getCountGroupID(id) != 0)
+        Ok(Json.obj("ok" -> false, "reason" -> "該群組正被使用"))
+      else {
+        Group.deleteGroup(id)
+        Ok(Json.obj("ok" -> true))
+      }
+  }
+
+  def updateGroup(id: Int) = Security.Authenticated(BodyParsers.parse.json) {
+    implicit request =>
+      Logger.info("updateGroup")
+      val groupParam = request.body.validate[Group]
+
+      groupParam.fold(
+        error => {
+          Logger.error(JsError.toFlatJson(error).toString())
+          BadRequest(Json.obj("ok" -> false, "msg" -> JsError.toFlatJson(error)))
+        },
+        param => {
+          Group.updateGroup(param)
+          Ok(Json.obj("ok" -> true))
+        })
+  }
+  
+  def getAllGroups=Security.Authenticated{
+    val groups = Group.getAllGroups()
+    implicit val groupWrites = Json.writes[Group]
+    
+    Ok(Json.toJson(groups))
+  }
+  
+  
 }

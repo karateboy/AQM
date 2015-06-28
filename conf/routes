@@ -68,3 +68,9 @@ GET		/User				controllers.Application.getAllUsers
 POST	/User/:id			controllers.Application.updateUser(id:Int)
 GET		/User/:id			controllers.Application.getUser(id:Int)
 DELETE  /User/:id			controllers.Application.deleteUser(id:Int)	
+
+GET		/GroupManagement	controllers.Application.groupManagement
+PUT		/Group				controllers.Application.newGroup
+GET		/Group				controllers.Application.getAllGroups
+POST	/Group/:id			controllers.Application.updateGroup(id: Int)
+DELETE	/Group/:id			controllers.Application.deleteGroup(id: Int)

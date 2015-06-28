@@ -17,5 +17,6 @@ server.pid
 .cache
 .project
 .classpath
+.cache-*
 /.settings
 /conf/application.conf
