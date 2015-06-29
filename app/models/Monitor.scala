@@ -4,6 +4,11 @@ import java.sql.Date
 import play.api.Logger
 import scalikejdbc._
 import scalikejdbc.config._
+import EnumUtils._
+import play.api.libs.json._
+import play.api.libs.functional.syntax._
+
+
 case class Monitor(id:String, name:String, lat:Double, lng:Double)
 case class MonitorWithImageUrl(id:String, name:String, url:String)
 object Monitor extends Enumeration{
@@ -56,6 +61,9 @@ case class MonitorType(id:String, desp:String, unit:String,
     sd_internal:Option[Float], sd_law:Option[Float])
     
 object MonitorType extends Enumeration{
+  implicit val mtReads: Reads[MonitorType.Value] = EnumUtils.enumReads(MonitorType)
+  implicit val mtWrites: Writes[MonitorType.Value] = EnumUtils.enumWrites
+  
   val mtList:List[MonitorType] =
     DB readOnly{ implicit session =>
       sql"""
@@ -81,61 +89,4 @@ object MonitorType extends Enumeration{
   val realtimeList = mtvList.filter { !List(MonitorType.withName("C911"), MonitorType.withName("C912")).contains(_)} 
   val psiList = List(MonitorType.withName("A214"),MonitorType.withName("A222"), MonitorType.withName("A224"), MonitorType.withName("A225"), MonitorType.withName("A293") )
   val windDirList = List(MonitorType.withName("C212"), MonitorType.withName("C912")) 
-}
-
-case class MonitorStatus(id:String, desp:String, outage:Boolean, valid:Boolean)
-object MonitorStatus extends Enumeration{
-  private val msList:List[MonitorStatus] =
-    DB readOnly{ implicit session =>
-      sql"""
-        SELECT [statusNo],[statusName],[isOutage],[isValid]
-        FROM [AQMSDB].[dbo].[Infor_Status]
-      """.map { r =>  MonitorStatus(
-      getValidId(r.string(1)), r.string(2), r.boolean(3), r.boolean(4)    
-      )}.list.apply
-    }
-  
-  def getValidId(tag:String)= {
-    if(tag.charAt(0)=='0')
-      tag.substring(1)
-    else
-      tag
-  }
-
-  val NORMAL_STAT = "10"
-
-  def isNormalStat(s: String) = {
-    val OVER_STAT = "11"
-    val BELOW_STAT = "12"
-
-    val VALID_STATS = List(NORMAL_STAT, OVER_STAT, BELOW_STAT).map(getValidId)
-    VALID_STATS.contains(getValidId(s))
-  }
-
-  def isCalbration(s: String) = {
-    val CALBRATION_STAT = "20"
-    val CALBRATION_DIVERSION_STAT = "22"
-
-    val CALBRATION_STATS = List(CALBRATION_STAT, CALBRATION_DIVERSION_STAT).map(getValidId)
-    CALBRATION_STATS.contains(getValidId(s))
-  }
-  
-  def isRepairing(s: String)={
-    val REPAIR = "31"
-    REPAIR == getValidId(s)
-  }
-  
-  val DATA_LOSS_STAT = "36"
-  val REPAIR_STAT = "31"
-  def isMaintance(s: String)={
-    REPAIR_STAT == getValidId(s)
-  }
-  
-  def isError(s: String)={
-    !(isNormalStat(s)||isCalbration(s)||isRepairing(s)||isMaintance(s))  
-  }
-  
-  val map:Map[Value, MonitorStatus] = Map(msList.map{s=>Value(s.id)->s}:_*)
-  val msvList = msList.map {r=>MonitorStatus.withName(r.id)}
-  val alarmList = msvList.filter { _ != MonitorStatus.withName(getValidId(NORMAL_STAT)) }
 }

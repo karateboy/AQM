@@ -342,7 +342,7 @@ object Query extends Controller{
       records = Record.getHourRecords(m, start, end)
       typeRecords = records.map{r=>Record.monitorTypeProject2(monitorType)(r)}
       normalRecords = typeRecords.filter{
-        r=>(r._1.isDefined && r._2.isDefined && MonitorStatus.isNormalStat(getValidId(r._2.get)))
+        r=>(r._1.isDefined && r._2.isDefined && MonitorStatus.isNormalStat(getTagInfo(r._2.get).toString))
       }.map(_._1.get)
       len = normalRecords.length
       avg = normalRecords.sum/len

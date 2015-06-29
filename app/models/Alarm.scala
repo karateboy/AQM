@@ -23,7 +23,7 @@ object Alarm {
         Where DP_NO in ${mStr} and M_DateTime>=${startT} and M_DateTime<${end}
         """.map{
           rs=>Alarm(Monitor.withName(rs.string(1)), rs.string(2), rs.timestamp(3), rs.float(4), 
-              MonitorStatus.withName(MonitorStatus.getValidId(rs.string(5).trim())))
+              MonitorStatus.withName(MonitorStatus.getTagInfo(rs.string(5).trim()).toString))
           }.list.apply
     }else{
       val sfilter = SQLSyntax.createUnsafely(statusFilter.get.mkString("('","','","')"))
@@ -34,7 +34,7 @@ object Alarm {
         Where DP_NO in ${mStr} and M_DateTime>=${startT} and M_DateTime<${end} and CODE2 in ${sfilter}
         """.map{
           rs=>Alarm(Monitor.withName(rs.string(1)), rs.string(2), rs.timestamp(3), rs.float(4), 
-              MonitorStatus.withName(MonitorStatus.getValidId(rs.string(5).trim())))
+              MonitorStatus.withName(MonitorStatus.getTagInfo(rs.string(5).trim()).toString))
           }.list.apply
     }
   }
