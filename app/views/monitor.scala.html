@@ -10,12 +10,12 @@
             </div>
        		<div class="panel-body panel-collapse in" id="reportParam">
         	<div class="btn-group" data-toggle="buttons">
-        		@for(m<-Monitor.values.toList){
+        		@for(m<-Monitor.mvList){
         			@if(m.toString == monitor){
-        				<label class="btn btn-default active">
-        					<input type="radio" name="monitor" id="@m" Checked>@Monitor.getDisplayName(m)</label>	
+        				<label class="btn btn-outline btn-primary dim active">
+        					<input type="radio" name="monitor" id="@m" checked>@Monitor.getDisplayName(m)</label>	
         			}else{
-        				<label class="btn btn-default">
+        				<label class="btn btn-outline btn-primary dim">
         					<input type="radio" name="monitor" id="@m" >@Monitor.getDisplayName(m)</label>	
         			}			
             	}

@@ -8,6 +8,9 @@ import play.api.libs.functional.syntax._
 import scala.language.implicitConversions
 
 object MenuRight extends Enumeration{
+  implicit val mReads: Reads[MenuRight.Value] = EnumUtils.enumReads(MenuRight)
+  implicit val mWrites: Writes[MenuRight.Value] = EnumUtils.enumWrites
+
   val RealtimeInfo = Value("Realtime Info")
   val DataQuery = Value("Data Query")
   val Report = Value("Report")
@@ -31,29 +34,10 @@ case class Privilege(
     allowedMonitorTypes:Seq[MonitorType.Value],
     allowedMenuRights:Seq[MenuRight.Value]
   )
-
-case class PrivilegeJson(
-  allowedMonitors:Seq[String],
-  allowedMonitorTypes:Seq[String],
-  allowedMenuRights:Seq[String]
-  )
   
 object Privilege {    
-  implicit val privilegeWrite = Json.writes[PrivilegeJson]
-  implicit val privilegeRead = Json.reads[PrivilegeJson]
-  
-  implicit def privilegeJsonConvert(jsonObj:PrivilegeJson)={
-    val allowedMonitors = jsonObj.allowedMonitors.map { Monitor.withName }
-    val allowedMonitorTypes = jsonObj.allowedMonitorTypes.map { MonitorType.withName }
-    val allowedMenuRights = jsonObj.allowedMenuRights.map { MenuRight.withName }
-    Privilege(allowedMonitors, allowedMonitorTypes, allowedMenuRights)
-  } 
-  implicit def privilegeConvert(pObj:Privilege)={
-    val allowedMonitors = pObj.allowedMonitors.map {_.toString}
-    val allowedMonitorTypes = pObj.allowedMonitorTypes.map { _.toString }
-    val allowedMenuRights = pObj.allowedMenuRights.map { _.toString }
-    PrivilegeJson(allowedMonitors, allowedMonitorTypes, allowedMenuRights)
-  }
+  implicit val privilegeWrite = Json.writes[Privilege]
+  implicit val privilegeRead = Json.reads[Privilege]
   
   val defaultPrivilege = Privilege(Monitor.values.toSeq, MonitorType.values.toSeq, MenuRight.values.toSeq)
 }

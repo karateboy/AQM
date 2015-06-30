@@ -1,0 +1,284 @@
+@* auditConfig Template File *@
+<div class="row">
+    <div class="col-lg-12">
+        <div class="panel panel-primary" id="paramPanel">
+            <div class="panel-heading panel-title" >
+            	<a data-toggle="collapse" data-parent="#accordion" href="#reportParam">測站</a>	
+            </div>
+       		<div class="panel-body panel-collapse in" id="reportParam">
+        	<div class="btn-group" data-toggle="buttons">
+        		@for(m<-Monitor.mvList){
+        			@if(m == Monitor.mvList.head){
+        				<label class="btn btn-outline btn-primary dim active">
+        				<input type="radio" name="monitor" id="@m" checked>@Monitor.getDisplayName(m)</label>	
+        			}else{
+        				<label class="btn btn-outline btn-primary dim">
+        				<input type="radio" name="monitor" id="@m" checked>@Monitor.getDisplayName(m)</label>
+        			}        					
+             	}
+			</div>
+         	</div>
+        </div>
+	</div>
+</div>
+<div class="row">
+<div class="col-lg-12">
+<div class="ibox float-e-margins">
+<div class="ibox-title">資料檢核設定</div>
+<div class="ibox-content">
+<ul class="nav nav-tabs">
+	<li class="active">
+		<a data-toggle="tab" href="#minMaxRule"> <span class="glyphicons glyphicons-hotspot"></span>極大極小值稽核</a>
+	</li>
+	<li>
+		<a data-toggle="tab" href="#compareRule"> <span class="glyphicons glyphicons-hotspot">合理性稽核</span></a>
+	</li>
+	<li>
+		<a data-toggle="tab" href="#differceRule"> <span class="glyphicons glyphicons-hotspot">單調性稽核</span></a>
+	</li>
+	<li>
+		<a data-toggle="tab" href="#spikeRule"> <span class="glyphicons glyphicons-hotspot">突波高值稽核</span></a>
+	</li>
+	<li>
+		<a data-toggle="tab" href="#persistenceRule"> <span class="glyphicons glyphicons-hotspot">持續性稽核</span></a>
+	</li>
+</ul>
+<div class="tab-content ibox-content">
+<div id="minMaxRule" class="tab-pane active" align="left">
+	<br/>
+	<h3>說明:</h3>
+	<p>汙染物濃度超過最大或最小值, 系統自動註記</p>
+	<form id="minMaxForm" class="form-horizontal">
+		<div class="form-group">
+        	<div class="col-lg-10">
+            	<div class="checkbox i-checks"><label> <input type="checkbox" name="enabled"><i></i>啟用</label></div>
+            </div>
+        </div>
+        <div id='minMaxParameter'>
+        <table class="table">
+        	<thead>
+        		<tr>
+        			<th>測項</th>
+        			<th>最大值</th>
+        			<th>最小值</th>
+        		</tr>
+        	</thead>
+        	<tbody>
+        		@for(mt<-MonitorType.mtvList){
+        			<tr>
+        				<th><input type="checkbox" name="monitorType" id='@mt' disabled>@MonitorType.map(mt).desp</th>
+        				<td><input type="number" name="maxValue" id='@mt' value='@MonitorType.map(mt).std_internal' disabled></td>
+        				<td><input type="number" name="minValue" id='@mt' value='0' disabled></td>
+        			</tr>
+        		}
+        	</tbody>
+        </table>
+        </div>
+		<div class="form-group">
+        	<div class="col-lg-offset-2 col-lg-10">
+            	<button class="btn btn-primary" type="submit">確認</button>
+            </div>
+        </div>
+	</form>    
+</div>
+<div id="compareRule" class="tab-pane" align="left">
+	<br/>
+	<h3>說明:</h3>
+	<p>由同一測站不同汙染物的從屬關係,進行合理性判斷. 例如正常情況:THC > CH4, NOx > NO2</p>
+	<form id="compareForm" class="form-horizontal">
+		<div class="form-group">
+        	<div class="col-lg-10">
+            	<div class="checkbox i-checks"><label> <input type="checkbox" name="enabled"><i></i>啟用</label></div>
+            </div>
+        </div>
+		<div id='compareParameter'>			
+		    <table class="table">
+        	<thead>
+        		<tr>
+        			<th>測項比較規則</th>
+        		</tr>
+        	</thead>
+        	<tbody>        		
+        		<tr>
+        			<td>THC > CH4</td>
+        		</tr>
+        		<tr>
+        			<td>NOx > NO2</td>
+        		</tr>
+        	</tbody>
+        	</table>		
+		</div>
+		<div class="form-group">
+        	<div class="col-lg-offset-2 col-lg-10">
+            	<button class="btn btn-primary" type="submit">確認</button>
+            </div>
+        </div>
+	</form>
+</div>
+<div id="differceRule" class="tab-pane" align="left">
+	<br/>
+	<h3>說明:</h3>
+	<p>(測值-平均值)>3倍標準差</p>
+	<form id="differenceForm" class="form-horizontal">
+		<div class="form-group">
+        	<div class="col-lg-10">
+            	<div class="checkbox i-checks"><label> <input type="checkbox" name="enabled"><i></i>啟用</label></div>
+            </div>
+        </div>
+	    <div id='differenceParameter' class="form-group">
+        	<label class="col-lg-2 control-label">超過標準差倍數</label>
+            <div class="col-lg-10">
+            	<input name='multiplier' type="number" class="form-control" value='3' disabled>
+            </div>
+        </div>
+	
+		<div class="form-group">
+        	<div class="col-lg-offset-2 col-lg-10">
+            	<button class="btn btn-primary" type="submit">確認</button>
+            </div>
+        </div>
+	</form>
+</div>
+<div id="spikeRule" class="tab-pane" align="left">
+	<br/>
+	<h3>說明:</h3>
+	<p>該測值大於前後平均值的設定倍數</p>
+	<form id="spikeForm" class="form-horizontal">
+		<div class="form-group">
+        	<div class="col-lg-10">
+            	<div class="checkbox i-checks"><label> <input type="checkbox" name="enabled"><i></i>啟用</label></div>
+            </div>
+        </div>
+		<div id='spikeParameter'>
+        <table class="table">
+        	<thead>
+        		<tr>
+        			<th>測項</th>
+        			<th>絕對值</th>
+        			<th>比例</th>
+        		</tr>
+        	</thead>
+        	<tbody>
+        		@for(mt<-MonitorType.mtvList){
+        			<tr>
+        				<th><input type="checkbox" name="monitorType" id='@mt' disabled>@MonitorType.map(mt).desp</th>
+        				<td><input type="number" name="absValue" id='@mt' value='10' disabled></td>
+        				<td><input type="number" name="multiplier" id='@mt' value='0.5' disabled></td>
+        			</tr>
+        		}
+        	</tbody>
+        </table>
+        </div>
+		
+		<div class="form-group">
+        	<div class="col-lg-offset-2 col-lg-10">
+            	<button class="btn btn-primary" type="submit">確認</button>
+            </div>
+        </div>
+	</form>
+</div>
+<div id="persistenceRule" class="tab-pane" align="left">
+	<br/>
+	<h3>說明:</h3>
+	<p>連續多筆值相等, 視為連續性數值</p>
+	<form id="persistenceForm" class="form-horizontal">
+		<div class="form-group">
+        	<div class="col-lg-10">
+            	<div class="checkbox i-checks"><label> <input type="checkbox" name="enabled"><i></i>啟用</label></div>
+            </div>
+        </div>
+		<div id='persistenceParameter' class="form-group">
+        	<label class="col-lg-2 control-label">連續相同筆數</label>
+            <div class="col-lg-10">
+            	<input name='same' type="number" class="form-control" value='3' disabled>
+            </div>
+        </div>
+	
+		<div class="form-group">
+        	<div class="col-lg-offset-2 col-lg-10">
+            	<button class="btn btn-primary" type="submit">確認</button>
+            </div>
+        </div>
+	</form>
+</div>	
+</div>
+</div>
+</div>
+</div>
+</div>
+<script>
+$( document ).ready(function(){
+	$('#minMaxForm :input[name="enabled"]').click(function(){
+		var $me=$(this);
+		var $inputs = $('#minMaxParameter :input');
+		var disabled = !$me.prop('checked'); 
+		for(var i=0;i<$inputs.length;i++){
+			var $check = $inputs.eq(i);
+			$check.prop("disabled", disabled);
+		}
+	});
+	$('#minMaxForm').submit(function(){
+		alert("成功");
+		event.preventDefault();
+	});
+
+	$('#compareForm :input[name="enabled"]').click(function(){
+		var $me=$(this);
+		/*
+		var $inputs = $('#compareForm :input');
+		var disabled = !$me.prop('checked'); 
+		for(var i=0;i<$inputs.length;i++){
+			var $check = $inputs.eq(i);
+			$check.prop("disabled", disabled);
+		}
+		*/
+	});
+	$('#compareForm').submit(function(){
+		alert("成功");
+		event.preventDefault();
+	});
+
+	$('#differenceForm :input[name="enabled"]').click(function(){
+		var $me=$(this);
+		var $inputs = $('#differenceParameter :input');
+		var disabled = !$me.prop('checked'); 
+		for(var i=0;i<$inputs.length;i++){
+			var $check = $inputs.eq(i);
+			$check.prop("disabled", disabled);
+		}
+	});
+	$('#differenceForm').submit(function(){
+		alert("成功");
+		event.preventDefault();
+	});
+	
+	$('#spikeForm :input[name="enabled"]').click(function(){
+		var $me=$(this);
+		var $inputs = $('#spikeParameter :input');
+		var disabled = !$me.prop('checked'); 
+		for(var i=0;i<$inputs.length;i++){
+			var $check = $inputs.eq(i);
+			$check.prop("disabled", disabled);
+		}
+	});
+	$('#spikeForm').submit(function(){
+		alert("成功");
+		event.preventDefault();
+	});
+
+	$('#persistenceForm :input[name="enabled"]').click(function(){
+		var $me=$(this);
+		var $inputs = $('#persistenceParameter :input');
+		var disabled = !$me.prop('checked'); 
+		for(var i=0;i<$inputs.length;i++){
+			var $check = $inputs.eq(i);
+			$check.prop("disabled", disabled);
+		}
+	});
+	$('#persistenceForm').submit(function(){
+		alert("成功");
+		event.preventDefault();
+	});
+	
+});
+</script>

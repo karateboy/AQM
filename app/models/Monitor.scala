@@ -12,7 +12,9 @@ import play.api.libs.functional.syntax._
 case class Monitor(id:String, name:String, lat:Double, lng:Double)
 case class MonitorWithImageUrl(id:String, name:String, url:String)
 object Monitor extends Enumeration{
-  
+  implicit val mReads: Reads[Monitor.Value] = EnumUtils.enumReads(Monitor)
+  implicit val mWrites: Writes[Monitor.Value] = EnumUtils.enumWrites
+
   val monitorList:List[Monitor] =
     DB readOnly{ implicit session =>
       sql"""

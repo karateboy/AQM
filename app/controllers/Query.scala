@@ -33,7 +33,7 @@ object Query extends Controller{
       timeMap = Map(mtRecords :_*)
       }
     yield{
-      timeSet ++= timeMap.keySet
+      timeSet ++= timeMap.keySet      
       (m -> timeMap)
     }
     

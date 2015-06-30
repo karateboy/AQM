@@ -6,6 +6,18 @@
 <H3>測項:@MonitorType.map(monitorType).desp (@MonitorType.map(monitorType).unit)</H3>
 <H5>開始:@start.toString("YYYY-MM-dd")</H5>
 <H5>結束:@end.toString("YYYY-MM-dd")</H5>
+<table class="table">
+<tbody>
+<tr>
+	<td style="background-color:Chartreuse">校正</td>
+	<td style="background-color:DarkOrchid">維修</td>
+	<td style="background-color:DarkOrange">定保</td>
+	<td style="background-color:Crimson">異常</td>
+	<td style="background-color:Cyan">自動檢核</td>
+	<td style="background-color:Gold">人工註記</td>
+</tr>
+</tbody>
+</table>
 <table id="historyReport" class="table">
 <thead>
 	<tr>
@@ -19,7 +31,7 @@
 <tbody>
 	@for(t <- timeSeq){
 		<tr>
-			<th>@t.toString("YYYY-MM-dd hh:mm")</th>
+			<th>@t.toString("YYYY-MM-dd HH:mm")</th>
 			@for(m<-monitors){
 				@if(recordMap(m).get(t).isEmpty||recordMap(m)(t)._1.isEmpty||recordMap(m)(t)._2.isEmpty){
 					<td>-</td>
@@ -27,7 +39,7 @@
 					@if(MonitorStatus.isNormalStat(getTagInfo(recordMap(m)(t)._2.get).toString)){
 						<td>@("%.2f".format(recordMap(m)(t)._1.get))</td>
 					}else{
-						<td style="background-color:yellow">@("%.2f".format(recordMap(m)(t)._1.get))</td>
+						<td style="background-color:@MonitorStatus.getCssColorStr(recordMap(m)(t)._2.get)">@("%.2f".format(recordMap(m)(t)._1.get))</td>
 					}
 				}				
 			}

@@ -74,3 +74,8 @@ PUT		/Group				controllers.Application.newGroup
 GET		/Group				controllers.Application.getAllGroups
 POST	/Group/:id			controllers.Application.updateGroup(id: Int)
 DELETE	/Group/:id			controllers.Application.deleteGroup(id: Int)
+
+GET		/ManualAudit		controllers.Application.manualAudit
+PUT		/ManualAudit/:monitor/:monitorType/:start/:end	controllers.Application.manualAuditReport(monitor, monitorType, start, end)
+
+GET		/AuditConfig		controllers.Application.auditConfig

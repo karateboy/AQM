@@ -151,8 +151,30 @@ object Record {
       """.map { mapper }.list().apply()  
     //}
   }
+  
   val timeProjection:(HourRecord=>Timestamp) ={
     rs=>rs.date
+  }
+  
+  def getFieldName(mt:MonitorType.Value)={
+    val name = mt.toString
+    val head = name.charAt(0)
+    val tail = name.substring(2)
+    
+    SQLSyntax.createUnsafely(s"${head}5${tail}s")    
+  }
+  
+  def updateHourRecordStatus(monitor:Monitor.Value, monitorType:MonitorType.Value, startTime:DateTime, endTime:DateTime, status:String)(implicit session: DBSession = AutoSession)={
+    val start: Timestamp = startTime
+    val end: Timestamp = endTime
+    val monitorName = monitor.toString()
+    val tab_name = getTabName(TableType.Hour, startTime.getYear)
+    val field_name = getFieldName(monitorType)
+      sql""" 
+        Update ${tab_name}
+        Set ${field_name}=${status}
+        Where DP_NO=${monitorName} and ${field_name} IS NOT NULL and M_DateTime >= ${start} and M_DateTime < ${end}        
+      """.update.apply
   }
   
   val monitorTypeProjection:Map[MonitorType.Value, (HourRecord=>Option[Float], HourRecord=>Option[String])] = Map(

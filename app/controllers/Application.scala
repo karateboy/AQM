@@ -272,6 +272,33 @@ object Application extends Controller {
     
     Ok(Json.toJson(groups))
   }
+
+  def manualAudit = Security.Authenticated {
+    implicit request =>
+      Ok(views.html.manualAudit())
+  } 
   
-  
+  def manualAuditReport(monitorStr:String, monitorTypeStr:String, startStr:String, endStr:String)=Security.Authenticated.async {
+    implicit request =>
+    Logger.info("manualAuditReport")
+    //import scala.collection.JavaConverters._
+    val monitorStrArray = monitorStr.split(':')
+    val monitors = monitorStrArray.map{Monitor.withName}
+    val monitorType = MonitorType.withName(monitorTypeStr)
+    val start = DateTime.parse(startStr)
+    val end = DateTime.parse(endStr)
+    
+    var timeSet = Set[DateTime]()
+    val pairs =
+    for{m <- monitors
+      }{
+        Record.updateHourRecordStatus(m, monitorType, start, end, "M10")  
+      }
+       
+    Query.historyReport(monitorStr, monitorTypeStr, startStr, endStr).apply(request)    
+  }
+
+  def auditConfig()=Security.Authenticated{
+    Ok(views.html.auditConfig())
+  }
 }

@@ -9,7 +9,7 @@ import play.api.libs.functional.syntax._
 import play.api.libs.json.Json
 import Privilege._
 
-case class Group(id: Option[Int], name: String, privilege: PrivilegeJson)
+case class Group(id: Option[Int], name: String, privilege: Privilege)
 object Group {
   def newGroup(group: Group)(implicit session: DBSession = AutoSession) = {
     DB localTx { implicit session =>
@@ -46,7 +46,7 @@ object Group {
       From Groups
       """.map { r =>
         try{
-          Group(Some(r.int(1)), r.string(2), Json.parse(r.string(3)).validate[PrivilegeJson].get)
+          Group(Some(r.int(1)), r.string(2), Json.parse(r.string(3)).validate[Privilege].get)
         }catch{
           case e:Throwable=>
             Group(Some(r.int(1)), r.string(2), Privilege.defaultPrivilege)
@@ -61,7 +61,7 @@ object Group {
       Where id=${id}
       """.map { r =>
         try{
-          Group(Some(r.int(1)), r.string(2), Json.parse(r.string(3)).validate[PrivilegeJson].get)
+          Group(Some(r.int(1)), r.string(2), Json.parse(r.string(3)).validate[Privilege].get)
         }catch{
           case e:Throwable=>
             Group(Some(r.int(1)), r.string(2), Privilege.defaultPrivilege)

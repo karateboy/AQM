@@ -13,6 +13,7 @@ case class MinMaxCfg(
 )
 
 case class MinMaxRule(
+  enabled:Boolean,
   monitorTypes:Seq[MinMaxCfg]    
 )
 
@@ -22,4 +23,5 @@ object MinMaxRule {
   implicit val minMaxRuleWrite = Json.writes[MinMaxRule]
   implicit val minMaxRuleRead = Json.reads[MinMaxRule]
   
+  val default = MinMaxRule(false, Seq())
 }

@@ -74,6 +74,28 @@ object MonitorStatus extends Enumeration{
   
   def getTagStr(s:MonitorStatus)=TagInfo(s.statusType, s.id).toString()
   
+  def getCssColorStr(tag:String)={
+    val info=getTagInfo(tag)
+    info.statusType match {
+      case StatusType.Internal=>
+        {
+          if(isNormalStat(tag))
+            "White"
+          else if(isCalbration(tag))
+            "Chartreuse"
+          else if(isRepairing(tag))
+            "DarkOrchid"
+          else if(isMaintance(tag))
+            "DarkOrange"
+          else 
+            "Crimson"
+        }
+      case StatusType.Auto=>
+        "Cyan"
+      case StatusType.Manual=>
+        "Gold"
+    }
+  }
   
   val map:Map[Value, MonitorStatus] = Map(msList.map{s=>Value(getTagStr(s))->s}:_*)
   val msvList = msList.map {r=>MonitorStatus.withName(getTagStr(r))}
