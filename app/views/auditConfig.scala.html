@@ -91,23 +91,11 @@
             	<div class="checkbox i-checks"><label> <input type="checkbox" name="enabled"><i></i>啟用</label></div>
             </div>
         </div>
-		<div id='compareParameter'>			
-		    <table class="table">
-        	<thead>
-        		<tr>
-        			<th>測項比較規則</th>
-        		</tr>
-        	</thead>
-        	<tbody>        		
-        		<tr>
-        			<td>THC > CH4</td>
-        		</tr>
-        		<tr>
-        			<td>NOx > NO2</td>
-        		</tr>
-        	</tbody>
-        	</table>		
-		</div>
+        <h3>測項比較規則:</h3>
+        <ul>
+        	<li>THC > CH4</li>
+        	<li>NOx > NO2</li>
+        </ul>
 		<div class="form-group">
         	<div class="col-lg-offset-2 col-lg-10">
             	<button class="btn btn-primary" type="submit">確認</button>
@@ -118,7 +106,7 @@
 <div id="differceRule" class="tab-pane" align="left">
 	<br/>
 	<h3>說明:</h3>
-	<p>(測值-平均值)>3倍標準差</p>
+	<p>(測值-平均值)>?倍標準差</p>
 	<form id="differenceForm" class="form-horizontal">
 		<div class="form-group">
         	<div class="col-lg-10">
@@ -130,6 +118,20 @@
             <div class="col-lg-10">
             	<input name='multiplier' type="number" class="form-control" value='3' disabled>
             </div>
+            <table class="table">
+        	<thead>
+        		<tr>
+        			<th>測項</th>
+        		</tr>
+        	</thead>
+        	<tbody>
+        		@for(mt<-MonitorType.mtvList){
+        			<tr>
+        				<th><input type="checkbox" name="monitorType" id='@mt' disabled>@MonitorType.map(mt).desp</th>
+        			</tr>
+        		}
+        	</tbody>
+        	</table>
         </div>
 	
 		<div class="form-group">
@@ -155,7 +157,6 @@
         		<tr>
         			<th>測項</th>
         			<th>絕對值</th>
-        			<th>比例</th>
         		</tr>
         	</thead>
         	<tbody>
@@ -163,7 +164,6 @@
         			<tr>
         				<th><input type="checkbox" name="monitorType" id='@mt' disabled>@MonitorType.map(mt).desp</th>
         				<td><input type="number" name="absValue" id='@mt' value='10' disabled></td>
-        				<td><input type="number" name="multiplier" id='@mt' value='0.5' disabled></td>
         			</tr>
         		}
         	</tbody>
@@ -218,22 +218,39 @@ $( document ).ready(function(){
 		}
 	});
 	$('#minMaxForm').submit(function(){
+		var param={};
+		var $enabled = $('#minMaxForm :input[name="enabled"]')
+		var $inputs = $('#minMaxParameter :input');
+		param.minMaxRule={};
+		param.minMaxRule.enabled = $enabled.prop("checked");
+		param.minMaxRule.monitorType=[];
+		for(var i=0;i<$inputs.length;i++){
+			var $check = $inputs.eq(i);
+			if($check.prop("checked")){				
+				var mt={};
+				mt.id = $check.prop('id');
+				var $max = $check.parent().next().children();				
+				mt.max = parseFloat($max.val());
+				var $min = $max.parent().next().children();
+				mt.min = parseFloat($min.val());
+				param.minMaxRule.monitorType.push(mt);
+			}
+		}
+		console.log(param);
 		alert("成功");
 		event.preventDefault();
 	});
 
 	$('#compareForm :input[name="enabled"]').click(function(){
 		var $me=$(this);
-		/*
-		var $inputs = $('#compareForm :input');
-		var disabled = !$me.prop('checked'); 
-		for(var i=0;i<$inputs.length;i++){
-			var $check = $inputs.eq(i);
-			$check.prop("disabled", disabled);
-		}
-		*/
 	});
+	
 	$('#compareForm').submit(function(){
+		var param={};
+		var $enabled = $('#compareForm :input[name="enabled"]')
+		param.compareRule={};
+		param.compareRule.enabled = $enabled.prop("checked");
+		console.log(param);
 		alert("成功");
 		event.preventDefault();
 	});
@@ -248,6 +265,24 @@ $( document ).ready(function(){
 		}
 	});
 	$('#differenceForm').submit(function(){
+		var param={};
+		var $enabled = $('#differenceForm :input[name="enabled"]')
+		var $multiplier = $('#differenceForm :input[name="multiplier"]')
+		
+		var $inputs = $('#differenceForm :input[name="monitorType"]');
+		param.differenceRule={};
+		param.differenceRule.enabled = $enabled.prop("checked");
+		param.differenceRule.multiplier = parseFloat($multiplier.val());
+		
+		param.differenceRule.monitorType=[];
+		for(var i=0;i<$inputs.length;i++){
+			var $check = $inputs.eq(i);
+			if($check.prop("checked")){				
+				param.differenceRule.monitorType.push($check.prop('id'));
+			}
+		}
+		console.log(param);
+		
 		alert("成功");
 		event.preventDefault();
 	});
@@ -262,6 +297,23 @@ $( document ).ready(function(){
 		}
 	});
 	$('#spikeForm').submit(function(){
+		var param={};
+		var $enabled = $('#spikeForm :input[name="enabled"]')
+		var $inputs = $('#spikeParameter :input[name="monitorType"]');
+		param.spikeRule={};
+		param.spikeRule.enabled = $enabled.prop("checked");
+		param.spikeRule.monitorType=[];
+		for(var i=0;i<$inputs.length;i++){
+			var $check = $inputs.eq(i);
+			if($check.prop("checked")){				
+				var mt={};
+				mt.id = $check.prop('id');
+				var $abs = $check.parent().next().children();				
+				mt.abs = parseFloat($abs.val());
+				param.spikeRule.monitorType.push(mt);
+			}
+		}
+		console.log(param);
 		alert("成功");
 		event.preventDefault();
 	});
@@ -276,6 +328,13 @@ $( document ).ready(function(){
 		}
 	});
 	$('#persistenceForm').submit(function(){
+		var param={};
+		var $enabled = $('#persistenceForm :input[name="enabled"]');
+		var $same = $('#persistenceForm :input[name="same"]');
+		param.persistenceRule={};
+		param.persistenceRule.enabled = $enabled.prop("checked");
+		param.persistenceRule.same = parseInt($same.val()); 
+		console.log(param);
 		alert("成功");
 		event.preventDefault();
 	});

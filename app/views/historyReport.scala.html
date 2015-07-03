@@ -1,7 +1,6 @@
 @* historyReport Template File *@
 @import com.github.nscala_time.time.Imports._
-@import MonitorStatus._
-@(monitors:Seq[Monitor.Value], monitorType:MonitorType.Value, start:DateTime, end:DateTime, timeSeq:Seq[DateTime], recordMap: Map[Monitor.Value, Map[DateTime, (Option[Float], Option[String])]])
+@(manualAuditEnabled:Boolean, monitors:Seq[Monitor.Value], monitorType:MonitorType.Value, start:DateTime, end:DateTime, timeSeq:Seq[DateTime], recordMap: Map[Monitor.Value, Map[DateTime, (Option[Float], Option[String])]])
 
 <H3>測項:@MonitorType.map(monitorType).desp (@MonitorType.map(monitorType).unit)</H3>
 <H5>開始:@start.toString("YYYY-MM-dd")</H5>
@@ -36,8 +35,12 @@
 				@if(recordMap(m).get(t).isEmpty||recordMap(m)(t)._1.isEmpty||recordMap(m)(t)._2.isEmpty){
 					<td>-</td>
 				}else{
-					@if(MonitorStatus.isNormalStat(getTagInfo(recordMap(m)(t)._2.get).toString)){
-						<td>@("%.2f".format(recordMap(m)(t)._1.get))</td>
+					@if(MonitorStatus.isNormalStat(MonitorStatus.getTagInfo(recordMap(m)(t)._2.get).toString)){
+						<td>@("%.2f".format(recordMap(m)(t)._1.get))
+						@if(manualAuditEnabled){
+							<input type="checkbox" id="@m:@monitorType:@t.getMillis">
+						}
+						</td>
 					}else{
 						<td style="background-color:@MonitorStatus.getCssColorStr(recordMap(m)(t)._2.get)">@("%.2f".format(recordMap(m)(t)._1.get))</td>
 					}
@@ -47,8 +50,18 @@
 	}
 </tbody>
 </table>
+@if(manualAuditEnabled){
+<label>註記代碼</label>	
+<select id="manualStatusSelect">
+	@for(ms<-MonitorStatus.manualMonitorStatusList){
+		<option value='@ms'>@MonitorStatus.map(ms).desp</option>
+	}
+</select>
+<button type="button" class="btn btn-primary" id="manualAuditApply">註記</button>
+	
+}
 <script>
-$( document ).ready(function() {
+$(document ).ready(function() {
 	$('#historyReport').dataTable( {
 		responsive: true,
 		"dom": 'T<"clear">lfrtip',
@@ -60,5 +73,48 @@ $( document ).ready(function() {
         },
 		"paging":   false
 	} );
+	
+	@if(manualAuditEnabled){
+		$('#manualAuditApply').click(function(){
+			var $inputs=$("#historyReport :input:checked");
+			var $manualStatus = $('#manualStatusSelection :checked');
+			console.log($manualStatus);
+			var obj={};			
+			var manualAuditList=[];
+			for(var i=0;i<$inputs.length;i++){
+				$check = $inputs.eq(i);
+				var audit={};
+				var id = $check.prop('id');
+				var param = id.split(":");
+				audit.monitor=param[0];
+				audit.monitorType=param[1];
+				audit.time=parseInt(param[2]);
+				audit.status='M01';
+				manualAuditList.push(audit);
+			}
+			obj.list=manualAuditList;
+			$.ajax({
+				url: "/ManualAudit",
+				data: JSON.stringify(obj),
+				contentType: "application/json; charset=utf-8",
+				method:"POST",			
+				dataType: "json",
+				success: function(result){
+					if(result.ok){
+						alert("成功");
+					}else{
+						alert("失敗:"+result.msg);
+					}
+				},
+				error: function(xhr, status, errorThrown){
+					alert("失敗:" + status + "-" + errorThrown);
+				},
+
+				complete: function(xhr, status){
+				}					
+			});
+			
+		});
+	}	
 });
 </script>

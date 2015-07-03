@@ -1,130 +1,48 @@
 @* manual audit Template File *@
+@(param:Any)
 <div class="row">
-   	<div class="col-lg-12">
-    	<div class="panel-group" id="accordion">
-        	<div class="panel panel-primary" id="paramPanel">
-            	<div class="panel-heading panel-title" >
-            		<a data-toggle="collapse" data-parent="#accordion" href="#reportParam">報表參數</a>	
-                </div>
-            	<div class="panel-body panel-collapse in" id="reportParam">
-            		<h5>測站</h5>
-            		<div class="btn-group" data-toggle="buttons">
-            			@for(m<-Monitor.values.toList){
-            				<label class="btn btn-outline btn-primary dim">
-								<input type="checkbox" name="monitor" id="@m">@Monitor.getDisplayName(m)</label>		
-            			}
-            		</div>
-            		<br/>
-            		<h5>測項</h5>
-            		<div class="btn-group" data-toggle="buttons">
-            			@for(m<-MonitorType.mtvList){
-            				<label class="btn btn-outline btn-primary dim">
-								<input type="radio" name="monitorType" id="@m">@MonitorType.map(m).desp</label>		
-            			}
-            		</div>
-            		<br/>
- 					<h5>查詢區間</h5>
- 					<div class="input-daterange input-group" id="datepicker">
-                    	<span class="input-group-addon"><i class="fa fa-calendar"></i></span><input type="text" class="input-sm form-control" name="start" id="reportStart" required/>
-                       	<span class="input-group-addon">至</span>
-                        <input type="text" class="input-sm form-control" name="end" id="reportEnd" required/>                        
-                    </div>
-					<br/>
-					<div>
-						<button type="button" class="btn btn-primary" id="queryReport">註記</button>
-					</div>
-            	</div>
-        	</div>
-        	<div class="panel panel-success" style="display:none" id="reportPanel">
-            	<div class="panel-heading panel-title"" >
-            		<a data-toggle="collapse" data-parent="#accordion" href="#monitorReport">資料註記</a>	
-                </div>
-            	<div class="panel-body panel-collapse" id="monitorReport">
-					<div id="reportDiv" align="center" style="overflow-x:auto">
-            		</div>
-            	</div>
-        	</div> <!-- end of panel group -->
-    	</div>
+<div class="col-lg-12">
+<div class="ibox float-e-margins">
+<div class="ibox-title">人工資料註記</div>
+<div class="ibox-content">
+<ul class="nav nav-tabs">
+	<li class="active">
+		<a data-toggle="tab" href="#manualAudit"> <span class="glyphicons glyphicons-hotspot"></span>資料查詢註記</a>
+	</li>
+	<li >
+		<a data-toggle="tab" href="#manualStatus"> <span class="glyphicons glyphicons-hotspot"></span>註記代碼</a>
+	</li>
+	
+</ul>
+<div class="tab-content ibox-content">
+	<div id="manualAudit" class="tab-pane active" align="left">
+		@history(true)
 	</div>
+	<div id="manualStatus" class="tab-pane" align="left">
+		<table id="manualStatusTab" class="table">
+			<thead>
+				<tr>
+					<th>代碼</th>
+					<th>說明</th>
+				</tr>
+			</thead>
+			<tbody>
+			@for(ms<-MonitorStatus.manualMonitorStatusList){
+				<tr>
+					<td>@ms</td>
+					<td>@MonitorStatus.map(ms).desp</td>
+				</tr>
+			}
+			</tbody>
+		</table>
+	</div>
+</div>
+</div>
+</div>
+</div>
 </div>
 <script>
 $( document ).ready(function() {
-	$('#datepicker').datepicker({
-		format: 'yyyy-mm-dd',
-	    todayBtn: "linked",
-	    language: "zh-TW"
-	});
-
-	var monitors, monitorType, reportStart, reportEnd;
 	
-	function validate(){
-		monitors = $("input[name='monitor']:checked");
-
-		if (monitors.length == 0) {
-			alert("請選擇測站");
-			return false;
-		}
-
-
-		monitorType = $("input[name='monitorType']:checked").attr('id');
-		if(!monitorType) {
-			alert('請選擇測項');
-			return false;
-		}
-		
-		reportStart = $('#reportStart').val();
-		if(reportStart.length === 0){
-			alert('請選擇開始日期');
-			return false;
-		}
-		
-		reportEnd = $('#reportEnd').val();
-		if(reportStart.length === 0){
-			alert('請選擇結束日期');
-			return false;
-		}
-		
-		return true;
-	}
-	
-	$('#queryReport').click(function(){
-		if(!validate())
-			return;
-
-		$("#reportPanel").css('display','block');
-		$("#reportParam").collapse();
-		$("#reportPanel").collapse('show');
-
-		$('#reportDiv').html('');
-		$("body").css("cursor", "progress");
-
-		var monitorParam='';
-		for (var i = 0; i < monitors.length; i++) {
-			if(monitorParam=='')
-				monitorParam = monitors[i].id;
-			else
-				monitorParam += ':' + monitors[i].id;
-		}
-			
-		var url = "/ManualAudit/" + monitorParam + "/" + monitorType + "/" + reportStart + "/" + reportEnd;
-		console.log(url);
-		$.ajax({
-			url: url,
-			data: "{}",
-			contentType: "application/json; charset=utf-8",
-			method: "PUT",
-			dataType: "html",
-			success: function(result){
-				$('#reportDiv').html(result);
-			},
-			error: function(xhr, status, errorThrown){
-				console.log("錯誤訊息:" + status + "-" + errorThrown);
-			},
-
-			complete: function(xhr, status){
-				$("body").css("cursor", "default");
-			}					
-		});
-	});
 });
 </script>

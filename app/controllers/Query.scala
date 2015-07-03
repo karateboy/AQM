@@ -13,17 +13,17 @@ object Query extends Controller{
   def history() = Security.Authenticated {
     implicit request =>
       
-    Ok(views.html.history())
+    Ok(views.html.history(false))
   }
   
-  def historyReport(monitorStr:String, monitorTypeStr:String, startStr:String, endStr:String)=Security.Authenticated {
+  def historyReport(edit:Boolean, monitorStr:String, monitorTypeStr:String, startStr:String, endStr:String)=Security.Authenticated {
     implicit request =>
     import scala.collection.JavaConverters._
     val monitorStrArray = monitorStr.split(':')
     val monitors = monitorStrArray.map{Monitor.withName}
     val monitorType = MonitorType.withName(monitorTypeStr)
     val start = DateTime.parse(startStr)
-    val end = DateTime.parse(endStr)
+    val end = DateTime.parse(endStr) + 1.day
     
     var timeSet = Set[DateTime]()
     val pairs =
@@ -39,7 +39,7 @@ object Query extends Controller{
     
     val recordMap = Map(pairs :_*)
     
-    Ok(views.html.historyReport(monitors, monitorType, start, end, timeSet.toList.sorted, recordMap))
+    Ok(views.html.historyReport(edit, monitors, monitorType, start, end, timeSet.toList.sorted, recordMap))
     
   }
   
@@ -56,7 +56,7 @@ object Query extends Controller{
       val monitorType = MonitorType.withName(monitorTypeStr)
       val mtCase = MonitorType.map(monitorType)
       val start = DateTime.parse(startStr)
-      val end = DateTime.parse(endStr)
+      val end = DateTime.parse(endStr) + 1.day
 
       var timeSet = Set[DateTime]()
       val pairs =
@@ -112,7 +112,7 @@ object Query extends Controller{
       val monitorStrArray = monitorStr.split(':')
       val monitors = monitorStrArray.map { Monitor.withName }
       val start = DateTime.parse(startStr)
-      val end = DateTime.parse(endStr)
+      val end = DateTime.parse(endStr) + 1.day
 
       import scala.collection.mutable.Map
       def getPsiMap(m: Monitor.Value) = {
@@ -171,7 +171,7 @@ object Query extends Controller{
     val monitorType = MonitorType.withName(monitorTypeStr)
     val mtCase = MonitorType.map(monitorType)
     val start = DateTime.parse(startStr)
-    val end = DateTime.parse(endStr)
+    val end = DateTime.parse(endStr) + 1.day
     
     assert(mtCase.sd_law.isDefined)
     
@@ -200,7 +200,7 @@ object Query extends Controller{
   def effectivePercentageReport(startStr:String, endStr:String)=Security.Authenticated {
        implicit request =>
     val start = DateTime.parse(startStr)
-    val end = DateTime.parse(endStr)
+    val end = DateTime.parse(endStr) + 1.day
     
     val reports = 
     for(m <- Monitor.mvList)
@@ -224,7 +224,7 @@ object Query extends Controller{
       Some(statusStr.split(':').toList.map { MonitorStatus.withName })
     }
     val start = DateTime.parse(startStr)
-    val end = DateTime.parse(endStr)
+    val end = DateTime.parse(endStr) + 1.day
    
     val records = Alarm.getAlarm(monitors, statusFilter, start, end)
     
@@ -239,7 +239,7 @@ object Query extends Controller{
   def windRoseReport(monitorStr: String, startStr: String, endStr: String) = Security.Authenticated {
     val monitor = Monitor.withName(monitorStr)
     val start = DateTime.parse(startStr)
-    val end = DateTime.parse(endStr)
+    val end = DateTime.parse(endStr) + 1.day
    
     val windMap = Record.getWindRose(monitor, start, end)
     val dirMap = Map(
@@ -294,7 +294,7 @@ object Query extends Controller{
     val monitorType = MonitorType.withName(monitorTypeStr)
     val mtCase = MonitorType.map(monitorType)
     val start = DateTime.parse(startStr)
-    val end = DateTime.parse(endStr)
+    val end = DateTime.parse(endStr) + 1.day
         
     val (thisYearRecord, lastYearRecord) = Record.getLastYearCompareList(monitor, monitorType, start, end)
     
@@ -332,7 +332,7 @@ object Query extends Controller{
     val monitors = monitorStrArray.map{Monitor.withName}
     val monitorType = MonitorType.withName(monitorTypeStr)
     val start = DateTime.parse(startStr)
-    val end = DateTime.parse(endStr)
+    val end = DateTime.parse(endStr) + 1.day
     
     import models.Record._
     import MonitorStatus._
@@ -385,7 +385,7 @@ object Query extends Controller{
       val monitorType = MonitorType.withName(monitorTypeStr)
       val mtCase = MonitorType.map(monitorType)
       val start = DateTime.parse(startStr)
-      val end = DateTime.parse(endStr)
+      val end = DateTime.parse(endStr) + 1.day
 
       val thisYearRecord = Record.getRegressionData(monitor, monitorType, start, end)
 
@@ -420,7 +420,7 @@ object Query extends Controller{
       Logger.info("calibrationQueryResult")
       val monitor = Monitor.withName(monitorStr)
       val start = DateTime.parse(startStr)
-      val end = DateTime.parse(endStr)
+      val end = DateTime.parse(endStr) + 1.day
       val result = Calibration.calibrationQueryReport(monitor, start, end)
       Ok(views.html.calibrationQueryResult(result))
   }

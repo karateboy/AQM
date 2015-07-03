@@ -99,5 +99,6 @@ object MonitorStatus extends Enumeration{
   
   val map:Map[Value, MonitorStatus] = Map(msList.map{s=>Value(getTagStr(s))->s}:_*)
   val msvList = msList.map {r=>MonitorStatus.withName(getTagStr(r))}
+  val manualMonitorStatusList = {msvList.filter { map(_).statusType == StatusType.Manual }}
   val alarmList = msvList.filter { _ != MonitorStatus.withName(getTagInfo(NORMAL_STAT).toString) }
 }

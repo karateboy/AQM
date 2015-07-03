@@ -31,7 +31,7 @@ GET		/EffectiveQuery			controllers.Report.effectiveQuery
 GET		/EffectiveAnnualReport/:reportType/:start/:param	controllers.Report.effectiveAnnualReport(reportType, start, param)
 
 GET		/HistoryQuery			controllers.Query.history
-GET		/HistoryQueryReport/:monitor/:monitorType/:start/:end	controllers.Query.historyReport(monitor, monitorType, start, end)
+GET		/HistoryQueryReport/:edit/:monitor/:monitorType/:start/:end	controllers.Query.historyReport(edit:Boolean, monitor, monitorType, start, end)
 GET		/HistoryTrend			controllers.Query.historyTrend
 GET		/JSON/HistoryTrend/:monitor/:monitorType/:start/:end	controllers.Query.historyTrendChart(monitor, monitorType, start, end)
 GET		/PsiTrend				controllers.Query.psiTrend
@@ -76,6 +76,6 @@ POST	/Group/:id			controllers.Application.updateGroup(id: Int)
 DELETE	/Group/:id			controllers.Application.deleteGroup(id: Int)
 
 GET		/ManualAudit		controllers.Application.manualAudit
-PUT		/ManualAudit/:monitor/:monitorType/:start/:end	controllers.Application.manualAuditReport(monitor, monitorType, start, end)
+POST	/ManualAudit		controllers.Application.manualAuditApply
 
 GET		/AuditConfig		controllers.Application.auditConfig

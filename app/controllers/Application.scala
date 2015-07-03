@@ -275,29 +275,31 @@ object Application extends Controller {
 
   def manualAudit = Security.Authenticated {
     implicit request =>
-      Ok(views.html.manualAudit())
+      Ok(views.html.manualAudit(true))
   } 
   
-  def manualAuditReport(monitorStr:String, monitorTypeStr:String, startStr:String, endStr:String)=Security.Authenticated.async {
+  case class ManualAudit(monitor:Monitor.Value, monitorType:MonitorType.Value, time:Long, status:String)
+  case class ManualAuditList(list:Seq[ManualAudit])
+  def manualAuditApply()=Security.Authenticated(BodyParsers.parse.json){
     implicit request =>
-    Logger.info("manualAuditReport")
-    //import scala.collection.JavaConverters._
-    val monitorStrArray = monitorStr.split(':')
-    val monitors = monitorStrArray.map{Monitor.withName}
-    val monitorType = MonitorType.withName(monitorTypeStr)
-    val start = DateTime.parse(startStr)
-    val end = DateTime.parse(endStr)
-    
-    var timeSet = Set[DateTime]()
-    val pairs =
-    for{m <- monitors
-      }{
-        Record.updateHourRecordStatus(m, monitorType, start, end, "M10")  
-      }
-       
-    Query.historyReport(monitorStr, monitorTypeStr, startStr, endStr).apply(request)    
+      implicit val manualAuditReads = Json.reads[ManualAudit]
+      implicit val manualAuditListReads = Json.reads[ManualAuditList]
+      val manualAuditList = request.body.validate[ManualAuditList]
+      Logger.info("manualAuditApply")
+      manualAuditList.fold(
+        error=>{
+          Logger.error(JsError.toFlatJson(error).toString())
+          BadRequest(Json.obj("ok"->false, "msg"->JsError.toFlatJson(error)))
+        }, 
+         manualAuditList=>{
+           for(ma <- manualAuditList.list){
+             Record.updateHourRecordStatus(ma.monitor, ma.monitorType, ma.time, ma.status)
+           }
+           
+           Ok(Json.obj("ok"->true)) 
+         })
   }
-
+    
   def auditConfig()=Security.Authenticated{
     Ok(views.html.auditConfig())
   }
