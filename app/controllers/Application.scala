@@ -275,7 +275,8 @@ object Application extends Controller {
 
   def manualAudit = Security.Authenticated {
     implicit request =>
-      Ok(views.html.manualAudit(true))
+      val userInfo = Security.getUserinfo(request).get
+      Ok(views.html.manualAudit(userInfo.groupID))
   } 
   
   case class ManualAudit(monitor:Monitor.Value, monitorType:MonitorType.Value, time:Long, status:String)

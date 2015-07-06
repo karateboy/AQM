@@ -175,15 +175,18 @@ $( document ).ready(function(){
 		});
 	});						
 
-	refreshGroupInfos();
+	function groupUICallback(){
+		$('#groupToBeUpdated').empty();	
+		for(id in groupInfos){
+			$("#groupToBeUpdated").append("<option value='"+ id + "' >" + groupInfos[id].name + "</option>");
+		}
+		$('#groupToBeUpdated').change();	
+	}
+	
+	refreshGroupInfos(groupUICallback);
 		
 	$('#updateGroupTab').on("show.bs.tab", function(evt){
-		refreshGroupInfos(function(){
-			$('#groupToBeUpdated').empty();	
-			for(id in groupInfos){
-				$("#groupToBeUpdated").append("<option value='"+ id + "' >" + groupInfos[id].name + "</option>");
-			}	
-		});
+		refreshGroupInfos(groupUICallback);
 	});		
 
 	function updateGroupUI(allowed, $toolbar){
@@ -216,7 +219,7 @@ $( document ).ready(function(){
 		var $menuRights = $('#updateGroup :input[name="menuRight"]');
 		updateGroupUI(group.privilege.allowedMenuRights, $menuRights);		 
 	});
-		
+	
 	$('#newGroup').submit(function(event) {
 		var $inputs = $('#newGroup :input');
 		var param = {};

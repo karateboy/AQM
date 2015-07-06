@@ -1,5 +1,6 @@
 @* periodReport Template File *@
 @import controllers.Report._
+@(groupID:Int)
 <div class="row">
    	<div class="col-lg-12">
     	<div class="panel-group" id="accordion">
@@ -18,7 +19,7 @@
 					<div id="monitorSelection">
 						<h5>測站</h5>
             			<div class="btn-group" data-toggle="buttons">
-            				@for(m<-Monitor.values.toList){
+            				@for(m<-Monitor.getMvList(groupID)){
             					<label class="btn btn-outline btn-primary dim">
 									<input type="radio" name="monitor" id="@m">@Monitor.getDisplayName(m)</label>		
             				}

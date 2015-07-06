@@ -1,5 +1,5 @@
 @* realtimeImage Template File *@
-@(param: Any)
+@(groupID: Int)
 <div class="row">
    	<div class="col-lg-12">
     		<div class="panel-group" id="accordion">
@@ -11,7 +11,7 @@
             		<img alt="image" class="img-circle" src='@routes.Assets.at("images/cctv.png")' />
             		<h5>測站</h5>
             		<div class="btn-group" data-toggle="buttons">
-            			@for(m<-Monitor.getImageMonitorList){
+            			@for(m<-Monitor.getImageMonitorList(groupID)){
             				<label class="btn btn-outline btn-primary dim" id="@m.id");">
 								<input type="radio" name="monitor" id="@m.id" >@m.name</label>		
             			}
@@ -30,7 +30,7 @@
 <script>
 $( document ).ready(function() {
 	//onClick="$('#realtimeImage').html('<iframe></iframe>'
-	@for(m<-Monitor.getImageMonitorList){
+	@for(m<-Monitor.getImageMonitorList(groupID)){
 		$('#@m.id').click(function( event ) {
     		$('#realtimeImage').html("<iframe height='768px' width='1024px' src='@m.url'></iframe>");
     	});

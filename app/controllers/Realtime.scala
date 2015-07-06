@@ -21,12 +21,14 @@ object Realtime extends Controller {
 
   def realtimeImg = Security.Authenticated {
     implicit request =>
-      Ok(views.html.realtimeImage(""))
+      val userInfo = Security.getUserinfo(request).get
+      Ok(views.html.realtimeImage(userInfo.groupID))
   }
 
   def realtimeTrend = Security.Authenticated {
     implicit request =>
-      Ok(views.html.realtimeTrend(""))
+      val userInfo = Security.getUserinfo(request).get
+      Ok(views.html.realtimeTrend(userInfo.groupID))
   }
 
   case class RealtimeTrendParam(monitors: Seq[Monitor.Value], monitorTypes: Seq[MonitorType.Value])

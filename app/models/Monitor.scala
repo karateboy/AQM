@@ -9,7 +9,7 @@ import play.api.libs.json._
 import play.api.libs.functional.syntax._
 
 
-case class Monitor(id:String, name:String, lat:Double, lng:Double)
+case class Monitor(id:String, name:String, lat:Double, lng:Double, autoAudit:AutoAudit)
 case class MonitorWithImageUrl(id:String, name:String, url:String)
 object Monitor extends Enumeration{
   implicit val mReads: Reads[Monitor.Value] = EnumUtils.enumReads(Monitor)
@@ -20,12 +20,25 @@ object Monitor extends Enumeration{
       sql"""
         Select * 
         From Monitor
-        """.map { r => Monitor(r.string(1), r.string(2), r.string(6).toDouble, r.string(7).toDouble)}.list.apply
+        """.map { r => 
+          val autoAuditJson = r.stringOpt(9).getOrElse(Json.toJson(AutoAudit.default).toString())
+          val autoAudit = Json.parse(autoAuditJson).validate[AutoAudit].get
+          Monitor(r.string(1), r.string(2), r.string(6).toDouble, r.string(7).toDouble, autoAudit)}.list.apply
     }
     
-  val map:Map[Value, Monitor] = Map(monitorList.map{e=>Value(e.id)->e}:_*)
+  var map:Map[Value, Monitor] = Map(monitorList.map{e=>Value(e.id)->e}:_*)
 
   val mvList = monitorList.map{m=>Monitor.withName(m.id)}
+  
+  def getMvList(groupID:Int):List[Monitor.Value]={
+    val groupOpt = Group.getGroup(groupID)
+    if(groupOpt.isEmpty){
+      List()
+    }else{
+      val group = groupOpt.get
+      group.privilege.allowedMonitors.toList
+    }
+  }
   
   def getDisplayName(monitor:Value):String ={
     map.get(monitor) match{
@@ -36,7 +49,7 @@ object Monitor extends Enumeration{
     }
   }
 
-  def getImageMonitorList = {
+  def getImageMonitorList(groupID:Int) = {
     DB readOnly{ implicit session =>
       val monitorList =
       sql"""
@@ -44,7 +57,11 @@ object Monitor extends Enumeration{
         From Monitor
         """.map { r => MonitorWithImageUrl(r.string(1), r.string(2), r.string("imageUrl"))}.list.apply
         
-      monitorList.filter { m => !m.url.isEmpty() }
+      val allowedList = getMvList(groupID)
+      monitorList.filter { m =>
+        val mv = Monitor.withName(m.id)
+        !m.url.isEmpty() && allowedList.contains(mv) 
+        }
     }
   }
   

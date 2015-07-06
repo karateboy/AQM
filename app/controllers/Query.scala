@@ -12,12 +12,13 @@ object Query extends Controller{
 
   def history() = Security.Authenticated {
     implicit request =>
-      
-    Ok(views.html.history(false))
+    val userInfo = Security.getUserinfo(request).get  
+    Ok(views.html.history(false, userInfo.groupID))
   }
   
   def historyReport(edit:Boolean, monitorStr:String, monitorTypeStr:String, startStr:String, endStr:String)=Security.Authenticated {
     implicit request =>
+      
     import scala.collection.JavaConverters._
     val monitorStrArray = monitorStr.split(':')
     val monitors = monitorStrArray.map{Monitor.withName}
@@ -45,7 +46,8 @@ object Query extends Controller{
   
   def historyTrend = Security.Authenticated {
     implicit request =>
-    Ok(views.html.historyTrend())
+      val userInfo = Security.getUserinfo(request).get
+    Ok(views.html.historyTrend(userInfo.groupID))
   }
 
   def historyTrendChart(monitorStr: String, monitorTypeStr: String, startStr: String, endStr: String) = Security.Authenticated {
@@ -103,7 +105,8 @@ object Query extends Controller{
   
   def psiTrend = Security.Authenticated {
     implicit request =>
-    Ok(views.html.psiTrend())
+      val userInfo = Security.getUserinfo(request).get
+    Ok(views.html.psiTrend(userInfo.groupID))
   }
 
   def psiTrendChart(monitorStr: String, startStr: String, endStr: String) = Security.Authenticated {
@@ -159,7 +162,8 @@ object Query extends Controller{
   
   def overLawStd() = Security.Authenticated {
     implicit request =>
-    Ok(views.html.overLawStd())
+      val userInfo = Security.getUserinfo(request).get
+    Ok(views.html.overLawStd(userInfo.groupID))
   }
   
   case class OverLawStdEntry(monitor:Monitor.Value, time:DateTime, value:Float)
@@ -194,16 +198,18 @@ object Query extends Controller{
   
   def effectivePercentage() = Security.Authenticated {
     implicit request =>
-    Ok(views.html.effectivePercentage())
+      val userInfo = Security.getUserinfo(request).get
+    Ok(views.html.effectivePercentage(userInfo.groupID))
   }
   
   def effectivePercentageReport(startStr:String, endStr:String)=Security.Authenticated {
        implicit request =>
+         val userInfo = Security.getUserinfo(request).get
     val start = DateTime.parse(startStr)
     val end = DateTime.parse(endStr) + 1.day
     
     val reports = 
-    for(m <- Monitor.mvList)
+    for(m <- Monitor.getMvList(userInfo.groupID))
       yield{
       Record.getMonitorEffectiveRate(m, start, end)
     }
@@ -212,7 +218,8 @@ object Query extends Controller{
   
   def alarm() = Security.Authenticated {
     implicit request =>
-    Ok(views.html.alarm())
+      val userInfo = Security.getUserinfo(request).get
+    Ok(views.html.alarm(userInfo.groupID))
   }
 
   def alarmReport(monitorStr: String, statusStr: String, startStr: String, endStr: String) = Security.Authenticated {
@@ -233,7 +240,8 @@ object Query extends Controller{
   
   def windRose() = Security.Authenticated {
     implicit request =>
-    Ok(views.html.windRose())
+      val userInfo = Security.getUserinfo(request).get
+    Ok(views.html.windRose(userInfo.groupID))
   }
   
   def windRoseReport(monitorStr: String, startStr: String, endStr: String) = Security.Authenticated {
@@ -284,7 +292,8 @@ object Query extends Controller{
   
   def compareLastYear() = Security.Authenticated {
     implicit request =>
-    Ok(views.html.compareLastYear())
+      val userInfo = Security.getUserinfo(request).get
+    Ok(views.html.compareLastYear(userInfo.groupID))
   }
   
   def compareLastYearChart(monitorStr:String, monitorTypeStr:String, startStr:String, endStr:String)=Security.Authenticated {
@@ -321,7 +330,8 @@ object Query extends Controller{
 
   def calculateStat() = Security.Authenticated {
     implicit request =>
-    Ok(views.html.calculateStat())
+      val userInfo = Security.getUserinfo(request).get
+    Ok(views.html.calculateStat(userInfo.groupID))
   }
   
   case class Stat(avg:Float, min:Float, max:Float, sd:Float)
@@ -363,7 +373,8 @@ object Query extends Controller{
   
   def regression() = Security.Authenticated {
     implicit request =>
-    Ok(views.html.regression())
+      val userInfo = Security.getUserinfo(request).get
+    Ok(views.html.regression(userInfo.groupID))
   }
 
   import Realtime._
@@ -412,7 +423,8 @@ object Query extends Controller{
 
   def calibrationQuery = Security.Authenticated {
     implicit request =>
-      Ok(views.html.calibration())
+      val userInfo = Security.getUserinfo(request).get
+      Ok(views.html.calibration(userInfo.groupID))
   }
   
   def calibrationQueryReport(monitorStr:String, startStr:String, endStr:String) = Security.Authenticated {

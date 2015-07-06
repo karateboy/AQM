@@ -24,13 +24,14 @@ object ReportType extends Enumeration{
 object Report extends Controller {
   
   def getReport(reportType: String) = Security.Authenticated { implicit request =>
+    val userInfo = Security.getUserinfo(request).get
     val MR = ReportType.MonitorReport.toString()
     val MHR = ReportType.MonthlyHourReport.toString()
     reportType match {
       case MR=>
-        Ok(views.html.monitorReport(false))
+        Ok(views.html.monitorReport(false, userInfo.groupID))
       case MHR=>
-        Ok(views.html.monthlyHourReportForm())
+        Ok(views.html.monthlyHourReportForm(userInfo.groupID))
       case _=>
         BadRequest("未知的報表種類:" + reportType)
     }
@@ -293,7 +294,8 @@ object Report extends Controller {
   
   def psiReportPrompt() = Security.Authenticated { 
     implicit request =>
-      Ok(views.html.psiReport())
+      val userInfo = Security.getUserinfo(request).get
+      Ok(views.html.psiReport(userInfo.groupID))
   }
   
   def psiReportReport(monitorStr:String, reportTypeStr:String, startDateStr:String) = Security.Authenticated {
@@ -319,7 +321,8 @@ object Report extends Controller {
   
   def effectiveQuery() = Security.Authenticated {
     implicit request =>
-      Ok(views.html.effectiveReport())
+      val userInfo = Security.getUserinfo(request).get
+      Ok(views.html.effectiveReport(userInfo.groupID))
   }
   
   object EffectiveReportType extends Enumeration{

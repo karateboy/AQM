@@ -274,11 +274,11 @@ $( document ).ready(function(){
 		param.differenceRule.enabled = $enabled.prop("checked");
 		param.differenceRule.multiplier = parseFloat($multiplier.val());
 		
-		param.differenceRule.monitorType=[];
+		param.differenceRule.monitorTypes=[];
 		for(var i=0;i<$inputs.length;i++){
 			var $check = $inputs.eq(i);
 			if($check.prop("checked")){				
-				param.differenceRule.monitorType.push($check.prop('id'));
+				param.differenceRule.monitorTypes.push($check.prop('id'));
 			}
 		}
 		console.log(param);
@@ -302,7 +302,7 @@ $( document ).ready(function(){
 		var $inputs = $('#spikeParameter :input[name="monitorType"]');
 		param.spikeRule={};
 		param.spikeRule.enabled = $enabled.prop("checked");
-		param.spikeRule.monitorType=[];
+		param.spikeRule.monitorTypes=[];
 		for(var i=0;i<$inputs.length;i++){
 			var $check = $inputs.eq(i);
 			if($check.prop("checked")){				
