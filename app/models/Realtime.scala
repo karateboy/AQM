@@ -109,9 +109,11 @@ object Realtime {
     val records = getHourRecords(monitor, start, end)
     val typeValues = records.map { hr => monitorTypeProject2(monitorType)(hr) }
     //val validValues = typeValues.filter(v => (!v._2.isEmpty) && (Record.isValidStat(v._2.get))).map(_._1.get)
+    val duration = new Duration(start, end)
+    val nHour = duration.getStandardHours
     val validValues = typeValues.filter(v => (!v._2.isEmpty)).map(_._1.get)
     val total = validValues.length
-    if (total == 0)
+    if (total == 0 || total != nHour)
       None
     else {
       val sum = validValues.sum
@@ -421,13 +423,37 @@ object Realtime {
 
     val kvs =
       for { r <- records } yield {
-        val (v, s) = Record.monitorTypeProject2(mt)(r)
-        Monitor.withName(r.name) -> v.getOrElse(0f)
+        val t = Record.monitorTypeProject2(mt)(r)
+        Monitor.withName(r.name) -> t
       }
     
     Map( kvs :_*)
   }
   
+  def getRealtimeMonitorStatusMap(current:Timestamp)(implicit session: DBSession = AutoSession) = {
+    val datetime = current.toDateTime 
+    val tab = Record.getTabName(TableType.Min, datetime.getYear)
+    val records = sql"""
+      SELECT *
+      FROM ${tab}
+      WHERE M_DateTime = ${current}
+      """.map { Record.mapper }.list.apply
+
+    val kvs =
+      for { r <- records } yield {         
+        val statusPairs = 
+          for(mt <- monitorTypeProject2.keys.toList)
+            yield{
+              mt->Record.monitorTypeProject2(mt)(r)._2
+          }
+        
+        val statusMap = Map(statusPairs: _*) 
+        Monitor.withName(r.name) -> statusMap
+      }
+    
+    Map( kvs :_*)
+  }
+    
   def getRealtimeWeatherMap(current:Timestamp)(implicit session: DBSession = AutoSession) = {
     val datetime = current.toDateTime 
     val tab = Record.getTabName(TableType.SixSec, datetime.getYear)

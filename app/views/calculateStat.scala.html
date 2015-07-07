@@ -9,6 +9,7 @@
                 </div>
             	<div class="panel-body panel-collapse in" id="reportParam">
             		<h5>測站</h5>
+            		<button id="select-all-monitors" class="btn btn-info">全選</button>
             		<div class="btn-group" data-toggle="buttons">
             			@for(m<-Monitor.getMvList(groupID)){
             				<label class="btn btn-outline btn-primary dim">
@@ -38,7 +39,7 @@
         	</div>
         	<div class="panel panel-success" style="display:none" id="reportPanel">
             	<div class="panel-heading panel-title"" >
-            		<a data-toggle="collapse" data-parent="#accordion" href="#monitorReport">超過法規報表</a>	
+            		<a data-toggle="collapse" data-parent="#accordion" href="#monitorReport">數據統計報表</a>	
                 </div>
             	<div class="panel-body panel-collapse" id="monitorReport">
 					<div id="reportDiv" align="center" style="overflow-x:auto">
@@ -54,6 +55,15 @@ $( document ).ready(function() {
 		format: 'yyyy-mm-dd',
 	    todayBtn: "linked",
 	    language: "zh-TW"
+	});
+	
+	$('#select-all-monitors').click(function(){
+		$('.btn-group input[name="monitor"]').each(function(){
+	            // toggle checkbox
+	            $(this).prop('checked',!$(this).prop('checked'));
+	            // toggle class
+	            $(this).parents('label').toggleClass('active');
+	        });
 	});
 
 	var monitors, monitorType, reportStart, reportEnd;

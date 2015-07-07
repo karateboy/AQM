@@ -144,7 +144,13 @@ object Realtime extends Controller {
       val realtimeValueMap = getRealtimeMonitorValueMap(mt, latestRecordTime)
 
       val series = for (m <- Monitor.mvList) yield {
-        seqData(Monitor.map(m).name, Seq(realtimeValueMap.getOrElse(m, 0f)))
+        seqData(Monitor.map(m).name, Seq({
+           val vOpt = realtimeValueMap.get(m)
+           if(vOpt.isEmpty||vOpt.get._1.isEmpty)
+             0f
+           else             
+             vOpt.get._1.get
+        }))
       }
 
       val title = mtCase.desp + " 即時資料"
@@ -158,7 +164,7 @@ object Realtime extends Controller {
       val c = HighchartData(
         Map("type" -> "column"),
         Map("text" -> title),
-        XAxis(Some(Seq(latestRecordTime.toString("yyyy:MM:DD HH:mm")))),
+        XAxis(Some(Seq(latestRecordTime.toString("yyyy:MM:dd HH:mm")))),
         YAxis(None, AxisTitle(Some(mtCase.unit)), axisLines),
         series)
 
@@ -174,27 +180,40 @@ object Realtime extends Controller {
   def realtimeMap = Security.Authenticated {
     implicit request =>
     val current = getLatestRecordTime(TableType.SixSec).get 
-    val map = getRealtimeWeatherMap(current)
+    val weatherMap = getRealtimeWeatherMap(current)
+    val statusMap = getRealtimeMonitorStatusMap(current)
     
-    def getStatusIndex(s:String)={
-      if(MonitorStatus.isNormalStat(s))
-        0
-      else if(MonitorStatus.isCalbration(s))
-        1
-      else if(MonitorStatus.isRepairing(s))
-        2
-      else if(MonitorStatus.isMaintance(s))
-        3
-      else
-        4
+    def getStatusIndex(statusMapOpt:Option[Map[MonitorType.Value, Option[String]]]):Int={
+      if(statusMapOpt.isEmpty)
+        return 4
+      
+      val statusMap = statusMapOpt.get
+      val statusList = statusMap.values.toList
+      val statusIndexes = statusList.map { s => 
+          //empty is treated as normal
+          val str = s.getOrElse("010")  
+          if(MonitorStatus.isNormalStat(str))
+            0
+          else if(MonitorStatus.isCalbration(str))
+            1
+          else if(MonitorStatus.isRepairing(str))
+            2
+          else if(MonitorStatus.isMaintance(str))
+            3
+          else
+            4
+      }
+      statusIndexes.max
     }
+    
     val mapInfos =
     for{m <- Monitor.mvList
-      s = map.getOrElse(m, Record.emptySixSecRecord(m, current, MonitorStatus.DATA_LOSS_STAT))
+      weather = weatherMap.getOrElse(m, Record.emptySixSecRecord(m, current, MonitorStatus.DATA_LOSS_STAT))
+      status = statusMap.get(m)
       }
       yield
     {
-      MonitorInfo(m.toString(), getStatusIndex(s.status), s.winDir, s.winSpeed)
+      MonitorInfo(m.toString(), getStatusIndex(status), weather.winDir, weather.winSpeed)
     }
     
     Ok(Json.toJson(RealtimeMapInfo(mapInfos)))

@@ -228,7 +228,7 @@ object Query extends Controller{
     val statusFilter = if (statusStr.equalsIgnoreCase("none")) {
       None
     } else {
-      Some(statusStr.split(':').toList.map { MonitorStatus.withName })
+      Some(statusStr.split(':').toList)
     }
     val start = DateTime.parse(startStr)
     val end = DateTime.parse(endStr) + 1.day
@@ -356,10 +356,10 @@ object Query extends Controller{
       }.map(_._1.get)
       len = normalRecords.length
       avg = normalRecords.sum/len
-      max = normalRecords.max
-      min = normalRecords.min
-      dev = normalRecords.map(r=>(r-avg)*(r-avg))
-      sd = Math.sqrt(dev.sum/len)
+      max = if(len>0) normalRecords.max else Float.NaN
+      min = if(len>0) normalRecords.min else Float.NaN
+      dev = if(len>0) normalRecords.map(r=>(r-avg)*(r-avg)) else List[Float]()
+      sd = if(len>0) Math.sqrt(dev.sum/len) else Double.NaN
     }
     yield
     {

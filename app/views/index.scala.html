@@ -375,6 +375,7 @@ function initWindInfobox(map){
 			   border: "none"
 			  ,textAlign: "center"
 			  ,fontSize: "12pt"
+			  ,color: "Red"
 			  ,width: "60px"
 			 }
 			,disableAutoPan: true
@@ -397,11 +398,11 @@ function initLableInfobox(map){
 		var monitor = markerStaticData[i];
 			
 		var myOptions = {
-			 content: monitor.name
+			 content: "<strong>"+monitor.name+"</strong>"
 			,boxStyle: {
 			   border: "none"
 			  ,textAlign: "center"
-			  ,fontSize: "12pt"
+			  ,fontSize: "14pt"
 			  ,width: "60px"
 			 }
 			,disableAutoPan: true

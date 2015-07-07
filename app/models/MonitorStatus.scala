@@ -17,7 +17,7 @@ case class TagInfo(statusType:StatusType.Value, id:String){
   }
 }
 
-object MonitorStatus extends Enumeration{
+object MonitorStatus {
   private val msList:List[MonitorStatus] =
     DB readOnly{ implicit session =>
       sql"""
@@ -59,13 +59,14 @@ object MonitorStatus extends Enumeration{
   
   def isRepairing(s: String)={
     val REPAIR = "031"
-    REPAIR == getTagInfo(s)
+    getTagInfo(REPAIR) == getTagInfo(s)
   }
   
   val DATA_LOSS_STAT = "036"
-  val REPAIR_STAT = "031"
+
   def isMaintance(s: String)={
-    REPAIR_STAT == getTagInfo(s)
+    val MAINTANCE_STAT = "038"
+    getTagInfo(MAINTANCE_STAT) == getTagInfo(s)
   }
   
   def isError(s: String)={
@@ -97,8 +98,14 @@ object MonitorStatus extends Enumeration{
     }
   }
   
-  val map:Map[Value, MonitorStatus] = Map(msList.map{s=>Value(getTagStr(s))->s}:_*)
-  val msvList = msList.map {r=>MonitorStatus.withName(getTagStr(r))}
-  val manualMonitorStatusList = {msvList.filter { map(_).statusType == StatusType.Manual }}
-  val alarmList = msvList.filter { _ != MonitorStatus.withName(getTagInfo(NORMAL_STAT).toString) }
+  private val _map:Map[String, MonitorStatus] = Map(msList.map{s=>getTagStr(s)->s}:_*)
+  val msvList = msList.map {r=>getTagStr(r)}
+  val manualMonitorStatusList = {msvList.filter { _map(_).statusType == StatusType.Manual }}
+  val alarmList = msvList.filter { _ != getTagInfo(NORMAL_STAT).toString }
+  def map(key:String)={
+    _map.getOrElse(key, {
+      val tagInfo = getTagInfo(key)
+      MonitorStatus(tagInfo.statusType, tagInfo.id, "未知的狀態:"+key, false, false)
+      })
+  }
 }
