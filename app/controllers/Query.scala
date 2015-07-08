@@ -12,8 +12,9 @@ object Query extends Controller{
 
   def history() = Security.Authenticated {
     implicit request =>
-    val userInfo = Security.getUserinfo(request).get  
-    Ok(views.html.history(false, userInfo.groupID))
+    val userInfo = Security.getUserinfo(request).get
+    val group = Group.getGroup(userInfo.groupID).get
+    Ok(views.html.history(false, group.privilege))
   }
   
   def historyReport(edit:Boolean, monitorStr:String, monitorTypeStr:String, startStr:String, endStr:String)=Security.Authenticated {
@@ -47,7 +48,8 @@ object Query extends Controller{
   def historyTrend = Security.Authenticated {
     implicit request =>
       val userInfo = Security.getUserinfo(request).get
-    Ok(views.html.historyTrend(userInfo.groupID))
+      val group = Group.getGroup(userInfo.groupID).get
+    Ok(views.html.historyTrend(group.privilege))
   }
 
   def historyTrendChart(monitorStr: String, monitorTypeStr: String, startStr: String, endStr: String) = Security.Authenticated {
@@ -106,7 +108,8 @@ object Query extends Controller{
   def psiTrend = Security.Authenticated {
     implicit request =>
       val userInfo = Security.getUserinfo(request).get
-    Ok(views.html.psiTrend(userInfo.groupID))
+      val group = Group.getGroup(userInfo.groupID).get
+    Ok(views.html.psiTrend(group.privilege))
   }
 
   def psiTrendChart(monitorStr: String, startStr: String, endStr: String) = Security.Authenticated {
@@ -163,7 +166,8 @@ object Query extends Controller{
   def overLawStd() = Security.Authenticated {
     implicit request =>
       val userInfo = Security.getUserinfo(request).get
-    Ok(views.html.overLawStd(userInfo.groupID))
+      val group = Group.getGroup(userInfo.groupID).get
+    Ok(views.html.overLawStd(group.privilege))
   }
   
   case class OverLawStdEntry(monitor:Monitor.Value, time:DateTime, value:Float)
@@ -199,27 +203,29 @@ object Query extends Controller{
   def effectivePercentage() = Security.Authenticated {
     implicit request =>
       val userInfo = Security.getUserinfo(request).get
-    Ok(views.html.effectivePercentage(userInfo.groupID))
+      val group = Group.getGroup(userInfo.groupID).get
+    Ok(views.html.effectivePercentage(group.privilege))
   }
-  
-  def effectivePercentageReport(startStr:String, endStr:String)=Security.Authenticated {
-       implicit request =>
-         val userInfo = Security.getUserinfo(request).get
-    val start = DateTime.parse(startStr)
-    val end = DateTime.parse(endStr) + 1.day
-    
-    val reports = 
-    for(m <- Monitor.getMvList(userInfo.groupID))
-      yield{
-      Record.getMonitorEffectiveRate(m, start, end)
-    }
-    Ok(views.html.effectivePercentageReport(start, end, reports))
+
+  def effectivePercentageReport(startStr: String, endStr: String) = Security.Authenticated {
+    implicit request =>
+      val userInfo = Security.getUserinfo(request).get
+      val group = Group.getGroup(userInfo.groupID).get
+      val start = DateTime.parse(startStr)
+      val end = DateTime.parse(endStr) + 1.day
+
+      val reports =
+        for (m <- group.privilege.allowedMonitors) yield {
+          Record.getMonitorEffectiveRate(m, start, end)
+        }
+      Ok(views.html.effectivePercentageReport(start, end, reports, group.privilege))
   }
   
   def alarm() = Security.Authenticated {
     implicit request =>
       val userInfo = Security.getUserinfo(request).get
-    Ok(views.html.alarm(userInfo.groupID))
+      val group = Group.getGroup(userInfo.groupID).get
+    Ok(views.html.alarm(group.privilege))
   }
 
   def alarmReport(monitorStr: String, statusStr: String, startStr: String, endStr: String) = Security.Authenticated {
@@ -241,7 +247,8 @@ object Query extends Controller{
   def windRose() = Security.Authenticated {
     implicit request =>
       val userInfo = Security.getUserinfo(request).get
-    Ok(views.html.windRose(userInfo.groupID))
+      val group = Group.getGroup(userInfo.groupID).get
+    Ok(views.html.windRose(group.privilege))
   }
   
   def windRoseReport(monitorStr: String, startStr: String, endStr: String) = Security.Authenticated {
@@ -293,7 +300,8 @@ object Query extends Controller{
   def compareLastYear() = Security.Authenticated {
     implicit request =>
       val userInfo = Security.getUserinfo(request).get
-    Ok(views.html.compareLastYear(userInfo.groupID))
+      val group = Group.getGroup(userInfo.groupID).get
+    Ok(views.html.compareLastYear(group.privilege))
   }
   
   def compareLastYearChart(monitorStr:String, monitorTypeStr:String, startStr:String, endStr:String)=Security.Authenticated {
@@ -331,7 +339,8 @@ object Query extends Controller{
   def calculateStat() = Security.Authenticated {
     implicit request =>
       val userInfo = Security.getUserinfo(request).get
-    Ok(views.html.calculateStat(userInfo.groupID))
+      val group = Group.getGroup(userInfo.groupID).get
+    Ok(views.html.calculateStat(group.privilege))
   }
   
   case class Stat(avg:Float, min:Float, max:Float, sd:Float)
@@ -374,7 +383,8 @@ object Query extends Controller{
   def regression() = Security.Authenticated {
     implicit request =>
       val userInfo = Security.getUserinfo(request).get
-    Ok(views.html.regression(userInfo.groupID))
+      val group = Group.getGroup(userInfo.groupID).get
+    Ok(views.html.regression(group.privilege))
   }
 
   import Realtime._
@@ -424,7 +434,8 @@ object Query extends Controller{
   def calibrationQuery = Security.Authenticated {
     implicit request =>
       val userInfo = Security.getUserinfo(request).get
-      Ok(views.html.calibration(userInfo.groupID))
+      val group = Group.getGroup(userInfo.groupID).get
+      Ok(views.html.calibration(group.privilege))
   }
   
   def calibrationQueryReport(monitorStr:String, startStr:String, endStr:String) = Security.Authenticated {

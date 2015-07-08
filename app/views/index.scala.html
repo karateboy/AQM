@@ -1,6 +1,6 @@
-@(title: String, userInfo:controllers.Security.UserInfo)
+@(title: String, userInfo:controllers.Security.UserInfo, privilege: Privilege)
 
-@outline(title, userInfo){
+@outline(title, userInfo, privilege){
 <div class="row">
 	<div class="col-lg-3">
 		<div class="ibox float-e-margins">
@@ -256,22 +256,22 @@ function HomeControl(map, div, home) {
 
 var markerStaticData = [];
 
-@for(m<-Monitor.monitorList){
+@for(m<-privilege.allowedMonitors){
 	markerStaticData.push(
 		{
-			id:'@m.id',
-			name:'@m.name',
-			lat:'@m.lat',
-			lng:'@m.lng'
+			id:'@Monitor.map(m).id',
+			name:'@Monitor.map(m).name',
+			lat:'@Monitor.map(m).lat',
+			lng:'@Monitor.map(m).lng'
 		});
 }
 
 var statusIconUrl = [
-	"@routes.Assets.at("images/normal.png")",
-	"@routes.Assets.at("images/calbration.png")",
-	"@routes.Assets.at("images/repair.png")",
-	"@routes.Assets.at("images/maintance.png")",
-	"@routes.Assets.at("images/warn.png")"
+	'@routes.Assets.at("images/normal.png")',
+	'@routes.Assets.at("images/calbration.png")',
+	'@routes.Assets.at("images/repair.png")',
+	'@routes.Assets.at("images/maintance.png")',
+	'@routes.Assets.at("images/warn.png")'
 ];
 
 

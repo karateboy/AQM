@@ -9,8 +9,7 @@ import play.api.libs.json._
 import play.api.libs.functional.syntax._
 
 
-case class Monitor(id:String, name:String, lat:Double, lng:Double, autoAudit:AutoAudit)
-case class MonitorWithImageUrl(id:String, name:String, url:String)
+case class Monitor(id:String, name:String, lat:Double, lng:Double, url:String, autoAudit:AutoAudit)
 object Monitor extends Enumeration{
   implicit val mReads: Reads[Monitor.Value] = EnumUtils.enumReads(Monitor)
   implicit val mWrites: Writes[Monitor.Value] = EnumUtils.enumWrites
@@ -23,46 +22,15 @@ object Monitor extends Enumeration{
         """.map { r => 
           val autoAuditJson = r.stringOpt(9).getOrElse(Json.toJson(AutoAudit.default).toString())
           val autoAudit = Json.parse(autoAuditJson).validate[AutoAudit].get
-          Monitor(r.string(1), r.string(2), r.string(6).toDouble, r.string(7).toDouble, autoAudit)}.list.apply
+          Monitor(r.string(1), r.string(2), r.string(6).toDouble, r.string(7).toDouble, r.string("imageUrl"), autoAudit)}.list.apply
     }
     
   var map:Map[Value, Monitor] = Map(monitorList.map{e=>Value(e.id)->e}:_*)
 
   val mvList = monitorList.map{m=>Monitor.withName(m.id)}
-  
-  def getMvList(groupID:Int):List[Monitor.Value]={
-    val groupOpt = Group.getGroup(groupID)
-    if(groupOpt.isEmpty){
-      List()
-    }else{
-      val group = groupOpt.get
-      group.privilege.allowedMonitors.toList
-    }
-  }
-  
-  def getDisplayName(monitor:Value):String ={
-    map.get(monitor) match{
-      case Some(m) => m.name 
-      case None => 
-        Logger.error("Unknown monitor :" + monitor)
-        ""
-    }
-  }
-
-  def getImageMonitorList(groupID:Int) = {
-    DB readOnly{ implicit session =>
-      val monitorList =
-      sql"""
-        Select * 
-        From Monitor
-        """.map { r => MonitorWithImageUrl(r.string(1), r.string(2), r.string("imageUrl"))}.list.apply
-        
-      val allowedList = getMvList(groupID)
-      monitorList.filter { m =>
-        val mv = Monitor.withName(m.id)
-        !m.url.isEmpty() && allowedList.contains(mv) 
-        }
-    }
+    
+  def getDisplayName(m:Monitor.Value)={
+    map(m).name
   }
   
   def main(args: Array[String]) {

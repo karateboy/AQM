@@ -1,6 +1,6 @@
 @* outline Template File *@
 @import controllers.Security._
-@(title: String, user:controllers.Security.UserInfo)(content: Html)
+@(title: String, user:controllers.Security.UserInfo, privilege: Privilege)(content: Html)
 <!DOCTYPE html>
 <html lang="zh-tw">
 
@@ -108,6 +108,7 @@
                     
                 </div>
             </li>
+            @if(privilege.allowedMenuRights.contains(MenuRight.RealtimeInfo)){
             <li class="active">
                 <a href="index.html"><i class="fa fa-th-large"></i> <span class="nav-label">即時資訊</span> <span class="fa arrow"></span></a>
                 <ul class="nav nav-second-level">
@@ -117,6 +118,8 @@
                     <li ><a href="#" onClick="loadPage('/realtimeImage','即時資訊','即時影像')">即時影像</a></li>
                 </ul>
             </li>
+            }
+            @if(privilege.allowedMenuRights.contains(MenuRight.DataQuery)){
             <li>
                 <a href="#"><i class="fa fa-bar-chart-o"></i> <span class="nav-label">數據查詢</span><span class="fa arrow"></span></a>
                 <ul class="nav nav-second-level">                
@@ -131,6 +134,8 @@
                     <li><a href="#" onClick="loadPage('/Alarm','數據查詢','警報記錄查詢')">警報記錄查詢</a></li>
                 </ul>
             </li>
+            }
+            @if(privilege.allowedMenuRights.contains(MenuRight.Report)){
             <li>
                 <a href="#"><i class="fa fa-table"></i> <span class="nav-label">報表查詢 </span></a>
                 <ul class="nav nav-second-level">
@@ -142,6 +147,8 @@
                     <li><a href="#" onClick="loadPage('/report/@ReportType.MonthlyHourReport', '報表查詢','月份時報表')">月份時報表</a></li> 
                 </ul>
             </li>
+            }
+            @if(privilege.allowedMenuRights.contains(MenuRight.Statistics)){
             <li>
                 <a href="#"><i class="fa fa-university"></i> <span class="nav-label">統計分析</span><span class="fa arrow"></span></a>
                 <ul class="nav nav-second-level">
@@ -150,7 +157,8 @@
                     <li><a href="#" onClick="loadPage('/Regression','統計分析','趨勢分析')">趨勢分析</a></li>
                 </ul>
             </li>
-            @if(user.isAdmin){
+            }
+            @if(user.isAdmin || privilege.allowedMenuRights.contains(MenuRight.SystemManagement)){
             <li>
                 <a href="#"><i class="fa fa-desktop"></i> <span class="nav-label">系統管理</span></a>
                 <ul class="nav nav-second-level">                    

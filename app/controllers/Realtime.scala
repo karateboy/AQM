@@ -12,23 +12,28 @@ import play.api.libs.functional.syntax._
 object Realtime extends Controller {
   def realtimeStat = Security.Authenticated {
     implicit request =>
+      val userInfo = Security.getUserinfo(request).get
+      val group = Group.getGroup(userInfo.groupID).get
+
       val current = getLatestRecordTime(TableType.Min).get
-      val rt_status = getRealtimeMinStatus(current)
+      val rt_status = getRealtimeMinStatus(current, group.privilege)
       val currentHr = getLatestRecordTime(TableType.Hour).get
       val rt_psi = getRealtimePSI(currentHr)
-      Ok(views.html.realtimeStatus(current, rt_status, MonitorType.psiList, rt_psi))
+      Ok(views.html.realtimeStatus(current, rt_status, MonitorType.psiList, rt_psi, group.privilege))
   }
 
   def realtimeImg = Security.Authenticated {
     implicit request =>
       val userInfo = Security.getUserinfo(request).get
-      Ok(views.html.realtimeImage(userInfo.groupID))
+      val group = Group.getGroup(userInfo.groupID).get
+      Ok(views.html.realtimeImage(group.privilege))
   }
 
   def realtimeTrend = Security.Authenticated {
     implicit request =>
       val userInfo = Security.getUserinfo(request).get
-      Ok(views.html.realtimeTrend(userInfo.groupID))
+      val group = Group.getGroup(userInfo.groupID).get
+      Ok(views.html.realtimeTrend(group.privilege))
   }
 
   case class RealtimeTrendParam(monitors: Seq[Monitor.Value], monitorTypes: Seq[MonitorType.Value])
@@ -136,14 +141,22 @@ object Realtime extends Controller {
 
   def highchartJson(monitorTypeStr: String) = Security.Authenticated {
     implicit request =>
+      val userInfo = Security.getUserinfo(request).get
+      val group = Group.getGroup(userInfo.groupID).get
+
       val mt = MonitorType.withName(monitorTypeStr)
       val mtCase = MonitorType.map(mt)
 
       val latestRecordTime = getLatestRecordTime(TableType.Min).get
 
-      val realtimeValueMap = getRealtimeMonitorValueMap(mt, latestRecordTime)
+      val realtimeValueMap =
+        if(group.privilege.allowedMonitorTypes.contains(mt))
+          getRealtimeMonitorValueMap(mt, latestRecordTime)
+        else{
+          Map[Monitor.Value, (Option[Float], Option[String])]()
+        }
 
-      val series = for (m <- Monitor.mvList) yield {
+      val series = for (m <- group.privilege.allowedMonitors) yield {
         seqData(Monitor.map(m).name, Seq({
            val vOpt = realtimeValueMap.get(m)
            if(vOpt.isEmpty||vOpt.get._1.isEmpty)

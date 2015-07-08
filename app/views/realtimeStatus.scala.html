@@ -1,7 +1,7 @@
 @* realtimeStatus Template File *@
 @import models.Realtime._
 @import com.github.nscala_time.time.Imports._
-@(current:DateTime, rt_status: Map[Monitor.Value, Map[MonitorType.Value, (Option[Float], Option[String])]], psiList:List[MonitorType.Value], rt_psi: Map[Monitor.Value, (Option[Float], Map[MonitorType.Value, (Option[Float], Option[Float])])])
+@(current:DateTime, rt_status: Map[Monitor.Value, Map[MonitorType.Value, (Option[Float], Option[String])]], psiList:List[MonitorType.Value], rt_psi: Map[Monitor.Value, (Option[Float], Map[MonitorType.Value, (Option[Float], Option[Float])])], privilege: Privilege)
 <div class="row">
 	<div class="col-lg-12">
 		<div class="ibox float-e-margins">
@@ -25,31 +25,17 @@
 			  
 			<th>測站</th>
 			
-			@for(mt <- MonitorType.realtimeList){
+			@for(mt <- MonitorType.realtimeList.filter(privilege.allowedMonitorTypes.contains)){
 				<th>@MonitorType.map(mt).desp</th>
 			}
 		</tr>
 	</thead>
 	<tbody>
-		<!--  
-	
-		<tr>
-			<td>法規值</td>
-				@for(mt <- MonitorType.realtimeList){
-					@if(MonitorType.map(mt).std_law.isEmpty){
-						<td>-</td>	
-					}else{
-						<td>@MonitorType.map(mt).std_law</td>
-					}
-				}
-			
-		</tr>
-		-->
-		@for(m <- Monitor.mvList){
+		@for(m <- privilege.allowedMonitors){
 			<tr>
 				<td>@Monitor.map(m).name</td> 
 				
-			@for(mt <- MonitorType.realtimeList){
+			@for(mt <- MonitorType.realtimeList.filter(privilege.allowedMonitorTypes.contains)){
 				@if(rt_status(m)(mt)._1.isEmpty){
 						<td>-</td>						
 					}else{

@@ -2,7 +2,7 @@
 @import com.github.nscala_time.time.Imports._
 @import Report._
 @import Record._
-@(start:DateTime, end:DateTime, rateList:List[MonitorEffectiveRate])
+@(start:DateTime, end:DateTime, rateList:Seq[MonitorEffectiveRate], privilege: Privilege)
 <b>
 <h3>有效率報表</h3>
 <h4>開始日期:@start.toString("yyyy年MM月dd日")</h4>
@@ -13,7 +13,7 @@
 	<thead>
 		<tr>
 			<th>測站</th>
-			@for(mt<-MonitorType.mtvList){
+			@for(mt<-privilege.allowedMonitorTypes){
 				<td>@MonitorType.map(mt).desp</td>
 			}
 		</tr>
@@ -22,7 +22,7 @@
 		@for(r<-rateList){
 			<tr>
 			<th>@Monitor.map(r.monitor).name</th>
-			@for(mt<-MonitorType.mtvList){
+			@for(mt<-privilege.allowedMonitorTypes){
 				@if(r.rateMap(mt)*100 < 75){
 					<td style="color:blue">@("%.1f".format(r.rateMap(mt)*100))</td>	
 				}else{

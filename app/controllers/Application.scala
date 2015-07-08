@@ -26,8 +26,8 @@ object Application extends Controller {
         Forbidden("Invalid access!")
       }else{
         val userInfo = userInfoOpt.get
-        
-        Ok(views.html.index(title, userInfo))
+        val group = Group.getGroup(userInfo.groupID).get
+        Ok(views.html.index(title, userInfo, group.privilege))
       }
         
   }
@@ -276,7 +276,8 @@ object Application extends Controller {
   def manualAudit = Security.Authenticated {
     implicit request =>
       val userInfo = Security.getUserinfo(request).get
-      Ok(views.html.manualAudit(userInfo.groupID))
+      val group = Group.getGroup(userInfo.groupID).get
+      Ok(views.html.manualAudit(group.privilege))
   } 
   
   case class ManualAudit(monitor:Monitor.Value, monitorType:MonitorType.Value, time:Long, status:String)

@@ -24,7 +24,7 @@ object Realtime {
     SixSecRecord(c911.toArray, c912.toArray)
   }
 
-  def getRealtimeMinStatus(current:DateTime) = {
+  def getRealtimeMinStatus(current:DateTime, privilege: Privilege) = {
 
     DB readOnly { implicit session =>
       val tab_name = Record.getTabName(TableType.Min, current.getYear)
@@ -36,7 +36,7 @@ object Realtime {
              """.map { Record.mapper }.list.apply
 
       val rt_result =
-        for { m <- Monitor.mvList } yield {
+        for { m <- privilege.allowedMonitors } yield {
           import scala.collection.mutable.Map
           val hrMap: Map[Monitor.Value, HourRecord] = Map()
 
@@ -47,7 +47,8 @@ object Realtime {
           }
 
           val hr = hrMap.getOrElse(m, emptyRecord(Monitor.map(m).id, current))
-          val type_record = monitorTypeProjection.map(
+          val type_record = monitorTypeProjection
+          .map(
             t => (t._1 -> (t._2._1(hr), t._2._2(hr))))
           (m -> type_record)
         }
@@ -55,11 +56,11 @@ object Realtime {
     }
   }
 
-  def getRealtimeStatus() = {
+  def getRealtimeStatus(privilege: Privilege) = {
     Logger.info(DateTime.now.toString + "Enter")
     DB readOnly { implicit session =>
       val rt_result =
-        for { m <- Monitor.monitorList } yield {
+        for { m <- privilege.allowedMonitors } yield {
           val optHr =
             sql"""
               SELECT TOP 1 *
@@ -68,14 +69,14 @@ object Realtime {
               ORDER BY M_DateTime  DESC
              """.map { Record.mapper }.single.apply
 
-          val hr = optHr.getOrElse(emptyRecord(m.id, DateTime.now))
+          val hr = optHr.getOrElse(emptyRecord(m.toString(), DateTime.now))
           val type_record = monitorTypeProjection.map(
             t => (t._1 -> (t._2._1(hr), t._2._2(hr))))
-          (Monitor.withName(m.id) -> type_record)
+          (m -> type_record)
         }
       Logger.info(DateTime.now.toString + "rt_result")
       val windMapList =
-        for { m <- Monitor.monitorList } yield {
+        for { m <- privilege.allowedMonitors } yield {
           val wind_record =
             sql"""
             SELECT TOP 1 *
@@ -89,7 +90,7 @@ object Realtime {
             arr.last
           }
 
-          Monitor.withName(m.id) -> Map(MonitorType.withName("C911") -> getLatest(wind_record.c911),
+          m -> Map(MonitorType.withName("C911") -> getLatest(wind_record.c911),
             MonitorType.withName("C912") -> getLatest(wind_record.c912))
         }
       Logger.info(DateTime.now.toString + "windMapList")
@@ -97,7 +98,7 @@ object Realtime {
       val hr_map = Map(rt_result: _*)
       val sec_map = Map(windMapList: _*)
       val final_list =
-        for { m <- Monitor.mvList } yield {
+        for { m <- privilege.allowedMonitors } yield {
           m -> (hr_map(m) ++ sec_map(m))
         }
       Logger.info(DateTime.now.toString + "combined")

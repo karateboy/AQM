@@ -1,5 +1,5 @@
 @* calibration Template File *@
-@(groupID:Int)
+@(privilege: Privilege)
 <div class="row">
    	<div class="col-lg-12">
     	<div class="panel-group" id="accordion">
@@ -10,7 +10,7 @@
             	<div class="panel-body panel-collapse in" id="reportParam">
             		<h5>測站</h5>
             		<div class="btn-group" data-toggle="buttons">
-            			@for(m<-Monitor.getMvList(groupID)){
+            			@for(m<-privilege.allowedMonitors){
             				<label class="btn btn-outline btn-primary dim">
 								<input type="radio" name="monitor" id="@m">@Monitor.getDisplayName(m)</label>		
             			}

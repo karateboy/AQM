@@ -1,5 +1,5 @@
 @* manual audit Template File *@
-@(groupID:Int)
+@(privilege: Privilege)
 <div class="row">
 <div class="col-lg-12">
 <div class="ibox float-e-margins">
@@ -16,7 +16,7 @@
 </ul>
 <div class="tab-content ibox-content">
 	<div id="manualAudit" class="tab-pane active" align="left">
-		@history(true, groupID)
+		@history(true, privilege)
 	</div>
 	<div id="manualStatus" class="tab-pane" align="left">
 		<table id="manualStatusTab" class="table">

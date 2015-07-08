@@ -25,13 +25,14 @@ object Report extends Controller {
   
   def getReport(reportType: String) = Security.Authenticated { implicit request =>
     val userInfo = Security.getUserinfo(request).get
+    val group = Group.getGroup(userInfo.groupID).get
     val MR = ReportType.MonitorReport.toString()
     val MHR = ReportType.MonthlyHourReport.toString()
     reportType match {
       case MR=>
-        Ok(views.html.monitorReport(false, userInfo.groupID))
+        Ok(views.html.monitorReport(false, group.privilege))
       case MHR=>
-        Ok(views.html.monthlyHourReportForm(userInfo.groupID))
+        Ok(views.html.monthlyHourReportForm(group.privilege))
       case _=>
         BadRequest("未知的報表種類:" + reportType)
     }
@@ -295,7 +296,8 @@ object Report extends Controller {
   def psiReportPrompt() = Security.Authenticated { 
     implicit request =>
       val userInfo = Security.getUserinfo(request).get
-      Ok(views.html.psiReport(userInfo.groupID))
+      val group = Group.getGroup(userInfo.groupID).get
+      Ok(views.html.psiReport(group.privilege))
   }
   
   def psiReportReport(monitorStr:String, reportTypeStr:String, startDateStr:String) = Security.Authenticated {
@@ -322,7 +324,8 @@ object Report extends Controller {
   def effectiveQuery() = Security.Authenticated {
     implicit request =>
       val userInfo = Security.getUserinfo(request).get
-      Ok(views.html.effectiveReport(userInfo.groupID))
+      val group = Group.getGroup(userInfo.groupID).get
+      Ok(views.html.effectiveReport(group.privilege))
   }
   
   object EffectiveReportType extends Enumeration{
@@ -332,6 +335,8 @@ object Report extends Controller {
   
   def effectiveAnnualReport(reportTypeStr:String, startStr:String, param:String) = Security.Authenticated{
     implicit request =>
+      val userInfo = Security.getUserinfo(request).get
+      val group = Group.getGroup(userInfo.groupID).get
       import Record._
       val reportType = EffectiveReportType.withName(reportTypeStr)
       val start = DateTime.parse(startStr)
@@ -349,7 +354,7 @@ object Report extends Controller {
           val rateList = getMonitorTypeYearlyEffectiveRate(monitorType, adjustedStart)
           val statMap = getStatYearlyMonthlyEffectiveRate(rateList)
           
-          Ok(views.html.multipleSiteEffectiveRateYearlyReport(monitorType, adjustedStart, rateList, statMap))
+          Ok(views.html.multipleSiteEffectiveRateYearlyReport(monitorType, adjustedStart, rateList, statMap, group.privilege))
       }      
   }
 }
