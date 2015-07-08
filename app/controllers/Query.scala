@@ -173,15 +173,18 @@ object Query extends Controller{
   case class OverLawStdEntry(monitor:Monitor.Value, time:DateTime, value:Float)
   def overLawStdReport(monitorStr:String, monitorTypeStr:String, startStr:String, endStr:String)=Security.Authenticated {
     implicit request =>
+      val userInfo = Security.getUserinfo(request).get
+      val group = Group.getGroup(userInfo.groupID).get
+
     import scala.collection.JavaConverters._
     val monitorStrArray = monitorStr.split(':')
-    val monitors = monitorStrArray.map{Monitor.withName}
+    val monitors = monitorStrArray.map{Monitor.withName}.filter { group.privilege.allowedMonitors.contains}
     val monitorType = MonitorType.withName(monitorTypeStr)
     val mtCase = MonitorType.map(monitorType)
     val start = DateTime.parse(startStr)
     val end = DateTime.parse(endStr) + 1.day
     
-    assert(mtCase.sd_law.isDefined)
+    assert(mtCase.std_law.isDefined)
     
     import models.Record._
     import scala.collection.mutable.ListBuffer
@@ -190,7 +193,7 @@ object Query extends Controller{
       records = Record.getHourRecords(m, start, end)
       typeRecords = records.map{r=>(Record.timeProjection(r) ,Record.monitorTypeProject2(monitorType)(r))}
       overLawRecords = typeRecords.filter{
-        r=>(r._2._1.isDefined && r._2._1.get > mtCase.sd_law.get)
+        r=>(r._2._1.isDefined && r._2._1.get > mtCase.std_law.get)
       }
       overList = overLawRecords.map{r=>OverLawStdEntry(m, r._1, r._2._1.get)}
     }{

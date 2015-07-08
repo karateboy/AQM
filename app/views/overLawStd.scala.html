@@ -20,7 +20,7 @@
             		<h5>測項</h5>
             		<div class="btn-group" data-toggle="buttons">
             			@for(m<-privilege.allowedMonitorTypes){
-            				@if(MonitorType.map(m).sd_law.isDefined){
+            				@if(MonitorType.map(m).std_law.isDefined){
             				<label class="btn btn-outline btn-primary dim">
 								<input type="radio" name="monitorType" id="@m">@MonitorType.map(m).desp</label>
 							}		
@@ -92,7 +92,7 @@ $( document ).ready(function() {
 		}
 		
 		reportEnd = $('#reportEnd').val();
-		if(reportStart.length === 0){
+		if(reportEnd.length === 0){
 			alert('請選擇結束日期');
 			return false;
 		}
