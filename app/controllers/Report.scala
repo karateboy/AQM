@@ -8,6 +8,7 @@ import models._
 import java.util.Date
 import play.api.Play.current
 import play.api.db.DB
+import PdfUtility._
 
 object PeriodReport extends Enumeration{
   val DailyReport = Value
@@ -21,6 +22,12 @@ object ReportType extends Enumeration{
   val MonthlyHourReport = Value("MonthlyHourReport")
 }
 
+object OutputType extends Enumeration{
+  val html = Value("html")
+  val pdf = Value("pdf")
+  val excel = Value("excel")
+}
+
 object Report extends Controller {
   
   def getReport(reportType: String) = Security.Authenticated { implicit request =>
@@ -30,7 +37,7 @@ object Report extends Controller {
     val MHR = ReportType.MonthlyHourReport.toString()
     reportType match {
       case MR=>
-        Ok(views.html.monitorReport(false, group.privilege))
+        Ok(views.html.monitorReport(group.privilege))
       case MHR=>
         Ok(views.html.monthlyHourReportForm(group.privilege))
       case _=>
@@ -157,142 +164,88 @@ object Report extends Controller {
         MonitorTypeReport(monitorType, typeStat, Stat(avg, min, max, count, total, overCount))
       }
     MonthlyReport(typeReport.toArray)
-  }            
-  
-  def monitorReport = Security.Authenticated(BodyParsers.parse.json){
-    implicit request =>
-      Logger.info("monitorReport")
-      val reportInfo = request.body.validate[ReportInfo]      
-      reportInfo.fold(
-          error=>{
-            Logger.error(JsError.toFlatJson(error).toString())
-            BadRequest(Json.obj("ok"->false, "msg"->JsError.toFlatJson(error)))
-          }, 
-          reportInfo=>{
-            implicit val monitor = Monitor.withName(reportInfo.monitor)
-            val reportType = PeriodReport.withName(reportInfo.reportType)
-            val startTime = DateTime.parse(reportInfo.startTime)
-            Logger.debug(Monitor.map(monitor) + ":" + reportType + ":" + startTime)
-           
-            def getYearlyReport(startTime:DateTime)={
-               val endTime = startTime + Period.years(1)
-               def getMonths(current:DateTime):List[DateTime]={
-                 if(current == endTime)
-                   Nil
-                 else
-                   current :: getMonths(current + 1.months)
-               }
-               
-               val monthes = getMonths(startTime)
-               val monthlyReports =  
-                 for{month <- monthes}yield{
-                   getMonthlyReport(monitor, month)
-                 }
-                 
-               def getTypeStat(i:Int)={
-                 monthlyReports.map { _.typeArray(i).stat}
-               }
-               
-               val typeReport = 
-               for {t<-monthlyReports(0).typeArray
-                 monitorType = t.monitorType
-                 pos = monthlyReports(0).typeArray.indexWhere { x => x.monitorType == monitorType }
-                 typeStat = getTypeStat(pos)
-                 validData = typeStat.filter { _.count !=0 } 
-                 count = validData.length
-                 total = monthlyReports.length
-                 max = if (count != 0) validData.map(_.min).min else Float.MinValue
-                 min = if (count != 0) validData.map(_.max).max else Float.MaxValue
-                 overCount = validData.map(_.overCount).sum
-               } yield{
-                val avg = if (MonitorType.windDirList.contains(monitorType)) {
-                  val sum_sin = validData.map(v => Math.sin(Math.toRadians(v.avg))).sum
-                  val sum_cos = validData.map(v => Math.cos(Math.toRadians(v.avg))).sum
-                  Math.toDegrees(Math.atan(sum_sin / sum_cos)).toFloat
-                } else {
-                  if (count != 0) validData.map { _.avg }.sum / count else 0
-                }
-                 MonitorTypeReport(monitorType, typeStat, Stat(avg, min, max, count, total, overCount) )
-               }
-               YearlyReport(typeReport.toArray)
-            }
-            
-            val monitorCase = Monitor.map(monitor)
-            reportType match{
-              case PeriodReport.DailyReport =>                
-                val dailyReport = Record.getDailyReport(monitor, startTime)
-                Ok(views.html.dailyReport(monitor, startTime, dailyReport))
-              case PeriodReport.MonthlyReport =>
-                val adjustStartDate = DateTime.parse(startTime.toString("YYYY-MM-1"))
-                val monthlyReport = getMonthlyReport(monitor, adjustStartDate)
-                val nDays = monthlyReport.typeArray(0).dataList.length
-                //val firstDay = new DateTime(startTime.year, startTime.month, 1)
-                Ok(views.html.monthlyReport(monitorCase.name, startTime, monthlyReport, nDays))
-              case PeriodReport.MonthlyHourReport=>
-                val adjustStartDate = DateTime.parse(startTime.toString("YYYY-MM-1"))
-                val monthlyReport = getMonthlyReport(monitor, adjustStartDate)
-                val nDays = monthlyReport.typeArray(0).dataList.length
-                Ok("")
-              case PeriodReport.YearlyReport =>
-                val adjustStartDate = DateTime.parse(startTime.toString("YYYY-1-1"))
-                val yearlyReport = getYearlyReport(adjustStartDate)
-                //val firstDay = new DateTime(startTime.year, startTime.month, 1)
-                Ok(views.html.yearlyReport(monitorCase.name, startTime, yearlyReport))
-              
-            }
-          })
   }
-  
-  def monitorReportHtml(monitorStr: String, reportTypeStr: String, startDateStr:String) =
-    Action { implicit request =>
-    Logger.debug("monitorReportPDF")
-    
-    val monitor = Monitor.withName(monitorStr)
-    val reportType = PeriodReport.withName(reportTypeStr)
-    val startDate = DateTime.parse(startDateStr)
-    
-    if(reportType == PeriodReport.DailyReport){
-      val dailyReport = Record.getDailyReport(monitor, startDate) 
-      Ok(views.html.reportTemplate(views.html.dailyReport(monitor, startDate, dailyReport)))
-    }else
-      Ok("")
-  }
-  
-  def monitorReportPDF(monitorStr: String, reportTypeStr: String, startDateStr:String) =
-    Security.Authenticated { implicit request =>
-    Logger.debug("monitorReportPDF")
-    
-    val monitor = Monitor.withName(monitorStr)
-    val reportType = PeriodReport.withName(reportTypeStr)
-    val startDate = DateTime.parse(startDateStr)
-    import play.api.templates._
-    def sendPDF(url:String) = {
-      import io.github.cloudify.scala.spdf._
-      import java.io._
-      import java.net._
-    
-      val pdf = Pdf("C:/Program Files/wkhtmltopdf/bin/wkhtmltopdf.exe", new PdfConfig {
-          orientation := Landscape
-          pageSize := "A4"
-        })
-              
-      val tempReportFile = File.createTempFile("report", ".pdf")
-      pdf.run(new URL(url), tempReportFile)
 
-      tempReportFile
-    }
-    
-    if(reportType == PeriodReport.DailyReport){
-      val dailyReport = Record.getDailyReport(monitor, startDate)
-      val output = views.html.reportTemplate(views.html.dailyReport(monitor, startDate, dailyReport))
-      
-      val url = "http://" + request.host + routes.Report.monitorReportHtml(monitorStr, reportTypeStr, startDateStr).toString()
-      Logger.info("url=" + url)
-      Ok.sendFile(sendPDF(url),  fileName= _=>"Daily_"+monitor+startDate.toString("YYYYMMDD")+".pdf")
-    }else
-      Ok("")
+  def monitorReport(monitorStr: String, reportTypeStr: String, startDateStr: String, outputTypeStr: String) = Security.Authenticated {
+    implicit request =>
+      val monitor = Monitor.withName(monitorStr)
+      val reportType = PeriodReport.withName(reportTypeStr)
+      val startTime = DateTime.parse(startDateStr)
+      val outputType = OutputType.withName(outputTypeStr)
+
+      def getYearlyReport(startTime: DateTime) = {
+        val endTime = startTime + Period.years(1)
+        def getMonths(current: DateTime): List[DateTime] = {
+          if (current == endTime)
+            Nil
+          else
+            current :: getMonths(current + 1.months)
+        }
+
+        val monthes = getMonths(startTime)
+        val monthlyReports =
+          for { month <- monthes } yield {
+            getMonthlyReport(monitor, month)
+          }
+
+        def getTypeStat(i: Int) = {
+          monthlyReports.map { _.typeArray(i).stat }
+        }
+
+        val typeReport =
+          for {
+            t <- monthlyReports(0).typeArray
+            monitorType = t.monitorType
+            pos = monthlyReports(0).typeArray.indexWhere { x => x.monitorType == monitorType }
+            typeStat = getTypeStat(pos)
+            validData = typeStat.filter { _.count != 0 }
+            count = validData.length
+            total = monthlyReports.length
+            max = if (count != 0) validData.map(_.min).min else Float.MinValue
+            min = if (count != 0) validData.map(_.max).max else Float.MaxValue
+            overCount = validData.map(_.overCount).sum
+          } yield {
+            val avg = if (MonitorType.windDirList.contains(monitorType)) {
+              val sum_sin = validData.map(v => Math.sin(Math.toRadians(v.avg))).sum
+              val sum_cos = validData.map(v => Math.cos(Math.toRadians(v.avg))).sum
+              Math.toDegrees(Math.atan(sum_sin / sum_cos)).toFloat
+            } else {
+              if (count != 0) validData.map { _.avg }.sum / count else 0
+            }
+            MonitorTypeReport(monitorType, typeStat, Stat(avg, min, max, count, total, overCount))
+          }
+        YearlyReport(typeReport.toArray)
+      }
+
+      val monitorCase = Monitor.map(monitor)
+      val (title, output) =
+        reportType match {
+          case PeriodReport.DailyReport =>
+            val dailyReport = Record.getDailyReport(monitor, startTime)
+            ("日報", views.html.dailyReport(monitor, startTime, dailyReport))
+
+          case PeriodReport.MonthlyReport =>
+            val adjustStartDate = DateTime.parse(startTime.toString("YYYY-MM-1"))
+            val monthlyReport = getMonthlyReport(monitor, adjustStartDate)
+            val nDays = monthlyReport.typeArray(0).dataList.length
+            ("月報", views.html.monthlyReport(monitorCase.name, startTime, monthlyReport, nDays))
+
+          case PeriodReport.YearlyReport =>
+            val adjustStartDate = DateTime.parse(startTime.toString("YYYY-1-1"))
+            val yearlyReport = getYearlyReport(adjustStartDate)
+            ("年報", views.html.yearlyReport(monitorCase.name, startTime, yearlyReport))
+        }
+
+      outputType match {
+        case OutputType.html =>
+          Ok(output)
+        case OutputType.pdf =>
+          Ok.sendFile(creatPdfWithReportHeader(title, output), 
+              fileName = _ => 
+                  play.utils.UriEncoding.encodePathSegment(Monitor.map(monitor).name + title +  startTime.toString("YYYYMMdd") + ".pdf", "UTF-8"))
+      }
   }
-  
+    
   def psiReportPrompt() = Security.Authenticated { 
     implicit request =>
       val userInfo = Security.getUserinfo(request).get

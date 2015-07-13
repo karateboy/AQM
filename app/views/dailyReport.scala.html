@@ -1,15 +1,9 @@
 @* dailyReport Template File *@
 @import com.github.nscala_time.time.Imports._
 @(monitor: Monitor.Value, reportDate:DateTime, report:DailyReport)
-<div>
-<a href="/PDF/monitorReport/DailyReport/@(monitor)/@reportDate.toString("yyyy-MM-dd")" class="btn btn-lg btn-success" style="display:none" id="downloadPDF"><span class="fa fa-file-pdf-o"></span>下載PDF</a>
-</div>
-
-<b>
 <h3>監測日報表</h3>
 <h4>監測站:@Monitor.map(monitor).name</h4>
 <h4>日期:@reportDate.toString("yyyy年MM月dd日")</h4>
-</b>
 <table id="reportTable" class="table" cellspacing="0" width="100%">
 	<thead>
 		<tr>

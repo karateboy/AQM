@@ -12,8 +12,6 @@ GET		/login						controllers.Login.prompt
 GET		/logout						controllers.Login.logout
 POST	/authenticate				controllers.Login.authenticate
 
-GET		/PDF/monitorReport/:reportType/:monitor/:startDate 	controllers.Report.monitorReportPDF(monitor, reportType, startDate)
-GET		/HTML/monitorReport/:reportType/:monitor/:startDate 	controllers.Report.monitorReportHtml(monitor, reportType, startDate)
 GET		/HTML/monitorMonthlyHourReport/:monitor/:monitorType/:startDate	controllers.Report.monthlyHourReportHtml(monitor, monitorType, startDate)
 
 GET		/realtimeStatus				controllers.Realtime.realtimeStat
@@ -23,8 +21,10 @@ GET		/JSON/realtime/map			controllers.Realtime.realtimeMap
 POST	/JSON/realtimeTrend			controllers.Realtime.realtimeTrendJSON
 GET 	/JSON/realtimeHighchart/:monitorType controllers.Realtime.highchartJson(monitorType)	
 
-GET		/report/*reporttype			controllers.Report.getReport(reporttype)
-POST	/monitorReport				controllers.Report.monitorReport
+GET		/report/*reportType			controllers.Report.getReport(reportType)
+GET		/monitorReport/:reportType/:monitor/:startDate	controllers.Report.monitorReport(monitor, reportType, startDate, outputTypeStr="html")
+GET		/PDF/monitorReport/:reportType/:monitor/:startDate	controllers.Report.monitorReport(monitor, reportType, startDate, outputTypeStr="pdf")
+
 GET		/PsiQuery					controllers.Report.psiReportPrompt
 GET		/PsiQueryReport/:monitor/:reportType/:start	controllers.Report.psiReportReport(monitor, reportType, start)
 GET		/EffectiveQuery			controllers.Report.effectiveQuery

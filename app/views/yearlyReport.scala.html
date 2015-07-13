@@ -2,12 +2,10 @@
 @import com.github.nscala_time.time.Imports._
 @import Report._
 @(monitor: String, reportDate:DateTime, report:YearlyReport)
-<b>
 <h3>監測年報表</h3>
 <h4>監測站:@monitor</h4>
 <h4>日期:@reportDate.toString("yyyy年")</h4>
-</b>
-<table id="reportTable" class="display" cellspacing="0" width="100%">
+<table id="reportTable" class="table" cellspacing="0" width="100%">
 	<thead>
 		<tr>
 			<th>月</th>
