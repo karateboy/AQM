@@ -36,13 +36,15 @@
         	</div>
         	<div class="panel panel-success" style="display:none" id="reportPanel">
             	<div class="panel-heading panel-title"" >
-            		<a data-toggle="collapse" data-parent="#accordion" href="#monitorReport">監測報表</a>	
+            		<a data-toggle="collapse" data-parent="#accordion" href="#monitorReport">PSI報表</a>	
                 </div>
             	<div class="panel-body panel-collapse" id="monitorReport">
+            		<div align="left">
+            			<label class="btn btn-outline" data-toggle="tooltip" data-placement="bottom" title="PDF"><a href="#" id="downloadPDF"><i class="fa fa-file-pdf-o fa-2x"></i></a></label>
+            			<label class="btn btn-outline" data-toggle="tooltip" data-placement="bottom" title="Excel"><a href="#" id="downloadExcel"><i class="fa fa-file-excel-o fa-2x"></i></a></label>            			
+                	</div>
+            		
 					<div id="reportDiv" align="center" style="overflow-x:auto">
-					<h2>監測日報表</h2>
-            		<table id="reportTable" class="display" cellspacing="0" width="100%">
-            		</table>            		
             		</div>
             	</div>
         	</div>
@@ -100,6 +102,8 @@ $(document).ready(function() {
 			success: function(result){
 				console.log(result);
 				$('#reportDiv').html(result);
+				$("#downloadPDF").prop("href", "/PDF" + url);
+				
 				$('#reportTable').dataTable( {
 					responsive: true,
 					"dom": 'T<"clear">lfrtip',

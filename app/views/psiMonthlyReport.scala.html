@@ -3,11 +3,11 @@
 @import com.github.nscala_time.time.Imports._
 @(monitor: Monitor.Value, reportDate:DateTime, psiDailyList: List[PsiReport], nDays: Int)
 
-<b>
+
 <h3>空氣品質PSI月報表</h3>
 <h4>監測站:@Monitor.map(monitor).name</h4>
 <h4>日期:@reportDate.toString("yyyy年MM月")</h4>
-</b>
+
 <table id="reportTable" class="table" cellspacing="0" width="100%">
 <thead>
 	<tr>

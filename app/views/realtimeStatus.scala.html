@@ -7,6 +7,7 @@
 		<div class="ibox float-e-margins">
         	<div class="ibox-title">
             	<h5>@current.toString("YYYY-MM-dd HH:mm")</h5>
+            	<label class="btn btn-outline" data-toggle="tooltip" data-placement="bottom" title="PDF"><a href="/PDF/realtimeStatus" id="downloadPDF"><i class="fa fa-file-pdf-o fa-2x"></i></a></label>
             </div>
 <div class="ibox-content">
 <ul class="nav nav-tabs">
@@ -18,13 +19,11 @@
 </li>
 </ul>
 <div class="tab-content">
-<div id="reportDiv" class="tab-pane active">
-<table id="reportTable" cellspacing="0" width="100%">
+<div id="reportDiv" class="tab-pane active">            			            	
+<table id="reportTable" class="table" cellspacing="0" width="100%">
 	<thead>
-		<tr>
-			  
-			<th>測站</th>
-			
+		<tr>			  
+			<th>測站</th>			
 			@for(mt <- MonitorType.realtimeList.filter(privilege.allowedMonitorTypes.contains)){
 				<th>@MonitorType.map(mt).desp</th>
 			}
@@ -49,6 +48,7 @@
 </table> 
 </div>
 <div id="psiDiv" class="tab-pane" align="center">
+
 <table id="psiTable" cellspacing="0" width="100%">
 <thead>
 	<tr>
@@ -104,8 +104,7 @@
 <br/>
 <table border="1" class="DIV_CENTER ALT_TABLE_EVENT">
 	<tbody><tr class="ALT">
-		<th>空氣污染指標<br>
-		(PSI)</th>
+		<th>空氣污染指標(PSI)</th>
 		<th nowrap="">0～50</th>
 		<th>51～100</th>
 		<th>101～199</th>
@@ -151,12 +150,11 @@
                        
 </div>
 </div>
-
 <script>
 $( document ).ready(function() {
 	$('#reportTable').dataTable( {
 		responsive: true,
-		"dom": 'T<"clear">lfrtip',
+		"dom": 'T&lt'+'clear'+'&gtlfrtip',
 		language: {
 			url: '@routes.Assets.at("localization/zh_tw.json")',							
 		},
@@ -169,25 +167,12 @@ $( document ).ready(function() {
 	
 	$('#psiTable').dataTable( {
 		responsive: true,
-		"dom": 'T<"clear">lfrtip',
+		"dom": 'T&lt'+'clear'+'&gtlfrtip',
 		language: {
 			url: '@routes.Assets.at("localization/zh_tw.json")',							
 		},
 		"tableTools": {
         	"sSwfPath": "@routes.Assets.at("js/plugins/dataTables/swf/copy_csv_xls_pdf.swf")"
-        },
-        "oTableTools": {
-            "aButtons": [
-                "copy",
-                "csv",
-                "xls",
-                {
-                    "sExtends": "pdf",
-                    "sPdfOrientation": "landscape",
-                    "sCharSet": "utf16le"
-                },
-                "print"
-            ]
         },
 		"paging":   false,
 		"searching": false

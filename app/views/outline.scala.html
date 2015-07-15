@@ -46,6 +46,7 @@
     <script src='@routes.Assets.at("js/plugins/datepicker/bootstrap-datepicker.min.js")'></script>
 	<script src='@routes.Assets.at("js/plugins/datepicker/bootstrap-datepicker.zh-TW.min.js")'></script>
 	<script src='@routes.Assets.at("js/plugins/table2excel/jquery.table2excel.min.js")'></script>
+
 	<!-- Custom and plugin javascript -->
 	<script src='@routes.Assets.at("js/inspinia.js")'></script>
 	<script src='@routes.Assets.at("js/plugins/pace/pace.min.js")'></script>	
@@ -140,7 +141,7 @@
                 <a href="#"><i class="fa fa-table"></i> <span class="nav-label">報表查詢 </span></a>
                 <ul class="nav nav-second-level">
                     <li><a href="#" onClick="loadPage('/report/@ReportType.MonitorReport','報表查詢','監測報表')">監測報表</a></li>
-                    <li><a href="#">測站數據比較報表</a></li>
+                    <li><a href="#" onClick='alert("環保署資料格式改變, 暫時不提供");'>測站數據比較報表</a></li>
                     <li><a href="#" onClick="loadPage('/CalibrationQuery','報表查詢','校正報表')">校正報表</a></li>
                     <li><a href="#" onClick="loadPage('/PsiQuery','報表查詢','空氣品質PSI報表')">空氣品質PSI報表</a></li>
                     <li><a href="#" onClick="loadPage('/EffectiveQuery ','報表查詢','有效率年報表')">有效率年報表</a></li>

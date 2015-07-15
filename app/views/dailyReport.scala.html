@@ -47,7 +47,7 @@
 		<tr>
 			<td>有效率(%)</td>
 			@for(t<-report.typeList){
-				<td>@("%.1f".format(t.stat.count.toFloat/t.stat.total*100))</td>
+				<td>@("%.0f".format(t.stat.count.toFloat/t.stat.total*100))</td>
 			}
 		</tr>
 	</tfoot>

@@ -42,6 +42,11 @@
             		<a data-toggle="collapse" data-parent="#accordion" href="#monitorReport">警告報表</a>	
                 </div>
             	<div class="panel-body panel-collapse" id="monitorReport">
+            	    <div align="left">
+            			<label class="btn btn-outline" data-toggle="tooltip" data-placement="bottom" title="PDF"><a href="#" id="downloadPDF"><i class="fa fa-file-pdf-o fa-2x"></i></a></label>
+            			<label class="btn btn-outline" data-toggle="tooltip" data-placement="bottom" title="Excel"><a href="#" id="downloadExcel"><i class="fa fa-file-excel-o fa-2x"></i></a></label>            			
+                	</div>
+            	
 					<div id="reportDiv" align="center" style="overflow-x:auto">
             		</div>
             	</div>
@@ -135,6 +140,7 @@ $( document ).ready(function() {
 			dataType: "html",
 			success: function(result){
 				$('#reportDiv').html(result);
+				$("#downloadPDF").prop("href", "/PDF" + url);
 				$( document ).ready(function() {
 					$('#alarmReport').dataTable( {
 						responsive: true,

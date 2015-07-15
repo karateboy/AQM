@@ -1,6 +1,5 @@
 @* monitorManagement Template File *@
-@(monitor: String)
-
+@(monitor: Monitor.Value)
 <div class="row">
     <div class="col-lg-12">
     	<div class="panel-group" id="accordion">
@@ -11,7 +10,7 @@
        		<div class="panel-body panel-collapse in" id="reportParam">
         	<div class="btn-group" data-toggle="buttons">
         		@for(m<-Monitor.mvList){
-        			@if(m.toString == monitor){
+        			@if(m == monitor){
         				<label class="btn btn-outline btn-primary dim active">
         					<input type="radio" name="monitor" id="@m" checked>@Monitor.getDisplayName(m)</label>	
         			}else{
@@ -27,18 +26,21 @@
         	<a data-toggle="collapse" data-parent="#accordion" href="#monitorType">監測項目</a>	
         </div>
         <div class="panel-body panel-collapse" id="monitorType">    		
-			<div id="monitorTypeDiv" align="center">
-            	<table id="monitorTypeTable" class="display" cellspacing="0" width="100%">
-            	</table>            		
-            </div>
-       </div>
-       </div>
-        <div class="panel panel-success">
-        <div class="panel-heading panel-title"" >
-        	<a data-toggle="collapse" data-parent="#accordion" href="#monitorType">影像網址</a>	
-        </div>
-        <div class="panel-body panel-collapse">    		
-			<input type
+			<form id="monitorTypesForm">
+				<input name='monitor' type="hidden" class="form-control" value="@monitor">				
+           		<div id="mTypes" class="btn-group" data-toggle="buttons">
+            		@for(mt<-MonitorType.mtvAllList){
+            			<label class="btn btn-outline btn-primary dim">
+						<input type="checkbox" name="monitorType" id="@mt">@MonitorType.map(mt).desp</label>		
+            		}
+            	</div>
+            	<br/>
+            	<br/>
+         		<div class="col-lg-offset-1 col-lg-10">
+            		<button class="btn btn-primary" type="submit">確認</button>
+            		<button id="reset" class="btn btn-calcel" type="reset">重設</button>
+            	</div>
+ 			</form>
        </div>
        </div>
        
@@ -46,19 +48,87 @@
 	</div>
 </div>
 <script>
-	$(document).ready(function() {
-		$("input[name='monitor']").change(function(){
-			var me = $(this)			
-			var url = '/MonitoredType/' + me.attr('id')
-			console.log(url); 
-			$('#monitorTypeDiv').load(url)	
-			});
+$(document).ready(function() {
+	var activeMonitor=$('#monitorTypesForm :input[name="monitor"]').val();
+	var monitorTypes={};
+	function updateUI(monitor){
+		var mTypes = monitorTypes[monitor];
+		console.log("mTypes");
+		console.log(mTypes);
+		var $TypeLabels = $('#mTypes').children();
+		for(var i=0;i<$TypeLabels.length;i++){
+			var $label = $TypeLabels.eq(i);
+			var $checkbox = $label.children();
+			if(mTypes.indexOf($checkbox.prop('id')) == -1){
+				$checkbox.prop('checked', false);
+				$label.removeClass('active');
+			}else{
+				$checkbox.prop('checked', true);
+				$label.addClass('active');
+			}
+		}		
+	}
+	
+	function refreshMonitorTypes(monitor){
+		monitorTypes[monitor]={};
+		$.ajax({
+			url: "/MonitorTypes/"+ monitor,
+			data: "",
+			contentType: "application/json; charset=utf-8",
+			method: "GET",
+			dataType: "json",
+			success: function(mt){
+				console.log(mt);
+				monitorTypes[monitor]=mt;
+				updateUI(monitor);				
+			},
+			error: function(xhr, status, errorThrown){
+				alert("失敗:"+ errorThrown);
+			},
+			complete: function(xhr, status){
+			}					
+		});						
+	}
 
-		//var monitor = $("input[name='monitor']:checked").attr('id');
-		//console.log(monitor);
+	refreshMonitorTypes(activeMonitor);
+	
+	$("input[name='monitor']").change(function(){
+		var me = $(this)
+		refreshMonitorTypes(me.attr('id'));		
+		activeMonitor = me.attr('id');
+		$('#monitorTypesForm :input[name="monitor"]').val(activeMonitor);	
 	});
 
-	$('#monitorTypeDiv').load('/MonitoredType/' + '@monitor')
+	$('#monitorTypesForm').submit(function(event) {
+		activeMonitor = $('#monitorTypesForm :input[name="monitor"]').val();
+				
+		var $monitorTypes = $("#monitorTypesForm :input[name='monitorType']:checked");
+		var mt=[];
+		for(var i=0;i<$monitorTypes.length;i++){
+			mt.push($monitorTypes[i].id);
+		}
+		
+	    $.ajax({
+			url: "/MonitorTypes/"+activeMonitor,
+			data: JSON.stringify(mt),
+			contentType: "application/json; charset=utf-8",
+			method: "POST",
+			dataType: "json",
+			success: function(result){
+				alert("成功");
+			},
+			error: function(xhr, status, errorThrown){
+				alert("失敗:"+ errorThrown);
+			},
+
+			complete: function(xhr, status){
+			}					
+		});
+		event.preventDefault();
+	});
+
+	$('#reset').click(function(){
+		updateUI(activeMonitor);
+	});	
+});
 </script>
-
-

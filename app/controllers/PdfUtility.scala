@@ -63,6 +63,8 @@ object PdfUtility {
                 XMLWorkerHelper.getInstance().getDefaultCssResolver(false);
     val bootstrapCss = XMLWorkerHelper.getCSS(new FileInputStream(current.path + CSS_ROOT +"css/bootstrap.min.css"))
     cssResolver.addCss(bootstrapCss)
+    val aqmCss = XMLWorkerHelper.getCSS(new FileInputStream(current.path + CSS_ROOT +"css/aqm.css"))
+    cssResolver.addCss(aqmCss)
 
     // HTML
     val fontProvider = new XMLWorkerFontProvider();

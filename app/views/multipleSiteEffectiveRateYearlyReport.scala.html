@@ -3,12 +3,10 @@
 @import Report._
 @import Record._
 @(monitorType: MonitorType.Value, reportDate:DateTime, rateList:List[MonitorTypeEffectiveRate], statMap: Map[Monitor.Value, Stat], privilege: Privilege)
-<b>
 <h3>有效率年報表</h3>
 <h4>測項:@MonitorType.map(monitorType).desp</h4>
 <h4>日期:@reportDate.toString("yyyy年")</h4>
-</b>
-<table id="reportTable" class="display" cellspacing="0" width="100%">
+<table id="reportTable" class="table" cellspacing="0" width="100%">
 	<thead>
 		<tr>
 			<th>月</th>
@@ -19,32 +17,32 @@
 	</thead>
 	<tfoot>
 		<tr>
-			<td>平均</td>
+			<td>平均%</td>
 			@for(m<-privilege.allowedMonitors){
 				@if(statMap(m).count==0){
 					<td>-</td>
 				}else{
-				<td>@("%.1f".format(statMap(m).avg))</td>
+				<td>@("%.0f".format(statMap(m).avg*100))</td>
 				}
 			}
 		</tr>
 		<tr>
-			<td>最大</td>
+			<td>最大%</td>
 			@for(m<-privilege.allowedMonitors){
 				@if(statMap(m).count==0){
 					<td>-</td>
 				}else{
-				<td>@("%.1f".format(statMap(m).max))</td>
+				<td>@("%.0f".format(statMap(m).max*100))</td>
 				}
 			}
 		</tr>
 		<tr>
-			<td>最小</td>
+			<td>最小%</td>
 			@for(m<-privilege.allowedMonitors){
 				@if(statMap(m).count==0){
 					<td>-</td>
 				}else{
-				<td>@("%.1f".format(statMap(m).min))</td>
+				<td>@("%.0f".format(statMap(m).min*100))</td>
 				}
 			}
 		</tr>
@@ -54,7 +52,7 @@
 			<tr>
 			<th>@(i+1)</th>
 			@for(m<-privilege.allowedMonitors){
-				<td>@("%.1f".format(rateList(i).rateMap(m)))</td>	
+				<td>@("%.0f".format(rateList(i).rateMap(m)*100))</td>	
 			}
 			</tr>
 		}

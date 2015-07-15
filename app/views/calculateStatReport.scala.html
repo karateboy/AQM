@@ -21,10 +21,17 @@
 	@for(r <- map){
 		<tr>
 			<th>@Monitor.map(r._1).name</th>
-			<td>@("%.2f".format(r._2.avg))</td>
-			<td>@("%.2f".format(r._2.min))</td>				
-			<td>@("%.2f".format(r._2.max))</td>
-			<td>@("%.2f".format(r._2.sd))</td>
+			@if(r._2.avg.isNaN){
+				<td>-</td>
+				<td>-</td>
+				<td>-</td>
+				<td>-</td>
+			}else{
+				<td>@("%.2f".format(r._2.avg))</td>
+				<td>@("%.2f".format(r._2.min))</td>
+				<td>@("%.2f".format(r._2.max))</td>
+				<td>@("%.2f".format(r._2.sd))</td>
+			}
 		</tr>
 	}
 </tbody>
@@ -33,7 +40,7 @@
 $( document ).ready(function() {
 	$('#historyReport').dataTable( {
 		responsive: true,
-		"dom": 'T<"clear">lfrtip',
+		"dom": 'T&lt'+'clear'+'&gtlfrtip',
 		language: {
 			url: '@routes.Assets.at("localization/zh_tw.json")',							
 		},

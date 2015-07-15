@@ -2,12 +2,12 @@
 @import controllers.Report._
 @import com.github.nscala_time.time.Imports._
 @(monitor:String, reportDate:DateTime, report: MonthHourReport, nDays:Int)
-<b>
+
 <h3>監測月分時報表</h3>
 <h4>監測站:@monitor</h4>
 <h4>日期:@reportDate.toString("yyyy年MM月")</h4>
-</b>
-<table id="reportTable" class="display" cellspacing="0" width="100%">
+
+<table id="reportTable" class="table" cellspacing="0" width="100%">
 	<thead>
 		<tr>
 			<th>日期\時間</th>
@@ -27,11 +27,11 @@
 				@if(stat.count==0){
 					<td>-</td>
 				}else{
-				<td>@("%.2f".format(stat.avg))</td>
+				<td>@("%.1f".format(stat.avg))</td>
 				}
 			}
 			@if(report.StatStat.count != 0){
-				<td>@("%.2f".format(report.StatStat.avg))</td>
+				<td>@("%.1f".format(report.StatStat.avg))</td>
 			}else{
 				<td></td>
 			}
@@ -45,12 +45,12 @@
 				@if(stat.count==0){
 					<td>-</td>
 				}else{
-				<td>@("%.2f".format(stat.max))</td>
+				<td>@("%.1f".format(stat.max))</td>
 				}
 			}
 			<td></td>
 			@if(report.StatStat.count != 0){
-				<td>@("%.2f".format(report.StatStat.max))</td>
+				<td>@("%.1f".format(report.StatStat.max))</td>
 			}else{
 				<td></td>
 			}
@@ -63,13 +63,13 @@
 				@if(stat.count==0){
 					<td>-</td>
 				}else{
-				<td>@("%.2f".format(stat.min))</td>
+				<td>@("%.1f".format(stat.min))</td>
 				}
 			}
 			<td></td>
 			<td></td>
 			@if(report.StatStat.count != 0){
-				<td>@("%.2f".format(report.StatStat.min))</td>	
+				<td>@("%.1f".format(report.StatStat.min))</td>	
 			}else{
 				<td>-</td>
 			}
@@ -85,9 +85,9 @@
 				<td>@if(!report.dailyReports(d).typeList(0).dataList(hour)._2.isEmpty && 
 					!report.dailyReports(d).typeList(0).dataList(hour)._3.isEmpty){
 						@if(MonitorStatus.isNormalStat(report.dailyReports(d).typeList(0).dataList(hour)._3.get)){
-							@("%.2f".format(report.dailyReports(d).typeList(0).dataList(hour)._2.get))	
+							@("%.1f".format(report.dailyReports(d).typeList(0).dataList(hour)._2.get))	
 						}else{
-							<span style="background-color:yellow">@("%.2f".format(report.dailyReports(d).typeList(0).dataList(hour)._2.get))</span>
+							<span style="background-color:yellow">@("%.1f".format(report.dailyReports(d).typeList(0).dataList(hour)._2.get))</span>
 						}	
 					}else{
 						-

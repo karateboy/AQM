@@ -35,25 +35,35 @@ object Application extends Controller {
   def monitor(monitor:String) = Security.Authenticated{
     implicit request =>
       Logger.debug("monitor=>"+monitor)
-      val monitorValue = Monitor.withName(monitor)
-    Ok(views.html.monitor(monitor))
+      val m = Monitor.withName(monitor)
+    Ok(views.html.monitor(m))
   }
-  
-  def monitoredTypes(monitorStr:String) = Security.Authenticated{
+ 
+  def getMonitorTypes(monitorStr:String) = Security.Authenticated{
+    implicit request =>
+      val m = Monitor.withName(monitorStr)
+      val monitorTypes = Monitor.map(m).monitorTypes
+      
+      Ok(Json.toJson(monitorTypes))
+  }
+
+  def setMonitorTypes(monitorStr: String) = Security.Authenticated(BodyParsers.parse.json) {
     implicit request =>
       val monitor = Monitor.withName(monitorStr)
-      val monitoredTypes = MonitoredType.getMonitoredTypes(monitor)
-    Ok(views.html.monitoredTypes(monitor.toString(), monitoredTypes))
+      val monitorTypes = request.body.validate[Seq[MonitorType.Value]]
+
+      monitorTypes.fold(
+        error => {
+          Logger.error(JsError.toFlatJson(error).toString())
+          BadRequest(Json.obj("ok" -> false, "msg" -> JsError.toFlatJson(error)))
+        },
+        mt => {
+          val oriM = Monitor.map(monitor)
+          Monitor.updateMonitorTypes(monitor, mt)
+          Ok(Json.obj("ok" -> true))
+        })
   }
-  
-  def setMonitoredTypes(monitorStr:String, monitoredTypeStr:String, used:Boolean) = Security.Authenticated{
-    implicit request =>
-      val monitor = Monitor.withName(monitorStr)
-      val monitorType = MonitorType.withName(monitoredTypeStr)
-      MonitoredType.setMonitoredType(monitor, monitorType, used)
-      Ok("")
-  }
-  
+   
   
   def monitorTypeConfig = Security.Authenticated{
     implicit request =>

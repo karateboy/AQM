@@ -9,7 +9,7 @@
 <h4>結束日期:@end.toString("yyyy年MM月dd日")</h4>
 <h4 style="color:blue">有效率低於75%</h4>
 </b>
-<table id="reportTable" class="display" cellspacing="0" width="100%">
+<table id="reportTable" class="table" cellspacing="0" width="100%">
 	<thead>
 		<tr>
 			<th>測站</th>
@@ -38,7 +38,7 @@
 $( document ).ready(function() {
 	$('#reportTable').dataTable( {
 		responsive: true,
-		"dom": 'T<"clear">lfrtip',
+		"dom": 'T&lt'+'clear'+'&gtlfrtip',
 		language: {
 			url: '@routes.Assets.at("localization/zh_tw.json")',							
 		},

@@ -307,7 +307,7 @@ object Record {
           checkHourRecord(start, originalHourRecordList)
         }
 
-      val usedMonitoredTypes = MonitoredType.getUsedMonitoredType(monitor).filter { includeTypes.contains(_) }
+      val usedMonitoredTypes = Monitor.map(monitor).monitorTypes.filter { includeTypes.contains(_) }
 
       val actualMonitoredTypes = 
         if(usedMonitoredTypes.length == 0)

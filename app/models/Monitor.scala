@@ -9,12 +9,12 @@ import play.api.libs.json._
 import play.api.libs.functional.syntax._
 
 
-case class Monitor(id:String, name:String, lat:Double, lng:Double, url:String, autoAudit:AutoAudit)
+case class Monitor(id:String, name:String, lat:Double, lng:Double, url:String, autoAudit:AutoAudit, monitorTypes: Seq[MonitorType.Value])
 object Monitor extends Enumeration{
   implicit val mReads: Reads[Monitor.Value] = EnumUtils.enumReads(Monitor)
   implicit val mWrites: Writes[Monitor.Value] = EnumUtils.enumWrites
 
-  val monitorList:List[Monitor] =
+  lazy val monitorList:List[Monitor] =
     DB readOnly{ implicit session =>
       sql"""
         Select * 
@@ -22,22 +22,36 @@ object Monitor extends Enumeration{
         """.map { r => 
           val autoAuditJson = r.stringOpt(9).getOrElse(Json.toJson(AutoAudit.default).toString())
           val autoAudit = Json.parse(autoAuditJson).validate[AutoAudit].get
-          Monitor(r.string(1), r.string(2), r.string(6).toDouble, r.string(7).toDouble, r.string("imageUrl"), autoAudit)}.list.apply
+          val monitorTypesJson = r.stringOpt(10).getOrElse(Json.toJson(Seq()).toString())
+          val monitorTypes = Json.parse(monitorTypesJson).validate[Seq[MonitorType.Value]].get
+          Monitor(r.string(1), r.string(2), r.string(6).toDouble, r.string(7).toDouble, r.string("imageUrl"), 
+              autoAudit, monitorTypes)}.list.apply
     }
     
   var map:Map[Value, Monitor] = Map(monitorList.map{e=>Value(e.id)->e}:_*)
 
-  val mvList = monitorList.map{m=>Monitor.withName(m.id)}
+  lazy val mvList = monitorList.map{m=>Monitor.withName(m.id)}
     
   def getDisplayName(m:Monitor.Value)={
     map(m).name
   }
   
-  def main(args: Array[String]) {
-    for(p<-MonitorType.values.toList){
-        println(p + ":" + p.id + ":" + MonitorType.map.get(p).get)
-    }
-      
+  def updateMonitorTypes(m:Monitor.Value, mt:Seq[MonitorType.Value])={
+    val oldM = map(m)
+    val newM = Monitor(oldM.id, oldM.name, oldM.lat, oldM.lng, oldM.url, oldM.autoAudit, mt)
+    updateMonitor(newM)
+    map = map + (m -> newM)
+  }
+  
+  def updateMonitor(m:Monitor)(implicit session: DBSession = AutoSession) = {
+    sql"""
+        Update Monitor
+        Set autoAudit=${Json.toJson(m.autoAudit).toString}, monitorTypes=${Json.toJson(m.monitorTypes).toString}
+        Where DP_NO=${m.id}  
+        """.update.apply
+    
+    val newMap = map + (Monitor.withName(m.id)->m)
+    map = newMap
   }
 }
 
@@ -72,8 +86,30 @@ object MonitorType extends Enumeration{
     }
   
   val map:Map[Value, MonitorType] = Map(mtList.map{e=>Value(e.id)->e}:_*) - MonitorType.withName("A325")
-  val mtvList = mtList.map(mt=>MonitorType.withName(mt.id)).filter { !List(MonitorType.withName("A325"), MonitorType.withName("C911"), MonitorType.withName("C912")).contains(_) }
-  val realtimeList = mtvList.filter { !List(MonitorType.withName("C911"), MonitorType.withName("C912")).contains(_)} 
+  val mtvAllList = mtList.map(mt=>MonitorType.withName(mt.id)).filter { !List(MonitorType.withName("A325"), MonitorType.withName("C911"), MonitorType.withName("C912")).contains(_) }
+  
+  def mtvList = {
+    var mtSet = Set.empty[MonitorType.Value]
+    for(m<-Monitor.mvList){
+      mtSet = mtSet.union(Monitor.map(m).monitorTypes.toSet)
+    }
+    
+    mtvAllList.filter {mtSet.contains}
+  }
+  
+  def myMtvList(implicit p:Privilege)={
+    mtvList.filter { p.allowedMonitorTypes.contains }
+  }
+  
+  def realtimeList = {
+    var mtSet = Set.empty[MonitorType.Value]
+    for(m<-Monitor.mvList){
+      mtSet = mtSet.union(Monitor.map(m).monitorTypes.toSet)
+    }
+        
+     mtSet.filter { !List(MonitorType.withName("C911"), MonitorType.withName("C912")).contains(_)}.toList 
+  } 
+  
   val psiList = List(MonitorType.withName("A214"),MonitorType.withName("A222"), MonitorType.withName("A224"), MonitorType.withName("A225"), MonitorType.withName("A293") )
   val windDirList = List(MonitorType.withName("C212"), MonitorType.withName("C912")) 
 }

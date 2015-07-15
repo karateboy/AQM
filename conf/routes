@@ -12,9 +12,11 @@ GET		/login						controllers.Login.prompt
 GET		/logout						controllers.Login.logout
 POST	/authenticate				controllers.Login.authenticate
 
-GET		/HTML/monitorMonthlyHourReport/:monitor/:monitorType/:startDate	controllers.Report.monthlyHourReportHtml(monitor, monitorType, startDate)
+GET		/monitorMonthlyHourReport/:monitor/:monitorType/:startDate	controllers.Report.monthlyHourReport(monitor, monitorType, startDate, outputTypeStr="html")
+GET		/PDF/monitorMonthlyHourReport/:monitor/:monitorType/:startDate	controllers.Report.monthlyHourReport(monitor, monitorType, startDate, outputTypeStr="pdf")
 
-GET		/realtimeStatus				controllers.Realtime.realtimeStat
+GET		/realtimeStatus				controllers.Realtime.realtimeStat(outputTypeStr = "html")
+GET		/PDF/realtimeStatus			controllers.Realtime.realtimeStat(outputTypeStr = "pdf")
 GET		/realtimeImage				controllers.Realtime.realtimeImg
 GET		/realtimeTrend				controllers.Realtime.realtimeTrend
 GET		/JSON/realtime/map			controllers.Realtime.realtimeMap
@@ -26,37 +28,53 @@ GET		/monitorReport/:reportType/:monitor/:startDate	controllers.Report.monitorRe
 GET		/PDF/monitorReport/:reportType/:monitor/:startDate	controllers.Report.monitorReport(monitor, reportType, startDate, outputTypeStr="pdf")
 
 GET		/PsiQuery					controllers.Report.psiReportPrompt
-GET		/PsiQueryReport/:monitor/:reportType/:start	controllers.Report.psiReportReport(monitor, reportType, start)
+GET		/PsiQueryReport/:monitor/:reportType/:start	controllers.Report.psiReportReport(monitor, reportType, start, outputTypeStr="html")
+GET		/PDF/PsiQueryReport/:monitor/:reportType/:start	controllers.Report.psiReportReport(monitor, reportType, start, outputTypeStr="pdf")
+
 GET		/EffectiveQuery			controllers.Report.effectiveQuery
-GET		/EffectiveAnnualReport/:reportType/:start/:param	controllers.Report.effectiveAnnualReport(reportType, start, param)
+GET		/EffectiveAnnualReport/:reportType/:start/:param	controllers.Report.effectiveAnnualReport(reportType, start, param, outputTypeStr="html")
+GET		/PDF/EffectiveAnnualReport/:reportType/:start/:param	controllers.Report.effectiveAnnualReport(reportType, start, param, outputTypeStr="pdf")
 
 GET		/HistoryQuery			controllers.Query.history
-GET		/HistoryQueryReport/:edit/:monitor/:monitorType/:start/:end	controllers.Query.historyReport(edit:Boolean, monitor, monitorType, start, end)
+GET		/HistoryQueryReport/:edit/:monitor/:monitorType/:start/:end	controllers.Query.historyReport(edit:Boolean, monitor, monitorType, start, end, outputType="html")
+GET		/PDF/HistoryQueryReport/:edit/:monitor/:monitorType/:start/:end	controllers.Query.historyReport(edit:Boolean, monitor, monitorType, start, end, outputType="pdf")
+
 GET		/HistoryTrend			controllers.Query.historyTrend
 GET		/JSON/HistoryTrend/:monitor/:monitorType/:start/:end	controllers.Query.historyTrendChart(monitor, monitorType, start, end)
 GET		/PsiTrend				controllers.Query.psiTrend
 GET		/JSON/PsiTrend/:monitor/:start/:end	controllers.Query.psiTrendChart(monitor, start, end)
+
 GET		/OverLawStd				controllers.Query.overLawStd
-GET		/OverLawStdReport/:monitor/:monitorType/:start/:end	controllers.Query.overLawStdReport(monitor, monitorType, start, end)
+GET		/OverLawStdReport/:monitor/:monitorType/:start/:end	controllers.Query.overLawStdReport(monitor, monitorType, start, end, outputTypeStr="html")
+GET		/PDF/OverLawStdReport/:monitor/:monitorType/:start/:end	controllers.Query.overLawStdReport(monitor, monitorType, start, end, outputTypeStr="pdf")
+
 GET		/EffectivePercentage	controllers.Query.effectivePercentage
-GET		/EffectivePercentage/:start/:end	controllers.Query.effectivePercentageReport(start, end)
+GET		/EffectivePercentage/:start/:end	controllers.Query.effectivePercentageReport(start, end, outputTypeStr="html")
+GET		/PDF/EffectivePercentage/:start/:end	controllers.Query.effectivePercentageReport(start, end, outputTypeStr="pdf")
+
 GET		/Alarm					controllers.Query.alarm
-GET		/AlarmReport/:monitor/:status/:start/:end	controllers.Query.alarmReport(monitor, status, start, end)
+GET		/AlarmReport/:monitor/:status/:start/:end	controllers.Query.alarmReport(monitor, status, start, end, outputTypeStr="html")
+GET		/PDF/AlarmReport/:monitor/:status/:start/:end	controllers.Query.alarmReport(monitor, status, start, end, outputTypeStr="pdf")
+
 GET		/WindRose				controllers.Query.windRose
 GET		/WindRoseReport/:monitor/:start/:end	controllers.Query.windRoseReport(monitor, start, end)
 GET		/CompareLastYear		controllers.Query.compareLastYear
 GET		/JSON/CompareLastYearChart/:monitor/:monitorType/:start/:end	controllers.Query.compareLastYearChart(monitor, monitorType, start, end)
 GET		/CalculateStat			controllers.Query.calculateStat
-GET		/CalculateStatReport/:monitor/:monitorType/:start/:end	controllers.Query.calculateStatReport(monitor, monitorType, start, end)
+GET		/CalculateStatReport/:monitor/:monitorType/:start/:end	controllers.Query.calculateStatReport(monitor, monitorType, start, end, outputTypeStr="html")
+GET		/PDF/CalculateStatReport/:monitor/:monitorType/:start/:end	controllers.Query.calculateStatReport(monitor, monitorType, start, end, outputTypeStr="pdf")
+
 GET		/Regression				controllers.Query.regression
 GET		/JSON/RegressionChart/:monitor/:monitorType/:start/:end	controllers.Query.regressionChart(monitor, monitorType, start, end)
+
 GET		/CalibrationQuery			controllers.Query.calibrationQuery
-GET		/HTML/CalibrationQuery/:monitor/:start/:end controllers.Query.calibrationQueryReport(monitor, start, end)
+GET		/CalibrationQueryReport/:monitor/:start/:end controllers.Query.calibrationQueryReport(monitor, start, end, outputTypeStr="html")
+GET		/PDF/CalibrationQueryReport/:monitor/:start/:end controllers.Query.calibrationQueryReport(monitor, start, end, outputTypeStr="pdf")
 
 GET		/Monitor					controllers.Application.monitor(monitor = "A001")
 GET		/Monitor/:monitor			controllers.Application.monitor(monitor)
-GET		/MonitoredType/:monitor		controllers.Application.monitoredTypes(monitor)
-POST	/MonitoredType/:monitor/:monitorType/:used	controllers.Application.setMonitoredTypes(monitor, monitorType, used:Boolean)
+GET		/MonitorTypes/:monitor	controllers.Application.getMonitorTypes(monitor)
+POST	/MonitorTypes/:monitor	controllers.Application.setMonitorTypes(monitor)
 GET		/MonitorTypeConfig			controllers.Application.monitorTypeConfig
 GET 	/RecordValidation			controllers.Application.recordValidation
 GET		/HTML/RecordValidation/:start	controllers.Application.recordValidationHtml(start)

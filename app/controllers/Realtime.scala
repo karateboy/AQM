@@ -8,18 +8,29 @@ import com.github.nscala_time.time.Imports._
 import models.ModelHelper._
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
+import PdfUtility._
 
 object Realtime extends Controller {
-  def realtimeStat = Security.Authenticated {
+  def realtimeStat(outputTypeStr:String) = Security.Authenticated {
     implicit request =>
       val userInfo = Security.getUserinfo(request).get
       val group = Group.getGroup(userInfo.groupID).get
+      val outputType = OutputType.withName(outputTypeStr)
 
       val current = getLatestRecordTime(TableType.Min).get
       val rt_status = getRealtimeMinStatus(current, group.privilege)
       val currentHr = getLatestRecordTime(TableType.Hour).get
       val rt_psi = getRealtimePSI(currentHr)
-      Ok(views.html.realtimeStatus(current, rt_status, MonitorType.psiList, rt_psi, group.privilege))
+      val output = views.html.realtimeStatus(current, rt_status, MonitorType.psiList, rt_psi, group.privilege) 
+      val title = "即時資訊"
+      outputType match {
+        case OutputType.html=>
+          Ok(output)
+        case OutputType.pdf=>
+          Ok.sendFile(creatPdfWithReportHeader(title, output), 
+              fileName = _ => 
+                  play.utils.UriEncoding.encodePathSegment(title +  current.toString("YYMMdd_hhmm") + ".pdf", "UTF-8"))
+      }
   }
 
   def realtimeImg = Security.Authenticated {
