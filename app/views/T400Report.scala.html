@@ -1,0 +1,58 @@
+@* h37Report Template File *@
+@import com.github.nscala_time.time.Imports._
+@(monitor:Monitor.Value, start:DateTime, end:DateTime, rsList: List[T400Record])
+<H3>測站:@Monitor.map(monitor).name</H3>
+<H5>儀器:T400</H5>
+<H5>開始:@start.toString("YYYY-MM-dd")</H5>
+<H5>結束:@end.toString("YYYY-MM-dd")</H5>
+<table id="t400Report" class="table">
+<thead>
+	<tr>		
+		<th>時間</th>
+      	<th>RANGE (PPB)</th>
+      	<th>STABIL (PPB)</th>
+	    <th>O3 MEAS (MV)</th>
+      	<th>O3 REF (MV)</th>
+      	<th>PRES (IN-HG-A)</th>
+      	<th>SAMP FL (CC/M)</th>
+      	<th>SAMPLE TEMP (C)</th>
+      	<th>PHOTO LAMP (C)</th>
+      	<th>BOX TEMP (C)</th>
+      	<th>SLOPE</th>
+      	<th>OFFSET (PPB)</th>            	
+	</tr>
+</thead>
+<tbody>
+	@for(rs<-rsList){
+		<tr>
+			<td>@rs.time.toString("YYYY-MM-dd hh:mm")</td>
+			<td>@("%.0f".format(rs.range))</td>
+			<td>@("%.1f".format(rs.stabil))</td>
+			<td>@("%.1f".format(rs.o3_meas))</td>
+			<td>@("%.0f".format(rs.o3_ref))</td>
+			<td>@("%.1f".format(rs.pres))</td>			
+			<td>@("%.0f".format(rs.samp_fl))</td>
+			<td>@("%.1f".format(rs.sample_temp))</td>
+			<td>@("%.0f".format(rs.photo_lamp))</td>			
+           	<td>@("%.1f".format(rs.box_temp))</td>           	
+           	<td>@("%.3f".format(rs.slope))</td>
+           	<td>@("%.1f".format(rs.offset))</td>
+		</tr>
+	}
+</tbody>
+</table>
+<script>
+$(document ).ready(function() {
+	$('#t400Report').dataTable( {
+		responsive: true,
+		"dom": 'T&lt'+'clear'+'&gtlfrtip',
+		language: {
+			url: '@routes.Assets.at("localization/zh_tw.json")',							
+		},
+		"tableTools": {
+        	"sSwfPath": "@routes.Assets.at("js/plugins/dataTables/swf/copy_csv_xls_pdf.swf")"
+        },
+		"paging":   true
+	} );
+});
+</script>

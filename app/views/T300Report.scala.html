@@ -1,0 +1,64 @@
+@* h37Report Template File *@
+@import com.github.nscala_time.time.Imports._
+@(monitor:Monitor.Value, start:DateTime, end:DateTime, rsList: List[T300Record])
+<H3>測站:@Monitor.map(monitor).name</H3>
+<H5>儀器:T300</H5>
+<H5>開始:@start.toString("YYYY-MM-dd")</H5>
+<H5>結束:@end.toString("YYYY-MM-dd")</H5>
+<table id="t300Report" class="table">
+<thead>
+	<tr>		
+		<th>時間</th>
+      	<th>RANGE (PPM)</th>
+      	<th>STABIL (PPM)</th>
+      	<th>CO MEAS (MV)</th>
+      	<th>CO REF (MV)</th>
+      	<th>MR RATIO</th>
+      	<th>PRES (IN_HG_A)</th>
+      	<th>SAMP FL (CC/M)</th>
+      	<th>SAMPLE TEMP (C)</th>
+      	<th>BENCH TEMP (C)</th>
+      	<th>WHEEL TEMP (C)</th>
+      	<th>BOX TEMP (C)</th>
+      	<th>PHT DRIVE (MV)</th>
+      	<th>SLOPE</th>
+      	<th>OFFSET</th>      	
+	</tr>
+</thead>
+<tbody>
+	@for(rs<-rsList){
+		<tr>
+			<td>@rs.time.toString("YYYY-MM-dd hh:mm")</td>
+			<td>@("%.0f".format(rs.range))</td>
+			<td>@("%.3f".format(rs.stabil))</td>
+			<td>@("%.1f".format(rs.co_meas))</td>
+			<td>@("%.1f".format(rs.co_ref))</td>
+			<td>@("%.3f".format(rs.mr_ratio))</td>
+			<td>@("%.1f".format(rs.pres))</td>
+			<td>@("%.0f".format(rs.samp_fl))</td>
+			<td>@("%.1f".format(rs.sample_temp))</td>
+			<td>@("%.1f".format(rs.bench_temp))</td>
+			<td>@("%.1f".format(rs.wheel_temp))</td>
+           	<td>@("%.1f".format(rs.box_temp))</td>
+           	<td>@("%.0f".format(rs.pht_drive))</td>
+           	<td>@("%.3f".format(rs.slope))</td>
+           	<td>@("%.3f".format(rs.offset))</td>
+		</tr>
+	}
+</tbody>
+</table>
+<script>
+$(document ).ready(function() {
+	$('#t300Report').dataTable( {
+		responsive: true,
+		"dom": 'T&lt'+'clear'+'&gtlfrtip',
+		language: {
+			url: '@routes.Assets.at("localization/zh_tw.json")',							
+		},
+		"tableTools": {
+        	"sSwfPath": "@routes.Assets.at("js/plugins/dataTables/swf/copy_csv_xls_pdf.swf")"
+        },
+		"paging":   true
+	} );
+});
+</script>

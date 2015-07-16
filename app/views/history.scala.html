@@ -57,22 +57,21 @@
 <script>
 $( document ).ready(function() {
 	$('#select-all-monitors').click(function(){
-			$('.btn-group input[name="monitor"]').each(function(){
-		            // toggle checkbox
-		            $(this).prop('checked',!$(this).prop('checked'));
-		            // toggle class
-		            $(this).parents('label').toggleClass('active');
-		        });
-	});
-	
-	$('#datepicker').datepicker({
-		format: 'yyyy-mm-dd',
-	    todayBtn: "linked",
-	    language: "zh-TW"
+		$('.btn-group input[name="monitor"]').each(function(){
+	            // toggle checkbox
+	            $(this).prop('checked',!$(this).prop('checked'));
+	            // toggle class
+	            $(this).parents('label').toggleClass('active');
+	        });
 	});
 
+	$('#datepicker').datepicker({
+		format: 'yyyy-mm-dd',
+    	todayBtn: "linked",
+    	language: "zh-TW"
+	});
 	var monitors, monitorType, reportStart, reportEnd;
-	
+
 	function validate(){
 		monitors = $("input[name='monitor']:checked");
 
@@ -102,7 +101,7 @@ $( document ).ready(function() {
 		
 		return true;
 	}
-	
+
 	$('#queryReport').click(function(){
 		if(!validate())
 			return;
@@ -121,7 +120,7 @@ $( document ).ready(function() {
 			else
 				monitorParam += ':' + monitors[i].id;
 		}
-			
+		
 		var url = "/HistoryQueryReport/" + @showManualAudit + "/" + monitorParam + "/" + monitorType + "/" + reportStart + "/" + reportEnd;
 
 		$.ajax({

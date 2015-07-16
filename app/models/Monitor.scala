@@ -31,7 +31,11 @@ object Monitor extends Enumeration{
   var map:Map[Value, Monitor] = Map(monitorList.map{e=>Value(e.id)->e}:_*)
 
   lazy val mvList = monitorList.map{m=>Monitor.withName(m.id)}
-    
+   
+  def instrumentMvList(p:Privilege) = {
+    List(Monitor.withName("A012")).filter { p.allowedMonitors.contains }
+  }
+  
   def getDisplayName(m:Monitor.Value)={
     map(m).name
   }

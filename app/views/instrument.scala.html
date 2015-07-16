@@ -1,4 +1,4 @@
-@* periodReport Template File *@
+@* instrument Template File *@
 @(privilege: Privilege)
 <div class="row">
    	<div class="col-lg-12">
@@ -10,24 +10,25 @@
             	<div class="panel-body panel-collapse in" id="reportParam">
             		<h5>測站</h5>
             		<div class="btn-group" data-toggle="buttons">
-            			@for(m<-privilege.allowedMonitors){
+            			@for(m<-Monitor.instrumentMvList(privilege)){
             				<label class="btn btn-outline btn-primary dim">
 								<input type="radio" name="monitor" id="@m">@Monitor.getDisplayName(m)</label>		
             			}
             		</div>
-            		<h5>報表種類</h5>
-					<div class="btn-group" data-toggle="buttons">
-						<label class="btn btn-outline btn-primary dim">
-							<input type="radio" name="reportType" id="@PeriodReport.DailyReport">日報</label>
-						<label class="btn btn-outline btn-primary dim">
-							<input type="radio" name="reportType" id="@PeriodReport.MonthlyReport">月報</label>
-					</div>
-					<h5>查詢日期</h5>
-					<div class="col-lg-2 input-group date" id="reportDateDiv">
-						<div class="input-group date">
-  							<span class="input-group-addon"><i class="fa fa-calendar"></i></span><input type="text" class="form-control" id="reportDate" required>
-  						</div>  							
-					</div>
+            		<h5>儀器種類</h5>
+            		<div class="btn-group" data-toggle="buttons">
+            			@for(inst<-Instrument.values.toList.sorted){
+            				<label class="btn btn-outline btn-primary dim">
+								<input type="radio" name="instrument" id="@inst">@inst</label>		
+            			}
+            		</div>
+					<h5>查詢區間</h5>
+					<div class="input-daterange input-group" id="datepicker">
+                    	<span class="input-group-addon"><i class="fa fa-calendar"></i></span><input type="text" class="input-sm form-control" name="start" id="reportStart" required/>
+                       	<span class="input-group-addon">至</span>
+                        <input type="text" class="input-sm form-control" name="end" id="reportEnd" required/>                        
+                    </div>
+					<br/>
 					</br>
 					<div>
 						<button type="button" class="btn btn-primary" id="queryReport">查詢</button>
@@ -42,8 +43,7 @@
             		<div align="left">
             			<label class="btn btn-outline" data-toggle="tooltip" data-placement="bottom" title="PDF"><a href="#" id="downloadPDF"><i class="fa fa-file-pdf-o fa-2x"></i></a></label>
             			<label class="btn btn-outline" data-toggle="tooltip" data-placement="bottom" title="Excel"><a href="#" id="downloadExcel"><i class="fa fa-file-excel-o fa-2x"></i></a></label>            			
-                	</div>
-            		
+                	</div>            		
 					<div id="reportDiv" align="center" style="overflow-x:auto">
             		</div>
             	</div>
@@ -52,54 +52,63 @@
 	</div>
 </div>
 <script>
-$(document).ready(function() {
-	$('#reportDateDiv').datepicker({
+$(document).ready(function (){
+	$('#datepicker').datepicker({
 		format: 'yyyy-mm-dd',
 	    todayBtn: "linked",
 	    language: "zh-TW"
 	});
-
-	var monitor, reportType, reportDate;
+	var $monitors, $instrument, reportStart, reportEnd;
 	
 	function validate(){
-		monitor = $("input[name='monitor']:checked").attr('id');
-		if (!monitor) {
-			alert('請選擇測站');
+		$monitors = $("input[name='monitor']:checked");
+		
+		if ($monitors.length == 0) {
+			alert("請選擇測站");
 			return false;
 		}
-		reportType = $("input[name='reportType']:checked").attr('id');
-		if (!reportType) {
-			alert('請選擇報表種類');
-			return false;
-		}
-		reportDate = $('#reportDate').val();
-		if(reportDate.length === 0){
-			alert('請選擇報表日期');
+
+		$instrument = $("input[name='instrument']:checked");
+		if($instrument.length == 0){
+			alert("請選擇儀器");
 			return false;
 		}
 		
+		reportStart = $('#reportStart').val();
+		if(reportStart.length === 0){
+			alert('請選擇開始日期');
+			return false;
+		}
+		
+		reportEnd = $('#reportEnd').val();
+		if(reportEnd.length === 0){
+			alert('請選擇結束日期');
+			return false;
+		}
+
 		return true;
 	}
 	
 	$('#queryReport').click(function(){
 		if(!validate())
 			return;
-
+			
 		$("#reportPanel").css('display','block');
 		$("#reportParam").collapse();
-		$("#reportPanel").collapse('show');
 
 		$('#reportDiv').html('');
 		$("body").css("cursor", "progress");
-		var url = "/PsiQueryReport/"+monitor+"/"+reportType+"/"+reportDate;
-		 
+
+			
+		var url = "/InstrumentReport/" + $monitors.prop('id') + "/" + $instrument.prop('id') + "/" + reportStart + "/" + reportEnd;
+		console.log(url);
 		$.ajax({
-			url:url,
-			data: "",
-			contentType: "application/json; charset=utf-8",
-			type: "GET",
-			dataType: "html",
-			success: function(result){
+			url : url,
+			data : "",
+			contentType : "application/json; charset=utf-8",
+			type : "GET",
+			dataType : "html",
+			success : function(result) {
 				$('#reportDiv').html(result);
 				$("#downloadPDF").prop("href", "/PDF" + url);
 				
@@ -115,16 +124,17 @@ $(document).ready(function() {
 					"paging":   false,
 					"searching": false				
 				});
+				
 			},
-			error: function(xhr, status, errorThrown){
+			error : function(xhr, status, errorThrown) {
 				console.log("錯誤訊息:" + status + "-" + errorThrown);
 			},
 
-			complete: function(xhr, status){
+			complete : function(xhr, status) {
 				$("body").css("cursor", "default");
-			}					
+			}
 		});
 	});
+	
 });
 </script>
-

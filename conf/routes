@@ -97,3 +97,6 @@ GET		/ManualAudit		controllers.Application.manualAudit
 POST	/ManualAudit		controllers.Application.manualAuditApply
 
 GET		/AuditConfig		controllers.Application.auditConfig
+GET		/Instrument			controllers.Application.instrument
+GET		/InstrumentReport/:monitor/:instrument/:start/:end controllers.Application.instrumentReport(monitor, instrument, start, end, outputTypeStr="html")
+GET		/PDF/InstrumentReport/:monitor/:instrument/:start/:end controllers.Application.instrumentReport(monitor, instrument, start, end, outputTypeStr="pdf")

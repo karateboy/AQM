@@ -14,6 +14,7 @@ import play.api.Play.current
 import play.api.libs.ws._
 import play.api.libs.ws.ning.NingAsyncHttpClientConfigBuilder
 import scala.concurrent.Future
+import PdfUtility._
 
 object Application extends Controller {
 
@@ -314,5 +315,50 @@ object Application extends Controller {
     
   def auditConfig()=Security.Authenticated{
     Ok(views.html.auditConfig())
+  }
+
+  def instrument() = Security.Authenticated {
+    implicit request =>
+      val userInfo = Security.getUserinfo(request).get
+      val group = Group.getGroup(userInfo.groupID).get
+
+      Ok(views.html.instrument(group.privilege))
+  }
+  
+  def instrumentReport(monitorStr:String, instrumentStr:String, startStr:String, endStr:String, outputTypeStr: String) = Security.Authenticated {
+    val monitor = Monitor.withName(monitorStr)
+    val instrument = Instrument.withName(instrumentStr)
+    val start = DateTime.parse(startStr)
+    val end = DateTime.parse(endStr) + 1.day
+    val outputType = OutputType.withName(outputTypeStr)
+    
+    val output =
+      instrument match {
+      case Instrument.H370=>
+        val records =Instrument.getH370Record(monitor, start, end)
+        views.html.h370Report(monitor, start, end, records)
+      case Instrument.T100=>
+        val records =Instrument.getT100Record(monitor, start, end)
+        views.html.T100Report(monitor, start, end, records)
+      case Instrument.T200=>
+        val records =Instrument.getT200Record(monitor, start, end)
+        views.html.T200Report(monitor, start, end, records)
+      case Instrument.T300=>
+        val records =Instrument.getT300Record(monitor, start, end)
+        views.html.T300Report(monitor, start, end, records)
+      case Instrument.T400=>
+        val records =Instrument.getT400Record(monitor, start, end)
+        views.html.T400Report(monitor, start, end, records)      
+    }
+    val title = "儀器狀態"
+    
+    outputType match {
+        case OutputType.html =>
+          Ok(output)
+        case OutputType.pdf =>
+          Ok.sendFile(creatPdfWithReportHeader(title, output),
+            fileName = _ =>
+              play.utils.UriEncoding.encodePathSegment(Monitor.map(monitor).name + title + start.toString("YYYYMMdd") + "_" + end.toString("MMdd")+".pdf", "UTF-8"))
+      }
   }
 }

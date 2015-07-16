@@ -1,0 +1,60 @@
+@* h37Report Template File *@
+@import com.github.nscala_time.time.Imports._
+@(monitor:Monitor.Value, start:DateTime, end:DateTime, rsList: List[H370Record])
+<H3>測站:@Monitor.map(monitor).name</H3>
+<H5>儀器:H370</H5>
+<H5>開始:@start.toString("YYYY-MM-dd")</H5>
+<H5>結束:@end.toString("YYYY-MM-dd")</H5>
+<table id="h370Report" class="table">
+<thead>
+	<tr>		
+		<th>時間</th>
+		<th>THC_Signal (PPM)</th>
+      	<th>CH4_Signal (PPM)</th>
+      	<th>Zero_Compension</th>
+      	<th>PurifierTemp (C)</th>
+	    <th>NMHCOutTemp (C)</th>
+	    <th>+5V</th>
+	    <th>+24V</th>
+  		<th>SampleFlow (m/s)</th>
+      	<th>OverFlow (m/s)</th>
+      	<th>PumpPress (mBar)</th>
+      	<th>PurifierPress (mBar)</th>
+      	<th>AtmosPress (mBar)</th>
+	</tr>
+</thead>
+<tbody>
+	@for(rs<-rsList){
+		<tr>
+			<td>@rs.time.toString("YYYY-MM-dd hh:mm")</td>
+			<td>@rs.thc_signal</td>
+			<td>@rs.ch4_signal</td>
+			<td>@rs.zero_compression</td>
+			<td>@rs.purifierTemp</td>
+			<td>@rs.NMHCCOutTemp</td>
+			<td>@rs.v5</td>
+			<td>@rs.v24</td>
+			<td>@rs.sampleFlow</td>
+			<td>@rs.overFlow</td>
+			<td>@rs.pumpPress</td>
+			<td>@rs.purifierPress</td>
+			<td>@rs.atmosPress</td>
+		</tr>
+	}
+</tbody>
+</table>
+<script>
+$(document ).ready(function() {
+	$('#h370Report').dataTable( {
+		responsive: true,
+		"dom": 'T&lt'+'clear'+'&gtlfrtip',
+		language: {
+			url: '@routes.Assets.at("localization/zh_tw.json")',							
+		},
+		"tableTools": {
+        	"sSwfPath": "@routes.Assets.at("js/plugins/dataTables/swf/copy_csv_xls_pdf.swf")"
+        },
+		"paging":   true
+	} );
+});
+</script>

@@ -1,0 +1,76 @@
+@* h37Report Template File *@
+@import com.github.nscala_time.time.Imports._
+@(monitor:Monitor.Value, start:DateTime, end:DateTime, rsList: List[T200Record])
+<H3>測站:@Monitor.map(monitor).name</H3>
+<H5>儀器:T200</H5>
+<H5>開始:@start.toString("YYYY-MM-dd")</H5>
+<H5>結束:@end.toString("YYYY-MM-dd")</H5>
+<table id="t200Report" class="table">
+<thead>
+	<tr>		
+		<th>時間</th>
+		<th>NO</th>
+      	<th>NOX</th>
+      	<th>RANGE (PPB)</th>
+      	<th>NOX STB (PPB)</th>
+      	<th>SAMP FLW (CC/M)</th>
+      	<th>OZONE FL (CC/M)</th>
+      	<th>PMT (MV)</th>
+      	<th>NORM PMT (MV)</th>
+      	<th>AZERO (MV)</th>
+      	<th>HVPS (V)</th>
+      	<th>RCELL TEMP (C)</th>
+      	<th>BOX TEMP (C)</th>
+      	<th>PMT TEMP (C)</th>
+      	<th>MOLY TEMP (C)</th>
+      	<th>RCEL (IN-HG-A)</th>
+      	<th>SAMP (IN-HG-A)</th>
+      	<th>NOX SLOPE</th>
+      	<th>NOX OFFS</th>
+      	<th>NO SLOPE</th>
+      	<th>NO OFFS</th>      	
+	</tr>
+</thead>
+<tbody>
+	@for(rs<-rsList){
+		<tr>
+			<td>@rs.time.toString("YYYY-MM-dd hh:mm")</td>
+			<td>@("%.1f".format(rs.no))</td>
+			<td>@("%.1f".format(rs.nox))</td>
+			<td>@("%.0f".format(rs.range))</td>
+			<td>@("%.0f".format(rs.nox_stb))</td>
+			<td>@("%.0f".format(rs.samp_flw))</td>
+			<td>@("%.0f".format(rs.ozone_fl))</td>			
+			<td>@("%.1f".format(rs.pmt))</td>			
+			<td>@("%.1f".format(rs.norm_pmt))</td>
+			<td>@("%.0f".format(rs.azero))</td>			
+            <td>@("%.0f".format(rs.hvps))</td>
+            <td>@("%.0f".format(rs.rcell_temp))</td>
+            <td>@("%.1f".format(rs.box_temp))</td>
+            <td>@("%.1f".format(rs.pmt_temp))</td>
+            <td>@("%.1f".format(rs.moly_temp))</td>
+            <td>@("%.1f".format(rs.rcel))</td>
+            <td>@("%.1f".format(rs.samp))</td>
+            <td>@("%.3f".format(rs.nox_slope))</td>
+            <td>@("%.1f".format(rs.nox_offs))</td>
+            <td>@("%.3f".format(rs.no_slope))</td>
+            <td>@("%.1f".format(rs.no_offs))</td>            
+		</tr>
+	}
+</tbody>
+</table>
+<script>
+$(document ).ready(function() {
+	$('#t200Report').dataTable( {
+		responsive: true,
+		"dom": 'T&lt'+'clear'+'&gtlfrtip',
+		language: {
+			url: '@routes.Assets.at("localization/zh_tw.json")',							
+		},
+		"tableTools": {
+        	"sSwfPath": "@routes.Assets.at("js/plugins/dataTables/swf/copy_csv_xls_pdf.swf")"
+        },
+		"paging":   true
+	} );
+});
+</script>
