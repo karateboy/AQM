@@ -4,9 +4,19 @@ import play.api.libs.functional.syntax._
 import scalikejdbc._
 import scalikejdbc.config._
 
+abstract class Rule {
+  val shift:Int
+  lazy val mask=1<<shift
+  def isTriggered(v:Int)={
+    (v & mask) != 0
+  }
+  def setTriggered(v:Int)={
+    v | mask
+  }
+}
 
 case class MinMaxCfg(
-  mt:MonitorType.Value,
+  id:MonitorType.Value,
   min:Float,
   max:Float
 )
@@ -16,12 +26,13 @@ case class MinMaxRule(
   monitorTypes:Seq[MinMaxCfg]    
 )
 
-object MinMaxRule {
+object MinMaxRule extends Rule{
   implicit val minMaxCfgRead = Json.reads[MinMaxCfg]
   implicit val minMaxCfgWrite = Json.writes[MinMaxCfg]
   implicit val minMaxRuleWrite = Json.writes[MinMaxRule]
   implicit val minMaxRuleRead = Json.reads[MinMaxRule]
 
+  val shift = 0
   val default = MinMaxRule(false, Seq())
 }
 
@@ -29,10 +40,11 @@ case class CompareRule(
   enabled:Boolean    
 )
 
-object CompareRule{
+object CompareRule extends Rule{
   implicit val compareRuleRead = Json.reads[CompareRule]
   implicit val compareRuleWrite = Json.writes[CompareRule]
   
+  val shift = 1
   val default = CompareRule(false)
 }
 
@@ -42,22 +54,30 @@ case class DifferenceRule(
   monitorTypes:Seq[MonitorType.Value]  
 )
 
-object DifferenceRule{
+object DifferenceRule extends Rule{
   implicit val differenceRuleRead = Json.reads[DifferenceRule]
   implicit val differenceRuleWrite = Json.writes[DifferenceRule]
   
+  val shift = 2
   val default = DifferenceRule(false, 3, Seq())
 }
 
+case class SpikeCfg(
+  id:MonitorType.Value,
+  abs:Float
+)
 case class SpikeRule(
   enabled:Boolean,
-  monitorTypes:Seq[MonitorType.Value]
+  monitorTypes:Seq[SpikeCfg]
 )
 
-object SpikeRule{
+object SpikeRule extends Rule{
+  implicit val spikeCfgRead = Json.reads[SpikeCfg]
   implicit val spikeRuleRead = Json.reads[SpikeRule]
+  implicit val spikeCfgWrite = Json.writes[SpikeCfg]
   implicit val spikeRuleWrite = Json.writes[SpikeRule]
   
+  val shift = 3
   val default = SpikeRule(false, Seq())
 }
 
@@ -66,10 +86,11 @@ case class PersistenceRule(
   same:Int
 )
 
-object PersistenceRule{
+object PersistenceRule extends Rule{
   implicit val persistenceRuleRead = Json.reads[PersistenceRule]
   implicit val persistenceRuleWrite = Json.writes[PersistenceRule]
   
+  val shift = 4
   val default = PersistenceRule(false, 3)
 }
 

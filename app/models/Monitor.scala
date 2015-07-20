@@ -32,6 +32,10 @@ object Monitor extends Enumeration{
 
   lazy val mvList = monitorList.map{m=>Monitor.withName(m.id)}
    
+  def myMvList(p:Privilege) = {
+    mvList.filter { p.allowedMonitors.contains }
+  }
+  
   def instrumentMvList(p:Privilege) = {
     List(Monitor.withName("A012")).filter { p.allowedMonitors.contains }
   }
@@ -43,6 +47,13 @@ object Monitor extends Enumeration{
   def updateMonitorTypes(m:Monitor.Value, mt:Seq[MonitorType.Value])={
     val oldM = map(m)
     val newM = Monitor(oldM.id, oldM.name, oldM.lat, oldM.lng, oldM.url, oldM.autoAudit, mt)
+    updateMonitor(newM)
+    map = map + (m -> newM)
+  }
+  
+  def updateMonitorAutoAudit(m:Monitor.Value, autoAudit:AutoAudit)={
+    val oldM = map(m)
+    val newM = Monitor(oldM.id, oldM.name, oldM.lat, oldM.lng, oldM.url, autoAudit, oldM.monitorTypes)
     updateMonitor(newM)
     map = map + (m -> newM)
   }

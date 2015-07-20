@@ -14,8 +14,51 @@ object Query extends Controller {
     implicit request =>
       val userInfo = Security.getUserinfo(request).get
       val group = Group.getGroup(userInfo.groupID).get
-      val output = views.html.history(false, group.privilege)
-      Ok(output)
+      Ok(views.html.history("/HistoryQueryReport/" + false.toString + "/", group.privilege))
+  }
+
+  def auditedQuery() = Security.Authenticated {
+    implicit request =>
+      val userInfo = Security.getUserinfo(request).get
+      val group = Group.getGroup(userInfo.groupID).get
+      Ok(views.html.history("/AuditedQueryReport/", group.privilege))
+  }
+
+  def auditedReport(monitorStr: String, monitorTypeStr: String, startStr: String, endStr: String, outputTypeStr: String) = Security.Authenticated {
+    implicit request =>
+
+      import scala.collection.JavaConverters._
+      val monitorStrArray = monitorStr.split(':')
+      val monitors = monitorStrArray.map { Monitor.withName }
+      val monitorType = MonitorType.withName(monitorTypeStr)
+      val start = DateTime.parse(startStr)
+      val end = DateTime.parse(endStr) + 1.day
+      val outputType = OutputType.withName(outputTypeStr)
+
+      var timeSet = Set[DateTime]()
+      val pairs =
+        for {
+          m <- monitors
+          records = Record.getHourRecords(m, start, end)
+          mtRecords = records.map { rs => (Record.timeProjection(rs).toDateTime, Record.monitorTypeProject2(monitorType)(rs)) }
+          timeMap = Map(mtRecords: _*)
+        } yield {
+          timeSet ++= timeMap.keySet
+          (m -> timeMap)
+        }
+
+      val recordMap = Map(pairs: _*)
+
+      val title = "歷史資料查詢"
+      val output = views.html.historyReport(false, monitors, monitorType, start, end, timeSet.toList.sorted, recordMap)
+      outputType match {
+        case OutputType.html =>
+          Ok(output)
+        case OutputType.pdf =>
+          Ok.sendFile(creatPdfWithReportHeader(title, output),
+            fileName = _ =>
+              play.utils.UriEncoding.encodePathSegment(title + start.toString("YYMMdd") + "_" + end.toString("MMdd") + ".pdf", "UTF-8"))
+      }
   }
 
   def historyReport(edit: Boolean, monitorStr: String, monitorTypeStr: String, startStr: String, endStr: String, outputTypeStr: String) = Security.Authenticated {

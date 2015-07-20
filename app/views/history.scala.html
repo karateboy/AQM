@@ -1,5 +1,5 @@
 @* calibration Template File *@
-@(showManualAudit:Boolean, privilege: Privilege)
+@(requestUrl:String, privilege: Privilege)
 <div class="row">
    	<div class="col-lg-12">
     	<div class="panel-group" id="accordion">
@@ -39,7 +39,7 @@
         	</div>
         	<div class="panel panel-success" style="display:none" id="reportPanel">
             	<div class="panel-heading panel-title"" >
-            		<a data-toggle="collapse" data-parent="#accordion" href="#monitorReport">歷史資料報表</a>	
+            		<a data-toggle="collapse" data-parent="#accordion" href="#monitorReport">報表</a>	
                 </div>
             	<div class="panel-body panel-collapse" id="monitorReport">
             		<div align="left">
@@ -54,6 +54,9 @@
     	</div>
 	</div>
 </div>
+<script>
+	var url = "@requestUrl"; 
+</script>
 <script>
 $( document ).ready(function() {
 	$('#select-all-monitors').click(function(){
@@ -121,8 +124,10 @@ $( document ).ready(function() {
 				monitorParam += ':' + monitors[i].id;
 		}
 		
-		var url = "/HistoryQueryReport/" + @showManualAudit + "/" + monitorParam + "/" + monitorType + "/" + reportStart + "/" + reportEnd;
+		url += monitorParam + "/" + monitorType + "/" + reportStart + "/" + reportEnd;
 
+		console.log(url);
+		
 		$.ajax({
 			url: url,
 			data: '',

@@ -38,7 +38,7 @@
 					<h5>查詢年度</h5>
 					<div class="col-lg-2 input-group date" id="reportDateDiv">
 						<div class="input-group date">
-  							<span class="input-group-addon"><i class="fa fa-calendar"></i></span><input type="text" class="form-control" id="reportDate" required>
+  							<span class="input-group-addon"><i class="fa fa-calendar"></i></span><input type="number" class="form-control" id="reportDate" required value="2014">
   						</div>  							
 					</div>
 					</br>
@@ -76,13 +76,13 @@ $( document ).ready(function() {
 		$("#monitorSelection").css('display','none');
 		$("#monitorTypeSelection").css('display','block');		
 	});
-	
+	/*
 	$('#reportDateDiv').datepicker({
 		format: 'yyyy-mm-dd',
 	    todayBtn: "linked",
 	    language: "zh-TW"
 	});
-
+	*/
 	var monitor, monitorTypes, reportType, reportDate;
 	
 	
