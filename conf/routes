@@ -26,6 +26,7 @@ GET 	/JSON/realtimeHighchart/:monitorType controllers.Realtime.highchartJson(mon
 GET		/report/*reportType			controllers.Report.getReport(reportType)
 GET		/monitorReport/:reportType/:monitor/:startDate	controllers.Report.monitorReport(monitor, reportType, startDate, outputTypeStr="html")
 GET		/PDF/monitorReport/:reportType/:monitor/:startDate	controllers.Report.monitorReport(monitor, reportType, startDate, outputTypeStr="pdf")
+GET		/Excel/monitorReport/:reportType/:monitor/:startDate	controllers.Report.monitorReport(monitor, reportType, startDate, outputTypeStr="excel")
 
 GET		/PsiQuery					controllers.Report.psiReportPrompt
 GET		/PsiQueryReport/:monitor/:reportType/:start	controllers.Report.psiReportReport(monitor, reportType, start, outputTypeStr="html")
@@ -36,11 +37,11 @@ GET		/EffectiveAnnualReport/:reportType/:start/:param	controllers.Report.effecti
 GET		/PDF/EffectiveAnnualReport/:reportType/:start/:param	controllers.Report.effectiveAnnualReport(reportType, start, param, outputTypeStr="pdf")
 
 GET		/HistoryQuery			controllers.Query.history
-GET		/HistoryQueryReport/:edit/:monitor/:monitorType/:start/:end	controllers.Query.historyReport(edit:Boolean, monitor, monitorType, start, end, outputType="html")
-GET		/PDF/HistoryQueryReport/:edit/:monitor/:monitorType/:start/:end	controllers.Query.historyReport(edit:Boolean, monitor, monitorType, start, end, outputType="pdf")
+GET		/HistoryQueryReport/:edit/:monitor/:monitorType/:recordType/:start/:end	controllers.Query.historyReport(edit:Boolean, monitor, monitorType, recordType, start, end, outputType="html")
+GET		/PDF/HistoryQueryReport/:edit/:monitor/:monitorType/:recordType/:start/:end	controllers.Query.historyReport(edit:Boolean, monitor, monitorType, recordType, start, end, outputType="pdf")
 
 GET		/HistoryTrend			controllers.Query.historyTrend
-GET		/JSON/HistoryTrend/:monitor/:monitorType/:start/:end	controllers.Query.historyTrendChart(monitor, monitorType, start, end)
+GET		/JSON/HistoryTrend/:monitor/:monitorType/:reportUnit/:start/:end	controllers.Query.historyTrendChart(monitor, monitorType, reportUnit, start, end)
 GET		/PsiTrend				controllers.Query.psiTrend
 GET		/JSON/PsiTrend/:monitor/:start/:end	controllers.Query.psiTrendChart(monitor, start, end)
 

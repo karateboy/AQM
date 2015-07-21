@@ -8,6 +8,17 @@ import models.ModelHelper._
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
 import PdfUtility._
+
+object ReportUnit extends Enumeration
+{
+  val Min  = Value("min")
+  val Hour = Value("hour")
+  val Day = Value("day")
+  val Month = Value("month")
+  val Quarter = Value("quarter")
+  val map = Map((Min->"分鐘"), (Hour->"小時"), (Day->"日"),(Month->"月"),(Quarter->"季"))
+}
+
 object Query extends Controller {
 
   def history() = Security.Authenticated {
@@ -61,22 +72,27 @@ object Query extends Controller {
       }
   }
 
-  def historyReport(edit: Boolean, monitorStr: String, monitorTypeStr: String, startStr: String, endStr: String, outputTypeStr: String) = Security.Authenticated {
+  def historyReport(edit: Boolean, monitorStr: String, monitorTypeStr: String, recordTypeStr: String, startStr: String, endStr: String, outputTypeStr: String) = Security.Authenticated {
     implicit request =>
 
       import scala.collection.JavaConverters._
       val monitorStrArray = monitorStr.split(':')
       val monitors = monitorStrArray.map { Monitor.withName }
       val monitorType = MonitorType.withName(monitorTypeStr)
-      val start = DateTime.parse(startStr)
-      val end = DateTime.parse(endStr) + 1.day
+      val recordType = RecordType.withName(recordTypeStr)
+      val start = DateTime.parse(startStr, DateTimeFormat.forPattern("YYYY-MM-dd HH:mm"))
+      val end = DateTime.parse(endStr, DateTimeFormat.forPattern("YYYY-MM-dd HH:mm"))
       val outputType = OutputType.withName(outputTypeStr)
 
       var timeSet = Set[DateTime]()
       val pairs =
         for {
           m <- monitors
-          records = Record.getHourRecords(m, start, end)
+          records = if (recordType == RecordType.Hour)
+            Record.getHourRecords(m, start, end)
+          else
+            Record.getMinRecords(m, start, end)
+
           mtRecords = records.map { rs => (Record.timeProjection(rs).toDateTime, Record.monitorTypeProject2(monitorType)(rs)) }
           timeMap = Map(mtRecords: _*)
         } yield {
@@ -105,26 +121,55 @@ object Query extends Controller {
       Ok(views.html.historyTrend(group.privilege))
   }
 
-  def historyTrendChart(monitorStr: String, monitorTypeStr: String, startStr: String, endStr: String) = Security.Authenticated {
+  def historyTrendChart(monitorStr: String, monitorTypeStr: String, reportUnitStr: String, startStr: String, endStr: String) = Security.Authenticated {
     implicit request =>
       import scala.collection.JavaConverters._
       val monitorStrArray = monitorStr.split(':')
       val monitors = monitorStrArray.map { Monitor.withName }
-      val monitorType = MonitorType.withName(monitorTypeStr)
-      val mtCase = MonitorType.map(monitorType)
-      val start = DateTime.parse(startStr)
-      val end = DateTime.parse(endStr) + 1.day
+      val monitorTypeStrArray = monitorTypeStr.split(':')
+      val monitorTypes = monitorTypeStrArray.map { MonitorType.withName }
+      val reportUnit = ReportUnit.withName(reportUnitStr)
+      val start = DateTime.parse(startStr, DateTimeFormat.forPattern("YYYY-MM-dd HH:mm"))
+      val end = DateTime.parse(endStr, DateTimeFormat.forPattern("YYYY-MM-dd HH:mm"))
 
       var timeSet = Set[DateTime]()
       val pairs =
-        for {
-          m <- monitors
-          records = Record.getHourRecords(m, start, end)
-          mtRecords = records.map { rs => (Record.timeProjection(rs).toDateTime, Record.monitorTypeProject2(monitorType)(rs)) }
-          timeMap = Map(mtRecords: _*)
-        } yield {
-          timeSet ++= timeMap.keySet
-          (m -> timeMap)
+        if (reportUnit == ReportUnit.Min || reportUnit == ReportUnit.Hour) {
+          val ps =
+            for {
+              m <- monitors
+              records = reportUnit match {
+                case ReportUnit.Min =>
+                  Record.getMinRecords(m, start, end)
+                case ReportUnit.Hour =>
+                  Record.getHourRecords(m, start, end)
+              }
+
+              mtPairs = for {
+                mt <- monitorTypes
+                mtRecords = records.map { rs => (Record.timeProjection(rs).toDateTime, Record.monitorTypeProject2(mt)(rs)) }
+              } yield {
+                val timeMap = Map(mtRecords: _*)
+                timeSet ++= timeMap.keySet
+                mt -> timeMap
+              }
+            } yield {
+              m -> Map(mtPairs: _*)
+            }
+          ps
+        } else {
+          val ps =
+            for {
+              m <- monitors
+            } yield {
+              m -> Record.getDayReportMap(m, start, end)
+            }
+          val adjustStart = DateTime.parse(start.toString("YYYY-MM-dd"))
+          val adjustEnd = DateTime.parse(end.toString("YYYY-MM-dd"))
+
+          timeSet ++= Report.getDays(adjustStart, adjustEnd)
+          Logger.debug(timeSet.toString)
+          ps
         }
 
       val recordMap = Map(pairs: _*)
@@ -133,27 +178,57 @@ object Query extends Controller {
 
       val series = for {
         m <- monitors
-        timeData = timeSeq.map(t => recordMap(m).getOrElse(t, (Some(0f), Some(""))))
+        mt <- monitorTypes
+        timeData = timeSeq.map(t => recordMap(m)(mt).getOrElse(t, (Some(0f), Some(""))))
         data = timeData.map(_._1.getOrElse(0f))
       } yield {
-        seqData(Monitor.map(m).name, data)
+        seqData(Monitor.map(m).name + "_" + MonitorType.map(mt).desp, data)
       }
 
-      val title = mtCase.desp + "歷史趨勢圖"
-      val axisLines = if (mtCase.std_internal.isEmpty || mtCase.std_law.isEmpty)
+      val title = if (monitorTypes.length == 1) {
+        MonitorType.map(monitorTypes(0)).desp + "歷史趨勢圖"
+      } else
+        "綜合歷史趨勢圖"
+
+      val axisLines = if (monitorTypes.length == 1) {
+        val mtCase = MonitorType.map(monitorTypes(0))
+        if (mtCase.std_internal.isEmpty || mtCase.std_law.isEmpty)
+          None
+        else
+          Some(Seq(AxisLine("#0000FF", 2, mtCase.std_internal.get, Some(AxisLineLabel("left", "內控值"))),
+            AxisLine("#FF0000", 2, mtCase.std_law.get, Some(AxisLineLabel("right", "法規值")))))
+      } else
         None
-      else {
-        Some(Seq(AxisLine("#0000FF", 2, mtCase.std_internal.get, Some(AxisLineLabel("left", "內控值"))),
-          AxisLine("#FF0000", 2, mtCase.std_law.get, Some(AxisLineLabel("right", "法規值")))))
-      }
 
-      val timeStrSeq = timeSeq.map(_.toString("YYYY/MM/dd HH:mm"))
-      val c = HighchartData(
-        Map("type" -> "line"),
-        Map("text" -> title),
-        XAxis(Some(timeStrSeq)),
-        YAxis(None, AxisTitle(Some(mtCase.unit)), axisLines),
-        series)
+      val timeStrSeq = timeSeq.map(t =>
+        reportUnit match {
+          case ReportUnit.Hour =>
+            t.toString("YYYY/MM/dd HH:mm")
+          case ReportUnit.Day =>
+            t.toString("YYYY/MM/dd")
+          case ReportUnit.Month =>
+            t.toString("YYYY/MM")
+          case ReportUnit.Quarter =>
+            t.toString("YYYY/MM")
+        })
+      val c =
+        if (monitorTypes.length == 1) {
+          val mtCase = MonitorType.map(monitorTypes(0))
+
+          HighchartData(
+            Map("type" -> "line"),
+            Map("text" -> title),
+            XAxis(Some(timeStrSeq)),
+            YAxis(None, AxisTitle(Some(mtCase.unit)), axisLines),
+            series)
+        } else {
+          HighchartData(
+            Map("type" -> "line"),
+            Map("text" -> title),
+            XAxis(Some(timeStrSeq)),
+            YAxis(None, AxisTitle(None), axisLines),
+            series)
+        }
 
       Results.Ok(Json.toJson(c))
   }
@@ -271,6 +346,8 @@ object Query extends Controller {
     implicit request =>
       val userInfo = Security.getUserinfo(request).get
       val group = Group.getGroup(userInfo.groupID).get
+      Logger.debug(MonitorType.values.toList.sorted.toString)
+      Logger.debug(MonitorType.map.keySet.toList.sorted.toString)
       Ok(views.html.effectivePercentage(group.privilege))
   }
 

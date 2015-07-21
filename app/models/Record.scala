@@ -7,6 +7,13 @@ import com.github.nscala_time.time.Imports._
 import models.ModelHelper._
 import models._    
     
+object RecordType extends Enumeration
+{
+  val Min  = Value("min")
+  val Hour = Value("hour")
+  val map = Map((Min->"分鐘資料"), (Hour->"小時資料"))
+}
+
 case class Stat(
     avg:Float,
     min:Float,
@@ -149,9 +156,21 @@ object Record {
         Where DP_NO=${monitorName} and M_DateTime >= ${start} and M_DateTime < ${end}
         ORDER BY M_DateTime ASC
       """.map { mapper }.list().apply()  
-    //}
   }
   
+  def getMinRecords(monitor:Monitor.Value, startTime:DateTime, endTime:DateTime)(implicit session: DBSession = AutoSession)={
+    val start: Timestamp = startTime
+    val end: Timestamp = endTime
+    val monitorName = monitor.toString()
+    val tab_name = getTabName(TableType.Min, startTime.getYear)
+      sql"""
+        Select * 
+        From ${tab_name}
+        Where DP_NO=${monitorName} and M_DateTime >= ${start} and M_DateTime < ${end}
+        ORDER BY M_DateTime ASC
+      """.map { mapper }.list().apply()  
+  }
+    
   val timeProjection:(HourRecord=>Timestamp) ={
     rs=>rs.date
   }
@@ -286,7 +305,37 @@ object Record {
     }
   }
   
-  def getDailyReport(monitor: Monitor.Value, start: DateTime, includeTypes:List[MonitorType.Value]=MonitorType.mtvList) = {
+  def getDays(current: DateTime, endTime: DateTime): List[DateTime] = {
+    if (current == endTime)
+      Nil
+    else
+      current :: getDays(current + 1.days, endTime)
+  }
+
+  def getDayReportMap(monitor: Monitor.Value, start: DateTime, end: DateTime) = {
+    val adjustStart = DateTime.parse(start.toString("YYYY-MM-dd"))
+    val adjustEnd = DateTime.parse(end.toString("YYYY-MM-dd"))
+    val days = getDays(adjustStart, adjustEnd)
+    val nDay = days.length
+    val dailyReports =
+      for { day <- days } yield {
+        (day->Record.getDailyReport(monitor, day, MonitorType.mtvAllList))
+      }
+    
+    import scala.collection.mutable.Map
+    val map = Map.empty[MonitorType.Value, Map[DateTime, (Option[Float], Option[String])]]
+    
+    for{(day, report) <- dailyReports
+      t<-report.typeList  
+    }{
+      val dateMap = map.getOrElse(t.monitorType, Map.empty[DateTime, (Option[Float], Option[String])])
+      dateMap.put(day, (Some(t.stat.avg), Some("010"))) 
+      map.put(t.monitorType, dateMap)
+    }
+    map
+  }
+  
+  def getDailyReport(monitor: Monitor.Value, start: DateTime, includeTypes:List[MonitorType.Value]=MonitorType.monitorReportList) = {
     DB localTx { implicit session =>
       val originalHourRecordList = getHourRecords(monitor, start, start + 1.day)
       val reportList =
@@ -317,10 +366,10 @@ object Record {
           
       val typeResultList =
         for {
-          t <- monitorTypeProjection.filter(kv=>actualMonitoredTypes.contains(kv._1))
-          monitorType = t._1
+          mt <- includeTypes
+          t = monitorTypeProject2(mt)
           total = reportList.size
-          projections = reportList.map(rs => (rs.date, t._2._1(rs), t._2._2(rs)))
+          projections = reportList.map(rs => (rs.date, t(rs)._1, t(rs)._2))
           validStat = { t: (Timestamp, Option[Float], Option[String]) =>
             {
               t._3 match {
@@ -343,7 +392,7 @@ object Record {
           max = if (count != 0) validValues.max else Float.MinValue
           min = if (count != 0) validValues.min else Float.MaxValue          
         } yield {          
-          val avg = if(MonitorType.windDirList.contains(monitorType)){
+          val avg = if(MonitorType.windDirList.contains(mt)){
             val sum_sin = validValues.map(v=>Math.sin(Math.toRadians(v))).sum
             val sum_cos = validValues.map(v=>Math.cos(Math.toRadians(v))).sum
             Math.toDegrees(Math.atan (sum_sin/sum_cos)).toFloat
@@ -354,7 +403,7 @@ object Record {
             
           val stat = Stat(avg, min, max, count, total, 0)
           //Logger.info(MonitorType.map(t._1).toString() + stat.toString())
-          MonitorTypeRecord(t._1, projections, stat)
+          MonitorTypeRecord(mt, projections, stat)
         }
         
         DailyReport(typeResultList.toArray)

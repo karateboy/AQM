@@ -30,15 +30,15 @@ object OutputType extends Enumeration {
 
 object Report extends Controller {
 
-  def getReport(reportType: String) = Security.Authenticated { implicit request =>
+  def getReport(reportTypeStr: String) = Security.Authenticated { implicit request =>
     val userInfo = Security.getUserinfo(request).get
     val group = Group.getGroup(userInfo.groupID).get
-    val MR = ReportType.MonitorReport.toString()
-    val MHR = ReportType.MonthlyHourReport.toString()
+    val reportType = ReportType.withName(reportTypeStr)
+    //ExcelUtility.createDailyReport()
     reportType match {
-      case MR =>
+      case ReportType.MonitorReport =>
         Ok(views.html.monitorReport(group.privilege))
-      case MHR =>
+      case ReportType.MonthlyHourReport =>
         Ok(views.html.monthlyHourReportForm(group.privilege))
       case _ =>
         BadRequest("未知的報表種類:" + reportType)
@@ -141,7 +141,7 @@ object Report extends Controller {
   case class MonthlyReport(typeArray: Array[MonitorTypeReport])
   case class YearlyReport(typeArray: Array[MonitorTypeReport])
 
-  def getMonthlyReport(monitor: Monitor.Value, startTime: DateTime, includeTypes: List[MonitorType.Value] = MonitorType.mtvList) = {
+  def getMonthlyReport(monitor: Monitor.Value, startTime: DateTime, includeTypes: List[MonitorType.Value] = MonitorType.monitorReportList) = {
     val endTime = startTime + Period.months(1)
     val days = getDays(startTime, endTime)
     val dailyReports =
@@ -228,32 +228,36 @@ object Report extends Controller {
         YearlyReport(typeReport.toArray)
       }
 
-      val monitorCase = Monitor.map(monitor)
-      val (title, output) =
-        reportType match {
-          case PeriodReport.DailyReport =>
-            val dailyReport = Record.getDailyReport(monitor, startTime)
-            ("日報", views.html.dailyReport(monitor, startTime, dailyReport))
+      if (outputType == OutputType.html || outputType == OutputType.pdf) {
+        val monitorCase = Monitor.map(monitor)
+        val (title, output) =
+          reportType match {
+            case PeriodReport.DailyReport =>
+              val dailyReport = Record.getDailyReport(monitor, startTime)
+              ("日報", views.html.dailyReport(monitor, startTime, dailyReport))
 
-          case PeriodReport.MonthlyReport =>
-            val adjustStartDate = DateTime.parse(startTime.toString("YYYY-MM-1"))
-            val monthlyReport = getMonthlyReport(monitor, adjustStartDate)
-            val nDays = monthlyReport.typeArray(0).dataList.length
-            ("月報", views.html.monthlyReport(monitorCase.name, startTime, monthlyReport, nDays))
+            case PeriodReport.MonthlyReport =>
+              val adjustStartDate = DateTime.parse(startTime.toString("YYYY-MM-1"))
+              val monthlyReport = getMonthlyReport(monitor, adjustStartDate)
+              val nDays = monthlyReport.typeArray(0).dataList.length
+              ("月報", views.html.monthlyReport(monitorCase.name, startTime, monthlyReport, nDays))
 
-          case PeriodReport.YearlyReport =>
-            val adjustStartDate = DateTime.parse(startTime.toString("YYYY-1-1"))
-            val yearlyReport = getYearlyReport(adjustStartDate)
-            ("年報", views.html.yearlyReport(monitorCase.name, startTime, yearlyReport))
+            case PeriodReport.YearlyReport =>
+              val adjustStartDate = DateTime.parse(startTime.toString("YYYY-1-1"))
+              val yearlyReport = getYearlyReport(adjustStartDate)
+              ("年報", views.html.yearlyReport(monitorCase.name, startTime, yearlyReport))
+          }
+
+        outputType match {
+          case OutputType.html =>
+            Ok(output)
+          case OutputType.pdf =>
+            Ok.sendFile(creatPdfWithReportHeader(title, output),
+              fileName = _ =>
+                play.utils.UriEncoding.encodePathSegment(Monitor.map(monitor).name + title + startTime.toString("YYYYMMdd") + ".pdf", "UTF-8"))
         }
-
-      outputType match {
-        case OutputType.html =>
-          Ok(output)
-        case OutputType.pdf =>
-          Ok.sendFile(creatPdfWithReportHeader(title, output),
-            fileName = _ =>
-              play.utils.UriEncoding.encodePathSegment(Monitor.map(monitor).name + title + startTime.toString("YYYYMMdd") + ".pdf", "UTF-8"))
+      }else{
+        Ok("")
       }
   }
 

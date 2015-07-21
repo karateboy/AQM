@@ -40,9 +40,9 @@ object PdfUtility {
     //debug
     import java.io.FileOutputStream
     import java.nio.charset.Charset
-    val outs = new FileOutputStream("D:/temp/output.html")
-    outs.write(htmlInput.getBytes(Charset.forName("UTF-8")))
-    outs.close()
+    //val outs = new FileOutputStream("D:/temp/output.html")
+    //outs.write(htmlInput.getBytes(Charset.forName("UTF-8")))
+    //outs.close()
     
     // step 1
     val document = new Document(PageSize.A4.rotate());

@@ -312,20 +312,6 @@ object Application extends Controller {
       val userInfo = Security.getUserinfo(request).get
       val group = Group.getGroup(userInfo.groupID).get
 
-      Logger.debug("minMax="+MinMaxRule.mask)
-      Logger.debug("CompareRule="+CompareRule.mask)
-      Logger.debug("DifferenceRule="+DifferenceRule.mask)
-      Logger.debug("SpikeRule="+SpikeRule.mask)
-      Logger.debug("PersistenceRule="+PersistenceRule.mask)
-      for(i <- 0 to 16){
-        Logger.debug("n="+i)
-      Logger.debug("minMax="+MinMaxRule.isTriggered(i))
-      Logger.debug("CompareRule="+CompareRule.isTriggered(i))
-      Logger.debug("DifferenceRule="+DifferenceRule.isTriggered(i))
-      Logger.debug("SpikeRule="+SpikeRule.isTriggered(i))
-      Logger.debug("PersistenceRule="+PersistenceRule.isTriggered(i))
-        
-      }
       Ok(views.html.auditConfig(group.privilege))
   }
   

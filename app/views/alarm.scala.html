@@ -149,7 +149,8 @@ $( document ).ready(function() {
 							url: '@routes.Assets.at("localization/zh_tw.json")',							
 						},
 						"tableTools": {
-            				"sSwfPath": "@routes.Assets.at("js/plugins/dataTables/swf/copy_csv_xls_pdf.swf")"
+            				"sSwfPath": "@routes.Assets.at("js/plugins/dataTables/swf/copy_csv_xls_pdf.swf")",
+            				"aButtons": ["copy", "print", "csv", "xls"]
         				},
         				"searching": false
 					} );

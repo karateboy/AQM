@@ -83,7 +83,6 @@ object Realtime extends Controller {
           BadRequest(Json.obj("ok" -> false, "msg" -> JsError.toFlatJson(error)))
         },
         param => {
-          Logger.debug(param.toString)
           assert(param.monitorTypes.length == 1 || param.monitors.length == 1)
           val json =
             if (param.monitorTypes.length != 1) {

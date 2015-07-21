@@ -13,7 +13,7 @@
 	<thead>
 		<tr>
 			<th>測站</th>
-			@for(mt<-privilege.allowedMonitorTypes){
+			@for(mt<-MonitorType.myMtvList(privilege)){
 				<td>@MonitorType.map(mt).desp</td>
 			}
 		</tr>
@@ -22,7 +22,7 @@
 		@for(r<-rateList){
 			<tr>
 			<th>@Monitor.map(r.monitor).name</th>
-			@for(mt<-privilege.allowedMonitorTypes){
+			@for(mt<-MonitorType.myMtvList(privilege)){
 				@if(r.rateMap(mt)*100 < 75){
 					<td style="color:blue">@("%.1f".format(r.rateMap(mt)*100))</td>	
 				}else{
@@ -43,7 +43,8 @@ $( document ).ready(function() {
 			url: '@routes.Assets.at("localization/zh_tw.json")',							
 		},
 		"tableTools": {
-        	"sSwfPath": "@routes.Assets.at("js/plugins/dataTables/swf/copy_csv_xls_pdf.swf")"
+        	"sSwfPath": "@routes.Assets.at("js/plugins/dataTables/swf/copy_csv_xls_pdf.swf")",
+        	"aButtons": ["copy", "print", "csv", "xls"]
         },
 		"paging":   false,
 		"searching": false

@@ -3,8 +3,8 @@
 @(manualAuditEnabled:Boolean, monitors:Seq[Monitor.Value], monitorType:MonitorType.Value, start:DateTime, end:DateTime, timeSeq:Seq[DateTime], recordMap: Map[Monitor.Value, Map[DateTime, (Option[Float], Option[String])]])
 
 <H3>測項:@MonitorType.map(monitorType).desp (@MonitorType.map(monitorType).unit)</H3>
-<H5>開始:@start.toString("YYYY-MM-dd")</H5>
-<H5>結束:@end.toString("YYYY-MM-dd")</H5>
+<H5>開始:@start.toString("YYYY-MM-dd HH:mm")</H5>
+<H5>結束:@end.toString("YYYY-MM-dd HH:mm")</H5>
 <table class="table">
 <tbody>
 <tr>
@@ -69,7 +69,8 @@ $(document ).ready(function() {
 			url: '@routes.Assets.at("localization/zh_tw.json")',							
 		},
 		"tableTools": {
-        	"sSwfPath": "@routes.Assets.at("js/plugins/dataTables/swf/copy_csv_xls_pdf.swf")"
+        	"sSwfPath": "@routes.Assets.at("js/plugins/dataTables/swf/copy_csv_xls_pdf.swf")",
+        	"aButtons": ["copy", "print", "csv", "xls"]
         },
 		"paging":   false
 	} );

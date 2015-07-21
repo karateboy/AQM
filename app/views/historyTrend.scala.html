@@ -16,15 +16,26 @@
 								<input type="checkbox" name="monitor" id="@m">@Monitor.getDisplayName(m)</label>		
             			}
             		</div>
+            		<br/>
 					<h5>監測項目</h5>
+					<button id="select-all-monitorTypes" class="btn btn-info">全選</button>
 					<div class="btn-group" data-toggle="buttons">
 					    @for(mt<-privilege.allowedMonitorTypes){
             				<label class="btn btn-outline btn-primary dim">
-								<input type="radio" name="monitorType" id="@mt">@MonitorType.map(mt).desp</label>		
+								<input type="checkbox" name="monitorType" id="@mt">@MonitorType.map(mt).desp</label>		
             			}
   
 					</div>
- 					<h5>查詢區間</h5>
+					<br/>
+					<h5>報表單位</h5>
+           			<div class="btn-group" data-toggle="buttons">
+            			@for(ru<-ReportUnit.values.toList.sorted){
+            				<label class="btn btn-outline btn-primary dim">
+								<input type="radio" name="reportUnit" id="@ru">@ReportUnit.map(ru)</label>		
+            			}
+            		</div>
+ 					<br/>
+  					<h5>查詢區間</h5>
  					<div class="input-daterange input-group" id="datepicker">
                     	<span class="input-group-addon"><i class="fa fa-calendar"></i></span><input type="text" class="input-sm form-control" name="start" id="reportStart" required/>
                        	<span class="input-group-addon">至</span>
@@ -61,14 +72,33 @@ $( document ).ready(function() {
 	        });
 	});
 
-	$('#datepicker').datepicker({
-		format: 'yyyy-mm-dd',
-	    todayBtn: "linked",
-	    language: "zh-TW"
+	$('#select-all-monitorTypes').click(function(){
+		$('.btn-group input[name="monitorType"]').each(function(){
+	            // toggle checkbox
+	            $(this).prop('checked',!$(this).prop('checked'));
+	            // toggle class
+	            $(this).parents('label').toggleClass('active');
+	        });
 	});
+	
+	$('#reportStart').datetimepicker({
+		format: 'YYYY-MM-D HH:mm',
+    	locale: "zh-TW"
+	});
+	$('#reportEnd').datetimepicker({
+		format: 'YYYY-MM-D HH:mm',
+    	locale: "zh-TW"
+	});
+    $("#reportStart").on("dp.change", function (e) {
+        $('#reportEnd').data("DateTimePicker").minDate(e.date);
+    });
+    
+    $("#reportEnd").on("dp.change", function (e) {
+        $('#reportStart').data("DateTimePicker").maxDate(e.date);
+    });
 
 
-	var monitors, monitorType, reportStart, reportEnd;
+	var monitors, monitorTypes, reportUnit, reportStart, reportEnd;
 	
 	function validate(){
 		monitors = $("input[name='monitor']:checked");
@@ -78,10 +108,15 @@ $( document ).ready(function() {
 			return false;
 		}
 
-
-		monitorType = $("input[name='monitorType']:checked").attr('id');
-		if(!monitorType) {
+		monitorTypes = $("input[name='monitorType']:checked");
+		if(monitorTypes.length == 0) {
 			alert('請選擇測項');
+			return false;
+		}
+
+		reportUnit = $("input[name='reportUnit']:checked").attr('id');
+		if(!reportUnit) {
+			alert("請選擇報表單位");
 			return false;
 		}
 		
@@ -97,6 +132,16 @@ $( document ).ready(function() {
 			return false;
 		}
 
+		if(reportUnit == "min"){
+			var start = new Date(reportStart);
+			var end = new Date(reportEnd);
+			var diff = end.getTime()-start.getTime();
+			if(diff > 1 * 24*60*60*1000){
+				alert("分鐘查詢區間必須小於1天");
+				return false;
+			}
+		}
+		
 		return true;
 	}
 	
@@ -118,8 +163,17 @@ $( document ).ready(function() {
 			else
 				monitorParam += ':' + monitors[i].id;
 		}	
-			
-		var url = "/JSON/HistoryTrend/" + monitorParam + "/" + monitorType + "/" + reportStart + "/" + reportEnd;
+
+		console.log(monitorTypes);
+		var monitorTypeParam='';
+		for (var i = 0; i < monitorTypes.length; i++) {
+			if(monitorTypeParam=='')
+				monitorTypeParam = monitorTypes[i].id;
+			else
+				monitorTypeParam += ':' + monitorTypes[i].id;
+		}	
+				
+		var url = "/JSON/HistoryTrend/" + monitorParam + "/" + monitorTypeParam + "/" + reportUnit +"/" +reportStart + "/" + reportEnd;
 		
 		$.ajax({
 			url : url,

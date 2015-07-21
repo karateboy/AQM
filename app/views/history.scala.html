@@ -25,6 +25,14 @@
             			}
             		</div>
             		<br/>
+            		<h5>資料來源</h5>
+            		<div class="btn-group" data-toggle="buttons">
+            			@for(rt<-RecordType.values){
+            				<label class="btn btn-outline btn-primary dim">
+								<input type="radio" name="recordType" id="@rt">@RecordType.map(rt)</label>		
+            			}
+            		</div>
+            		<br/>
  					<h5>查詢區間</h5>
  					<div class="input-daterange input-group" id="datepicker">
                     	<span class="input-group-addon"><i class="fa fa-calendar"></i></span><input type="text" class="input-sm form-control" name="start" id="reportStart" required/>
@@ -55,7 +63,7 @@
 	</div>
 </div>
 <script>
-	var url = "@requestUrl"; 
+	var url_head = "@requestUrl"; 
 </script>
 <script>
 $( document ).ready(function() {
@@ -68,12 +76,23 @@ $( document ).ready(function() {
 	        });
 	});
 
-	$('#datepicker').datepicker({
-		format: 'yyyy-mm-dd',
-    	todayBtn: "linked",
-    	language: "zh-TW"
+	$('#reportStart').datetimepicker({
+		format: 'YYYY-MM-D HH:mm',
+    	locale: "zh-TW"
 	});
-	var monitors, monitorType, reportStart, reportEnd;
+	$('#reportEnd').datetimepicker({
+		format: 'YYYY-MM-D HH:mm',
+    	locale: "zh-TW"
+	});
+    $("#reportStart").on("dp.change", function (e) {
+        $('#reportEnd').data("DateTimePicker").minDate(e.date);
+    });
+    
+    $("#reportEnd").on("dp.change", function (e) {
+        $('#reportStart').data("DateTimePicker").maxDate(e.date);
+    });
+	
+	var monitors, monitorType, recordType, reportStart, reportEnd;
 
 	function validate(){
 		monitors = $("input[name='monitor']:checked");
@@ -89,6 +108,12 @@ $( document ).ready(function() {
 			alert('請選擇測項');
 			return false;
 		}
+
+		recordType = $("input[name='recordType']:checked").attr('id');
+		if(!recordType) {
+			alert("請選擇資料來源");
+			return false;
+		}
 		
 		reportStart = $('#reportStart').val();
 		if(reportStart.length === 0){
@@ -100,6 +125,16 @@ $( document ).ready(function() {
 		if(reportStart.length === 0){
 			alert('請選擇結束日期');
 			return false;
+		}
+
+		if(recordType == "min"){
+			var start = new Date(reportStart);
+			var end = new Date(reportEnd);
+			var diff = end.getTime()-start.getTime();
+			if(diff > 1 * 24*60*60*1000){
+				alert("分鐘查詢區間必須小於1天");
+				return false;
+			}
 		}
 		
 		return true;
@@ -123,8 +158,10 @@ $( document ).ready(function() {
 			else
 				monitorParam += ':' + monitors[i].id;
 		}
+
+		console.log("recordType=" + recordType);
 		
-		url += monitorParam + "/" + monitorType + "/" + reportStart + "/" + reportEnd;
+		var url = url_head + monitorParam + "/" + monitorType + "/" + recordType + "/" +reportStart + "/" + reportEnd;
 
 		console.log(url);
 		
