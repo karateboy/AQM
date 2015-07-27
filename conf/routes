@@ -41,7 +41,7 @@ GET		/HistoryQueryReport/:edit/:monitor/:monitorType/:recordType/:start/:end	con
 GET		/PDF/HistoryQueryReport/:edit/:monitor/:monitorType/:recordType/:start/:end	controllers.Query.historyReport(edit:Boolean, monitor, monitorType, recordType, start, end, outputType="pdf")
 
 GET		/HistoryTrend			controllers.Query.historyTrend
-GET		/JSON/HistoryTrend/:monitor/:monitorType/:reportUnit/:start/:end	controllers.Query.historyTrendChart(monitor, monitorType, reportUnit, start, end)
+GET		/JSON/HistoryTrend/:monitor/:monitorType/:reportUnit/:msf/:start/:end	controllers.Query.historyTrendChart(monitor, monitorType, reportUnit, msf, start, end)
 GET		/PsiTrend				controllers.Query.psiTrend
 GET		/JSON/PsiTrend/:monitor/:start/:end	controllers.Query.psiTrendChart(monitor, start, end)
 

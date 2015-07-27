@@ -40,37 +40,67 @@ object MonitorStatus {
   }
 
   val NORMAL_STAT = "010"
+  val OVER_STAT = "011"
+  val BELOW_STAT = "012"
 
   def isNormalStat(s: String) = {
-    val OVER_STAT = "011"
-    val BELOW_STAT = "012"
-
     val VALID_STATS = List(NORMAL_STAT, OVER_STAT, BELOW_STAT).map(getTagInfo)
     VALID_STATS.contains(getTagInfo(s))
   }
 
+  def isNormal(s:String)={
+    getTagInfo(NORMAL_STAT) == getTagInfo(s)
+  }
+  
+  def isOver(s:String)={
+    getTagInfo(OVER_STAT) == getTagInfo(s)
+  }
+  
+  val CALBRATION_STAT = "020"
+  val CALBRATION_DIVERSION_STAT = "022"
+  val CALBRATION_FAILED = "030"
+  
   def isCalbration(s: String) = {
-    val CALBRATION_STAT = "020"
-    val CALBRATION_DIVERSION_STAT = "022"
-
     val CALBRATION_STATS = List(CALBRATION_STAT, CALBRATION_DIVERSION_STAT).map(getTagInfo)
     CALBRATION_STATS.contains(getTagInfo(s))
   }
+
+  def isCalbrating(s: String)={
+    getTagInfo(CALBRATION_STAT) == getTagInfo(s)
+  }
+  
+  def isOverInternal(s:String)={
+    getTagInfo(CALBRATION_DIVERSION_STAT) == getTagInfo(s)
+  }
+  
+  def isCalbrationFailed(s:String)={
+    getTagInfo(CALBRATION_FAILED) == getTagInfo(s)
+  }
+  
+  val REPAIR = "031"
+  val INVALID_DATA = "032"
   
   def isRepairing(s: String)={
-    val REPAIR = "031"
     getTagInfo(REPAIR) == getTagInfo(s)
   }
   
+  def isInvalidData(s:String)={
+    getTagInfo(INVALID_DATA) == getTagInfo(s)
+  }
+  
   val DATA_LOSS_STAT = "036"
-
-  def isMaintance(s: String)={
-    val MAINTANCE_STAT = "038"
+  val MAINTANCE_STAT = "038"
+  
+  def isMaintance(s: String)={  
     getTagInfo(MAINTANCE_STAT) == getTagInfo(s)
   }
   
   def isError(s: String)={
     !(isNormalStat(s)||isCalbration(s)||isRepairing(s)||isMaintance(s))  
+  }
+  
+  def isDataLost(s:String)={
+    getTagInfo(DATA_LOSS_STAT) == getTagInfo(s)
   }
   
   def getTagStr(s:MonitorStatus)=TagInfo(s.statusType, s.id).toString()

@@ -312,14 +312,14 @@ object Record {
       current :: getDays(current + 1.days, endTime)
   }
 
-  def getDayReportMap(monitor: Monitor.Value, start: DateTime, end: DateTime) = {
+  def getDayReportMap(monitor: Monitor.Value, start: DateTime, end: DateTime, filter:MonitorStatusFilter.Value) = {
     val adjustStart = DateTime.parse(start.toString("YYYY-MM-dd"))
     val adjustEnd = DateTime.parse(end.toString("YYYY-MM-dd"))
     val days = getDays(adjustStart, adjustEnd)
     val nDay = days.length
     val dailyReports =
       for { day <- days } yield {
-        (day->Record.getDailyReport(monitor, day, MonitorType.mtvAllList))
+        (day->Record.getDailyReport(monitor, day, MonitorType.mtvAllList, filter))
       }
     
     import scala.collection.mutable.Map
@@ -335,7 +335,8 @@ object Record {
     map
   }
   
-  def getDailyReport(monitor: Monitor.Value, start: DateTime, includeTypes:List[MonitorType.Value]=MonitorType.monitorReportList) = {
+  def getDailyReport(monitor: Monitor.Value, start: DateTime, includeTypes:List[MonitorType.Value]=MonitorType.monitorReportList, 
+      monitorStatusFilter:MonitorStatusFilter.Value=MonitorStatusFilter.All) = {
     DB localTx { implicit session =>
       val originalHourRecordList = getHourRecords(monitor, start, start + 1.day)
       val reportList =
@@ -356,6 +357,15 @@ object Record {
           checkHourRecord(start, originalHourRecordList)
         }
 
+      def statusFilter(data: (DateTime, (Option[Float], Option[String]))): Boolean = {
+        if (data._2._2.isEmpty)
+          return false
+
+        val stat = data._2._2.get
+
+        MonitorStatusFilter.isMatched(monitorStatusFilter, stat)
+      }
+
       val usedMonitoredTypes = Monitor.map(monitor).monitorTypes.filter { includeTypes.contains(_) }
 
       val actualMonitoredTypes = 
@@ -371,16 +381,7 @@ object Record {
           total = reportList.size
           projections = reportList.map(rs => (rs.date, t(rs)._1, t(rs)._2))
           validStat = { t: (Timestamp, Option[Float], Option[String]) =>
-            {
-              t._3 match {
-                case Some(s) =>
-                  if (MonitorStatus.isNormalStat(s)) {
-                    t._2 != None
-                  } else
-                    false
-                case _ => false
-              }
-            }
+            statusFilter(t._1, (t._2, t._3))
           }
 
           validValues = projections.filter(validStat).map(t => t._2.getOrElse {

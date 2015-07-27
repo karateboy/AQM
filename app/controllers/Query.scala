@@ -8,6 +8,7 @@ import models.ModelHelper._
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
 import PdfUtility._
+import models.MonitorStatusFilter
 
 object ReportUnit extends Enumeration
 {
@@ -121,7 +122,7 @@ object Query extends Controller {
       Ok(views.html.historyTrend(group.privilege))
   }
 
-  def historyTrendChart(monitorStr: String, monitorTypeStr: String, reportUnitStr: String, startStr: String, endStr: String) = Security.Authenticated {
+  def historyTrendChart(monitorStr: String, monitorTypeStr: String, reportUnitStr: String, msfStr:String, startStr: String, endStr: String) = Security.Authenticated {
     implicit request =>
       import scala.collection.JavaConverters._
       val monitorStrArray = monitorStr.split(':')
@@ -129,9 +130,19 @@ object Query extends Controller {
       val monitorTypeStrArray = monitorTypeStr.split(':')
       val monitorTypes = monitorTypeStrArray.map { MonitorType.withName }
       val reportUnit = ReportUnit.withName(reportUnitStr)
+      val monitorStatusFilter = MonitorStatusFilter.withName(msfStr)
       val start = DateTime.parse(startStr, DateTimeFormat.forPattern("YYYY-MM-dd HH:mm"))
       val end = DateTime.parse(endStr, DateTimeFormat.forPattern("YYYY-MM-dd HH:mm"))
 
+      def statusFilter(data: (DateTime, (Option[Float], Option[String]))): Boolean = {
+        if (data._2._2.isEmpty)
+          return false
+
+        val stat = data._2._2.get
+
+        MonitorStatusFilter.isMatched(monitorStatusFilter, stat)
+      }
+      
       var timeSet = Set[DateTime]()
       val pairs =
         if (reportUnit == ReportUnit.Min || reportUnit == ReportUnit.Hour) {
@@ -148,8 +159,9 @@ object Query extends Controller {
               mtPairs = for {
                 mt <- monitorTypes
                 mtRecords = records.map { rs => (Record.timeProjection(rs).toDateTime, Record.monitorTypeProject2(mt)(rs)) }
+                msfRecords = mtRecords.filter(statusFilter)
               } yield {
-                val timeMap = Map(mtRecords: _*)
+                val timeMap = Map(msfRecords: _*)
                 timeSet ++= timeMap.keySet
                 mt -> timeMap
               }
@@ -157,18 +169,17 @@ object Query extends Controller {
               m -> Map(mtPairs: _*)
             }
           ps
-        } else {
+        } else {          
           val ps =
             for {
               m <- monitors
             } yield {
-              m -> Record.getDayReportMap(m, start, end)
+              m -> Record.getDayReportMap(m, start, end, monitorStatusFilter)
             }
           val adjustStart = DateTime.parse(start.toString("YYYY-MM-dd"))
           val adjustEnd = DateTime.parse(end.toString("YYYY-MM-dd"))
 
           timeSet ++= Report.getDays(adjustStart, adjustEnd)
-          Logger.debug(timeSet.toString)
           ps
         }
 
@@ -202,6 +213,8 @@ object Query extends Controller {
 
       val timeStrSeq = timeSeq.map(t =>
         reportUnit match {
+          case ReportUnit.Min =>
+            t.toString("YYYY/MM/dd HH:mm")
           case ReportUnit.Hour =>
             t.toString("YYYY/MM/dd HH:mm")
           case ReportUnit.Day =>
