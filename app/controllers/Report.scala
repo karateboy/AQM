@@ -246,8 +246,6 @@ object Report extends Controller {
    def getPeriodReport(monitor: Monitor.Value, startTime: DateTime, period:Period, includeTypes: List[MonitorType.Value] = MonitorType.monitorReportList,
       filter: MonitorStatusFilter.Value = MonitorStatusFilter.All) = {
     val endTime = startTime + period
-    Logger.debug("start="+startTime)
-    Logger.debug("end="+endTime)
     
     val days = getDays(startTime, endTime)
     val dailyReports =
@@ -367,8 +365,7 @@ object Report extends Controller {
     }
 
     val quarters = getQuarters(adjustStart)
-    Logger.debug("quarters="+quarters)
-    
+   
     val quarterReports =
       for { quarter <- quarters } yield {
         (quarter, getPeriodReport(monitor, quarter, Period.months(3), MonitorType.mtvAllList, filter))
