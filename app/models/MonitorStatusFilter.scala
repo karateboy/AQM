@@ -27,6 +27,18 @@ object MonitorStatusFilter extends Enumeration {
     OverInternal -> "校正偏移(超過內控值)",
     DataLost -> "遺失數據")
 
+  val statusMap = Map(
+    All -> MonitorStatus.NORMAL_STAT,
+    Normal_Over -> MonitorStatus.NORMAL_STAT,
+    Normal -> MonitorStatus.NORMAL_STAT,
+    Over -> MonitorStatus.OVER_STAT,
+    Calbrating -> MonitorStatus.CALBRATION_STAT,
+    Calbration_Fail -> MonitorStatus.CALBRATION_FAILED,
+    Maintance -> MonitorStatus.MAINTANCE_STAT,
+    InvalidData -> MonitorStatus.INVALID_DATA,
+    OverInternal -> MonitorStatus.CALBRATION_DIVERSION_STAT,
+    DataLost -> MonitorStatus.DATA_LOSS_STAT)
+
   def isMatched(msf: MonitorStatusFilter.Value, stat: String) = {
     msf match {
       case MonitorStatusFilter.All =>

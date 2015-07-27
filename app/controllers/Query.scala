@@ -15,9 +15,10 @@ object ReportUnit extends Enumeration
   val Min  = Value("min")
   val Hour = Value("hour")
   val Day = Value("day")
+  val Week = Value("week")
   val Month = Value("month")
   val Quarter = Value("quarter")
-  val map = Map((Min->"分鐘"), (Hour->"小時"), (Day->"日"),(Month->"月"),(Quarter->"季"))
+  val map = Map((Min->"分鐘"), (Hour->"小時"), (Day->"日"),(Week->"周"), (Month->"月"),(Quarter->"季"))
 }
 
 object Query extends Controller {
@@ -122,7 +123,7 @@ object Query extends Controller {
       Ok(views.html.historyTrend(group.privilege))
   }
 
-  def historyTrendChart(monitorStr: String, monitorTypeStr: String, reportUnitStr: String, msfStr:String, startStr: String, endStr: String) = Security.Authenticated {
+  def historyTrendChart(monitorStr: String, monitorTypeStr: String, reportUnitStr: String, msfStr: String, startStr: String, endStr: String) = Security.Authenticated {
     implicit request =>
       import scala.collection.JavaConverters._
       val monitorStrArray = monitorStr.split(':')
@@ -142,7 +143,7 @@ object Query extends Controller {
 
         MonitorStatusFilter.isMatched(monitorStatusFilter, stat)
       }
-      
+
       var timeSet = Set[DateTime]()
       val pairs =
         if (reportUnit == ReportUnit.Min || reportUnit == ReportUnit.Hour) {
@@ -169,17 +170,36 @@ object Query extends Controller {
               m -> Map(mtPairs: _*)
             }
           ps
-        } else {          
+        } else {
+          import controllers.Report._
           val ps =
             for {
               m <- monitors
             } yield {
-              m -> Record.getDayReportMap(m, start, end, monitorStatusFilter)
+              reportUnit match {
+                case ReportUnit.Day =>
+                  m -> Record.getDayReportMap(m, start, end, monitorStatusFilter)
+                case ReportUnit.Week=>
+                  m -> getWeeklyReportMap(m, start, end, monitorStatusFilter)
+                case ReportUnit.Month =>
+                  m -> getMonthlyReportMap(m, start, end, monitorStatusFilter)
+                case ReportUnit.Quarter=> 
+                  m -> getQuarterReportMap(m, start, end, monitorStatusFilter)
+              }
             }
-          val adjustStart = DateTime.parse(start.toString("YYYY-MM-dd"))
-          val adjustEnd = DateTime.parse(end.toString("YYYY-MM-dd"))
-
-          timeSet ++= Report.getDays(adjustStart, adjustEnd)
+          reportUnit match {
+            case ReportUnit.Day =>
+              timeSet ++= Report.getDays(DateTime.parse(start.toString("YYYY-MM-dd")), DateTime.parse(end.toString("YYYY-MM-dd")))
+            case ReportUnit.Week =>
+              timeSet ++= Report.getWeeks(DateTime.parse(adjustWeekDay(start).toString("YYYY-MM-dd")), 
+                  DateTime.parse(adjustWeekDay(end).toString("YYYY-MM-dd"))+ 1.weeks)
+            case ReportUnit.Month =>
+              timeSet ++= Report.getMonths(DateTime.parse(start.toString("YYYY-MM-01")), DateTime.parse(end.toString("YYYY-MM-01")) + 1.months)
+            case ReportUnit.Quarter =>
+              timeSet ++= Report.getQuarters(DateTime.parse(s"${start.getYear}-${1+(start.getMonthOfYear-1)/3*3}-01"), 
+                  DateTime.parse(s"${end.getYear}-${1+(end.getMonthOfYear-1)/3*3}-01") + 3.month)
+              
+          }
           ps
         }
 
@@ -219,10 +239,12 @@ object Query extends Controller {
             t.toString("YYYY/MM/dd HH:mm")
           case ReportUnit.Day =>
             t.toString("YYYY/MM/dd")
+          case ReportUnit.Week =>
+            t.toString("YYYY/MM/dd")
           case ReportUnit.Month =>
             t.toString("YYYY/MM")
           case ReportUnit.Quarter =>
-            t.toString("YYYY/MM")
+            s"${t.getYear}/${1+(t.getMonthOfYear-1)/3}Q"            
         })
       val c =
         if (monitorTypes.length == 1) {

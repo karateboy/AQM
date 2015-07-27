@@ -329,7 +329,7 @@ object Record {
       t<-report.typeList  
     }{
       val dateMap = map.getOrElse(t.monitorType, Map.empty[DateTime, (Option[Float], Option[String])])
-      dateMap.put(day, (Some(t.stat.avg), Some("010"))) 
+      dateMap.put(day, (Some(t.stat.avg), Some(MonitorStatusFilter.statusMap(filter)))) 
       map.put(t.monitorType, dateMap)
     }
     map
