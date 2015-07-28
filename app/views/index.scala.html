@@ -163,6 +163,28 @@
 	</div>
 </div>
 <script>
+var markerStaticData = [];
+
+@for(m<-privilege.allowedMonitors){
+	markerStaticData.push(
+		{
+			id:'@Monitor.map(m).id',
+			name:'@Monitor.map(m).name',
+			lat:'@Monitor.map(m).lat',
+			lng:'@Monitor.map(m).lng'
+		});
+}
+
+var statusIconUrl = [
+	'@routes.Assets.at("images/normal.png")',
+	'@routes.Assets.at("images/calbration.png")',
+	'@routes.Assets.at("images/repair.png")',
+	'@routes.Assets.at("images/maintance.png")',
+	'@routes.Assets.at("images/warn.png")'
+];
+
+</script>
+<script>
 var mapCenter = new google.maps.LatLng(23.68875446, 120.2805895);
 
 // Define a property to hold the Home state.
@@ -253,26 +275,6 @@ function HomeControl(map, div, home) {
   });
   
 }
-
-var markerStaticData = [];
-
-@for(m<-privilege.allowedMonitors){
-	markerStaticData.push(
-		{
-			id:'@Monitor.map(m).id',
-			name:'@Monitor.map(m).name',
-			lat:'@Monitor.map(m).lat',
-			lng:'@Monitor.map(m).lng'
-		});
-}
-
-var statusIconUrl = [
-	'@routes.Assets.at("images/normal.png")',
-	'@routes.Assets.at("images/calbration.png")',
-	'@routes.Assets.at("images/repair.png")',
-	'@routes.Assets.at("images/maintance.png")',
-	'@routes.Assets.at("images/warn.png")'
-];
 
 
 function getRandomInt(min, max) {

@@ -169,10 +169,18 @@ object Realtime extends Controller {
       val series = for (m <- group.privilege.allowedMonitors) yield {
         seqData(Monitor.map(m).name, Seq({
            val vOpt = realtimeValueMap.get(m)
-           if(vOpt.isEmpty||vOpt.get._1.isEmpty)
+           if(vOpt.isEmpty||vOpt.get._1.isEmpty||vOpt.get._2.isEmpty)
              0f
-           else             
-             vOpt.get._1.get
+           else{
+             val value = vOpt.get._1.get
+             val status = vOpt.get._2.get
+             Logger.debug("status="+status)
+             if(MonitorStatus.isNormalStat(status))
+               value
+             else
+               0f
+           }             
+             
         }))
       }
 
