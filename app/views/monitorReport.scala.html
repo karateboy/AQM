@@ -9,32 +9,45 @@
             		<a data-toggle="collapse" data-parent="#accordion" href="#reportParam">報表參數</a>	
                 </div>
             	<div class="panel-body panel-collapse in" id="reportParam">
-            		<h5>測站</h5>
-            		<div class="btn-group" data-toggle="buttons">
-            			@for(m<-privilege.allowedMonitors){
-            				<label class="btn btn-outline btn-primary dim">
-								<input type="radio" name="monitor" id="@m">@Monitor.getDisplayName(m)</label>		
-            			}
-            		</div>
-            		<h5>報表種類</h5>
-					<div class="btn-group" data-toggle="buttons">
-						<label class="btn btn-outline btn-primary dim">
-							<input type="radio" name="reportType" id="@PeriodReport.DailyReport">日報</label>
-						<label class="btn btn-outline btn-primary dim">
-							<input type="radio" name="reportType" id="@PeriodReport.MonthlyReport">月報</label>
-						<label class="btn btn-outline btn-primary dim">
-							<input type="radio" name="reportType" id="@PeriodReport.YearlyReport">年報</label>
-					</div>
-					<h5>查詢日期</h5>
-					<div class="col-lg-2 input-group date" id="reportDateDiv">
-						<div class="input-group date">
-  							<span class="input-group-addon"><i class="fa fa-calendar"></i></span><input type="text" class="form-control" id="reportDate" required>
-  						</div>  							
-					</div>
-					</br>
-					<div>
-						<button type="button" class="btn btn-primary" id="queryReport">查詢</button>
-					</div>
+            		<form class="form-horizontal">
+            			<div class="form-group">
+	            			<label class="col-lg-1 control-label">測站</label>
+	            			<div class="col-lg-11">
+	            				<div class="btn-group" data-toggle="buttons">	            					            				
+	            					@for(m<-Monitor.myMvList(privilege)){
+	            						<label class="btn btn-outline btn-primary dim">
+											<input type="radio" name="monitor" id="@m">@Monitor.getDisplayName(m)</label>
+	            					}
+	            				</div>
+	            			</div>	            			            		
+	                    </div>
+	                    <div class="form-group">
+	            			<label class="col-lg-1 control-label">報表種類</label>
+	            			<div class="col-lg-11">
+	            				<div class="btn-group" data-toggle="buttons">	            					            				
+	            					<label class="btn btn-outline btn-primary dim">
+										<input type="radio" name="reportType" id="@PeriodReport.DailyReport">日報</label>
+									<label class="btn btn-outline btn-primary dim">
+										<input type="radio" name="reportType" id="@PeriodReport.MonthlyReport">月報</label>
+									<label class="btn btn-outline btn-primary dim">
+										<input type="radio" name="reportType" id="@PeriodReport.YearlyReport">年報</label>
+	            				</div>
+	            			</div>	            			            		
+	                    </div>
+	                    <div class="form-group">
+	            			<label class="col-lg-1 control-label">查詢日期</label>
+	            			<div class="col-lg-5">
+	            				<div class="input-group date">
+  									<span class="input-group-addon"><i class="fa fa-calendar"></i></span><input type="text" class="form-control" id="reportDate" required>
+  								</div>
+	            			</div>	            			            		
+	                    </div>
+	                    <div class="form-group">
+							<div class="col-lg-1 col-lg-offset-1">
+								<button type="button" class="btn btn-primary" id="queryReport">查詢</button>
+							</div>							
+						</div>
+            		</form>
             	</div>
         	</div>
         	<div class="panel panel-success" style="display:none" id="reportPanel">
@@ -57,7 +70,7 @@
 </div>
 <script>
 $( document ).ready(function() {
-	$('#reportDateDiv').datepicker({
+	$('#reportDate').datepicker({
 		format: 'yyyy-mm-dd',
 	    todayBtn: "linked",
 	    language: "zh-TW"

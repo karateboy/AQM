@@ -6,26 +6,54 @@
         	<div class="panel panel-primary" id="paramPanel">
             	<div class="panel-heading panel-title" >
             		<a data-toggle="collapse" data-parent="#accordion" href="#reportParam">查詢參數</a>	
-                </div>
+                </div>                
             	<div class="panel-body panel-collapse in" id="reportParam">
-            		<h5>測站</h5>
-            		<button id="select-all-monitors" class="btn btn-info">全選</button>
-            		<div class="btn-group" data-toggle="buttons">
-            			@for(m<-privilege.allowedMonitors){
-            				<label class="btn btn-outline btn-primary dim">
-								<input type="checkbox" name="monitor" id="@m">@Monitor.getDisplayName(m)</label>		
-            			}
-            		</div>
- 					<h5>查詢區間</h5>
- 					<div class="input-daterange input-group" id="datepicker">
-                    	<span class="input-group-addon"><i class="fa fa-calendar"></i></span><input type="text" class="input-sm form-control" name="start" id="reportStart" required/>
-                       	<span class="input-group-addon">至</span>
-                        <input type="text" class="input-sm form-control" name="end" id="reportEnd" required/>                        
-                    </div>
-					<br/>
-					<div>
-						<button type="button" class="btn btn-primary" id="queryReport">查詢</button>
-					</div>
+            		<form class="form-horizontal">
+                		<div class="form-group">
+	            			<label class="col-lg-1 control-label">測站</label>
+	            			<div class="col-lg-11">
+	            				<button id="select-all-monitors" class="btn btn-info" type="button">全選</button>
+	            				<div class="btn-group" data-toggle="buttons">	            					            				
+	            					@for(m<-Monitor.myMvList(privilege)){
+	            						<label class="btn btn-outline btn-primary dim">
+												<input type="checkbox" name="monitor" id="@m">@Monitor.getDisplayName(m)</label>
+	            					}
+	            				</div>
+	            			</div>	            			            		
+	                    </div>
+	                    <div class="form-group">
+	            			<label class="col-lg-1 control-label">查詢區間</label>	
+	            			<div class="col-lg-5">
+	            				<div class="input-daterange input-group" id="datepicker">
+                    				<span class="input-group-addon"><i class="fa fa-calendar"></i></span><input type="text" class="input-sm form-control" name="start" id="reportStart" required/>
+                       				<span class="input-group-addon">至</span>
+                        			<input type="text" class="input-sm form-control" name="end" id="reportEnd" required/>                        
+                    			</div>                        
+                    		</div>
+	            		</div>
+	            		<div class="form-group">
+	            			<label class="col-lg-1 control-label">圖表類型</label>						
+	            			<div class="col-lg-11 btn-group" data-toggle="buttons">
+           						<label class="btn btn-outline btn-primary dim active">
+									<input type="radio" name="chartType" id="line" checked>折線圖</label>
+								<label class="btn btn-outline btn-primary dim">
+									<input type="radio" name="chartType" id="spline">曲線圖</label>
+								<label class="btn btn-outline btn-primary dim">
+									<input type="radio" name="chartType" id="area">面積圖</label>	
+								<label class="btn btn-outline btn-primary dim">
+									<input type="radio" name="chartType" id="areaspline">曲線面積圖</label>		
+								<label class="btn btn-outline btn-primary dim">
+									<input type="radio" name="chartType" id="column">柱狀圖</label>
+								<label class="btn btn-outline btn-primary dim">
+									<input type="radio" name="chartType" id="scatter">點圖</label>			
+	            			</div>            		
+	                    </div>
+	            		<div class="form-group">
+							<div class="col-lg-1 col-lg-offset-1">
+								<button type="button" class="btn btn-primary" id="queryReport">查詢</button>
+							</div>							
+						</div>
+                	</form>
             	</div>
         	</div>
         	<div class="panel panel-success" style="display:none" id="reportPanel">
@@ -37,7 +65,7 @@
 					            		
             		</div>
             	</div>
-        	</div> <!-- end of panel group -->
+        	</div>
     	</div>
 	</div>
 </div>
@@ -110,7 +138,7 @@ $( document ).ready(function() {
 			else
 				monitorParam += ':' + monitors[i].id;
 		}	
-			
+		var chartType = $("input[name='chartType']:checked").attr('id');	
 		var url = "/JSON/PsiTrend/" + monitorParam + "/" + reportStart + "/" + reportEnd;
 		
 		$.ajax({
@@ -120,6 +148,9 @@ $( document ).ready(function() {
 			type : "GET",
 			dataType : "json",
 			success : function(result) {
+				result.chart = {
+						type: chartType
+					};
 				result.colors=[
 				'#7CB5EC','#434348','#90ED7D','#F7A35C','#8085E9','#F15C80',
 				'#E4D354','#2B908F','#FB9FA8','#91E8E1','#7CB5EC','#80C535','#969696'];

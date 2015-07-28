@@ -8,32 +8,46 @@
             		<a data-toggle="collapse" data-parent="#accordion" href="#reportParam">查詢參數</a>	
                 </div>
             	<div class="panel-body panel-collapse in" id="reportParam">
-            		<h5>測站</h5>
-            		<div class="btn-group" data-toggle="buttons">
-            			@for(m<-privilege.allowedMonitors){
-            				<label class="btn btn-outline btn-primary dim">
-								<input type="radio" name="monitor" id="@m">@Monitor.getDisplayName(m)</label>		
-            			}
-            		</div>
-					<h5>監測項目</h5>
-					<div class="btn-group" data-toggle="buttons">
-					    @for(mt<-privilege.allowedMonitorTypes){
-            				<label class="btn btn-outline btn-primary dim">
-								<input type="radio" name="monitorType" id="@mt">@MonitorType.map(mt).desp</label>		
-            			}
-  
-					</div>
- 					<h5>查詢區間</h5>
- 					<div class="input-daterange input-group" id="datepicker">
-                    	<span class="input-group-addon"><i class="fa fa-calendar"></i></span><input type="text" class="input-sm form-control" name="start" id="reportStart" required/>
-                       	<span class="input-group-addon">至</span>
-                        <input type="text" class="input-sm form-control" name="end" id="reportEnd" required/>                        
-                    </div>
-					<br/>
-					<div>
-						<button type="button" class="btn btn-primary" id="queryReport">查詢</button>
-					</div>
-            	</div>
+            		<form class="form-horizontal">
+            			<div class="form-group">
+	            			<label class="col-lg-1 control-label">測站</label>
+	            			<div class="col-lg-11">
+	            				<div class="btn-group" data-toggle="buttons">	            					            				
+	            					@for(m<-Monitor.myMvList(privilege)){
+	            						<label class="btn btn-outline btn-primary dim">
+											<input type="radio" name="monitor" id="@m">@Monitor.getDisplayName(m)</label>
+	            					}
+	            				</div>
+	            			</div>	            			            		
+	                    </div>
+            			<div class="form-group">
+	            			<label class="col-lg-1 control-label">測項</label>
+	            			<div class="col-lg-11">
+	            				<div class="btn-group" data-toggle="buttons">	            				
+	            				@for(mt<-MonitorType.myMtvList(privilege)){
+	            					<label class="btn btn-outline btn-primary dim">
+										<input type="radio" name="monitorType" id="@mt">@MonitorType.map(mt).desp</label>
+	            				}
+	            				</div>
+	            			</div>	            			            		
+	                    </div>
+            			<div class="form-group">
+	            			<label class="col-lg-1 control-label">查詢區間</label>	
+	            			<div class="col-lg-5">
+	            				<div class="input-daterange input-group" id="datepicker">
+                    				<span class="input-group-addon"><i class="fa fa-calendar"></i></span><input type="text" class="input-sm form-control" name="start" id="reportStart" required/>
+                       				<span class="input-group-addon">至</span>
+                        			<input type="text" class="input-sm form-control" name="end" id="reportEnd" required/>                        
+                    			</div>                        
+                    		</div>
+	            		</div>
+	            		<div class="form-group">
+							<div class="col-lg-1 col-lg-offset-1">
+								<button type="button" class="btn btn-primary" id="queryReport">查詢</button>
+							</div>							
+						</div>	                               		            			
+            		</form>
+             	</div>
         	</div>
         	<div class="panel panel-success" style="display:none" id="reportPanel">
             	<div class="panel-heading panel-title"" >

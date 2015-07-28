@@ -37,22 +37,26 @@ object Query extends Controller {
       Ok(views.html.history("/AuditedQueryReport/", group.privilege))
   }
 
-  def auditedReport(monitorStr: String, monitorTypeStr: String, startStr: String, endStr: String, outputTypeStr: String) = Security.Authenticated {
+  def auditedReport(monitorStr: String, monitorTypeStr: String, recordTypeStr: String, startStr: String, endStr: String, outputTypeStr: String) = Security.Authenticated {
     implicit request =>
 
       import scala.collection.JavaConverters._
       val monitorStrArray = monitorStr.split(':')
       val monitors = monitorStrArray.map { Monitor.withName }
       val monitorType = MonitorType.withName(monitorTypeStr)
-      val start = DateTime.parse(startStr)
-      val end = DateTime.parse(endStr) + 1.day
+      val recordType = RecordType.withName(recordTypeStr)
+      val start = DateTime.parse(startStr, DateTimeFormat.forPattern("YYYY-MM-dd HH:mm"))
+      val end = DateTime.parse(endStr, DateTimeFormat.forPattern("YYYY-MM-dd HH:mm"))
       val outputType = OutputType.withName(outputTypeStr)
 
       var timeSet = Set[DateTime]()
       val pairs =
         for {
           m <- monitors
-          records = Record.getHourRecords(m, start, end)
+          records = if (recordType == RecordType.Hour)
+            Record.getHourRecords(m, start, end)
+          else
+            Record.getMinRecords(m, start, end)
           mtRecords = records.map { rs => (Record.timeProjection(rs).toDateTime, Record.monitorTypeProject2(monitorType)(rs)) }
           timeMap = Map(mtRecords: _*)
         } yield {

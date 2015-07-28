@@ -10,7 +10,7 @@
 <table id="reportTable" class="table" cellspacing="0" width="100%">
 	<thead>
 		<tr>
-			<th>日期\時間</th>
+			<th>X</th>
 			@for(t<- 0 to 23){
 				<td>@t 時</td>
 			}
@@ -80,7 +80,7 @@
 	<tbody>
 		@for(d<-0 to (nDays-1)){
 			<tr>
-			<th>@("%02d".format(d+1))日</th>
+			<th>@("%02d".format(d+1))</th>
 			@for(hour<-0 to 23){
 				<td>@if(!report.dailyReports(d).typeList(0).dataList(hour)._2.isEmpty && 
 					!report.dailyReports(d).typeList(0).dataList(hour)._3.isEmpty){
@@ -95,17 +95,17 @@
 				</td>	
 			}
 			@if(report.dailyReports(d).typeList(0).stat.count != 0){
-				<td>@report.dailyReports(d).typeList(0).stat.avg</td>	
+				<td>@("%.1f".format(report.dailyReports(d).typeList(0).stat.avg))</td>	
 			}else{
 				<td>-</td>
 			}
 			@if(report.dailyReports(d).typeList(0).stat.count != 0){
-				<td>@report.dailyReports(d).typeList(0).stat.max</td>	
+				<td>@("%.1f".format(report.dailyReports(d).typeList(0).stat.max))</td>	
 			}else{
 				<td>-</td>
 			}
 			@if(report.dailyReports(d).typeList(0).stat.count != 0){
-				<td>@report.dailyReports(d).typeList(0).stat.min</td>	
+				<td>@("%.1f".format(report.dailyReports(d).typeList(0).stat.min))</td>	
 			}else{
 				<td>-</td>
 			}
