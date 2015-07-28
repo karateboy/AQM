@@ -57,7 +57,6 @@ object Realtime {
   }
 
   def getRealtimeStatus(privilege: Privilege) = {
-    Logger.info(DateTime.now.toString + "Enter")
     DB readOnly { implicit session =>
       val rt_result =
         for { m <- privilege.allowedMonitors } yield {
@@ -74,7 +73,6 @@ object Realtime {
             t => (t._1 -> (t._2._1(hr), t._2._2(hr))))
           (m -> type_record)
         }
-      Logger.info(DateTime.now.toString + "rt_result")
       val windMapList =
         for { m <- privilege.allowedMonitors } yield {
           val wind_record =
@@ -93,7 +91,6 @@ object Realtime {
           m -> Map(MonitorType.withName("C911") -> getLatest(wind_record.c911),
             MonitorType.withName("C912") -> getLatest(wind_record.c912))
         }
-      Logger.info(DateTime.now.toString + "windMapList")
       //combine
       val hr_map = Map(rt_result: _*)
       val sec_map = Map(windMapList: _*)
@@ -101,7 +98,6 @@ object Realtime {
         for { m <- privilege.allowedMonitors } yield {
           m -> (hr_map(m) ++ sec_map(m))
         }
-      Logger.info(DateTime.now.toString + "combined")
       Map(final_list: _*)
     }
   }
@@ -406,7 +402,6 @@ object Realtime {
           } 
         }
       } yield {
-        Logger.info("hr#="+hrList.length)
         m -> v
       }
 

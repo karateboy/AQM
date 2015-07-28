@@ -11,7 +11,6 @@ object Alarm {
 
   case class Alarm(monitor: Monitor.Value, mItem: String, time: DateTime, mVal: Float, code: String)
   def getAlarm(monitors: Seq[Monitor.Value], statusFilter: Option[Seq[String]], start: DateTime, end: DateTime)(implicit session: DBSession = AutoSession) = {
-    Logger.info("statusFilter=" + statusFilter)
     val mStr = SQLSyntax.createUnsafely(monitors.mkString("('", "','", "')"))
     val startT: Timestamp = start
     val endT: Timestamp = end

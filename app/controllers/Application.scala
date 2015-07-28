@@ -146,7 +146,6 @@ object Application extends Controller {
         Forbidden("No such user!")
       else {
         val userInfo = userInfoOpt.get
-        Logger.info("id=" + userInfo.id)
         val user = User.getUserById(userInfo.id).get
         val (userList, groupList) =
           if (!user.isAdmin)

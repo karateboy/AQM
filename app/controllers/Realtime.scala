@@ -174,7 +174,6 @@ object Realtime extends Controller {
            else{
              val value = vOpt.get._1.get
              val status = vOpt.get._2.get
-             Logger.debug("status="+status)
              if(MonitorStatus.isNormalStat(status))
                value
              else

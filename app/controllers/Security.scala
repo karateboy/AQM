@@ -35,7 +35,6 @@ object Security {
   }
   
   def onUnauthorized(request: RequestHeader) = {
-    Logger.info("onUnauthorized")
     Results.Redirect(routes.Login.prompt()) 
   }
   

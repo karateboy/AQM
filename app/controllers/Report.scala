@@ -33,8 +33,7 @@ object Report extends Controller {
   def getReport(reportTypeStr: String) = Security.Authenticated { implicit request =>
     val userInfo = Security.getUserinfo(request).get
     val group = Group.getGroup(userInfo.groupID).get
-    val reportType = ReportType.withName(reportTypeStr)
-    //ExcelUtility.createDailyReport()
+    val reportType = ReportType.withName(reportTypeStr)    
     reportType match {
       case ReportType.MonitorReport =>
         Ok(views.html.monitorReport(group.privilege))
@@ -465,7 +464,25 @@ object Report extends Controller {
                 play.utils.UriEncoding.encodePathSegment(Monitor.map(monitor).name + title + startTime.toString("YYYYMMdd") + ".pdf", "UTF-8"))
         }
       }else{
-        Ok("")
+        import java.io.File
+        import java.nio.file.Files
+        val (title, excelFile) =
+         reportType match {
+            case PeriodReport.DailyReport =>
+              val dailyReport = Record.getDailyReport(monitor, startTime)
+              ("日報",ExcelUtility.createDailyReport(monitor, startTime, dailyReport))              
+
+            case PeriodReport.MonthlyReport =>
+              ("月報",new File(""))
+
+            case PeriodReport.YearlyReport =>
+              ("年報", new File(""))
+          }
+
+        Ok.sendFile(excelFile, fileName = _ =>
+                play.utils.UriEncoding.encodePathSegment(Monitor.map(monitor).name + title + startTime.toString("YYYYMMdd") + ".xlsx", "UTF-8") 
+                )
+                //onClose = ()=>{Files.deleteIfExists(excelFile.toPath())}
       }
   }
 

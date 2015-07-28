@@ -647,7 +647,6 @@ object Query extends Controller {
 
   def calibrationQueryReport(monitorStr: String, startStr: String, endStr: String, outputTypeStr: String) = Security.Authenticated {
     implicit request =>
-      Logger.info("calibrationQueryResult")
       val monitor = Monitor.withName(monitorStr)
       val start = DateTime.parse(startStr)
       val end = DateTime.parse(endStr) + 1.day

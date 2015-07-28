@@ -140,7 +140,6 @@ object Record {
   def getCount(start:Timestamp, end:Timestamp)={
     DB readOnly { implicit session =>
       val query = sql"select count(*) from P1234567_Hr_2015 where M_DateTime >= ${start} and M_DateTime < ${end}"
-      Logger.info(query.toString)
       query.map { _.int(1) }.single().apply()  
     }
   }
@@ -403,7 +402,6 @@ object Record {
           }
             
           val stat = Stat(avg, min, max, count, total, 0)
-          //Logger.info(MonitorType.map(t._1).toString() + stat.toString())
           MonitorTypeRecord(mt, projections, stat)
         }
         
