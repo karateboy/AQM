@@ -1,6 +1,6 @@
 @* outline Template File *@
 @import controllers.Security._
-@(title: String, user:controllers.Security.UserInfo, privilege: Privilege)(content: Html)
+@(title: String, user:controllers.Security.UserInfo, privilege: Privilege, content:Html)
 <!DOCTYPE html>
 <html lang="zh-tw">
 
@@ -82,9 +82,7 @@
 	function loadPage(url, root, title){
 		//var elem = $( this );
 		//console.log(elem);
-		$("#breadcrumb-title").text(title);
-		$("#breadcrumb-root").text(root);
-		$("#breadcrumb-level1").text(title);
+		$("#breadcrumb-title").text(root + " > " + title);
 		$("#wrapper-content").load(url);
 	}
     </script>
@@ -251,9 +249,8 @@
     </nav>
 </div>
 <div class="row wrapper border-bottom white-bg">
-    <div class="col-lg-10">
-		
-        <h5 id='breadcrumb-title'>即時畫面</h2>
+    <div class="col-lg-10">		
+        <h3 id='breadcrumb-title'>即時資訊 &gt 即時畫面</h3>
 		
     </div>
 </div>

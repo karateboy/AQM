@@ -1,28 +1,21 @@
 @* dashboard Template File *@
-
+@(privilege: Privilege)
 <div class="row">
 	<div class="col-lg-3">
 		<div class="ibox float-e-margins">
                <div class="ibox-title">
-               	<h5>PM2.5 即時資料</h5>
+               	<h5>TSP 即時資料</h5>
                        <div class="ibox-tools">
                            <a class="collapse-link">
                                <i class="fa fa-chevron-up"></i>
-                           </a>
-                           <a class="dropdown-toggle" data-toggle="dropdown" href="#">
-                               <i class="fa fa-wrench"></i>
-                           </a>
-                           <ul class="dropdown-menu dropdown-user">
-                               <li><a href="#">設定</a>
-                               </li>                                
-                           </ul>
+                           </a>                                                     
                            <a class="close-link">
                                <i class="fa fa-times"></i>
                            </a>
                        </div>
                    </div>
                <div class="ibox-content">
-				<div id="pm25_realtimChart"></div>                        
+				<div id="tsp_realtimChart"></div>                        
            	</div>
            </div>
        </div>
@@ -33,14 +26,7 @@
                        <div class="ibox-tools">
                            <a class="collapse-link">
                                <i class="fa fa-chevron-up"></i>
-                           </a>
-                           <a class="dropdown-toggle" data-toggle="dropdown" href="#">
-                               <i class="fa fa-wrench"></i>
-                           </a>
-                           <ul class="dropdown-menu dropdown-user">
-                               <li><a href="#">設定</a>
-                               </li>                                
-                           </ul>
+                           </a>                                                      
                            <a class="close-link">
                                <i class="fa fa-times"></i>
                            </a>
@@ -58,14 +44,7 @@
                        <div class="ibox-tools">
                            <a class="collapse-link">
                                <i class="fa fa-chevron-up"></i>
-                           </a>
-                           <a class="dropdown-toggle" data-toggle="dropdown" href="#">
-                               <i class="fa fa-wrench"></i>
-                           </a>
-                           <ul class="dropdown-menu dropdown-user">
-                               <li><a href="#">設定</a>
-                               </li>                                
-                           </ul>
+                           </a>                                                     
                            <a class="close-link">
                                <i class="fa fa-times"></i>
                            </a>
@@ -83,14 +62,7 @@
                        <div class="ibox-tools">
                            <a class="collapse-link">
                                <i class="fa fa-chevron-up"></i>
-                           </a>
-                           <a class="dropdown-toggle" data-toggle="dropdown" href="#">
-                               <i class="fa fa-wrench"></i>
-                           </a>
-                           <ul class="dropdown-menu dropdown-user">
-                               <li><a href="#">設定</a>
-                               </li>                                
-                           </ul>
+                           </a>                                                   
                            <a class="close-link">
                                <i class="fa fa-times"></i>
                            </a>
@@ -108,14 +80,7 @@
                        <div class="ibox-tools">
                            <a class="collapse-link">
                                <i class="fa fa-chevron-up"></i>
-                           </a>
-                           <a class="dropdown-toggle" data-toggle="dropdown" href="#">
-                               <i class="fa fa-wrench"></i>
-                           </a>
-                           <ul class="dropdown-menu dropdown-user">
-                               <li><a href="#">設定</a>
-                               </li>                                
-                           </ul>
+                           </a>                                                  
                            <a class="close-link">
                                <i class="fa fa-times"></i>
                            </a>
@@ -129,18 +94,11 @@
 	<div class="col-lg-3">
 		<div class="ibox float-e-margins">
                <div class="ibox-title">
-               	<h5>一氧化碳 即時資料</h5>
+               	<h5>一氧化氮 即時資料</h5>
                        <div class="ibox-tools">
                            <a class="collapse-link">
                                <i class="fa fa-chevron-up"></i>
-                           </a>
-                           <a class="dropdown-toggle" data-toggle="dropdown" href="#">
-                               <i class="fa fa-wrench"></i>
-                           </a>
-                           <ul class="dropdown-menu dropdown-user">
-                               <li><a href="#">設定</a>
-                               </li>                                
-                           </ul>
+                           </a>                           
                            <a class="close-link">
                                <i class="fa fa-times"></i>
                            </a>
@@ -148,6 +106,42 @@
                    </div>
                <div class="ibox-content">
 				<div id="no_realtimChart"></div>                       
+           	</div>
+           </div>
+	</div>
+	<div class="col-lg-3">
+		<div class="ibox float-e-margins">
+               <div class="ibox-title">
+               	<h5>甲烷 即時資料</h5>
+                       <div class="ibox-tools">
+                           <a class="collapse-link">
+                               <i class="fa fa-chevron-up"></i>
+                           </a>                           
+                           <a class="close-link">
+                               <i class="fa fa-times"></i>
+                           </a>
+                       </div>
+                   </div>
+               <div class="ibox-content">
+				<div id="ch4_realtimChart"></div>                       
+           	</div>
+           </div>
+	</div>
+	<div class="col-lg-3">
+		<div class="ibox float-e-margins">
+               <div class="ibox-title">
+               	<h5>非甲烷 即時資料</h5>
+                       <div class="ibox-tools">
+                           <a class="collapse-link">
+                               <i class="fa fa-chevron-up"></i>
+                           </a>                           
+                           <a class="close-link">
+                               <i class="fa fa-times"></i>
+                           </a>
+                       </div>
+                   </div>
+               <div class="ibox-content">
+				<div id="non_ch4_realtimChart"></div>                       
            	</div>
            </div>
 	</div>
@@ -167,6 +161,29 @@
            </div>
 	</div>
 </div>
+<script>
+var markerStaticData = [];
+
+@for(m<-privilege.allowedMonitors){
+	markerStaticData.push(
+		{
+			id:'@Monitor.map(m).id',
+			name:'@Monitor.map(m).name',
+			lat:'@Monitor.map(m).lat',
+			lng:'@Monitor.map(m).lng'
+		});
+}
+
+var statusIconUrl = [
+	'@routes.Assets.at("images/normal.png")',
+	'@routes.Assets.at("images/calbration.png")',
+	'@routes.Assets.at("images/repair.png")',
+	'@routes.Assets.at("images/maintance.png")',
+	'@routes.Assets.at("images/warn.png")'
+];
+
+ var mapLegendImgHTML = "<br/><img src='@routes.Assets.at("images/map_label.png")' style='width:50%;height:50%' />";
+</script>
 <script>
 var mapCenter = new google.maps.LatLng(23.68875446, 120.2805895);
 
@@ -225,7 +242,7 @@ function HomeControl(map, div, home) {
 
   // Set CSS for the control interior.
   var mapLegendImg = document.createElement('div');
-  mapLegendImg.innerHTML = "<br/><img src='@routes.Assets.at("images/map_label.png")' style='width:50%;height:50%' />";
+  mapLegendImg.innerHTML = mapLegendImgHTML;
   mapLegendUI.appendChild(mapLegendImg);
 
   // Setup the click event listener for Home:
@@ -241,7 +258,9 @@ function HomeControl(map, div, home) {
   	windMarkerArray.map(function(marker){
   		marker.setVisible(false);});
   	windInfoboxArray.map(function(ib){
-  		ib.setVisible(false);}
+  		ib.setVisible(false);
+  	refreshRealtimeInfo();	
+  		}
   	);
   });
   
@@ -257,42 +276,62 @@ function HomeControl(map, div, home) {
   
 }
 
-var markerStaticData = [];
-
-@for(m<-Monitor.monitorList){
-	markerStaticData.push(
-		{
-			id:'@m.id',
-			name:'@m.name',
-			lat:'@m.lat',
-			lng:'@m.lng'
-		});
-}
-
-var statusIconUrl = [
-	"@routes.Assets.at("images/normal.png")",
-	"@routes.Assets.at("images/calbration.png")",
-	"@routes.Assets.at("images/repair.png")",
-	"@routes.Assets.at("images/maintance.png")",
-	"@routes.Assets.at("images/warn.png")"
-]
 
 function getRandomInt(min, max) {
   return Math.floor(Math.random() * (max - min)) + min;
 }
 
+function refreshMarker(realtime){
+	for(var i=0;i<markerStaticData.length;i++){
+		var info = realtime.info[i];
+		var icon = {
+				url:statusIconUrl[info.status],
+				anchor: new google.maps.Point(12, 12),
+				scaledSize:new google.maps.Size(24,24) 
+			};
+		statusMarkerArray[i].setIcon(icon); 
+		if(info.status == 4)
+			statusMarkerArray[i].setAnimation(google.maps.Animation.BOUNCE);
+		
+		windMarkerArray[i].icon.rotation = info.winDir;
+		windInfoboxArray[i].setContent(Math.round(info.winSpeed*100)/100 + "m/s");
+	}
+}
+
+function refreshRealtimeInfo(){
+	$.ajax({
+		url : "/JSON/realtime/map",
+		data : "",
+		contentType : "application/json; charset=utf-8",
+		type : "GET",
+		dataType : "json",
+		success : function(result) {
+			console.log(result);
+			refreshMarker(result);
+		},
+		error : function(xhr, status, errorThrown) {
+			console.log("錯誤訊息:" + status + "-" + errorThrown);
+		},
+
+		complete : function(xhr, status) {
+			
+		}
+	});
+}
+
+
 var statusMarkerArray = [];
 function initMonitorMarker(map){
 	
 	for(var i=0;i<markerStaticData.length;i++){
-		var s = getRandomInt(0, statusIconUrl.length);
+		var s = 0;
 		var monitor = markerStaticData[i];
 		var marker = new google.maps.Marker({
 			position: new google.maps.LatLng(monitor.lat, monitor.lng),
 			map: map,
 			title:monitor.name,
 			icon:{
-				url:statusIconUrl[s],
+				url:statusIconUrl[0],
 				anchor: new google.maps.Point(12, 12),
 				scaledSize:new google.maps.Size(24,24)
 				} 
@@ -317,7 +356,7 @@ function initWindMarker(map){
 				fillColor: 'red',
 				strokeColor: "red",
 				strokeWeight: 4,
-				rotation: getRandomInt(0,365),
+				rotation: 0,
 				//anchor:google.maps.Point(-20,0),
 				scale:4
 			},
@@ -333,11 +372,12 @@ function initWindInfobox(map){
 		var monitor = markerStaticData[i];
 			
 		var myOptions = {
-			 content: getRandomInt(0,10)+"."+getRandomInt(0,10) + "m/s"
+			 content: "0.0" + "m/s"
 			,boxStyle: {
 			   border: "none"
 			  ,textAlign: "center"
 			  ,fontSize: "12pt"
+			  ,color: "Red"
 			  ,width: "60px"
 			 }
 			,disableAutoPan: true
@@ -360,11 +400,11 @@ function initLableInfobox(map){
 		var monitor = markerStaticData[i];
 			
 		var myOptions = {
-			 content: monitor.name
+			 content: "<strong>"+monitor.name+"</strong>"
 			,boxStyle: {
 			   border: "none"
 			  ,textAlign: "center"
-			  ,fontSize: "12pt"
+			  ,fontSize: "14pt"
 			  ,width: "60px"
 			 }
 			,disableAutoPan: true
@@ -389,6 +429,17 @@ function getRealtimChart(id, monitorType){
 		type : "GET",
 		dataType : "json",
 		success : function(result) {
+			result.colors=[
+			'#7CB5EC','#434348','#90ED7D','#F7A35C','#8085E9','#F15C80',
+			'#E4D354','#2B908F','#FB9FA8','#91E8E1','#7CB5EC','#80C535','#969696'];
+			result.tooltip ={
+            	valueDecimals: 2};
+            result.legend={enabled:false};
+			result.title={text:null};
+			result.credits={
+				enabled:false,
+				href:'http://www.wecc.com.tw/'
+			};
 			$(id).highcharts(result);
 		},
 		error : function(xhr, status, errorThrown) {
@@ -402,13 +453,14 @@ function getRealtimChart(id, monitorType){
 }
 
 function initRealtimeChart(){
-	getRealtimChart('#pm25_realtimChart', "A215");
+	getRealtimChart('#tsp_realtimChart', "A213");
 	getRealtimChart('#pm10_realtimChart', "A214");
 	getRealtimChart('#so2_realtimChart', "A222");
 	getRealtimChart('#no2_realtimChart', "A293");
 	getRealtimChart('#o3_realtimChart', "A225");
 	getRealtimChart('#no_realtimChart', "A283");
-	
+	getRealtimChart('#ch4_realtimChart', "A286");
+	getRealtimChart('#non_ch4_realtimChart', "A296");
 }
 		
 function initRealtimeMap() {
@@ -459,6 +511,7 @@ function initRealtimeMap() {
 function initRealtime(){
 	initRealtimeChart();
 	initRealtimeMap();
+	refreshRealtimeInfo();
 }
 
 $(document).ready(initRealtime());

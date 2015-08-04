@@ -243,7 +243,7 @@ object Realtime extends Controller {
       }
       yield
     {
-      MonitorInfo(m.toString(), getStatusIndex(status), weather.winDir, weather.winSpeed)
+      MonitorInfo(m.toString(), getStatusIndex(status), weather.winDir.last.getOrElse(0f), weather.winSpeed.last.getOrElse(0f))
     }
     
     Ok(Json.toJson(RealtimeMapInfo(mapInfos)))

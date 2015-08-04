@@ -6,13 +6,7 @@ import play.api._
 import com.github.nscala_time.time.Imports._
 import models.ModelHelper._
 import models._    
-    
-object RecordType extends Enumeration
-{
-  val Min  = Value("min")
-  val Hour = Value("hour")
-  val map = Map((Min->"分鐘資料"), (Hour->"小時資料"))
-}
+
 
 case class Stat(
     avg:Float,
@@ -32,9 +26,10 @@ case class DailyReport(
   )
 
 object TableType extends Enumeration{
-  val Hour = Value("Hour")
-  val Min = Value("Min")
   val SixSec = Value("SixSec")
+  val Min = Value("Min")
+  val Hour = Value("Hour")
+  val map = Map((SixSec->"六秒資料"),(Min->"分鐘資料"), (Hour->"小時資料"))
 }
 
 object Record {
@@ -97,14 +92,19 @@ object Record {
   case class SixSecRecord(
     monitor:Monitor.Value,
     time:DateTime,
-    winSpeed:Float,
-    winDir:Float,
-    status:String
+    winSpeed:Seq[Option[Float]],
+    winSpeed_stat:Seq[Option[String]],
+    winDir:Seq[Option[Float]],
+    winDir_stat:Seq[Option[String]]
   )
   
   type MinRecord = HourRecord
   
-  def emptySixSecRecord(m:Monitor.Value, t:DateTime, status:String) = SixSecRecord(m, t, 0f, 0f, status)  
+  def emptySixSecRecord(m:Monitor.Value, t:DateTime, status:String) = SixSecRecord(m, t, 
+      List.fill(10)(Some(0f)), 
+      List.fill(10)(Some(MonitorStatus.DATA_LOSS_STAT)),
+      List.fill(10)(Some(0f)),
+      List.fill(10)(Some(MonitorStatus.DATA_LOSS_STAT)))  
   
   def mapper(rs: WrappedResultSet) = {
     HourRecord(rs.string(1), rs.timestamp(2), rs.stringOpt(3), rs.floatOpt(4), rs.stringOpt(5), 
@@ -122,19 +122,27 @@ object Record {
   }
   
   def sixSecMapper(rs: WrappedResultSet) = {
-    val windSpeed = rs.floatOpt(4).getOrElse(0f)      
+    val windSpeed = 
+      for(loc <- 0 to 9)yield{
+        rs.floatOpt(4 + loc*2)
+      }
     
-    val windDir = rs.floatOpt(24).getOrElse(0f)
+    val windSpeed_stat =
+      for(loc <- 0 to 9)yield{
+        rs.stringOpt(5 + loc*2)
+      }
+    
+    val windDir =   
+      for(loc <- 0 to 9)yield{
+        rs.floatOpt(24 + loc*2)
+      }
 
-    val status = rs.stringOpt(5).getOrElse(MonitorStatus.DATA_LOSS_STAT)
-    
-    SixSecRecord(
-        Monitor.withName(rs.string(1)),
-        rs.timestamp(2),
-        windSpeed,
-        windDir,
-        status
-        )
+    val windDir_stat =   
+      for(loc <- 0 to 9)yield{
+        rs.stringOpt(24 + loc*2)
+      }
+
+    SixSecRecord(Monitor.withName(rs.string(1)), rs.timestamp(2), windSpeed, windSpeed_stat, windDir, windDir_stat) 
   }
   
   def getCount(start:Timestamp, end:Timestamp)={
@@ -169,6 +177,34 @@ object Record {
         ORDER BY M_DateTime ASC
       """.map { mapper }.list().apply()  
   }
+  
+  def getSecRecords(monitor:Monitor.Value, startTime:DateTime, endTime:DateTime)(implicit session: DBSession = AutoSession)={
+    val start: Timestamp = startTime
+    val end: Timestamp = endTime
+    val monitorName = monitor.toString()
+    val tab_name = getTabName(TableType.SixSec, startTime.getYear)
+      sql"""
+        Select * 
+        From ${tab_name}
+        Where DP_NO=${monitorName} and M_DateTime >= ${start} and M_DateTime < ${end}
+        ORDER BY M_DateTime ASC
+      """.map { sixSecMapper }.list().apply()  
+  }
+
+  def secRecordProject(mt: MonitorType.Value) =
+    (rs: SixSecRecord) => {
+      assert(mt == MonitorType.withName("C211") || mt == MonitorType.withName("C212"))
+      val start = rs.time
+      val values =
+        for (i <- 0 to 9) yield {
+          if (mt == MonitorType.withName("C211")) {
+            (start + (6*i).second, (rs.winSpeed(i), rs.winSpeed_stat(i)))
+          } else {
+            (start + (6*i).second, (rs.winDir(i), rs.winDir_stat(i)))
+          }
+        }
+      values.toList
+    }
     
   val timeProjection:(HourRecord=>Timestamp) ={
     rs=>rs.date
@@ -303,14 +339,14 @@ object Record {
       RecordValidationReport(start, end, hourReport, minReport, sixSecReport)
     }
   }
-  
+    
   def getDays(current: DateTime, endTime: DateTime): List[DateTime] = {
     if (current == endTime)
       Nil
     else
       current :: getDays(current + 1.days, endTime)
   }
-
+  
   def getDayReportMap(monitor: Monitor.Value, start: DateTime, end: DateTime, filter:MonitorStatusFilter.Value) = {
     val adjustStart = DateTime.parse(start.toString("YYYY-MM-dd"))
     val adjustEnd = DateTime.parse(end.toString("YYYY-MM-dd"))
@@ -335,7 +371,7 @@ object Record {
   }
   
   def getDailyReport(monitor: Monitor.Value, start: DateTime, includeTypes:List[MonitorType.Value]=MonitorType.monitorReportList, 
-      monitorStatusFilter:MonitorStatusFilter.Value=MonitorStatusFilter.All) = {
+      monitorStatusFilter:MonitorStatusFilter.Value=MonitorStatusFilter.Normal) = {
     DB localTx { implicit session =>
       val originalHourRecordList = getHourRecords(monitor, start, start + 1.day)
       val reportList =
@@ -395,7 +431,11 @@ object Record {
           val avg = if(MonitorType.windDirList.contains(mt)){
             val sum_sin = validValues.map(v=>Math.sin(Math.toRadians(v))).sum
             val sum_cos = validValues.map(v=>Math.cos(Math.toRadians(v))).sum
-            Math.toDegrees(Math.atan (sum_sin/sum_cos)).toFloat
+            val degree = Math.toDegrees(Math.atan (sum_sin/sum_cos)).toFloat
+            if(degree >0)
+              degree
+            else
+              degree + 360
           } else{
             val sum = validValues.sum
             if (count != 0) sum / count else 0
@@ -502,6 +542,8 @@ object Record {
   def getWindRose(monitor:Monitor.Value, start:DateTime, end:DateTime, nDiv:Int=16)={
     val records = getHourRecords(monitor, start, end)
     val windRecords = records.map { r => (r.wind_dir, r.wind_speed)}
+    assert(windRecords.length != 0)
+    
     val step = 360f/nDiv
     import scala.collection.mutable.ListBuffer
     val windDirPair = 
@@ -539,6 +581,7 @@ object Record {
           count(6)+=1
       }
       
+      assert(total != 0)
       count.map(_*100/total)
     }
     

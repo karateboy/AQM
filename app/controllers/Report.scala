@@ -45,7 +45,7 @@ object Report extends Controller {
   }
 
   def getDays(current: DateTime, endTime: DateTime): List[DateTime] = {
-    if (current == endTime)
+    if (current >= endTime)
       Nil
     else
       current :: getDays(current + 1.days, endTime)
@@ -77,9 +77,62 @@ object Report extends Controller {
       current :: getQuarters(current + 3.month, endTime)
   }
   
+  def monthlyHourReportHelper(monitor:Monitor.Value, startDate:DateTime)={
+    val endDate = startDate + Period.months(1)
+    val days = getDays(startDate, endDate)
+    val nDay = days.length
+    val dailyReports =
+      for { day <- days } yield {
+        Record.getDailyReport(monitor, day, MonitorType.monitorReportList)
+      }
+
+    def getHourRecord(i: Int, j: Int) = {
+      dailyReports.map { _.typeList(i).dataList(j) }
+    }
+
+    val monthHourStats =
+      for {
+        (mt, mt_i) <- MonitorType.monitorReportList.zipWithIndex
+        hour <- 0 to 23
+        hourRecord = getHourRecord(mt_i, hour)
+        validData = hourRecord.filter { hr =>
+          hr._3 match {
+            case Some(stat) => MonitorStatus.isNormalStat(stat)
+            case _          => false
+          }
+        }.map(r => r._2.get)
+
+        count = validData.length
+        total = nDay
+        max = if (count != 0) validData.max else Float.MinValue
+        min = if (count != 0) validData.min else Float.MaxValue
+        overCount = 0
+      } yield {
+        val avg = if (MonitorType.windDirList.contains(mt)) {
+          val sum_sin = validData.map(v => Math.sin(Math.toRadians(v))).sum
+          val sum_cos = validData.map(v => Math.cos(Math.toRadians(v))).sum
+          Math.toDegrees(Math.atan(sum_sin / sum_cos)).toFloat
+        } else {
+          val sum = validData.sum
+          if (count != 0) sum / count else 0
+        }
+
+        Stat(avg, min, max, count, total, overCount)
+      }
+
+    val stats = monthHourStats.filter(t => t.count != 0)
+    val count = stats.map(_.count).sum
+    val max = if (count != 0) stats.map { _.max }.max else Float.MinValue
+    val min = if (count != 0) stats.map { _.min }.min else Float.MaxValue
+    val total = stats.map { _.total }.sum
+    val avg = {
+      if (count != 0) stats.map { _.avg }.sum / count else 0
+    }
+    MonthHourReport(monthHourStats.toArray, dailyReports.toArray, Stat(avg, min, max, count, total, 0))    
+  }
+  
   case class MonthHourReport(hourStatArray: Array[Stat], dailyReports: Array[DailyReport], StatStat: Stat)
   def monthlyHourReport(monitorStr: String, monitorTypeStr: String, startDateStr: String, outputTypeStr: String) = Security.Authenticated { implicit request =>
-    Logger.debug("monthlyHourReportHtml()")
     val monitor = Monitor.withName(monitorStr)
     val monitorType = MonitorType.withName(monitorTypeStr)
     val startDate = DateTime.parse(startDateStr)
@@ -128,7 +181,6 @@ object Report extends Controller {
 
         Stat(avg, min, max, count, total, overCount)
       }
-    Logger.debug("monthHourStats #=" + monthHourStats.length);
 
     val stats = monthHourStats.filter(t => t.count != 0)
     val count = stats.map(_.count).sum
@@ -143,7 +195,6 @@ object Report extends Controller {
       if (count != 0) stats.map { _.avg }.sum / count else 0
     }
     val result = MonthHourReport(monthHourStats.toArray, dailyReports.toArray, Stat(avg, min, max, count, total, 0))
-    Logger.debug("result is ready!")
 
     val output = views.html.monthlyHourReport(Monitor.map(monitor).name, startDate, result, nDay)
     val title = "月份時報表"
@@ -206,7 +257,7 @@ object Report extends Controller {
   }
   
   def getMonthlyReport(monitor: Monitor.Value, startTime: DateTime, includeTypes: List[MonitorType.Value] = MonitorType.monitorReportList,
-      filter: MonitorStatusFilter.Value = MonitorStatusFilter.All) = {
+      filter: MonitorStatusFilter.Value = MonitorStatusFilter.Normal) = {
     val endTime = startTime + Period.months(1)
     val days = getDays(startTime, endTime)
     val dailyReports =
@@ -219,15 +270,13 @@ object Report extends Controller {
     }
     val typeReport =
       for {
-        t <- dailyReports(0).typeList
-        monitorType = t.monitorType
-        pos = dailyReports(0).typeList.indexWhere { x => x.monitorType == monitorType }
+        (monitorType, pos) <- includeTypes.zipWithIndex        
         typeStat = getTypeStat(pos)
         validData = typeStat.filter { _.count != 0 }
         count = validData.length
         total = dailyReports.length
-        max = if (count != 0) validData.map(_.min).min else Float.MinValue
-        min = if (count != 0) validData.map(_.max).max else Float.MaxValue
+        max = if (count != 0) validData.map(_.avg).max else Float.MinValue
+        min = if (count != 0) validData.map(_.avg).min else Float.MaxValue
         overCount = validData.map(_.overCount).sum
       } yield {
         val avg = if (MonitorType.windDirList.contains(monitorType)) {
@@ -264,8 +313,8 @@ object Report extends Controller {
         validData = typeStat.filter { _.count != 0 }
         count = validData.length
         total = dailyReports.length
-        max = if (count != 0) validData.map(_.min).min else Float.MinValue
-        min = if (count != 0) validData.map(_.max).max else Float.MaxValue
+        max = if (count != 0) validData.map(_.avg).max else Float.MinValue
+        min = if (count != 0) validData.map(_.avg).min else Float.MaxValue
         overCount = validData.map(_.overCount).sum
       } yield {
         val avg = if (MonitorType.windDirList.contains(monitorType)) {
@@ -287,7 +336,37 @@ object Report extends Controller {
     else
       date - (date.getDayOfWeek).days
   }
-      
+   
+  def getPeriods(current: DateTime, endTime: DateTime, d:Period): List[DateTime] = {
+    if (current >= endTime)
+      Nil
+    else
+      current :: getPeriods(current + d, endTime, d)    
+  }
+
+  def getPeriodReportMap(monitor: Monitor.Value, start: DateTime, end: DateTime, filter:MonitorStatusFilter.Value, d:Period) = {
+    val adjustStart = DateTime.parse(start.toString("YYYY-MM-dd"))
+    val adjustEnd = DateTime.parse(end.toString("YYYY-MM-dd"))+1.day
+    val periods = getPeriods(adjustStart, adjustEnd, d)
+    val nPeriod = periods.length
+    val periodReports =
+      for { p <- periods } yield {
+        (p->getPeriodReport(monitor, p, d, MonitorType.mtvAllList, filter))
+      }
+    
+    import scala.collection.mutable.Map
+    val map = Map.empty[MonitorType.Value, Map[DateTime, (Option[Float], Option[String])]]
+    
+    for{(time, report) <- periodReports
+      t<-report.typeArray  
+    }{
+      val periodMap = map.getOrElse(t.monitorType, Map.empty[DateTime, (Option[Float], Option[String])])
+      periodMap.put(time, (Some(t.stat.avg), Some(MonitorStatusFilter.statusMap(filter)))) 
+      map.put(t.monitorType, periodMap)
+    }
+    map
+  }
+
   def getWeeklyReportMap(monitor: Monitor.Value, start: DateTime, end: DateTime, filter: MonitorStatusFilter.Value) = {
     import org.joda.time.DateTimeConstants._
     val adjustStart = DateTime.parse(adjustWeekDay(start).toString("YYYY-MM-dd"))
@@ -473,7 +552,10 @@ object Report extends Controller {
               ("日報",ExcelUtility.createDailyReport(monitor, startTime, dailyReport))              
 
             case PeriodReport.MonthlyReport =>
-              ("月報",new File(""))
+              val adjustStartDate = DateTime.parse(startTime.toString("YYYY-MM-1"))
+              val monthlyReport = getMonthlyReport(monitor, adjustStartDate)
+              val nDay = monthlyReport.typeArray(0).dataList.length 
+              ("月報", ExcelUtility.createMonthlyReport(monitor, startTime, monthlyReport, nDay))
 
             case PeriodReport.YearlyReport =>
               ("年報", new File(""))

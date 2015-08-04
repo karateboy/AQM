@@ -2,10 +2,9 @@
 @(privilege: Privilege)
 <div class="row">
    	<div class="col-lg-12">
-    	<div class="panel-group" id="accordion">
         	<div class="panel panel-primary" id="paramPanel">
             	<div class="panel-heading panel-title" >
-            		<a data-toggle="collapse" data-parent="#accordion" href="#reportParam">報表參數</a>	
+            		<a data-toggle="collapse" data-parent="#accordion" href="#reportParam">查詢參數</a>	
                 </div>
             	<div class="panel-body panel-collapse in" id="reportParam">
             		<form class="form-horizontal">
@@ -28,20 +27,16 @@
             	</div>
         	</div>
         	<div class="panel panel-success" style="display:none" id="reportPanel">
-            	<div class="panel-heading panel-title"" >
-            		<a data-toggle="collapse" data-parent="#accordion" href="#monitorReport">有效率報表</a>	
-                </div>
             	<div class="panel-body panel-collapse" id="monitorReport">
-            	    <div align="left">
-            			<label class="btn btn-outline" data-toggle="tooltip" data-placement="bottom" title="PDF"><a href="#" id="downloadPDF"><i class="fa fa-file-pdf-o fa-2x"></i></a></label>
+            	    <div align="right">
+            			<label class="btn btn-outline" data-toggle="tooltip" data-placement="bottom" title="PDF"><a href="#" id="downloadPDF"><i class="fa fa-file-pdf-o fa-2x PDF" ></i></a></label>
             			<label class="btn btn-outline" data-toggle="tooltip" data-placement="bottom" title="Excel"><a href="#" id="downloadExcel"><i class="fa fa-file-excel-o fa-2x"></i></a></label>            			
                 	</div>
             	
 					<div id="reportDiv" align="center" style="overflow-x:auto">
             		</div>
             	</div>
-        	</div> <!-- end of panel group -->
-    	</div>
+        	</div>
 	</div>
 </div>
 <script>

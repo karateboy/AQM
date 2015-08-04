@@ -2,10 +2,9 @@
 @(requestUrl:String, privilege: Privilege)
 <div class="row">
    	<div class="col-lg-12">
-    	<div class="panel-group" id="accordion">
         	<div class="panel panel-primary" id="paramPanel">
             	<div class="panel-heading panel-title" >
-            		<a data-toggle="collapse" data-parent="#accordion" href="#reportParam">報表參數</a>	
+            		<a data-toggle="collapse" data-parent="#accordion" href="#reportParam">查詢參數</a>	
                 </div>
             	<div class="panel-body panel-collapse in" id="reportParam">
             		<form class="form-horizontal">
@@ -14,9 +13,14 @@
 	            			<div class="col-lg-11">
 	            				<button id="select-all-monitors" class="btn btn-info" type="button">全選</button>
 	            				<div class="btn-group" data-toggle="buttons">	            					            				
-	            					@for(m<-privilege.allowedMonitors){
-	            						<label class="btn btn-outline btn-primary dim">
-										<input type="checkbox" name="monitor" id="@m">@Monitor.getDisplayName(m)</label>		
+	            					@for(m<-Monitor.myMvList(privilege)){
+	            						@if(m == Monitor.myMvList(privilege).head){
+	            							<label class="btn btn-outline btn-primary dim active">
+											<input type="checkbox" name="monitor" id="@m" checked>@Monitor.getDisplayName(m)</label>
+	            						}else{
+	            							<label class="btn btn-outline btn-primary dim">
+											<input type="checkbox" name="monitor" id="@m">@Monitor.getDisplayName(m)</label>
+	            						}	            								
 	            					}
 	            				</div>
 	            			</div>	            			            		
@@ -24,18 +28,28 @@
 	                    <div class="form-group">
 	            			<label class="col-lg-1 control-label">測項</label>						
 	            			<div class="col-lg-11 btn-group" data-toggle="buttons">
-	            			@for(mt<-privilege.allowedMonitorTypes){
-	            				<label class="btn btn-outline btn-primary dim">
-									<input type="radio" name="monitorType" id="@mt">@MonitorType.map(mt).desp</label>		
+	            			@for(mt<-MonitorType.myMtvList(privilege)){
+	            				@if(mt == MonitorType.myMtvList(privilege).head){
+	            					<label class="btn btn-outline btn-primary dim active">
+									<input type="radio" name="monitorType" id="@mt" checked>@MonitorType.map(mt).desp</label>
+	            				}else{
+	            					<label class="btn btn-outline btn-primary dim">
+									<input type="radio" name="monitorType" id="@mt">@MonitorType.map(mt).desp</label>
+	            				}	            						
 	            			}
 	            			</div>            		
 	                    </div>
 	                    <div class="form-group">
 	            			<label class="col-lg-1 control-label">資料來源</label>						
 	            			<div class="col-lg-11 btn-group" data-toggle="buttons">
-           						@for(rt<-RecordType.values){
-            					<label class="btn btn-outline btn-primary dim">
-									<input type="radio" name="recordType" id="@rt">@RecordType.map(rt)</label>		
+           						@for(tt<-TableType.values.toList.sorted){
+           							@if(tt == TableType.values.toList.sorted.last){
+           								<label class="btn btn-outline btn-primary dim active">
+										<input type="radio" name="tableType" id="@tt">@TableType.map(tt)</label>
+           							}else{
+           								<label class="btn btn-outline btn-primary dim">
+										<input type="radio" name="tableType" id="@tt">@TableType.map(tt)</label>
+           							}            								
             					}
 	            			</div>            		
 	                    </div>
@@ -58,9 +72,6 @@
             	</div>
         	</div>
         	<div class="panel panel-success" style="display:none" id="reportPanel">
-            	<div class="panel-heading panel-title" >
-            		<a data-toggle="collapse" data-parent="#accordion" href="#monitorReport">報表</a>	
-                </div>
             	<div class="panel-body panel-collapse" id="monitorReport">
             		<div align="right">
             			<label class="btn btn-outline" data-toggle="tooltip" data-placement="bottom" title="PDF"><a href="#" id="downloadPDF"><i class="fa fa-file-pdf-o fa-2x"></i></a></label>
@@ -71,7 +82,6 @@
             		</div>
             	</div>
         	</div>
-    	</div>
 	</div>
 </div>
 <script>
@@ -95,18 +105,54 @@ $( document ).ready(function() {
 	});
 	$('#reportEnd').datetimepicker({
 		format: 'YYYY-MM-D HH:mm',
-		defaultDate: moment().subtract(1, 'hours'),
+		defaultDate: moment().subtract(12, 'hours'),
     	locale: "zh-TW"
 	});
     $("#reportStart").on("dp.change", function (e) {
         $('#reportEnd').data("DateTimePicker").minDate(e.date);
+        $('#reportEnd').data("DateTimePicker").date(e.date.add(12, 'hours'));
     });
     
     $("#reportEnd").on("dp.change", function (e) {
         $('#reportStart').data("DateTimePicker").maxDate(e.date);
     });
+
+	$('#SixSec').parent().click(function() {
+		var $monitorTypes = $("input[name='monitorType']");
+		for(var i=0;i<$monitorTypes.length;i++){
+			var $mt = $monitorTypes.eq(i);
+			if($mt.attr('id') != 'C211' && $mt.attr('id') != 'C212'){
+				$mt.prop('disabled', true);
+				$mt.prop('checked', false);
+				$mt.parent().removeClass("active");
+				$mt.parent().addClass("disabled");
+			}  
+		}
+
+		if(!$("input[name='monitorType']:checked").attr('id')){
+			var $mt = $("#C211");
+			$mt.prop('checked', true);
+			$mt.parent().addClass("active");
+		}		
+	});
+
+	function enableMT(){
+		var $monitorTypes = $("input[name='monitorType']");
+		for(var i=0;i<$monitorTypes.length;i++){
+			var $mt = $monitorTypes.eq(i);
+			$mt.prop('disabled', false);
+			$mt.parent().removeClass("disabled");  
+		}
+	}
 	
-	var monitors, monitorType, recordType, reportStart, reportEnd;
+	$('#Min').parent().click(function(){
+		enableMT();
+	});
+	$('#Hour').parent().click(function(){
+		enableMT();
+	});
+	
+	var monitors, monitorType, tableType, reportStart, reportEnd;
 
 	function validate(){
 		monitors = $("input[name='monitor']:checked");
@@ -123,8 +169,8 @@ $( document ).ready(function() {
 			return false;
 		}
 
-		recordType = $("input[name='recordType']:checked").attr('id');
-		if(!recordType) {
+		tableType = $("input[name='tableType']:checked").attr('id');
+		if(!tableType) {
 			alert("請選擇資料來源");
 			return false;
 		}
@@ -141,12 +187,13 @@ $( document ).ready(function() {
 			return false;
 		}
 
-		if(recordType == "min"){
-			var start = new Date(reportStart);
-			var end = new Date(reportEnd);
-			var diff = end.getTime()-start.getTime();
+		if(tableType == "Min" || tableType == "SixSec"){
+			var start = moment(reportStart, "YYYY-MM-DD HH:mm");
+			
+			var end = moment(reportEnd, "YYYY-MM-DD HH:mm");
+			var diff = end.diff(start);
 			if(diff > 1 * 24*60*60*1000){
-				alert("分鐘查詢區間必須小於1天");
+				alert("六秒或分鐘查詢區間必須小於1天");
 				return false;
 			}
 		}
@@ -173,9 +220,9 @@ $( document ).ready(function() {
 				monitorParam += ':' + monitors[i].id;
 		}
 
-		console.log("recordType=" + recordType);
+		console.log("tableType=" + tableType);
 		
-		var url = url_head + monitorParam + "/" + monitorType + "/" + recordType + "/" +reportStart + "/" + reportEnd;
+		var url = url_head + monitorParam + "/" + monitorType + "/" + tableType + "/" +reportStart + "/" + reportEnd;
 
 		console.log(url);
 		

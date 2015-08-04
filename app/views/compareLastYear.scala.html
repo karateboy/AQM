@@ -2,7 +2,6 @@
 @(privilege: Privilege)
 <div class="row">
    	<div class="col-lg-12">
-    		<div class="panel-group" id="accordion">
         	<div class="panel panel-primary" id="paramPanel">
             	<div class="panel-heading panel-title" >
             		<a data-toggle="collapse" data-parent="#accordion" href="#reportParam">查詢參數</a>	
@@ -68,16 +67,12 @@
              	</div>
         	</div>
         	<div class="panel panel-success" style="display:none" id="reportPanel">
-            	<div class="panel-heading panel-title"" >
-            		<a data-toggle="collapse" data-parent="#accordion" href="#monitorReport">各年同期比較圖</a>	
-                </div>
             	<div class="panel-body panel-collapse" id="monitorReport">
 					<div id="reportDiv" align="center" style="overflow-x:auto">
 					            		
             		</div>
             	</div>
-        	</div> <!-- end of panel group -->
-    	</div>
+        	</div>
 	</div>
 </div>
 <script src='@routes.Assets.at("js/highcharts/modules/exporting.js")'></script>

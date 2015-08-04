@@ -14,11 +14,12 @@ object ReportUnit extends Enumeration
 {
   val Min  = Value("min")
   val Hour = Value("hour")
+  val EightHour = Value("eight_hour")
   val Day = Value("day")
   val Week = Value("week")
   val Month = Value("month")
   val Quarter = Value("quarter")
-  val map = Map((Min->"分鐘"), (Hour->"小時"), (Day->"日"),(Week->"周"), (Month->"月"),(Quarter->"季"))
+  val map = Map((Min->"分鐘"), (Hour->"小時"), (EightHour->"八小時"),(Day->"日"),(Week->"周"), (Month->"月"),(Quarter->"季"))
 }
 
 object Query extends Controller {
@@ -44,7 +45,7 @@ object Query extends Controller {
       val monitorStrArray = monitorStr.split(':')
       val monitors = monitorStrArray.map { Monitor.withName }
       val monitorType = MonitorType.withName(monitorTypeStr)
-      val recordType = RecordType.withName(recordTypeStr)
+      val tabType = TableType.withName(recordTypeStr)
       val start = DateTime.parse(startStr, DateTimeFormat.forPattern("YYYY-MM-dd HH:mm"))
       val end = DateTime.parse(endStr, DateTimeFormat.forPattern("YYYY-MM-dd HH:mm"))
       val outputType = OutputType.withName(outputTypeStr)
@@ -53,7 +54,7 @@ object Query extends Controller {
       val pairs =
         for {
           m <- monitors
-          records = if (recordType == RecordType.Hour)
+          records = if (tabType == TableType.Hour)
             Record.getHourRecords(m, start, end)
           else
             Record.getMinRecords(m, start, end)
@@ -85,31 +86,46 @@ object Query extends Controller {
       val monitorStrArray = monitorStr.split(':')
       val monitors = monitorStrArray.map { Monitor.withName }
       val monitorType = MonitorType.withName(monitorTypeStr)
-      val recordType = RecordType.withName(recordTypeStr)
+      val tableType = TableType.withName(recordTypeStr)
       val start = DateTime.parse(startStr, DateTimeFormat.forPattern("YYYY-MM-dd HH:mm"))
       val end = DateTime.parse(endStr, DateTimeFormat.forPattern("YYYY-MM-dd HH:mm"))
       val outputType = OutputType.withName(outputTypeStr)
 
       var timeSet = Set[DateTime]()
       val pairs =
-        for {
-          m <- monitors
-          records = if (recordType == RecordType.Hour)
-            Record.getHourRecords(m, start, end)
-          else
-            Record.getMinRecords(m, start, end)
-
-          mtRecords = records.map { rs => (Record.timeProjection(rs).toDateTime, Record.monitorTypeProject2(monitorType)(rs)) }
-          timeMap = Map(mtRecords: _*)
-        } yield {
-          timeSet ++= timeMap.keySet
-          (m -> timeMap)
+        if (tableType == TableType.Hour || tableType == TableType.Min) {
+          for {
+            m <- monitors
+            records = if (tableType == TableType.Hour)
+              Record.getHourRecords(m, start, end)
+            else
+              Record.getMinRecords(m, start, end)
+            mtRecords = records.map { rs => (Record.timeProjection(rs).toDateTime, Record.monitorTypeProject2(monitorType)(rs)) }
+            timeMap = Map(mtRecords: _*)
+          } yield {
+            timeSet ++= timeMap.keySet
+            (m -> timeMap)
+          }
+        } else {
+          for {
+            m <- monitors
+            records = Record.getSecRecords(m, start, end)
+            mtRecords = records.flatMap { rs => Record.secRecordProject(monitorType)(rs)}              
+            timeMap = Map(mtRecords: _*)
+          } yield {
+            timeSet ++= timeMap.keySet
+            (m -> timeMap)
+          }
         }
 
       val recordMap = Map(pairs: _*)
 
       val title = "歷史資料查詢"
-      val output = views.html.historyReport(edit, monitors, monitorType, start, end, timeSet.toList.sorted, recordMap)
+      val output =
+        if(tableType == TableType.SixSec)
+          views.html.historyReport(edit, monitors, monitorType, start, end, timeSet.toList.sorted, recordMap, true)
+        else
+          views.html.historyReport(edit, monitors, monitorType, start, end, timeSet.toList.sorted, recordMap)
       outputType match {
         case OutputType.html =>
           Ok(output)
@@ -181,6 +197,8 @@ object Query extends Controller {
               m <- monitors
             } yield {
               reportUnit match {
+                case ReportUnit.EightHour=>
+                  m -> getPeriodReportMap(m, start, end, monitorStatusFilter, 8.hour)
                 case ReportUnit.Day =>
                   m -> Record.getDayReportMap(m, start, end, monitorStatusFilter)
                 case ReportUnit.Week=>
@@ -192,6 +210,8 @@ object Query extends Controller {
               }
             }
           reportUnit match {
+            case ReportUnit.EightHour=>
+              timeSet ++= Report.getPeriods(DateTime.parse(start.toString("YYYY-MM-dd")), DateTime.parse(end.toString("YYYY-MM-dd"))+1.day, 8.hour)
             case ReportUnit.Day =>
               timeSet ++= Report.getDays(DateTime.parse(start.toString("YYYY-MM-dd")), DateTime.parse(end.toString("YYYY-MM-dd")))
             case ReportUnit.Week =>
@@ -240,6 +260,8 @@ object Query extends Controller {
           case ReportUnit.Min =>
             t.toString("YYYY/MM/dd HH:mm")
           case ReportUnit.Hour =>
+            t.toString("YYYY/MM/dd HH:mm")
+          case ReportUnit.EightHour =>
             t.toString("YYYY/MM/dd HH:mm")
           case ReportUnit.Day =>
             t.toString("YYYY/MM/dd")
@@ -460,41 +482,51 @@ object Query extends Controller {
     val start = DateTime.parse(startStr)
     val end = DateTime.parse(endStr) + 1.day
 
-    val windMap = Record.getWindRose(monitor, start, end)
-    val dirMap = Map(
-      (0 -> "北"), (1 -> "北北東"), (2 -> "東北"), (3 -> "東北東"), (4 -> "東"),
-      (5 -> "東南東"), (6 -> "東南"), (7 -> "南南東"), (8 -> "南"),
-      (9 -> "南南西"), (10 -> "西南"), (11 -> "西西南"), (12 -> "西"),
-      (13 -> "西北西"), (14 -> "西北"), (15 -> "北北西"))
-    val dirStrSeq =
-      for (dir <- 0 to 15)
-        yield dirMap(dir)
+    try {
+      val windMap = Record.getWindRose(monitor, start, end)
+      Logger.debug("windMap size=" + windMap.size)
+      Logger.debug(windMap.toString)
+      val nRecord = windMap.values.map { _.length }.sum
+      Logger.debug("total size=" + nRecord)
 
-    val speedLevel = Array(
-      "<0.5 m/s", "0.5-2 m/s", "2-4 m/s", "4-6 m/s", "6-8 m/s", "8-10 m/s", ">10 m/s")
-
-    import Realtime._
-
-    val series = for {
-      level <- 0 to 6
-    } yield {
-      val data =
+      val dirMap = Map(
+        (0 -> "北"), (1 -> "北北東"), (2 -> "東北"), (3 -> "東北東"), (4 -> "東"),
+        (5 -> "東南東"), (6 -> "東南"), (7 -> "南南東"), (8 -> "南"),
+        (9 -> "南南西"), (10 -> "西南"), (11 -> "西西南"), (12 -> "西"),
+        (13 -> "西北西"), (14 -> "西北"), (15 -> "北北西"))
+      val dirStrSeq =
         for (dir <- 0 to 15)
-          yield windMap(dir)(level)
+          yield dirMap(dir)
 
-      seqData(speedLevel(level), data)
+      val speedLevel = Array(
+        "<0.5 m/s", "0.5-2 m/s", "2-4 m/s", "4-6 m/s", "6-8 m/s", "8-10 m/s", ">10 m/s")
+
+      import Realtime._
+
+      val series = for {
+        level <- 0 to 6
+      } yield {
+        val data =
+          for (dir <- 0 to 15)
+            yield windMap(dir)(level)
+
+        seqData(speedLevel(level), data)
+      }
+
+      val title = "風瑰圖"
+      val c = HighchartData(
+        scala.collection.immutable.Map("polar" -> "true", "type" -> "column"),
+        scala.collection.immutable.Map("text" -> title),
+        XAxis(Some(dirStrSeq)),
+        YAxis(None, AxisTitle(Some("")), None),
+        series)
+
+      Results.Ok(Json.toJson(c))
+    }catch{
+      case e:AssertionError=>
+        Logger.error(e.toString())
+        BadRequest("無資料")
     }
-
-    val title = "風瑰圖"
-    val c = HighchartData(
-      scala.collection.immutable.Map("polar" -> "true", "type" -> "column"),
-      scala.collection.immutable.Map("text" -> title),
-      XAxis(Some(dirStrSeq)),
-      YAxis(None, AxisTitle(Some("")), None),
-      series)
-
-    Results.Ok(Json.toJson(c))
-
   }
 
   def compareLastYear() = Security.Authenticated {

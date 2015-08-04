@@ -57,3 +57,13 @@
 .PSI3_BG {border: outset 1px #a0a0a0}
 .PSI4_BG {border: outset 1px #a0a0a0}
 .PSI5_BG {border: outset 1px #a0a0a0}
+
+.pdf {
+    color: red;
+    text-shadow: 3px 3px 3px #0;    
+}
+
+.excel {
+    color: blue;
+    text-shadow: 3px 3px 3px #0;    
+}
