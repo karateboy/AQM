@@ -74,7 +74,8 @@ case class MonitorType(id:String, desp:String, unit:String,
     std_internal:Option[Float], std_law:Option[Float], std_hour:Option[Float],
     std_day:Option[Float], std_year:Option[Float], 
     zd_internal:Option[Float], zd_law:Option[Float],
-    sd_internal:Option[Float], sd_law:Option[Float])
+    sd_internal:Option[Float], sd_law:Option[Float],
+    epa_mapping:Option[String])
     
 object MonitorType extends Enumeration{
   implicit val mtReads: Reads[MonitorType.Value] = EnumUtils.enumReads(MonitorType)
@@ -96,7 +97,8 @@ object MonitorType extends Enumeration{
           zd_internal = r.floatOpt(10),
           zd_law = r.floatOpt(11),
           sd_internal = r.floatOpt(12),
-          sd_law = r.floatOpt(13)
+          sd_law = r.floatOpt(13),
+          epa_mapping = r.stringOpt(14)
           )}.list.apply
     }
   

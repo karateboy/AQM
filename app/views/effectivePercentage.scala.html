@@ -1,4 +1,5 @@
 @* calibration Template File *@
+@import com.github.nscala_time.time.Imports._
 @(privilege: Privilege)
 <div class="row">
    	<div class="col-lg-12">
@@ -12,9 +13,9 @@
 	            			<label class="col-lg-1 control-label">查詢區間</label>	
 	            			<div class="col-lg-5">
 	            				<div class="input-daterange input-group" id="datepicker">
-                    				<span class="input-group-addon"><i class="fa fa-calendar"></i></span><input type="text" class="input-sm form-control" name="start" id="reportStart" required/>
+                    				<span class="input-group-addon"><i class="fa fa-calendar"></i></span><input type="text" class="input-sm form-control" name="start" id="reportStart" value='@((DateTime.now-1.month).toString("YYYY-MM-dd"))' required/>
                        				<span class="input-group-addon">至</span>
-                        			<input type="text" class="input-sm form-control" name="end" id="reportEnd" required/>                        
+                        			<input type="text" class="input-sm form-control" name="end" id="reportEnd" value='@(DateTime.now.toString("YYYY-MM-dd"))' required/>                        
                     			</div>                        
                     		</div>
 	            		</div>
@@ -29,7 +30,7 @@
         	<div class="panel panel-success" style="display:none" id="reportPanel">
             	<div class="panel-body panel-collapse" id="monitorReport">
             	    <div align="right">
-            			<label class="btn btn-outline" data-toggle="tooltip" data-placement="bottom" title="PDF"><a href="#" id="downloadPDF"><i class="fa fa-file-pdf-o fa-2x PDF" ></i></a></label>
+            			<label class="btn btn-outline" data-toggle="tooltip" data-placement="bottom" title="PDF"><a href="#" id="downloadPDF"><i class="fa fa-file-pdf-o fa-2x pdf" ></i></a></label>
             			<label class="btn btn-outline" data-toggle="tooltip" data-placement="bottom" title="Excel"><a href="#" id="downloadExcel"><i class="fa fa-file-excel-o fa-2x"></i></a></label>            			
                 	</div>
             	
@@ -86,6 +87,7 @@ $( document ).ready(function() {
 			success: function(result){
 				$('#reportDiv').html(result);
 				$("#downloadPDF").prop("href", "/PDF" + url);
+				$("#downloadExcel").prop("href", "/Excel" + url);
 				$("#reportPanel").collapse('show');
 			},
 			error: function(xhr, status, errorThrown){

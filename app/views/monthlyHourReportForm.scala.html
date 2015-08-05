@@ -1,11 +1,11 @@
 @* monthlyHourReportForm Template File *@
+@import com.github.nscala_time.time.Imports._
 @(privilege: Privilege)
 <div class="row">
    	<div class="col-lg-12">
-    	<div class="panel-group" id="accordion">
         	<div class="panel panel-primary" id="paramPanel">
             	<div class="panel-heading panel-title" >
-            		<a data-toggle="collapse" data-parent="#accordion" href="#reportParam">報表參數</a>	
+            		<a data-toggle="collapse" data-parent="#accordion" href="#reportParam">查詢參數</a>	
                 </div>
             	<div class="panel-body panel-collapse in" id="reportParam">
             		<form class="form-horizontal">
@@ -14,8 +14,14 @@
 	            			<div class="col-lg-11">
 	            				<div class="btn-group" data-toggle="buttons">	            					            				
 	            					@for(m<-Monitor.myMvList(privilege)){
-	            						<label class="btn btn-outline btn-primary dim">
+	            						@if(m == Monitor.myMvList(privilege).head){
+	            							<label class="btn btn-outline btn-primary dim active">
+											<input type="radio" name="monitor" id="@m" checked>@Monitor.getDisplayName(m)</label>
+	            						}else{
+	            							<label class="btn btn-outline btn-primary dim">
 											<input type="radio" name="monitor" id="@m">@Monitor.getDisplayName(m)</label>
+	            						}
+	            						
 	            					}
 	            				</div>
 	            			</div>	            			            		
@@ -25,8 +31,14 @@
 	            			<div class="col-lg-11">
 	            				<div class="btn-group" data-toggle="buttons">	            				
 	            				@for(mt<-MonitorType.myMtvList(privilege)){
-	            					<label class="btn btn-outline btn-primary dim">
+	            					@if(mt == MonitorType.myMtvList(privilege).head){
+	            						<label class="btn btn-outline btn-primary dim active">
+										<input type="radio" name="monitorType" id="@mt" checked>@MonitorType.map(mt).desp</label>
+	            					}else{
+	            						<label class="btn btn-outline btn-primary dim">
 										<input type="radio" name="monitorType" id="@mt">@MonitorType.map(mt).desp</label>
+	            					}
+	            					
 	            				}
 	            				</div>
 	            			</div>	            			            		
@@ -35,7 +47,8 @@
 	            			<label class="col-lg-1 control-label">查詢日期</label>
 	            			<div class="col-lg-5">
 	            				<div class="input-group date">
-  									<span class="input-group-addon"><i class="fa fa-calendar"></i></span><input type="text" class="form-control" id="reportDate" required>
+  									<span class="input-group-addon"><i class="fa fa-calendar"></i></span>
+  									<input type="text" class="form-control" id="reportDate" value='@((DateTime.now-1.day).toString("YYYY-MM-dd"))' required>
   								</div>
 	            			</div>	            			            		
 	                    </div>
@@ -48,21 +61,18 @@
             	</div>
         	</div>
         	<div class="panel panel-success" style="display:none" id="reportPanel">
-            	<div class="panel-heading panel-title"" >
-            		<a data-toggle="collapse" data-parent="#accordion" href="#monitorReport">月份時報表</a>	
-                </div>
             	<div class="panel-body panel-collapse" id="monitorReport">
-            	    <div align="left">
-            			<label class="btn btn-outline" data-toggle="tooltip" data-placement="bottom" title="PDF"><a href="#" id="downloadPDF"><i class="fa fa-file-pdf-o fa-2x"></i></a></label>
+            	    <div align="right">
+            			<label class="btn btn-outline" data-toggle="tooltip" data-placement="bottom" title="PDF"><a href="#" id="downloadPDF"><i class="fa fa-file-pdf-o fa-2x pdf"></i></a></label>
             			<label class="btn btn-outline" data-toggle="tooltip" data-placement="bottom" title="Excel"><a href="#" id="downloadExcel"><i class="fa fa-file-excel-o fa-2x"></i></a></label>            			
                 	</div>
             	
 					<div id="reportDiv" align="center" style="overflow-x:auto">
            			</div>
             	</div>
-        	</div> <!-- end of panel group -->
-    	</div>
+        	</div>
 	</div>
+</div>
 <script>
 $( document ).ready(function() {
 	$('#reportDate').datepicker({
@@ -115,7 +125,8 @@ $( document ).ready(function() {
 				
 				$('#reportDiv').html(result);
 	    		$("#downloadPDF").prop("href", "/PDF" + url);	    		
-
+				$("#downloadExcel").prop("href", "/Excel" + url);
+				
 				$('#reportTable').dataTable( {
 					ordering: false,
 					"dom": 'T<"clear">lfrtip',
@@ -123,7 +134,8 @@ $( document ).ready(function() {
 						url: '@routes.Assets.at("localization/zh_tw.json")',							
 					},
 					"tableTools": {
-        				"sSwfPath": "@routes.Assets.at("js/plugins/dataTables/swf/copy_csv_xls_pdf.swf")"
+        				"sSwfPath": "@routes.Assets.at("js/plugins/dataTables/swf/copy_csv_xls_pdf.swf")",
+        				"aButtons": ["copy", "print", "csv"]
         			},
 					"paging":   false,
 					"searching": false
@@ -138,19 +150,6 @@ $( document ).ready(function() {
 				$("body").css("cursor", "default");
 			}					
 		});
-		
-		/*
-		$("#reportDiv").load(url);
-		$("body").css("cursor", "default");
-		$( document ).ready(function() {
-			$('#reportTable').dataTable( {
-				language: {
-					url: '@routes.Assets.at("localization/zh_tw.json")'
-				},
-				"paging":   false
-			} );
-		});
-		*/
 	});
 });
 </script>

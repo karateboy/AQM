@@ -1,10 +1,11 @@
 @* calibration Template File *@
+@import com.github.nscala_time.time.Imports._
 @(privilege: Privilege)
 <div class="row">
    	<div class="col-lg-12">
         	<div class="panel panel-primary" id="paramPanel">
             	<div class="panel-heading panel-title" >
-            		<a data-toggle="collapse" data-parent="#accordion" href="#reportParam">報表參數</a>	
+            		<a data-toggle="collapse" data-parent="#accordion" href="#reportParam">查詢參數</a>	
                 </div>
             	<div class="panel-body panel-collapse in" id="reportParam">
             		<form class="form-horizontal">
@@ -14,8 +15,14 @@
 	            				<button id="select-all-monitors" class="btn btn-info" type="button">全選</button>
 	            				<div class="btn-group" data-toggle="buttons">	            					            				
 	            					@for(m<-Monitor.myMvList(privilege)){
-	            						<label class="btn btn-outline btn-primary dim">
+	            						@if(m == Monitor.myMvList(privilege).head){
+	            							<label class="btn btn-outline btn-primary dim active">
+												<input type="checkbox" name="monitor" id="@m" checked>@Monitor.getDisplayName(m)</label>
+	            						}else{
+	            							<label class="btn btn-outline btn-primary dim">
 												<input type="checkbox" name="monitor" id="@m">@Monitor.getDisplayName(m)</label>
+	            						}
+	            						
 	            					}
 	            				</div>
 	            			</div>	            			            		
@@ -35,9 +42,10 @@
 	            			<label class="col-lg-1 control-label">查詢區間</label>	
 	            			<div class="col-lg-5">
 	            				<div class="input-daterange input-group" id="datepicker">
-                    				<span class="input-group-addon"><i class="fa fa-calendar"></i></span><input type="text" class="input-sm form-control" name="start" id="reportStart" required/>
+                    				<span class="input-group-addon"><i class="fa fa-calendar"></i></span>
+                    				<input type="text" class="input-sm form-control" name="start" id="reportStart" value='@((DateTime.now-1.month).toString("YYYY-MM-dd"))' required/>
                        				<span class="input-group-addon">至</span>
-                        			<input type="text" class="input-sm form-control" name="end" id="reportEnd" required/>                        
+                        			<input type="text" class="input-sm form-control" name="end" id="reportEnd" value='@(DateTime.now.toString("YYYY-MM-dd"))' required/>                        
                     			</div>                        
                     		</div>
 	            		</div>
@@ -76,6 +84,7 @@ $( document ).ready(function() {
 	$('#datepicker').datepicker({
 		format: 'yyyy-mm-dd',
 	    todayBtn: "linked",
+	    defaultDate:0,
 	    language: "zh-TW"
 	});
 
@@ -160,7 +169,8 @@ $( document ).ready(function() {
             				"sSwfPath": "@routes.Assets.at("js/plugins/dataTables/swf/copy_csv_xls_pdf.swf")",
             				"aButtons": ["copy", "print", "csv", "xls"]
         				},
-        				"searching": false
+        				searching: false,
+        				paging: false
 					} );
 				});
 			},

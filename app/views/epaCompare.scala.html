@@ -1,22 +1,23 @@
-@* periodReport Template File *@
+@* epaCompare Template File *@
 @import com.github.nscala_time.time.Imports._
 @(privilege: Privilege)
+
 <div class="row">
    	<div class="col-lg-12">
         	<div class="panel panel-primary" id="paramPanel">
             	<div class="panel-heading panel-title" >
-            		<a data-toggle="collapse" href="#reportParam">查詢參數</a>	
+            		<a data-toggle="collapse" data-parent="#accordion" href="#reportParam">查詢參數</a>	
                 </div>
             	<div class="panel-body panel-collapse in" id="reportParam">
             		<form class="form-horizontal">
             			<div class="form-group">
-	            			<label class="col-lg-1 control-label">測站</label>
+	            			<label class="col-lg-1 control-label">台塑測站</label>
 	            			<div class="col-lg-11">
 	            				<div class="btn-group" data-toggle="buttons">	            					            				
 	            					@for(m<-Monitor.myMvList(privilege)){
 	            						@if(m == Monitor.myMvList(privilege).head){
 	            							<label class="btn btn-outline btn-primary dim active">
-											<input type="radio" name="monitor" id="@m" checked>@Monitor.getDisplayName(m)</label>	
+											<input type="radio" name="monitor" id="@m" checked>@Monitor.getDisplayName(m)</label>
 	            						}else{
 	            							<label class="btn btn-outline btn-primary dim">
 											<input type="radio" name="monitor" id="@m">@Monitor.getDisplayName(m)</label>
@@ -25,23 +26,28 @@
 	            				</div>
 	            			</div>	            			            		
 	                    </div>
-            			<div class="form-group">
-	            			<label class="col-lg-1 control-label">報表種類</label>
+	                    <div class="form-group">
+	            			<label class="col-lg-1 control-label">環保署測站</label>
 	            			<div class="col-lg-11">
 	            				<div class="btn-group" data-toggle="buttons">	            					            				
-	            					<label class="btn btn-outline btn-primary dim active">
-										<input type="radio" name="reportType" id="@PeriodReport.DailyReport" checked>日報</label>
-									<label class="btn btn-outline btn-primary dim">
-										<input type="radio" name="reportType" id="@PeriodReport.MonthlyReport">月報</label>
+	            					@for(m<-EpaMonitor.values.toList.sorted){
+	            						@if(m == EpaMonitor.epaList.head){
+	            							<label class="btn btn-outline btn-primary dim active">
+											<input type="radio" name="epaMonitor" id="@m" checked>@EpaMonitor.map(m).name</label>
+	            						}else{
+	            							<label class="btn btn-outline btn-primary dim">
+											<input type="radio" name="epaMonitor" id="@m">@EpaMonitor.map(m).name</label>
+	            						}	            						
+	            					}
 	            				</div>
 	            			</div>	            			            		
 	                    </div>
-            			<div class="form-group">
+	                    
+	                    <div class="form-group">
 	            			<label class="col-lg-1 control-label">查詢日期</label>
 	            			<div class="col-lg-5">
 	            				<div class="input-group date">
-  									<span class="input-group-addon"><i class="fa fa-calendar"></i></span>
-  									<input type="text" class="form-control" id="reportDate" value='@((DateTime.now-1.day).toString("YYYY-MM-dd"))' required>
+  									<span class="input-group-addon"><i class="fa fa-calendar"></i></span><input type="text" class="form-control" id="reportDate" value='@DateTime.now.toString("YYYY-MM-dd")' required>
   								</div>
 	            			</div>	            			            		
 	                    </div>
@@ -49,12 +55,12 @@
 							<div class="col-lg-1 col-lg-offset-1">
 								<button type="button" class="btn btn-primary" id="queryReport">查詢</button>
 							</div>							
-						</div>            			
+						</div>
             		</form>
             	</div>
         	</div>
         	<div class="panel panel-success" style="display:none" id="reportPanel">
-            	<div class="panel-body panel-collapse" id="monitorReport">
+             	<div class="panel-body panel-collapse" id="monitorReport">
             		<div align="right">
             			<label class="btn btn-outline" data-toggle="tooltip" data-placement="bottom" title="PDF"><a href="#" id="downloadPDF"><i class="fa fa-file-pdf-o fa-2x pdf"></i></a></label>
             			<label class="btn btn-outline" data-toggle="tooltip" data-placement="bottom" title="Excel"><a href="#" id="downloadExcel"><i class="fa fa-file-excel-o fa-2x"></i></a></label>            			
@@ -67,26 +73,18 @@
 	</div>
 </div>
 <script>
-$(document).ready(function() {
+$( document ).ready(function() {
 	$('#reportDate').datepicker({
 		format: 'yyyy-mm-dd',
 	    todayBtn: "linked",
 	    language: "zh-TW"
 	});
 
-	var monitor, reportType, reportDate;
+	var monitor, epaMonitor, reportDate;
 	
 	function validate(){
-		monitor = $("input[name='monitor']:checked").attr('id');
-		if (!monitor) {
-			alert('請選擇測站');
-			return false;
-		}
-		reportType = $("input[name='reportType']:checked").attr('id');
-		if (!reportType) {
-			alert('請選擇報表種類');
-			return false;
-		}
+		monitor = $("input[name='monitor']:checked").attr('id');		
+		epaMonitor = $("input[name='monitor']:checked").attr('id');
 		reportDate = $('#reportDate').val();
 		if(reportDate.length === 0){
 			alert('請選擇報表日期');
@@ -106,19 +104,17 @@ $(document).ready(function() {
 
 		$('#reportDiv').html('');
 		$("body").css("cursor", "progress");
-		var url = "/PsiQueryReport/"+monitor+"/"+reportType+"/"+reportDate;
-		 
+		console.log(JSON.stringify(obj));
+		var url="/epaCompareReport/"+monitor+"/"+epaMonitor +"/" +reportDate;
 		$.ajax({
-			url:url,
+			url: url,
 			data: "",
 			contentType: "application/json; charset=utf-8",
 			type: "GET",
 			dataType: "html",
 			success: function(result){
 				$('#reportDiv').html(result);
-				$("#downloadPDF").prop("href", "/PDF" + url);				
-				$("#downloadExcel").prop("href", "/Excel" + url);
-				
+
 				$('#reportTable').dataTable( {
 					responsive: true,
 					"dom": 'T<"clear">lfrtip',
@@ -130,8 +126,11 @@ $(document).ready(function() {
         				"aButtons": ["copy", "print", "csv"]
         			},
 					"paging":   false,
-					"searching": false				
-				});
+					"searching": false
+	    		} );
+	    		
+	    		$("#downloadPDF").prop("href", "/PDF" + url);
+				$("#downloadExcel").prop("href", "/Excel" + url);	    			    		
 			},
 			error: function(xhr, status, errorThrown){
 				console.log("錯誤訊息:" + status + "-" + errorThrown);

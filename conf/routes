@@ -14,6 +14,8 @@ POST	/authenticate				controllers.Login.authenticate
 
 GET		/monitorMonthlyHourReport/:monitor/:monitorType/:startDate	controllers.Report.monthlyHourReport(monitor, monitorType, startDate, outputTypeStr="html")
 GET		/PDF/monitorMonthlyHourReport/:monitor/:monitorType/:startDate	controllers.Report.monthlyHourReport(monitor, monitorType, startDate, outputTypeStr="pdf")
+GET		/Excel/monitorMonthlyHourReport/:monitor/:monitorType/:startDate	controllers.Report.monthlyHourReport(monitor, monitorType, startDate, outputTypeStr="excel")
+
 
 GET		/realtimeStatus				controllers.Realtime.realtimeStat(outputTypeStr = "html")
 GET		/PDF/realtimeStatus			controllers.Realtime.realtimeStat(outputTypeStr = "pdf")
@@ -31,10 +33,12 @@ GET		/Excel/monitorReport/:reportType/:monitor/:startDate	controllers.Report.mon
 GET		/PsiQuery					controllers.Report.psiReportPrompt
 GET		/PsiQueryReport/:monitor/:reportType/:start	controllers.Report.psiReportReport(monitor, reportType, start, outputTypeStr="html")
 GET		/PDF/PsiQueryReport/:monitor/:reportType/:start	controllers.Report.psiReportReport(monitor, reportType, start, outputTypeStr="pdf")
+GET		/Excel/PsiQueryReport/:monitor/:reportType/:start	controllers.Report.psiReportReport(monitor, reportType, start, outputTypeStr="excel")
 
 GET		/EffectiveQuery			controllers.Report.effectiveQuery
 GET		/EffectiveAnnualReport/:reportType/:start/:param	controllers.Report.effectiveAnnualReport(reportType, start, param, outputTypeStr="html")
 GET		/PDF/EffectiveAnnualReport/:reportType/:start/:param	controllers.Report.effectiveAnnualReport(reportType, start, param, outputTypeStr="pdf")
+GET		/Excel/EffectiveAnnualReport/:reportType/:start/:param	controllers.Report.effectiveAnnualReport(reportType, start, param, outputTypeStr="excel")
 
 GET		/HistoryQuery			controllers.Query.history
 GET		/HistoryQueryReport/:edit/:monitor/:monitorType/:recordType/:start/:end	controllers.Query.historyReport(edit:Boolean, monitor, monitorType, recordType, start, end, outputType="html")
@@ -80,6 +84,11 @@ GET		/MonitorTypeConfig			controllers.Application.monitorTypeConfig
 GET 	/RecordValidation			controllers.Application.recordValidation
 GET		/HTML/RecordValidation/:start	controllers.Application.recordValidationHtml(start)
 GET		/RealtimeEpaRecord			controllers.Application.realtimeEpaRecord
+
+GET		/epaCompare			controllers.Report.epaCompare
+GET		/epaCompareReport/:monitor/:epaMonitor/:reportDate controllers.Report.epaCompareReport(monitor, epaMonitor, reportDate, outputType="html")
+GET		/PDF/epaCompareReport/:monitor/:epaMonitor/:reportDate controllers.Report.epaCompareReport(monitor, epaMonitor, reportDate, outputType="pdf")
+GET		/Excel/epaCompareReport/:monitor/:epaMonitor/:reportDate controllers.Report.epaCompareReport(monitor, epaMonitor, reportDate, outputType="excel")
 
 GET		/UserManagement		controllers.Application.userManagement
 PUT		/User				controllers.Application.newUser

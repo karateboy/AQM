@@ -463,7 +463,7 @@ object Record {
       for{mt <- MonitorType.mtvList
         mtList = records.map(monitorTypeProject2(mt))  
         count = mtList.count(r=>(r._1.isDefined && r._2.isDefined && MonitorStatus.isNormalStat(r._2.get)))
-        }yield{
+        }yield{          
           (mt -> count.toFloat/expected_count)
         }
     val rateMap = Map(ratePair :_*)
@@ -510,82 +510,87 @@ object Record {
     }
     result.toList
   }
-  
-  def getStatMonitorEffectiveRate(rateList:List[MonitorEffectiveRate])={
-    val statList = 
-    for{mt <- MonitorType.mtvList
-      mtRateList = rateList.map(r=>r.rateMap(mt))
-      count = mtRateList.length
-      sum = mtRateList.sum
-      avg = sum/count
-    }
-    yield
-      (mt->Stat(avg, mtRateList.min, mtRateList.max, mtRateList.length, 12, 0))
-      
-    Map(statList :_*)
+
+  def getStatMonitorEffectiveRate(rateList: List[MonitorEffectiveRate]) = {
+    val statList =
+      for {
+        mt <- MonitorType.mtvList
+        mtRateList = rateList.map(r => r.rateMap(mt))
+        count = mtRateList.count(r => r != 0)
+        sum = mtRateList.sum
+        avg = if (count != 0)
+          sum / count else 0
+      } yield if (count != 0)
+        (mt -> Stat(avg, mtRateList.filter { _ != 0 }.min, mtRateList.max, count, mtRateList.length, 0))
+      else
+        (mt -> Stat(avg, 0, 0, count, mtRateList.length, 0))
+
+    Map(statList: _*)
   }
-  
-  def getStatYearlyMonthlyEffectiveRate(rateList:List[MonitorTypeEffectiveRate])={
-    val statList = 
-    for{m <- Monitor.mvList
-      mRateList = rateList.map(r=>r.rateMap(m))
-      count = mRateList.length
-      sum = mRateList.sum
-      avg = sum/count
-    }
-    yield
-      (m->Stat(avg, mRateList.min, mRateList.max, mRateList.length, 12, 0))
-      
-    Map(statList :_*)
+
+  def getStatYearlyMonthlyEffectiveRate(rateList: List[MonitorTypeEffectiveRate]) = {
+    val statList =
+      for {
+        m <- Monitor.mvList
+        mRateList = rateList.map(r => r.rateMap(m))
+        count = mRateList.count(r => r != 0)
+        sum = mRateList.sum
+        avg = if (count != 0)
+          sum / count else 0
+      } yield if (count != 0)
+        (m -> Stat(avg, mRateList.filter { _ != 0 }.min, mRateList.max, count, mRateList.length, 0))
+      else
+        (m -> Stat(avg, 0, 0, count, mRateList.length, 0))
+
+    Map(statList: _*)
   }
-  
-  def getWindRose(monitor:Monitor.Value, start:DateTime, end:DateTime, nDiv:Int=16)={
+
+  def getWindRose(monitor: Monitor.Value, start: DateTime, end: DateTime, nDiv: Int = 16) = {
     val records = getHourRecords(monitor, start, end)
-    val windRecords = records.map { r => (r.wind_dir, r.wind_speed)}
+    val windRecords = records.map { r => (r.wind_dir, r.wind_speed) }
     assert(windRecords.length != 0)
-    
-    val step = 360f/nDiv
+
+    val step = 360f / nDiv
     import scala.collection.mutable.ListBuffer
-    val windDirPair = 
-      for(d <- 0 to nDiv -1)
-        yield{
+    val windDirPair =
+      for (d <- 0 to nDiv - 1) yield {
         (d -> ListBuffer[Float]())
       }
-    val windMap = Map(windDirPair :_*)
-    
+    val windMap = Map(windDirPair: _*)
+
     var total = 0
-    for(w <- windRecords){
-      if(w._1.isDefined && w._2.isDefined){
-        val dir = (w._1.get/step).toInt
-        windMap(dir)+=w._2.get
-        total+=1
+    for (w <- windRecords) {
+      if (w._1.isDefined && w._2.isDefined) {
+        val dir = (w._1.get / step).toInt
+        windMap(dir) += w._2.get
+        total += 1
       }
     }
-    
-    def winSpeedPercent(winSpeedList:ListBuffer[Float])={
+
+    def winSpeedPercent(winSpeedList: ListBuffer[Float]) = {
       val count = new Array[Float](7)
-      for(w <- winSpeedList){
-        if(w<0.5)
-          count(0)+=1
-        else if(w<2)
-          count(1)+=1
-        else if(w<4)
-          count(2)+=1
-        else if(w<6)
-          count(3)+=1
-        else if(w<8)
-          count(4)+=1
-        else if(w<10)
-          count(5)+=1
+      for (w <- winSpeedList) {
+        if (w < 0.5)
+          count(0) += 1
+        else if (w < 2)
+          count(1) += 1
+        else if (w < 4)
+          count(2) += 1
+        else if (w < 6)
+          count(3) += 1
+        else if (w < 8)
+          count(4) += 1
+        else if (w < 10)
+          count(5) += 1
         else
-          count(6)+=1
+          count(6) += 1
       }
-      
+
       assert(total != 0)
-      count.map(_*100/total)
+      count.map(_ * 100 / total)
     }
-    
-    windMap.map(kv=>(kv._1, winSpeedPercent(kv._2)))
+
+    windMap.map(kv => (kv._1, winSpeedPercent(kv._2)))
   }
 
   def getLastYearCompareList(monitor: Monitor.Value, monitorType: MonitorType.Value, start: DateTime, end: DateTime) = {
@@ -602,15 +607,13 @@ object Record {
           checkList.head :: checkHourRecord(checkTime + 1.hour, endTime, checkList.tail)
       }
     }
-    
+
     val records = checkHourRecord(start, end, getHourRecords(monitor, start, end))
-    
-    val typeRecords =  records.map {
+
+    val typeRecords = records.map {
       r => (timeProjection(r), monitorTypeProject2(monitorType)(r)._1.getOrElse(0f))
     }
 
-
-    
     val lastYearRecords = checkHourRecord(start, end, getHourRecords(monitor, lastYearStart, lastYearEnd))
     val typeLastYearRecords = lastYearRecords.map {
       r => (timeProjection(r), monitorTypeProject2(monitorType)(r)._1.getOrElse(0f))
@@ -618,7 +621,7 @@ object Record {
 
     (typeRecords, typeLastYearRecords)
   }
-  
+
   def getRegressionData(monitor: Monitor.Value, monitorType: MonitorType.Value, start: DateTime, end: DateTime) = {
 
     def checkHourRecord(checkTime: DateTime, endTime: DateTime, checkList: List[HourRecord]): List[HourRecord] = {
@@ -631,24 +634,28 @@ object Record {
           checkList.head :: checkHourRecord(checkTime + 1.hour, endTime, checkList.tail)
       }
     }
-    
+
     val records = checkHourRecord(start, end, getHourRecords(monitor, start, end))
-    
-    val typeRecords =  records.map {
+
+    val typeRecords = records.map {
       r => (timeProjection(r), monitorTypeProject2(monitorType)(r)._1.getOrElse(0f))
     }
 
     typeRecords
   }
-    
-  def getTabName(tab:TableType.Value, year:Int)={
+
+  def getTabName(tab: TableType.Value, year: Int) = {
     tab match {
       case TableType.Hour =>
         SQLSyntax.createUnsafely(s"[AQMSDB].[dbo].[P1234567_Hr_${year}]")
-      case TableType.Min=>
+      case TableType.Min =>
         SQLSyntax.createUnsafely(s"[AQMSDB].[dbo].[P1234567_M1_${year}]")
-      case TableType.SixSec=>
+      case TableType.SixSec =>
         SQLSyntax.createUnsafely(s"[AQMSDB].[dbo].[P1234567_S6_${year}]")
-    }     
+    }
+  }
+  
+  def compareEpaReport(monitor:Monitor.Value, epaMonitor:EpaMonitor.Value, start:DateTime, end:DateTime)={
+    
   }
 }

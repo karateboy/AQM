@@ -45,7 +45,7 @@
            						@for(tt<-TableType.values.toList.sorted){
            							@if(tt == TableType.values.toList.sorted.last){
            								<label class="btn btn-outline btn-primary dim active">
-										<input type="radio" name="tableType" id="@tt">@TableType.map(tt)</label>
+										<input type="radio" name="tableType" id="@tt" checked>@TableType.map(tt)</label>
            							}else{
            								<label class="btn btn-outline btn-primary dim">
 										<input type="radio" name="tableType" id="@tt">@TableType.map(tt)</label>

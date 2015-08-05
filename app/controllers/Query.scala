@@ -545,26 +545,32 @@ object Query extends Controller {
       val start = DateTime.parse(startStr)
       val end = DateTime.parse(endStr) + 1.day
 
-      val (thisYearRecord, lastYearRecord) = Record.getLastYearCompareList(monitor, monitorType, start, end)
+      try {
+        val (thisYearRecord, lastYearRecord) = Record.getLastYearCompareList(monitor, monitorType, start, end)
 
-      val title = s"${Monitor.map(monitor).name} ${MonitorType.map(monitorType).desp}同期比較圖"
+        val title = s"${Monitor.map(monitor).name} ${MonitorType.map(monitorType).desp}同期比較圖"
 
-      val timeStrSeq = thisYearRecord.map(_._1.toDateTime.toString("MM-dd hh:00"))
-      val (t1, v1) = thisYearRecord.unzip
-      val (t2, v2) = lastYearRecord.unzip
+        val timeStrSeq = thisYearRecord.map(_._1.toDateTime.toString("MM-dd hh:00"))
+        val (t1, v1) = thisYearRecord.unzip
+        val (t2, v2) = lastYearRecord.unzip
 
-      import Realtime._
+        import Realtime._
 
-      val series = Seq(seqData(start.getYear.toString(), v1), seqData((start - 1.year).getYear.toString(), v2))
+        val series = Seq(seqData(start.getYear.toString(), v1), seqData((start - 1.year).getYear.toString(), v2))
 
-      val c = HighchartData(
-        scala.collection.immutable.Map("type" -> "line"),
-        scala.collection.immutable.Map("text" -> title),
-        XAxis(Some(timeStrSeq)),
-        YAxis(None, AxisTitle(Some("")), None),
-        series)
+        val c = HighchartData(
+          scala.collection.immutable.Map("type" -> "line"),
+          scala.collection.immutable.Map("text" -> title),
+          XAxis(Some(timeStrSeq)),
+          YAxis(None, AxisTitle(Some("")), None),
+          series)
 
-      Results.Ok(Json.toJson(c))
+        Results.Ok(Json.toJson(c))
+
+      } catch {
+        case ex: Exception =>
+          BadRequest(ex.toString())
+      }
   }
 
   def calculateStat() = Security.Authenticated {
