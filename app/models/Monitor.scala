@@ -134,4 +134,18 @@ object MonitorType extends Enumeration{
         "C211", "C212", "C214", "C215", "C216", "C213")
     name.map { MonitorType.withName }
   }
+  
+  val epaList = {
+    val name=List("A214", "A215", "A222", "A223", "A224", "A225", "A226", "A283", "A286", "A293", "A296", "C211", "C212", "C213", "C214", "C215")
+    name.map { MonitorType.withName }
+  }
+  
+  val epaReportList ={
+    val name=List("C212", "A222", "A293", "A224", "A225", "A214", "A226", "A296")
+    name.map { MonitorType.withName }
+  }
+  
+  val epaMap={
+    map.filter(p=>p._2.epa_mapping.isDefined).map(kv=>(kv._2.epa_mapping.get, kv._1))
+  }
 }

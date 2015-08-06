@@ -84,7 +84,7 @@ $( document ).ready(function() {
 	
 	function validate(){
 		monitor = $("input[name='monitor']:checked").attr('id');		
-		epaMonitor = $("input[name='monitor']:checked").attr('id');
+		epaMonitor = $("input[name='epaMonitor']:checked").attr('id');
 		reportDate = $('#reportDate').val();
 		if(reportDate.length === 0){
 			alert('請選擇報表日期');
@@ -103,8 +103,7 @@ $( document ).ready(function() {
 		$("#reportPanel").collapse('show');
 
 		$('#reportDiv').html('');
-		$("body").css("cursor", "progress");
-		console.log(JSON.stringify(obj));
+		$("body").css("cursor", "progress");		
 		var url="/epaCompareReport/"+monitor+"/"+epaMonitor +"/" +reportDate;
 		$.ajax({
 			url: url,
@@ -115,8 +114,8 @@ $( document ).ready(function() {
 			success: function(result){
 				$('#reportDiv').html(result);
 
-				$('#reportTable').dataTable( {
-					responsive: true,
+				/*
+				$('#reportTable').dataTable( {					
 					"dom": 'T<"clear">lfrtip',
 					language: {
 						url: '@routes.Assets.at("localization/zh_tw.json")',							
@@ -128,6 +127,7 @@ $( document ).ready(function() {
 					"paging":   false,
 					"searching": false
 	    		} );
+	    		*/
 	    		
 	    		$("#downloadPDF").prop("href", "/PDF" + url);
 				$("#downloadExcel").prop("href", "/Excel" + url);	    			    		

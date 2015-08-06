@@ -1,0 +1,75 @@
+@* epaCompareReport Template File *@
+@import controllers.Report._
+@import models.Record._
+@import com.github.nscala_time.time.Imports._
+@(monitor:Monitor.Value, epaMonitor:EpaMonitor.Value, reportDate:DateTime, myMap:Map[MonitorType.Value, (Map[DateTime, (Option[Float], Option[String])], Stat)], epaMap: Map[MonitorType.Value, (Map[DateTime, EpaHourRecord], Stat)], hours:List[DateTime])
+
+<h3>測站比較報表</h3>
+<h4>監測站:@Monitor.map(monitor).name 環保署測站:@EpaMonitor.map(epaMonitor).name</h4>
+<h4>日期:@reportDate.toString("yyyy年MM月dd日")</h4>
+
+<table id="reportTable" class="table" cellspacing="0" width="100%">
+	<thead>
+		<tr>
+			<th>測項</th>
+			<th>測站</th>
+			@for(t<- 0 to hours.length-1){
+				<td>@t</td>
+			}
+			<th>最大</th>
+			<th>最小</th>
+			<th>平均</th>
+		</tr>
+	</thead>
+	<tbody>
+		@for(mt<-MonitorType.epaReportList){
+			<tr>
+				<td rowspan="2">@MonitorType.map(mt).desp</td>
+				<td>@Monitor.map(monitor).name</td>
+				@for(h<-hours){
+					@if(myMap(mt)._1.get(h).isEmpty){
+						<td>-</td>
+					}else{
+						@if(myMap(mt)._1(h)._1.isEmpty){
+							<td>-</td>
+						}else{
+							<td>@("%.1f".format(myMap(mt)._1(h)._1.get))</td>
+						}
+					}
+				}
+				@if(myMap(mt)._2.count ==0){
+					<td>-</td>
+					<td>-</td>
+					<td>-</td>
+				}else{
+					<td>@("%.1f".format(myMap(mt)._2.max))</td>
+					<td>@("%.1f".format(myMap(mt)._2.min))</td>
+					<td>@("%.1f".format(myMap(mt)._2.avg))</td>
+				}
+									
+			</tr>
+			<tr>
+				<td>@EpaMonitor.map(epaMonitor).name</td>
+				@for(h<-hours){
+					@if(epaMap(mt)._1.get(h).isEmpty){
+						<td>-</td>
+					}else{
+						<td>@("%.1f".format(epaMap(mt)._1(h).value))</td>
+					}
+				}
+				@if(epaMap(mt)._2.count == 0){
+					<td>-</td>
+					<td>-</td>
+					<td>-</td>
+				}else{
+					<td>@("%.1f".format(epaMap(mt)._2.max))</td>
+					<td>@("%.1f".format(epaMap(mt)._2.min))</td>
+					<td>@("%.1f".format(epaMap(mt)._2.avg))</td>
+				}
+				
+			</tr>
+		}
+	</tbody>
+</table>            		
+ 
+

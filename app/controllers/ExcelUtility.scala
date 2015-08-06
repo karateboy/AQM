@@ -118,15 +118,13 @@ object ExcelUtility {
     val (reportFilePath, pkg, wb) = prepareTemplate("monthly_report.xlsx")
     val evaluator = wb.getCreationHelper().createFormulaEvaluator()
 
-    val titleCell = wb.getSheetAt(2).getRow(2)
-
-    val calColor = wb.getSheetAt(2).getRow(2).getCell(17).getCellStyle.getFillBackgroundColor
-    val repairColor = wb.getSheetAt(2).getRow(2).getCell(18).getCellStyle.getFillBackgroundColor
-    val maintanceColor = wb.getSheetAt(2).getRow(2).getCell(19).getCellStyle.getFillBackgroundColor
-    val invalidColor = wb.getSheetAt(2).getRow(2).getCell(20).getCellStyle.getFillBackgroundColor
-    val dataLostColor = wb.getSheetAt(2).getRow(2).getCell(21).getCellStyle.getFillBackgroundColor
+    val calStyle = wb.getSheetAt(2).getRow(2).getCell(17).getCellStyle
+    val repairStyle = wb.getSheetAt(2).getRow(2).getCell(18).getCellStyle
+    val maintanceStyle = wb.getSheetAt(2).getRow(2).getCell(19).getCellStyle
+    val invalidStyle = wb.getSheetAt(2).getRow(2).getCell(20).getCellStyle
+    val dataLostStyle = wb.getSheetAt(2).getRow(2).getCell(21).getCellStyle
     val defaultStyle = wb.getSheetAt(2).getRow(4).getCell(1).getCellStyle
-    val invalidStyle = wb.getSheetAt(2).getRow(4).getCell(1).getCellStyle
+
 
     def fillEffectSheet(sheet: XSSFSheet) = {
       val titleRow = sheet.getRow(2)
@@ -214,28 +212,22 @@ object ExcelUtility {
         val (date, valueOpt, statusOpt) = cellData
         if (valueOpt.isEmpty || statusOpt.isEmpty) {
           cell.setCellValue("-")
-          invalidStyle.setFillBackgroundColor(dataLostColor)
-          cell.setCellStyle(invalidStyle)
+          cell.setCellStyle(dataLostStyle)
         } else {
           val value = valueOpt.get
           val status = statusOpt.get
           cell.setCellValue(value)
           val style =
             if (MonitorStatus.isCalbration(status)) {
-              invalidStyle.setFillBackgroundColor(calColor)
-              invalidStyle
+              calStyle
             } else if (MonitorStatus.isRepairing(status)) {
-              invalidStyle.setFillBackgroundColor(repairColor)
-              invalidStyle
+              repairStyle
             } else if (MonitorStatus.isMaintance(status)) {
-              invalidStyle.setFillBackgroundColor(maintanceColor)
-              invalidStyle
+              maintanceStyle
             } else if (MonitorStatus.isInvalidData(status)) {
-              invalidStyle.setFillBackgroundColor(invalidColor)
               invalidStyle
             } else if (MonitorStatus.isDataLost(status)) {
-              invalidStyle.setFillBackgroundColor(dataLostColor)
-              invalidStyle
+              dataLostStyle
             } else if (MonitorStatus.isNormal(status))
               defaultStyle
             else
@@ -577,6 +569,98 @@ object ExcelUtility {
     }
 
     finishExcel(reportFilePath, pkg, wb)
+  }
 
+  def epaCompareReport(monitor: Monitor.Value, epaMonitor: EpaMonitor.Value, reportDate: DateTime, myMap: Map[MonitorType.Value, (Map[DateTime, (Option[Float], Option[String])], Stat)], epaMap: Map[MonitorType.Value, (Map[DateTime, EpaHourRecord], Stat)], hours: List[DateTime]) = {
+    val (reportFilePath, pkg, wb) = prepareTemplate("epa_compare.xlsx")
+    val evaluator = wb.getCreationHelper().createFormulaEvaluator()
+
+    val sheet = wb.getSheetAt(0)
+    sheet.getRow(2).getCell(0).setCellValue("測站:" + Monitor.map(monitor).name + "/環保署測站:" + EpaMonitor.map(epaMonitor).name)
+    sheet.getRow(1).getCell(24).setCellValue("查詢日期:" + DateTime.now.toString("YYYY/MM/dd"))
+    sheet.getRow(2).getCell(24).setCellValue("資料日期:" + reportDate.toString("YYYY年MM月dd"))
+
+    val calStyle = wb.getSheetAt(0).getRow(2).getCell(10).getCellStyle
+    val repairStyle = wb.getSheetAt(0).getRow(2).getCell(12).getCellStyle
+    val maintanceStyle = wb.getSheetAt(0).getRow(2).getCell(14).getCellStyle
+    val invalidStyle = wb.getSheetAt(0).getRow(2).getCell(16).getCellStyle
+    val dataLostStyle = wb.getSheetAt(0).getRow(2).getCell(18).getCellStyle
+    val defaultStyle = wb.getSheetAt(0).getRow(5).getCell(2).getCellStyle
+
+    for {
+      mt <- MonitorType.epaReportList.zipWithIndex
+      row = mt._2 * 2 + 5
+    } {
+      sheet.getRow(row).getCell(1).setCellValue(Monitor.map(monitor).name)
+      sheet.getRow(row+1).getCell(1).setCellValue(EpaMonitor.map(epaMonitor).name)      
+      for {
+        hr <- hours.zipWithIndex
+        col = hr._2 + 2
+        cell = sheet.getRow(row).getCell(col)
+      } {
+        val vOpt = myMap(mt._1)._1.get(hr._1)        
+        if (vOpt.isDefined) {
+          val p = vOpt.get          
+          cell.setCellValue(p._1.get)
+          val status = p._2.get
+          val style =
+            if (MonitorStatus.isCalbration(status)) {
+              calStyle
+            } else if (MonitorStatus.isRepairing(status)) {
+              repairStyle
+            } else if (MonitorStatus.isMaintance(status)) {
+              maintanceStyle
+            } else if (MonitorStatus.isInvalidData(status)) {
+              invalidStyle
+            } else if (MonitorStatus.isDataLost(status)) {
+              dataLostStyle
+            } else if (MonitorStatus.isNormal(status))
+              defaultStyle
+            else
+              invalidStyle
+          cell.setCellStyle(style)
+        }else{
+          cell.setCellValue("-")
+          cell.setCellStyle(dataLostStyle)
+        }        
+      }
+      
+      if(myMap(mt._1)._2.count !=0){
+        val stat = myMap(mt._1)._2
+        sheet.getRow(row).getCell(26).setCellValue(stat.min)
+        sheet.getRow(row).getCell(27).setCellValue(stat.max)
+        sheet.getRow(row).getCell(28).setCellValue(stat.avg)
+      }else{
+        sheet.getRow(row).getCell(26).setCellValue("-")
+        sheet.getRow(row).getCell(27).setCellValue("-")
+        sheet.getRow(row).getCell(28).setCellValue("-")
+      }
+      
+      for {
+        hr <- hours.zipWithIndex
+        col = hr._2 + 2
+        cell = sheet.getRow(row+1).getCell(col)
+      } {
+         val vOpt = epaMap(mt._1)._1.get(hr._1) 
+         if(vOpt.isEmpty){
+           cell.setCellValue("-")
+         }else{
+           val epaRecord = vOpt.get
+           cell.setCellValue(epaRecord.value)
+         }
+      } 
+      
+      if(epaMap(mt._1)._2.count !=0){
+        val stat = epaMap(mt._1)._2
+        sheet.getRow(row+1).getCell(26).setCellValue(stat.min)
+        sheet.getRow(row+1).getCell(27).setCellValue(stat.max)
+        sheet.getRow(row+1).getCell(28).setCellValue(stat.avg)
+      }else{
+        sheet.getRow(row+1).getCell(26).setCellValue("-")
+        sheet.getRow(row+1).getCell(27).setCellValue("-")
+        sheet.getRow(row+1).getCell(28).setCellValue("-")
+      }      
+    }
+    finishExcel(reportFilePath, pkg, wb)
   }
 }

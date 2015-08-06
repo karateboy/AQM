@@ -725,22 +725,41 @@ object Report extends Controller {
       Ok(views.html.epaCompare(group.privilege))
   }
 
-  def epaCompareReport(monitorStr:String, epaMonitorStr:String, reportDateStr:String, outputTypeStr: String) = Security.Authenticated {
+  def epaCompareReport(monitorStr: String, epaMonitorStr: String, reportDateStr: String, outputTypeStr: String) = Security.Authenticated {
     implicit request =>
       val monitor = Monitor.withName(monitorStr)
       val epaMonitor = EpaMonitor.withName(epaMonitorStr)
       val reportDate = DateTime.parse(reportDateStr)
       val outputType = OutputType.withName(outputTypeStr)
-      
-      val mRecord = Record.getHourRecords(monitor, reportDate, reportDate + 1.day)
-      if (outputType == OutputType.excel) {
-        
-      }else{
-        
+
+      val (myMap, epaMap) = Record.compareEpaReport(monitor, epaMonitor, reportDate, reportDate + 1.day)
+      def getHours(current: DateTime, endTime: DateTime): List[DateTime] = {
+        if (current >= endTime)
+          Nil
+        else
+          current :: getHours(current + 1.hour, endTime)
       }
 
-      
-      Ok("")
+      val hours = getHours(reportDate, reportDate + 1.day)
+
+      if (outputType == OutputType.excel) {
+        val excelFile = ExcelUtility.epaCompareReport(monitor, epaMonitor, reportDate, myMap, epaMap, hours)
+        
+        Ok.sendFile(excelFile, fileName = _ =>
+          play.utils.UriEncoding.encodePathSegment("測站比較表" + reportDate.toString("YYMMdd") + ".xlsx", "UTF-8"),
+          onClose = () => { Files.deleteIfExists(excelFile.toPath()) })
+      } else {
+        val output = views.html.epaCompareReport(monitor, epaMonitor, reportDate, myMap, epaMap, hours)
+        val title = "測站比較報表"
+        outputType match {
+          case OutputType.html =>
+            Ok(output)
+          case OutputType.pdf =>
+            Ok.sendFile(creatPdfWithReportHeader(title, output),
+              fileName = _ =>
+                play.utils.UriEncoding.encodePathSegment(title + reportDate.toString("YYYY-MM-dd") + ".pdf", "UTF-8"))
+        }
+      }      
   }
 }
 
