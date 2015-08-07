@@ -67,7 +67,7 @@ object Query extends Controller {
 
       val recordMap = Map(pairs: _*)
 
-      val title = "歷史資料查詢"
+      val title = "無效資料查詢"
       val output = views.html.historyReport(false, monitors, monitorType, start, end, timeSet.toList.sorted, recordMap)
       outputType match {
         case OutputType.html =>
@@ -200,7 +200,8 @@ object Query extends Controller {
                 case ReportUnit.EightHour=>
                   m -> getPeriodReportMap(m, start, end, monitorStatusFilter, 8.hour)
                 case ReportUnit.Day =>
-                  m -> Record.getDayReportMap(m, start, end, monitorStatusFilter)
+                  //m -> Record.getDayReportMap(m, start, end, monitorStatusFilter)
+                  m -> getPeriodReportMap(m, start, end, monitorStatusFilter, 1.day)
                 case ReportUnit.Week=>
                   m -> getWeeklyReportMap(m, start, end, monitorStatusFilter)
                 case ReportUnit.Month =>
@@ -484,10 +485,7 @@ object Query extends Controller {
 
     try {
       val windMap = Record.getWindRose(monitor, start, end)
-      Logger.debug("windMap size=" + windMap.size)
-      Logger.debug(windMap.toString)
       val nRecord = windMap.values.map { _.length }.sum
-      Logger.debug("total size=" + nRecord)
 
       val dirMap = Map(
         (0 -> "北"), (1 -> "北北東"), (2 -> "東北"), (3 -> "東北東"), (4 -> "東"),

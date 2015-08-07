@@ -2,17 +2,11 @@
 @import Calibration._
 @(report:Seq[CalibrationItem])
 
-<div class="row">
-	<div class="col-lg-12">
-		<h1 class="page-header">校正資料查詢</h1>
-		<h3><a></a></h3>
-	</div>
-</div>
 <p>顏色說明</p>
 <span style="color:blue">超過內控值</span>
 <span style="color:red">超過法規值</span>
 
-<table id="calibrationReport" class="table">
+<table id="calibrationReport" class="table compact">
 	<thead>
 		<tr>
 			<th rowspan='2'>測站名稱</th>
@@ -40,7 +34,7 @@
 				<td>@Monitor.map(item.monitor).name</td>
 				<td>@MonitorType.map(item.monitorType).desp</td>
 				<td>@item.startTime.toString("yyyy-MM-dd hh:mm")</td>				
-				@if(item.endTime.getDayOfYear == item.startTime.getDayOfYear){
+				@if(item.endTime.getDayOfYear != item.startTime.getDayOfYear){
 					<td>@item.endTime.toString("yyyy-MM-dd hh:mm")</td>
 				}else{
 					<td>@item.endTime.toString("hh:mm")</td>

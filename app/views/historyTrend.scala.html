@@ -14,8 +14,14 @@
 	            				<button id="select-all-monitors" class="btn btn-info" type="button">全選</button>
 	            				<div class="btn-group" data-toggle="buttons">	            					            				
 	            					@for(m<-Monitor.myMvList(privilege)){
-	            						<label class="btn btn-outline btn-primary dim">
-												<input type="checkbox" name="monitor" id="@m">@Monitor.getDisplayName(m)</label>
+	            						@if(m == Monitor.myMvList(privilege).head){
+	            							<label class="btn btn-outline btn-primary dim active">
+											<input type="checkbox" name="monitor" id="@m" checked>@Monitor.getDisplayName(m)</label>
+	            						}else{
+	            							<label class="btn btn-outline btn-primary dim">
+											<input type="checkbox" name="monitor" id="@m">@Monitor.getDisplayName(m)</label>
+	            						}
+	            						
 	            					}
 	            				</div>
 	            			</div>	            			            		
@@ -26,8 +32,13 @@
 	            				<button id="select-all-monitorTypes" class="btn btn-info" type="button">全選</button>
 	            				<div class="btn-group" data-toggle="buttons">	            				
 	            				@for(mt<-MonitorType.myMtvList(privilege)){
-	            					<label class="btn btn-outline btn-primary dim">
+	            					@if(mt == MonitorType.myMtvList(privilege).head){
+	            						<label class="btn btn-outline btn-primary dim active">
+										<input type="checkbox" name="monitorType" id="@mt" checked>@MonitorType.map(mt).desp</label>	
+	            					}else{
+	            						<label class="btn btn-outline btn-primary dim">
 										<input type="checkbox" name="monitorType" id="@mt">@MonitorType.map(mt).desp</label>
+	            					}	            					
 	            				}
 	            				</div>
 	            			</div>	            			            		

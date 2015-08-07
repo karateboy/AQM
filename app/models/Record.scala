@@ -339,30 +339,25 @@ object Record {
       current :: getDays(current + 1.days, endTime)
   }
 
-  def getDayReportMap(monitor: Monitor.Value, start: DateTime, end: DateTime, filter: MonitorStatusFilter.Value) = {
-    val adjustStart = DateTime.parse(start.toString("YYYY-MM-dd"))
-    val adjustEnd = DateTime.parse(end.toString("YYYY-MM-dd"))
-    val days = getDays(adjustStart, adjustEnd)
-    val nDay = days.length
-    val dailyReports =
-      for { day <- days } yield {
-        (day -> Record.getDailyReport(monitor, day, MonitorType.mtvAllList, filter))
-      }
 
-    import scala.collection.mutable.Map
-    val map = Map.empty[MonitorType.Value, Map[DateTime, (Option[Float], Option[String])]]
-
-    for {
-      (day, report) <- dailyReports
-      t <- report.typeList
-    } {
-      val dateMap = map.getOrElse(t.monitorType, Map.empty[DateTime, (Option[Float], Option[String])])
-      dateMap.put(day, (Some(t.stat.avg), Some(MonitorStatusFilter.statusMap(filter))))
-      map.put(t.monitorType, dateMap)
+  def windAvg(sum_sin:Double, sum_cos:Double)={
+    if(Math.abs(sum_cos) <= 0.00001){
+      if(sum_sin >0)
+        90
+      else
+        270
+    }else{
+      val degree = Math.toDegrees(Math.atan(sum_sin / sum_cos)).toFloat
+      if(sum_sin >0 && sum_cos >0)
+        degree
+      else if(sum_sin >0 && sum_cos <0)
+        degree + 180
+      else if(sum_sin <0 && sum_cos >0)
+        degree + 360
+      else
+        degree + 180
     }
-    map
   }
-
   def getDailyReport(monitor: Monitor.Value, start: DateTime, includeTypes: List[MonitorType.Value] = MonitorType.monitorReportList,
                      monitorStatusFilter: MonitorStatusFilter.Value = MonitorStatusFilter.Normal) = {
     DB localTx { implicit session =>
@@ -424,11 +419,7 @@ object Record {
           val avg = if (MonitorType.windDirList.contains(mt)) {
             val sum_sin = validValues.map(v => Math.sin(Math.toRadians(v))).sum
             val sum_cos = validValues.map(v => Math.cos(Math.toRadians(v))).sum
-            val degree = Math.toDegrees(Math.atan(sum_sin / sum_cos)).toFloat
-            if (degree > 0)
-              degree
-            else
-              degree + 360
+            windAvg(sum_sin, sum_cos)
           } else {
             val sum = validValues.sum
             if (count != 0) sum / count else 0

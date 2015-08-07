@@ -53,7 +53,7 @@ object ExcelUtility {
     val maintanceStyle = titleRow.getCell(10).getCellStyle
     val invalidStyle = titleRow.getCell(11).getCellStyle
     val dataLostStyle = titleRow.getCell(13).getCellStyle
-    val defaultStyle = titleCell.getCellStyle
+    val defaultStyle = sheet.getRow(4).getCell(1).getCellStyle
     
     titleCell.setCellValue("監測站:" + Monitor.map(monitor).name)
     sheet.getRow(1).getCell(16).setCellValue("查詢日期:" + DateTime.now.toString("YYYY/MM/dd"))
@@ -318,9 +318,6 @@ object ExcelUtility {
         } {
           val (data, idx) = dataI
           if (data._2.isDefined) {
-            Logger.debug("data._2=" + data._2)
-            Logger.debug("row_start=" + row_start)
-            Logger.debug("idx=" + idx)
             if (sheet.getRow(row_start + idx) == null)
               sheet.createRow(row_start + idx).createCell(mt_i + 1).setCellValue(data._2.get)
             else

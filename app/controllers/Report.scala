@@ -11,6 +11,7 @@ import play.api.db.DB
 import PdfUtility._
 import java.io.File
 import java.nio.file.Files
+import Record.windAvg
 
 object PeriodReport extends Enumeration {
   val DailyReport = Value
@@ -69,7 +70,7 @@ object Report extends Controller {
     else
       current :: getMonths(current + 1.month, endTime)
   }
-
+  
   def getQuarters(current: DateTime, endTime: DateTime): List[DateTime] = {
     assert(endTime.getDayOfMonth == 1)
 
@@ -110,11 +111,11 @@ object Report extends Controller {
         min = if (count != 0) validData.min else Float.MaxValue
         overCount = 0
       } yield {
-        val avg = if (MonitorType.windDirList.contains(mt)) {
+        val avg = if (MonitorType.windDirList.contains(mt)) {         
           val sum_sin = validData.map(v => Math.sin(Math.toRadians(v))).sum
           val sum_cos = validData.map(v => Math.cos(Math.toRadians(v))).sum
-          Math.toDegrees(Math.atan(sum_sin / sum_cos)).toFloat
-        } else {
+          windAvg(sum_sin, sum_cos)
+         } else {
           val sum = validData.sum
           if (count != 0) sum / count else 0
         }
@@ -185,7 +186,7 @@ object Report extends Controller {
           val avg = if (MonitorType.windDirList.contains(monitorType)) {
             val sum_sin = validData.map(v => Math.sin(Math.toRadians(v))).sum
             val sum_cos = validData.map(v => Math.cos(Math.toRadians(v))).sum
-            Math.toDegrees(Math.atan(sum_sin / sum_cos)).toFloat
+            windAvg(sum_sin, sum_cos)
           } else {
             val sum = validData.sum
             if (count != 0) sum / count else 0
@@ -202,7 +203,7 @@ object Report extends Controller {
       val avg = if (MonitorType.windDirList.contains(monitorType)) {
         val sum_sin = stats.map(v => Math.sin(Math.toRadians(v.avg))).sum
         val sum_cos = stats.map(v => Math.cos(Math.toRadians(v.avg))).sum
-        Math.toDegrees(Math.atan(sum_sin / sum_cos)).toFloat
+        windAvg(sum_sin, sum_cos)
       } else {
         if (count != 0) stats.map { _.avg }.sum / count else 0
       }
@@ -260,7 +261,7 @@ object Report extends Controller {
         val avg = if (MonitorType.windDirList.contains(monitorType)) {
           val sum_sin = validData.map(v => Math.sin(Math.toRadians(v.avg))).sum
           val sum_cos = validData.map(v => Math.cos(Math.toRadians(v.avg))).sum
-          Math.toDegrees(Math.atan(sum_sin / sum_cos)).toFloat
+          windAvg(sum_sin, sum_cos)
         } else {
           if (count != 0) validData.map { _.avg }.sum / count else 0
         }
@@ -295,11 +296,7 @@ object Report extends Controller {
         val avg = if (MonitorType.windDirList.contains(monitorType)) {
           val sum_sin = validData.map(v => Math.sin(Math.toRadians(v.avg))).sum
           val sum_cos = validData.map(v => Math.cos(Math.toRadians(v.avg))).sum
-          val degree = Math.toDegrees(Math.atan(sum_sin / sum_cos)).toFloat
-          if (degree < 0)
-            degree + 360
-          else
-            degree
+          windAvg(sum_sin, sum_cos)
         } else {
           if (count != 0) validData.map { _.avg }.sum / count else 0
         }
@@ -337,7 +334,7 @@ object Report extends Controller {
         val avg = if (MonitorType.windDirList.contains(monitorType)) {
           val sum_sin = validData.map(v => Math.sin(Math.toRadians(v.avg))).sum
           val sum_cos = validData.map(v => Math.cos(Math.toRadians(v.avg))).sum
-          Math.toDegrees(Math.atan(sum_sin / sum_cos)).toFloat
+          windAvg(sum_sin, sum_cos)
         } else {
           if (count != 0) validData.map { _.avg }.sum / count else 0
         }
@@ -521,11 +518,7 @@ object Report extends Controller {
             val avg = if (MonitorType.windDirList.contains(monitorType)) {
               val sum_sin = validData.map(v => Math.sin(Math.toRadians(v.avg))).sum
               val sum_cos = validData.map(v => Math.cos(Math.toRadians(v.avg))).sum
-              val degree = Math.toDegrees(Math.atan(sum_sin / sum_cos)).toFloat
-              if (degree < 0)
-                degree + 360
-              else
-                degree
+              windAvg(sum_sin, sum_cos)
             } else {
               if (count != 0) validData.map { _.avg }.sum / count else 0
             }
