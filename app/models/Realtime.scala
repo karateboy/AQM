@@ -435,16 +435,18 @@ object Realtime {
       WHERE M_DateTime = ${current}
       """.map { Record.mapper }.list.apply
 
+    
     val kvs =
-      for { r <- records } yield {         
+      for { r <- records } yield {
+        val monitor = Monitor.withName(r.name)
         val statusPairs = 
-          for(mt <- monitorTypeProject2.keys.toList)
+          for(mt <- Monitor.map(monitor).monitorTypes)
             yield{
               mt->Record.monitorTypeProject2(mt)(r)._2
           }
         
         val statusMap = Map(statusPairs: _*) 
-        Monitor.withName(r.name) -> statusMap
+        monitor -> statusMap
       }
     
     Map( kvs :_*)

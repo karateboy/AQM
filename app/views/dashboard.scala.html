@@ -162,15 +162,16 @@
 	</div>
 </div>
 <script>
-var markerStaticData = [];
+var monitorInfo = [];
 
 @for(m<-privilege.allowedMonitors){
-	markerStaticData.push(
+	monitorInfo.push(
 		{
 			id:'@Monitor.map(m).id',
 			name:'@Monitor.map(m).name',
 			lat:'@Monitor.map(m).lat',
-			lng:'@Monitor.map(m).lng'
+			lng:'@Monitor.map(m).lng',
+			status:'@Monitor.map(m).name',			
 		});
 }
 
@@ -282,7 +283,7 @@ function getRandomInt(min, max) {
 }
 
 function refreshMarker(realtime){
-	for(var i=0;i<markerStaticData.length;i++){
+	for(var i=0;i<monitorInfo.length;i++){
 		var info = realtime.info[i];
 		var icon = {
 				url:statusIconUrl[info.status],
@@ -295,6 +296,7 @@ function refreshMarker(realtime){
 		
 		windMarkerArray[i].icon.rotation = info.winDir;
 		windInfoboxArray[i].setContent(Math.round(info.winSpeed*100)/100 + "m/s");
+		monitorInfo[i].status = info.statusStr;
 	}
 }
 
@@ -306,7 +308,6 @@ function refreshRealtimeInfo(){
 		type : "GET",
 		dataType : "json",
 		success : function(result) {
-			console.log(result);
 			refreshMarker(result);
 		},
 		error : function(xhr, status, errorThrown) {
@@ -319,201 +320,223 @@ function refreshRealtimeInfo(){
 	});
 }
 
-
 var statusMarkerArray = [];
-function initMonitorMarker(map){
+
+
+	function initInfoWindow(marker, i){
+		var infoWindow = new google.maps.InfoWindow();
+		var monitor = monitorInfo[i];
+		google.maps.event.addListener(marker, 'click', function() {
+			if(monitor.status.length != 0){
+				infoWindow.setContent(monitor.status);
+				infoWindow.open(marker.get('map'), marker);	
+			}			  
+		});		
+	}
 	
-	for(var i=0;i<markerStaticData.length;i++){
-		var s = 0;
-		var monitor = markerStaticData[i];
-		var marker = new google.maps.Marker({
-			position: new google.maps.LatLng(monitor.lat, monitor.lng),
-			map: map,
-			title:monitor.name,
-			icon:{
-				url:statusIconUrl[0],
-				anchor: new google.maps.Point(12, 12),
-				scaledSize:new google.maps.Size(24,24)
-				} 
+	function initMonitorMarker(map) {
+		for (var i = 0; i < monitorInfo.length; i++) {
+			var monitor = monitorInfo[i];
+			var marker = new google.maps.Marker({
+				position : new google.maps.LatLng(monitor.lat, monitor.lng),
+				map : map,
+				title : monitor.name,
+				icon : {
+					url : statusIconUrl[0],
+					anchor : new google.maps.Point(12, 12),
+					scaledSize : new google.maps.Size(24, 24)
+				}
 			});
-		if(s == 4)
-			marker.setAnimation(google.maps.Animation.BOUNCE);
-			
-		statusMarkerArray.push(marker);
-	}
-}		
 
-var windMarkerArray = [];
-function initWindMarker(map){
-	for(var i=0;i<markerStaticData.length;i++){
-		var monitor = markerStaticData[i];
-		var marker = new google.maps.Marker({
-			position: new google.maps.LatLng(monitor.lat, monitor.lng),
-			map: map,
-			title:monitor.name,
-			icon:{
-				path:google.maps.SymbolPath.BACKWARD_CLOSED_ARROW,
-				fillColor: 'red',
-				strokeColor: "red",
-				strokeWeight: 4,
-				rotation: 0,
-				//anchor:google.maps.Point(-20,0),
-				scale:4
-			},
-			visible: false
-			});
-		windMarkerArray.push(marker);
-	}
-}
-
-var windInfoboxArray = [];
-function initWindInfobox(map){
-	for(var i=0;i<markerStaticData.length;i++){
-		var monitor = markerStaticData[i];
-			
-		var myOptions = {
-			 content: "0.0" + "m/s"
-			,boxStyle: {
-			   border: "none"
-			  ,textAlign: "center"
-			  ,fontSize: "12pt"
-			  ,color: "Red"
-			  ,width: "60px"
-			 }
-			,disableAutoPan: true
-			,pixelOffset: new google.maps.Size(20, -10)
-			,position: new google.maps.LatLng(monitor.lat, monitor.lng)
-			,closeBoxURL: ""
-			,visible: false
-			,pane: "mapPane"
-			,enableEventPropagation: true
-		};
-		
-		var ibLabel = new InfoBox(myOptions);
-		windInfoboxArray.push(ibLabel);
-		ibLabel.open(map);
-	}
-}
-
-function initLableInfobox(map){
-	for(var i=0;i<markerStaticData.length;i++){
-		var monitor = markerStaticData[i];
-			
-		var myOptions = {
-			 content: "<strong>"+monitor.name+"</strong>"
-			,boxStyle: {
-			   border: "none"
-			  ,textAlign: "center"
-			  ,fontSize: "14pt"
-			  ,width: "60px"
-			 }
-			,disableAutoPan: true
-			,pixelOffset: new google.maps.Size(-30, 20)
-			,position: new google.maps.LatLng(monitor.lat, monitor.lng)
-			,closeBoxURL: ""
-			,isHidden: false
-			,pane: "mapPane"
-			,enableEventPropagation: true
-		};
-		
-		var ibLabel = new InfoBox(myOptions);
-		ibLabel.open(map);
-	}
-}
-
-function getRealtimChart(id, monitorType){
-	$.ajax({
-		url : "/JSON/realtimeHighchart/"+monitorType,
-		data : "",
-		contentType : "application/json; charset=utf-8",
-		type : "GET",
-		dataType : "json",
-		success : function(result) {
-			result.colors=[
-			'#7CB5EC','#434348','#90ED7D','#F7A35C','#8085E9','#F15C80',
-			'#E4D354','#2B908F','#FB9FA8','#91E8E1','#7CB5EC','#80C535','#969696'];
-			result.tooltip ={
-            	valueDecimals: 2};
-            result.legend={enabled:false};
-			result.title={text:null};
-			result.credits={
-				enabled:false,
-				href:'http://www.wecc.com.tw/'
-			};
-			$(id).highcharts(result);
-		},
-		error : function(xhr, status, errorThrown) {
-			console.log("錯誤訊息:" + status + "-" + errorThrown);
-		},
-
-		complete : function(xhr, status) {
-			
+			initInfoWindow(marker, i);			
+			statusMarkerArray.push(marker);
 		}
-	});
-}
-
-function initRealtimeChart(){
-	getRealtimChart('#tsp_realtimChart', "A213");
-	getRealtimChart('#pm10_realtimChart', "A214");
-	getRealtimChart('#so2_realtimChart', "A222");
-	getRealtimChart('#no2_realtimChart', "A293");
-	getRealtimChart('#o3_realtimChart', "A225");
-	getRealtimChart('#no_realtimChart', "A283");
-	getRealtimChart('#ch4_realtimChart', "A286");
-	getRealtimChart('#non_ch4_realtimChart', "A296");
-}
 		
-function initRealtimeMap() {
-	console.log("initRealtimeMap");
-	var styles = [
-   {
-    featureType: "road",
-    elementType: "geometry",
-    stylers: [
-      { lightness: 100 },
-      { visibility: "simplified" }
-    ]
-  },{
-    featureType: "road",
-    elementType: "labels",
-    stylers: [
-      { visibility: "off" }
-    ]
-  }
-];
-	
-	var mapOptions = {
-		center : new google.maps.LatLng(23.68875446, 120.2805895),
-		zoom : 11,
-		panControl: false,
-	    zoomControl: false,
-	    scaleControl: true,
-	    styles:styles,
-		mapTypeId : google.maps.MapTypeId.ROADMAP
+		for (var i = 0; i < statusMarkerArray.length; i++) {
+						
+		}
+	}
+
+	var windMarkerArray = [];
+	function initWindMarker(map) {
+		for (var i = 0; i < monitorInfo.length; i++) {
+			var monitor = monitorInfo[i];
+			var marker = new google.maps.Marker({
+				position : new google.maps.LatLng(monitor.lat, monitor.lng),
+				map : map,
+				title : monitor.name,
+				icon : {
+					path : google.maps.SymbolPath.BACKWARD_CLOSED_ARROW,
+					fillColor : 'red',
+					strokeColor : "red",
+					strokeWeight : 4,
+					rotation : 0,
+					//anchor:google.maps.Point(-20,0),
+					scale : 4
+				},
+				visible : false
+			});
+			windMarkerArray.push(marker);
+		}
+	}
+
+	var windInfoboxArray = [];
+	function initWindInfobox(map) {
+		for (var i = 0; i < monitorInfo.length; i++) {
+			var monitor = monitorInfo[i];
+
+			var myOptions = {
+				content : "0.0" + "m/s",
+				boxStyle : {
+					border : "none",
+					textAlign : "center",
+					fontSize : "12pt",
+					color : "Red",
+					width : "60px"
+				},
+				disableAutoPan : true,
+				pixelOffset : new google.maps.Size(20, -10),
+				position : new google.maps.LatLng(monitor.lat, monitor.lng),
+				closeBoxURL : "",
+				visible : false,
+				pane : "mapPane",
+				enableEventPropagation : true
+			};
+
+			var ibLabel = new InfoBox(myOptions);
+			windInfoboxArray.push(ibLabel);
+			ibLabel.open(map);
+		}
+	}
+
+	function initLableInfobox(map) {
+		for (var i = 0; i < monitorInfo.length; i++) {
+			var monitor = monitorInfo[i];
+
+			var myOptions = {
+				content : "<strong>" + monitor.name + "</strong>",
+				boxStyle : {
+					border : "none",
+					textAlign : "center",
+					fontSize : "14pt",
+					width : "60px"
+				},
+				disableAutoPan : true,
+				pixelOffset : new google.maps.Size(-30, 20),
+				position : new google.maps.LatLng(monitor.lat, monitor.lng),
+				closeBoxURL : "",
+				isHidden : false,
+				pane : "mapPane",
+				enableEventPropagation : true
+			};
+
+			var ibLabel = new InfoBox(myOptions);
+			ibLabel.open(map);
+		}
+	}
+
+	function getRealtimChart(id, monitorType) {
+		$.ajax({
+			url : "/JSON/realtimeHighchart/" + monitorType,
+			data : "",
+			contentType : "application/json; charset=utf-8",
+			type : "GET",
+			dataType : "json",
+			success : function(result) {
+				result.colors = [ '#7CB5EC', '#434348', '#90ED7D', '#F7A35C',
+						'#8085E9', '#F15C80', '#E4D354', '#2B908F', '#FB9FA8',
+						'#91E8E1', '#7CB5EC', '#80C535', '#969696' ];
+				result.tooltip = {
+					valueDecimals : 2
+				};
+				result.legend = {
+					enabled : false
+				};
+				result.title = {
+					text : null
+				};
+				result.credits = {
+					enabled : false,
+					href : 'http://www.wecc.com.tw/'
+				};
+				$(id).highcharts(result);
+			},
+			error : function(xhr, status, errorThrown) {
+				console.log("錯誤訊息:" + status + "-" + errorThrown);
+			},
+
+			complete : function(xhr, status) {
+
+			}
+		});
+	}
+
+	function refreshRealtimeChart() {
+		getRealtimChart('#tsp_realtimChart', "A213");
+		getRealtimChart('#pm10_realtimChart', "A214");
+		getRealtimChart('#so2_realtimChart', "A222");
+		getRealtimChart('#no2_realtimChart', "A293");
+		getRealtimChart('#o3_realtimChart', "A225");
+		getRealtimChart('#no_realtimChart', "A283");
+		getRealtimChart('#ch4_realtimChart', "A286");
+		getRealtimChart('#non_ch4_realtimChart', "A296");
+	}
+
+	function initRealtimeMap() {
+		console.log("initRealtimeMap");
+		var styles = [ {
+			featureType : "road",
+			elementType : "geometry",
+			stylers : [ {
+				lightness : 100
+			}, {
+				visibility : "simplified"
+			} ]
+		}, {
+			featureType : "road",
+			elementType : "labels",
+			stylers : [ {
+				visibility : "off"
+			} ]
+		} ];
+
+		var mapOptions = {
+			center : new google.maps.LatLng(23.68875446, 120.2805895),
+			zoom : 11,
+			panControl : false,
+			zoomControl : false,
+			scaleControl : true,
+			styles : styles,
+			mapTypeId : google.maps.MapTypeId.ROADMAP
+		};
+		var map = new google.maps.Map(document.getElementById("realtimeMap"),
+				mapOptions);
+
+		// Create the DIV to hold the control and call the HomeControl()
+		// constructor passing in this DIV.
+		var homeControlDiv = document.createElement('div');
+		var homeControl = new HomeControl(map, homeControlDiv, mapCenter);
+
+		homeControlDiv.index = 1;
+		map.controls[google.maps.ControlPosition.TOP_LEFT].push(homeControlDiv);
+
+		initMonitorMarker(map);
+		initWindMarker(map);
+		initLableInfobox(map);
+		initWindInfobox(map);
 	};
-	var map = new google.maps.Map(document
-			.getElementById("realtimeMap"), mapOptions);
 
-	// Create the DIV to hold the control and call the HomeControl()
-	// constructor passing in this DIV.
-	var homeControlDiv = document.createElement('div');
-	var homeControl = new HomeControl(map, homeControlDiv, mapCenter);
+	function refreshInfo() {
+		refreshRealtimeChart();
+		refreshRealtimeInfo();
+	}
 
-	homeControlDiv.index = 1;
-	map.controls[google.maps.ControlPosition.TOP_LEFT].push(homeControlDiv);
+	function initRealtime() {
+		initRealtimeMap();
+		//refresh info every min
+		refreshInfo();
+		myInterval = setInterval(refreshInfo, 60 * 1000);
+	}
 
-	initMonitorMarker(map);
-	initWindMarker(map);
-	initLableInfobox(map);
-	initWindInfobox(map);
-};
-
-function initRealtime(){
-	initRealtimeChart();
-	initRealtimeMap();
-	refreshRealtimeInfo();
-}
-
-$(document).ready(initRealtime());
-
+	$(document).ready(initRealtime());
 </script>

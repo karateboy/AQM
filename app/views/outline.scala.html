@@ -79,9 +79,10 @@
     <script src="@routes.Assets.at("js/plugins/infobox/infobox_packed.js")"></script>
     
     <script>
+    var myInterval;
 	function loadPage(url, root, title){
 		//var elem = $( this );
-		//console.log(elem);
+		clearInterval(myInterval);
 		$("#breadcrumb-title").text(root + " > " + title);
 		$("#wrapper-content").load(url);
 	}

@@ -11,7 +11,7 @@ import play.api.libs.functional.syntax._
 import PdfUtility._
 
 object Realtime extends Controller {
-  def realtimeStat(outputTypeStr:String) = Security.Authenticated {
+  def realtimeStat(outputTypeStr: String) = Security.Authenticated {
     implicit request =>
       val userInfo = Security.getUserinfo(request).get
       val group = Group.getGroup(userInfo.groupID).get
@@ -21,15 +21,15 @@ object Realtime extends Controller {
       val rt_status = getRealtimeMinStatus(current, group.privilege)
       val currentHr = getLatestRecordTime(TableType.Hour).get
       val rt_psi = getRealtimePSI(currentHr)
-      val output = views.html.realtimeStatus(current, rt_status, MonitorType.psiList, rt_psi, group.privilege) 
+      val output = views.html.realtimeStatus(current, rt_status, MonitorType.psiList, rt_psi, group.privilege)
       val title = "即時資訊"
       outputType match {
-        case OutputType.html=>
+        case OutputType.html =>
           Ok(output)
-        case OutputType.pdf=>
-          Ok.sendFile(creatPdfWithReportHeader(title, output), 
-              fileName = _ => 
-                  play.utils.UriEncoding.encodePathSegment(title +  current.toString("YYMMdd_hhmm") + ".pdf", "UTF-8"))
+        case OutputType.pdf =>
+          Ok.sendFile(creatPdfWithReportHeader(title, output),
+            fileName = _ =>
+              play.utils.UriEncoding.encodePathSegment(title + current.toString("YYMMdd_hhmm") + ".pdf", "UTF-8"))
       }
   }
 
@@ -160,26 +160,26 @@ object Realtime extends Controller {
       val latestRecordTime = getLatestRecordTime(TableType.Min).get
 
       val realtimeValueMap =
-        if(group.privilege.allowedMonitorTypes.contains(mt))
+        if (group.privilege.allowedMonitorTypes.contains(mt))
           getRealtimeMonitorValueMap(mt, latestRecordTime)
-        else{
+        else {
           Map[Monitor.Value, (Option[Float], Option[String])]()
         }
 
       val series = for (m <- group.privilege.allowedMonitors) yield {
         seqData(Monitor.map(m).name, Seq({
-           val vOpt = realtimeValueMap.get(m)
-           if(vOpt.isEmpty||vOpt.get._1.isEmpty||vOpt.get._2.isEmpty)
-             0f
-           else{
-             val value = vOpt.get._1.get
-             val status = vOpt.get._2.get
-             if(MonitorStatus.isNormalStat(status))
-               value
-             else
-               0f
-           }             
-             
+          val vOpt = realtimeValueMap.get(m)
+          if (vOpt.isEmpty || vOpt.get._1.isEmpty || vOpt.get._2.isEmpty)
+            0f
+          else {
+            val value = vOpt.get._1.get
+            val status = vOpt.get._2.get
+            if (MonitorStatus.isNormalStat(status))
+              value
+            else
+              0f
+          }
+
         }))
       }
 
@@ -200,52 +200,60 @@ object Realtime extends Controller {
 
       Ok(Json.toJson(c))
   }
-  
-  case class MonitorInfo(id:String, status:Int, winDir:Float, winSpeed:Float)
-  case class RealtimeMapInfo(info:Seq[MonitorInfo])
-  
+
+  case class MonitorInfo(id: String, status: Int, winDir: Float, winSpeed: Float, statusStr: String)
+  case class RealtimeMapInfo(info: Seq[MonitorInfo])
+
   implicit val monitorInfoWrite = Json.writes[MonitorInfo]
   implicit val mapInfoWrite = Json.writes[RealtimeMapInfo]
-  
+
   def realtimeMap = Security.Authenticated {
     implicit request =>
-    val current = getLatestRecordTime(TableType.SixSec).get 
-    val weatherMap = getRealtimeWeatherMap(current)
-    val statusMap = getRealtimeMonitorStatusMap(current)
-    
-    def getStatusIndex(statusMapOpt:Option[Map[MonitorType.Value, Option[String]]]):Int={
-      if(statusMapOpt.isEmpty)
-        return 4
-      
-      val statusMap = statusMapOpt.get
-      val statusList = statusMap.values.toList
-      val statusIndexes = statusList.map { s => 
-          //empty is treated as normal
-          val str = s.getOrElse("010")  
-          if(MonitorStatus.isNormalStat(str))
+      val current = getLatestRecordTime(TableType.SixSec).get
+      val weatherMap = getRealtimeWeatherMap(current)
+      val statusMap = getRealtimeMonitorStatusMap(current)
+
+      def getStatusIndex(statusMapOpt: Option[Map[MonitorType.Value, Option[String]]]): (Int, String) = {
+        val statusBuilder = new StringBuilder
+        if (statusMapOpt.isEmpty)
+          return (4, "")
+
+        val statusMap = statusMapOpt.get
+        val statusIndexes = statusMap.map { mt_status =>
+          val status = mt_status._2.getOrElse(MonitorStatus.NORMAL_STAT)
+          if (MonitorStatus.isNormalStat(status))
             0
-          else if(MonitorStatus.isCalbration(str))
+          else if (MonitorStatus.isCalbration(status)) {
+            statusBuilder.append(s"${MonitorType.map(mt_status._1).desp}:${MonitorStatus.map(status).desp}<br/>")
             1
-          else if(MonitorStatus.isRepairing(str))
+          } else if (MonitorStatus.isRepairing(status)) {
+            statusBuilder.append(s"${MonitorType.map(mt_status._1).desp}:${MonitorStatus.map(status).desp}<br/>")
             2
-          else if(MonitorStatus.isMaintance(str))
+          } else if (MonitorStatus.isMaintance(status)) {
+            statusBuilder.append(s"${MonitorType.map(mt_status._1).desp}:${MonitorStatus.map(status).desp}<br/>")
             3
-          else
+          } else {
+            statusBuilder.append(s"${MonitorType.map(mt_status._1).desp}:${MonitorStatus.map(status).desp}<br/>")
             4
+          }
+        }
+        
+        if(statusIndexes.size == 0)
+          (0, "")
+        else
+          (statusIndexes.max, statusBuilder.toString())
       }
-      statusIndexes.max
-    }
-    
-    val mapInfos =
-    for{m <- Monitor.mvList
-      weather = weatherMap.getOrElse(m, Record.emptySixSecRecord(m, current, MonitorStatus.DATA_LOSS_STAT))
-      status = statusMap.get(m)
-      }
-      yield
-    {
-      MonitorInfo(m.toString(), getStatusIndex(status), weather.winDir.last.getOrElse(0f), weather.winSpeed.last.getOrElse(0f))
-    }
-    
-    Ok(Json.toJson(RealtimeMapInfo(mapInfos)))
+
+      val mapInfos =
+        for {
+          m <- Monitor.mvList
+          weather = weatherMap.getOrElse(m, Record.emptySixSecRecord(m, current, MonitorStatus.DATA_LOSS_STAT))
+          status = statusMap.get(m)
+        } yield {
+          val (statusIndex, statusStr) = getStatusIndex(status)
+          MonitorInfo(m.toString(), statusIndex, weather.winDir.last.getOrElse(0f), weather.winSpeed.last.getOrElse(0f), statusStr)
+        }
+
+      Ok(Json.toJson(RealtimeMapInfo(mapInfos)))
   }
 }
