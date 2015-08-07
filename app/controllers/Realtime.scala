@@ -194,7 +194,7 @@ object Realtime extends Controller {
       val c = HighchartData(
         Map("type" -> "column"),
         Map("text" -> title),
-        XAxis(Some(Seq(latestRecordTime.toString("yyyy:MM:dd HH:mm")))),
+        XAxis(Some(Seq(latestRecordTime.toString("yyyy-MM-dd HH:mm")))),
         YAxis(None, AxisTitle(Some(mtCase.unit)), axisLines),
         series)
 
@@ -216,7 +216,7 @@ object Realtime extends Controller {
       def getStatusIndex(statusMapOpt: Option[Map[MonitorType.Value, Option[String]]]): (Int, String) = {
         val statusBuilder = new StringBuilder
         if (statusMapOpt.isEmpty)
-          return (4, "")
+          return (4, s"<strong>所有測項:${MonitorStatus.map(MonitorStatus.DATA_LOSS_STAT).desp}</strong>")
 
         val statusMap = statusMapOpt.get
         val statusIndexes = statusMap.map { mt_status =>
