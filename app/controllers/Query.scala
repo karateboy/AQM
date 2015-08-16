@@ -13,13 +13,14 @@ import models.MonitorStatusFilter
 object ReportUnit extends Enumeration
 {
   val Min  = Value("min")
+  val TenMin = Value("ten_min")
   val Hour = Value("hour")
   val EightHour = Value("eight_hour")
   val Day = Value("day")
   val Week = Value("week")
   val Month = Value("month")
   val Quarter = Value("quarter")
-  val map = Map((Min->"分鐘"), (Hour->"小時"), (EightHour->"八小時"),(Day->"日"),(Week->"周"), (Month->"月"),(Quarter->"季"))
+  val map = Map((Min->"分"), (TenMin->"十分"),(Hour->"小時"), (EightHour->"八小時"),(Day->"日"),(Week->"周"), (Month->"月"),(Quarter->"季"))
 }
 
 object Query extends Controller {
@@ -143,7 +144,7 @@ object Query extends Controller {
       Ok(views.html.historyTrend(group.privilege))
   }
 
-  def historyTrendChart(monitorStr: String, monitorTypeStr: String, reportUnitStr: String, msfStr: String, startStr: String, endStr: String) = Security.Authenticated {
+  def historyTrendChart(monitorStr: String, epaMonitorStr:String, monitorTypeStr: String, reportUnitStr: String, msfStr: String, startStr: String, endStr: String) = Security.Authenticated {
     implicit request =>
       import scala.collection.JavaConverters._
       val monitorStrArray = monitorStr.split(':')
@@ -197,33 +198,36 @@ object Query extends Controller {
               m <- monitors
             } yield {
               reportUnit match {
-                case ReportUnit.EightHour=>
+                case ReportUnit.TenMin =>
+                  m -> getPeriodReportMap(m, start, end, monitorStatusFilter, 10.minute)
+                case ReportUnit.EightHour =>
                   m -> getPeriodReportMap(m, start, end, monitorStatusFilter, 8.hour)
                 case ReportUnit.Day =>
-                  //m -> Record.getDayReportMap(m, start, end, monitorStatusFilter)
                   m -> getPeriodReportMap(m, start, end, monitorStatusFilter, 1.day)
-                case ReportUnit.Week=>
+                case ReportUnit.Week =>
                   m -> getWeeklyReportMap(m, start, end, monitorStatusFilter)
                 case ReportUnit.Month =>
                   m -> getMonthlyReportMap(m, start, end, monitorStatusFilter)
-                case ReportUnit.Quarter=> 
+                case ReportUnit.Quarter =>
                   m -> getQuarterReportMap(m, start, end, monitorStatusFilter)
               }
             }
           reportUnit match {
-            case ReportUnit.EightHour=>
-              timeSet ++= Report.getPeriods(DateTime.parse(start.toString("YYYY-MM-dd")), DateTime.parse(end.toString("YYYY-MM-dd"))+1.day, 8.hour)
+            case ReportUnit.TenMin =>
+              timeSet ++= Report.getPeriods(DateTime.parse(start.toString("YYYY-MM-dd")), DateTime.parse(end.toString("YYYY-MM-dd")) + 1.day, 10.minute)
+            case ReportUnit.EightHour =>
+              timeSet ++= Report.getPeriods(DateTime.parse(start.toString("YYYY-MM-dd")), DateTime.parse(end.toString("YYYY-MM-dd")) + 1.day, 8.hour)
             case ReportUnit.Day =>
               timeSet ++= Report.getDays(DateTime.parse(start.toString("YYYY-MM-dd")), DateTime.parse(end.toString("YYYY-MM-dd")))
             case ReportUnit.Week =>
-              timeSet ++= Report.getWeeks(DateTime.parse(adjustWeekDay(start).toString("YYYY-MM-dd")), 
-                  DateTime.parse(adjustWeekDay(end).toString("YYYY-MM-dd"))+ 1.weeks)
+              timeSet ++= Report.getWeeks(DateTime.parse(adjustWeekDay(start).toString("YYYY-MM-dd")),
+                DateTime.parse(adjustWeekDay(end).toString("YYYY-MM-dd")) + 1.weeks)
             case ReportUnit.Month =>
               timeSet ++= Report.getMonths(DateTime.parse(start.toString("YYYY-MM-01")), DateTime.parse(end.toString("YYYY-MM-01")) + 1.months)
             case ReportUnit.Quarter =>
-              timeSet ++= Report.getQuarters(DateTime.parse(s"${start.getYear}-${1+(start.getMonthOfYear-1)/3*3}-01"), 
-                  DateTime.parse(s"${end.getYear}-${1+(end.getMonthOfYear-1)/3*3}-01") + 3.month)
-              
+              timeSet ++= Report.getQuarters(DateTime.parse(s"${start.getYear}-${1 + (start.getMonthOfYear - 1) / 3 * 3}-01"),
+                DateTime.parse(s"${end.getYear}-${1 + (end.getMonthOfYear - 1) / 3 * 3}-01") + 3.month)
+
           }
           ps
         }
@@ -232,33 +236,44 @@ object Query extends Controller {
       val timeSeq = timeSet.toList.sorted
       import Realtime._
 
-      val series = for {
-        m <- monitors
-        mt <- monitorTypes
-        timeData = timeSeq.map(t => recordMap(m)(mt).getOrElse(t, (Some(0f), Some(""))))
-        data = timeData.map(_._1.getOrElse(0f))
-      } yield {
-        seqData(Monitor.map(m).name + "_" + MonitorType.map(mt).desp, data)
-      }
+      val windMtv = MonitorType.withName("C212")
+      val series =
+        if (monitorTypes.length > 1 && monitorTypes.contains(windMtv)) {
+          val noWinMt = monitorTypes.filter { _ != windMtv }
+          for {
+            m <- monitors
+            mt <- monitorTypes
+            timeData = timeSeq.map(t => recordMap(m)(mt).getOrElse(t, (Some(0f), Some(""))))
+            data = timeData.map(_._1.getOrElse(0f))
+          } yield {
+            if (mt != windMtv)
+              seqData(Monitor.map(m).name + "_" + MonitorType.map(mt).desp, data)
+            else
+              seqData(Monitor.map(m).name + "_" + MonitorType.map(mt).desp, data, 1, Some("scatter"))
+          }
+        } else {
+          for {
+            m <- monitors
+            mt <- monitorTypes
+            timeData = timeSeq.map(t => recordMap(m)(mt).getOrElse(t, (Some(0f), Some(""))))
+            data = timeData.map(_._1.getOrElse(0f))
+          } yield {
+            seqData(Monitor.map(m).name + "_" + MonitorType.map(mt).desp, data)
+          }
+        }
 
-      val title = if (monitorTypes.length == 1) {
-        MonitorType.map(monitorTypes(0)).desp + "歷史趨勢圖"
-      } else
-        "綜合歷史趨勢圖"
-
-      val axisLines = if (monitorTypes.length == 1) {
-        val mtCase = MonitorType.map(monitorTypes(0))
-        if (mtCase.std_internal.isEmpty || mtCase.std_law.isEmpty)
-          None
-        else
-          Some(Seq(AxisLine("#0000FF", 2, mtCase.std_internal.get, Some(AxisLineLabel("left", "內控值"))),
-            AxisLine("#FF0000", 2, mtCase.std_law.get, Some(AxisLineLabel("right", "法規值")))))
-      } else
-        None
+      val title = {
+        val mNames = monitors.map{Monitor.map(_).name}
+        val mtNames = monitorTypes.map {MonitorType.map(_).desp}
+        mNames.mkString +mtNames.mkString + "趨勢圖"
+      } 
+        
 
       val timeStrSeq = timeSeq.map(t =>
         reportUnit match {
           case ReportUnit.Min =>
+            t.toString("YYYY/MM/dd HH:mm")
+          case ReportUnit.TenMin =>
             t.toString("YYYY/MM/dd HH:mm")
           case ReportUnit.Hour =>
             t.toString("YYYY/MM/dd HH:mm")
@@ -271,9 +286,18 @@ object Query extends Controller {
           case ReportUnit.Month =>
             t.toString("YYYY/MM")
           case ReportUnit.Quarter =>
-            s"${t.getYear}/${1+(t.getMonthOfYear-1)/3}Q"            
+            s"${t.getYear}/${1 + (t.getMonthOfYear - 1) / 3}Q"
         })
-      val c =
+        
+      def getAxisLines(mtCase:MonitorType)={
+        if (mtCase.std_internal.isEmpty || mtCase.std_law.isEmpty)
+              None
+            else
+              Some(Seq(AxisLine("#0000FF", 2, mtCase.std_internal.get, Some(AxisLineLabel("left", "內控值"))),
+                AxisLine("#FF0000", 2, mtCase.std_law.get, Some(AxisLineLabel("right", "法規值")))))
+      }
+      
+      val chart =
         if (monitorTypes.length == 1) {
           val mtCase = MonitorType.map(monitorTypes(0))
 
@@ -281,18 +305,33 @@ object Query extends Controller {
             Map("type" -> "line"),
             Map("text" -> title),
             XAxis(Some(timeStrSeq)),
-            YAxis(None, AxisTitle(Some(mtCase.unit)), axisLines),
+            Seq(YAxis(None, AxisTitle(Some(s"${mtCase.desp} (${mtCase.unit})")), getAxisLines(mtCase))),
             series)
         } else {
+          val yAxis =
+            if (monitorTypes.length > 1 && monitorTypes.contains(windMtv)) {
+              val windMtCase = MonitorType.map(MonitorType.withName("C212"))
+              if (monitorTypes.length == 2) {
+                val mtCase = MonitorType.map(monitorTypes.filter { !MonitorType.windDirList.contains(_) }(0))
+
+                Seq(YAxis(None, AxisTitle(Some(s"${mtCase.desp} (${mtCase.unit})")), getAxisLines(mtCase)),
+                  YAxis(None, AxisTitle(Some(s"${windMtCase.desp} (${windMtCase.unit})")), None, true))
+              } else {
+                Seq(YAxis(None, AxisTitle(None), None), YAxis(None, AxisTitle(Some(s"${windMtCase.desp} (${windMtCase.unit})")), None, true))
+              }
+            } else {
+              Seq(YAxis(None, AxisTitle(None), None))
+            }
+
           HighchartData(
             Map("type" -> "line"),
             Map("text" -> title),
             XAxis(Some(timeStrSeq)),
-            YAxis(None, AxisTitle(None), axisLines),
+            yAxis,
             series)
         }
 
-      Results.Ok(Json.toJson(c))
+      Results.Ok(Json.toJson(chart))
   }
 
   def psiTrend = Security.Authenticated {
@@ -302,7 +341,7 @@ object Query extends Controller {
       Ok(views.html.psiTrend(group.privilege))
   }
 
-  def psiTrendChart(monitorStr: String, startStr: String, endStr: String) = Security.Authenticated {
+  def psiTrendChart(monitorStr: String, startStr: String, endStr: String, isDailyPsi:Boolean = true) = Security.Authenticated {
     implicit request =>
       import scala.collection.JavaConverters._
       val monitorStrArray = monitorStr.split(':')
@@ -317,10 +356,17 @@ object Query extends Controller {
 
         val map = Map[DateTime, Float]()
         while (current < end) {
-          val v = getMonitorDailyPSI(m, current)
-          val psi = v.psi.getOrElse(0f)
-          map += (current -> psi)
-          current += 1.day
+          if (isDailyPsi) {
+            val v = getMonitorDailyPSI(m, current)
+            val psi = v.psi.getOrElse(0f)
+            map += (current -> psi)
+            current += 1.day
+          }else{
+            val v = getRealtimePSI(current, List(m))
+            val psi = v(m)._1.getOrElse(0f)
+            map += (current -> psi)
+            current += 1.hour
+          }
         }
         map
       }
@@ -341,12 +387,17 @@ object Query extends Controller {
         seqData(Monitor.map(m).name, timeData)
       }
 
-      val timeStrSeq = timeSeq.map(_.toString("YYYY/MM/dd"))
+      val timeStrSeq = 
+        if(isDailyPsi)
+          timeSeq.map(_.toString("YY/MM/dd"))
+        else
+          timeSeq.map(_.toString("MM/dd HH:00"))
+          
       val c = HighchartData(
         scala.collection.immutable.Map("type" -> "column"),
         scala.collection.immutable.Map("text" -> title),
         XAxis(Some(timeStrSeq)),
-        YAxis(None, AxisTitle(Some("")), None),
+        Seq(YAxis(None, AxisTitle(Some("")), None)),
         series)
 
       Results.Ok(Json.toJson(c))
@@ -478,34 +529,67 @@ object Query extends Controller {
       Ok(views.html.windRose(group.privilege))
   }
 
-  def windRoseReport(monitorStr: String, startStr: String, endStr: String) = Security.Authenticated {
+  def windRoseReport(monitorStr: String, monitorTypeStr:String, nWay:Int, startStr: String, endStr: String) = Security.Authenticated {
     val monitor = Monitor.withName(monitorStr)
+    val monitorType = MonitorType.withName(monitorTypeStr)
     val start = DateTime.parse(startStr)
     val end = DateTime.parse(endStr) + 1.day
 
+    assert(nWay == 8 || nWay==16 || nWay == 32)
+    
     try {
-      val windMap = Record.getWindRose(monitor, start, end)
+      val level = List(1f, 2f, 5f, 15f)
+      val windMap = Record.getWindRose(monitor, start, end, level, nWay)
       val nRecord = windMap.values.map { _.length }.sum
 
-      val dirMap = Map(
-        (0 -> "北"), (1 -> "北北東"), (2 -> "東北"), (3 -> "東北東"), (4 -> "東"),
-        (5 -> "東南東"), (6 -> "東南"), (7 -> "南南東"), (8 -> "南"),
-        (9 -> "南南西"), (10 -> "西南"), (11 -> "西西南"), (12 -> "西"),
-        (13 -> "西北西"), (14 -> "西北"), (15 -> "北北西"))
-      val dirStrSeq =
-        for (dir <- 0 to 15)
-          yield dirMap(dir)
+      val dirMap = 
+        Map(
+          (0 -> "北"), (1 -> "北北東"), (2 -> "東北"), (3 -> "東北東"), (4 -> "東"),
+          (5 -> "東南東"), (6 -> "東南"), (7 -> "南南東"), (8 -> "南"),
+          (9 -> "南南西"), (10 -> "西南"), (11 -> "西西南"), (12 -> "西"),
+          (13 -> "西北西"), (14 -> "西北"), (15 -> "北北西"))
 
-      val speedLevel = Array(
-        "<0.5 m/s", "0.5-2 m/s", "2-4 m/s", "4-6 m/s", "6-8 m/s", "8-10 m/s", ">10 m/s")
+      val dirStrSeq =
+        for {
+          dir <- 0 to nWay - 1
+          dirKey = if (nWay == 8)
+            dir * 2
+          else if (nWay == 32) {
+            if (dir % 2 == 0) {
+              dir / 2
+            } else
+              dir + 16
+          } else
+            dir
+        } yield dirMap.getOrElse(dirKey, "")
+          
+ 
+          
+          
+      var last = 0f
+      val speedLevel = level.flatMap { l =>
+        if (l == level.head) {
+          last = l
+          List(s"< ${l} m/s")
+        } else if (l == level.last) {
+          val ret = List(s"${last}~${l} m/s", s"> ${l} m/s")
+          last = l
+          ret
+        } else {
+          val ret = List(s"${last}~${l} m/s")
+          last = l
+          ret
+        }
+      }
+      
 
       import Realtime._
 
       val series = for {
-        level <- 0 to 6
+        level <- 0 to level.length
       } yield {
         val data =
-          for (dir <- 0 to 15)
+          for (dir <- 0 to nWay-1)
             yield windMap(dir)(level)
 
         seqData(speedLevel(level), data)
@@ -516,7 +600,7 @@ object Query extends Controller {
         scala.collection.immutable.Map("polar" -> "true", "type" -> "column"),
         scala.collection.immutable.Map("text" -> title),
         XAxis(Some(dirStrSeq)),
-        YAxis(None, AxisTitle(Some("")), None),
+        Seq(YAxis(None, AxisTitle(Some("")), None)),
         series)
 
       Results.Ok(Json.toJson(c))
@@ -560,7 +644,7 @@ object Query extends Controller {
           scala.collection.immutable.Map("type" -> "line"),
           scala.collection.immutable.Map("text" -> title),
           XAxis(Some(timeStrSeq)),
-          YAxis(None, AxisTitle(Some("")), None),
+          Seq(YAxis(None, AxisTitle(Some("")), None)),
           series)
 
         Results.Ok(Json.toJson(c))

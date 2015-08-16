@@ -308,39 +308,18 @@ object Report extends Controller {
   def getPeriodReport(monitor: Monitor.Value, startTime: DateTime, period: Period, includeTypes: List[MonitorType.Value] = MonitorType.monitorReportList,
                       filter: MonitorStatusFilter.Value = MonitorStatusFilter.All) = {
     val endTime = startTime + period
-
-    val days = getDays(startTime, endTime)
-    val dailyReports =
-      for { day <- days } yield {
-        Record.getDailyReport(monitor, day, includeTypes, filter)
-      }
-
-    def getTypeStat(i: Int) = {
-      dailyReports.map { _.typeList(i).stat }
-    }
+    val report = Record.getPeriodReport(monitor, startTime, period, includeTypes, filter)
+    
     val typeReport =
       for {
-        t <- dailyReports(0).typeList
-        monitorType = t.monitorType
-        pos = dailyReports(0).typeList.indexWhere { x => x.monitorType == monitorType }
-        typeStat = getTypeStat(pos)
-        validData = typeStat.filter { _.count != 0 }
-        count = validData.length
-        total = dailyReports.length
-        max = if (count != 0) validData.map(_.avg).max else Float.MinValue
-        min = if (count != 0) validData.map(_.avg).min else Float.MaxValue
-        overCount = validData.map(_.overCount).sum
+        t <- report.typeList.zipWithIndex
+        monitorType = t._1.monitorType
+        pos = t._2
+        typeStat = report.typeList(pos).stat
       } yield {
-        val avg = if (MonitorType.windDirList.contains(monitorType)) {
-          val sum_sin = validData.map(v => Math.sin(Math.toRadians(v.avg))).sum
-          val sum_cos = validData.map(v => Math.cos(Math.toRadians(v.avg))).sum
-          windAvg(sum_sin, sum_cos)
-        } else {
-          if (count != 0) validData.map { _.avg }.sum / count else 0
-        }
-        MonitorTypeReport(monitorType, typeStat, Stat(avg, min, max, count, total, overCount))
-      }
-    IntervalReport(typeReport.toArray)
+        MonitorTypeReport(monitorType, List(typeStat), typeStat)
+      }      
+    IntervalReport(typeReport)
   }
 
   def adjustWeekDay(date: DateTime) = {
@@ -351,21 +330,27 @@ object Report extends Controller {
       date - (date.getDayOfWeek).days
   }
 
-  def getPeriods(current: DateTime, endTime: DateTime, d: Period): List[DateTime] = {
-    if (current >= endTime)
-      Nil
-    else
-      current :: getPeriods(current + d, endTime, d)
-  }
+  def getPeriods(start: DateTime, endTime: DateTime, d: Period): List[DateTime] = {
+    import scala.collection.mutable.ListBuffer
+    
+    val buf = ListBuffer[DateTime]()
+    var current = start
+    while(current < endTime){
+      buf.append(current)
+      current += d
+    }
+    
+    buf.toList
+   }
 
-  def getPeriodReportMap(monitor: Monitor.Value, start: DateTime, end: DateTime, filter: MonitorStatusFilter.Value, d: Period) = {
+  def getPeriodReportMap(monitor: Monitor.Value, start: DateTime, end: DateTime, filter: MonitorStatusFilter.Value, period: Period) = {
     val adjustStart = DateTime.parse(start.toString("YYYY-MM-dd"))
     val adjustEnd = DateTime.parse(end.toString("YYYY-MM-dd")) + 1.day
-    val periods = getPeriods(adjustStart, adjustEnd, d)
+    val periods = getPeriods(adjustStart, adjustEnd, period)
     val nPeriod = periods.length
     val periodReports =
       for { p <- periods } yield {
-        (p -> getPeriodReport(monitor, p, d, MonitorType.mtvAllList, filter))
+        (p -> getPeriodReport(monitor, p, period, MonitorType.mtvAllList, filter))
       }
 
     import scala.collection.mutable.Map

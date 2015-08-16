@@ -22,7 +22,7 @@ GET		/PDF/realtimeStatus			controllers.Realtime.realtimeStat(outputTypeStr = "pd
 GET		/realtimeImage				controllers.Realtime.realtimeImg
 GET		/realtimeTrend				controllers.Realtime.realtimeTrend
 GET		/JSON/realtime/map			controllers.Realtime.realtimeMap
-POST	/JSON/realtimeTrend			controllers.Realtime.realtimeTrendJSON
+GET		/JSON/realtimeTrend/:monitor/:monitorType			controllers.Realtime.realtimeTrendJSON(monitor, monitorType)
 GET 	/JSON/realtimeHighchart/:monitorType controllers.Realtime.highchartJson(monitorType)	
 
 GET		/report/*reportType			controllers.Report.getReport(reportType)
@@ -45,9 +45,9 @@ GET		/HistoryQueryReport/:edit/:monitor/:monitorType/:recordType/:start/:end	con
 GET		/PDF/HistoryQueryReport/:edit/:monitor/:monitorType/:recordType/:start/:end	controllers.Query.historyReport(edit:Boolean, monitor, monitorType, recordType, start, end, outputType="pdf")
 
 GET		/HistoryTrend			controllers.Query.historyTrend
-GET		/JSON/HistoryTrend/:monitor/:monitorType/:reportUnit/:msf/:start/:end	controllers.Query.historyTrendChart(monitor, monitorType, reportUnit, msf, start, end)
+GET		/JSON/HistoryTrend/:monitor/:epaMonitor/:monitorType/:reportUnit/:msf/:start/:end	controllers.Query.historyTrendChart(monitor, epaMonitor, monitorType, reportUnit, msf, start, end)
 GET		/PsiTrend				controllers.Query.psiTrend
-GET		/JSON/PsiTrend/:monitor/:start/:end	controllers.Query.psiTrendChart(monitor, start, end)
+GET		/JSON/PsiTrend/:monitor/:start/:end/:dailyPsi		controllers.Query.psiTrendChart(monitor, start, end, dailyPsi:Boolean)
 
 GET		/OverLawStd				controllers.Query.overLawStd
 GET		/OverLawStdReport/:monitor/:monitorType/:start/:end	controllers.Query.overLawStdReport(monitor, monitorType, start, end, outputTypeStr="html")
@@ -62,7 +62,7 @@ GET		/AlarmReport/:monitor/:status/:start/:end	controllers.Query.alarmReport(mon
 GET		/PDF/AlarmReport/:monitor/:status/:start/:end	controllers.Query.alarmReport(monitor, status, start, end, outputTypeStr="pdf")
 
 GET		/WindRose				controllers.Query.windRose
-GET		/WindRoseReport/:monitor/:start/:end	controllers.Query.windRoseReport(monitor, start, end)
+GET		/WindRoseReport/:monitor/:monitorType/:nWays/:start/:end	controllers.Query.windRoseReport(monitor, monitorType, nWays:Int, start, end)
 GET		/CompareLastYear		controllers.Query.compareLastYear
 GET		/JSON/CompareLastYearChart/:monitor/:monitorType/:start/:end	controllers.Query.compareLastYearChart(monitor, monitorType, start, end)
 GET		/CalculateStat			controllers.Query.calculateStat
@@ -78,9 +78,13 @@ GET		/PDF/CalibrationQueryReport/:monitor/:start/:end controllers.Query.calibrat
 
 GET		/Monitor					controllers.Application.monitor(monitor = "A001")
 GET		/Monitor/:monitor			controllers.Application.monitor(monitor)
-GET		/MonitorTypes/:monitor	controllers.Application.getMonitorTypes(monitor)
+GET		/MonitorInfo/:monitor	controllers.Application.getMonitorInfo(monitor)
 POST	/MonitorTypes/:monitor	controllers.Application.setMonitorTypes(monitor)
+POST	/MonitorImgUrl/:monitor	controllers.Application.setMonitorImgUrl(monitor)
 GET		/MonitorTypeConfig			controllers.Application.monitorTypeConfig
+POST	/SaveMonitorTypeConfig		controllers.Application.saveMonitorTypeConfig
+GET		/MonitorStatusConfig		controllers.Application.monitorStatusConfig
+POST	/SaveMonitorStatusConfig		controllers.Application.saveMonitorStatusConfig
 GET 	/RecordValidation			controllers.Application.recordValidation
 GET		/HTML/RecordValidation/:start	controllers.Application.recordValidationHtml(start)
 GET		/RealtimeEpaRecord			controllers.Application.realtimeEpaRecord

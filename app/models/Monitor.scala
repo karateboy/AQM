@@ -9,11 +9,15 @@ import play.api.libs.json._
 import play.api.libs.functional.syntax._
 
 
-case class Monitor(id:String, name:String, lat:Double, lng:Double, url:String, autoAudit:AutoAudit, monitorTypes: Seq[MonitorType.Value])
+case class Monitor(id:String, name:String, lat:Double, lng:Double, url:String, autoAudit:AutoAudit, 
+    monitorTypes: Seq[MonitorType.Value], monitorTypeStds:Seq[MonitorTypeStandard])
+case class MonitorTypeStandard(id:MonitorType.Value, std_internal:Float)
 object Monitor extends Enumeration{
   implicit val mReads: Reads[Monitor.Value] = EnumUtils.enumReads(Monitor)
   implicit val mWrites: Writes[Monitor.Value] = EnumUtils.enumWrites
-
+  implicit val mtStdRead = Json.reads[MonitorTypeStandard]
+  implicit val mtStdWrite = Json.writes[MonitorTypeStandard]
+  
   lazy val monitorList:List[Monitor] =
     DB readOnly{ implicit session =>
       sql"""
@@ -22,10 +26,13 @@ object Monitor extends Enumeration{
         """.map { r => 
           val autoAuditJson = r.stringOpt(9).getOrElse(Json.toJson(AutoAudit.default).toString())
           val autoAudit = Json.parse(autoAuditJson).validate[AutoAudit].get
-          val monitorTypesJson = r.stringOpt(10).getOrElse(Json.toJson(Seq()).toString())
+          val monitorTypesJson = r.stringOpt(10).getOrElse(Json.toJson(Seq[MonitorType.Value]()).toString())
           val monitorTypes = Json.parse(monitorTypesJson).validate[Seq[MonitorType.Value]].get
+          val monitorTypeStdJson = r.stringOpt(11).getOrElse(Json.toJson(Seq[MonitorTypeStandard]()).toString())
+          val monitorTypeStd = Json.parse(monitorTypeStdJson).validate[Seq[MonitorTypeStandard]].get
+          
           Monitor(r.string(1), r.string(2), r.string(6).toDouble, r.string(7).toDouble, r.string("imageUrl"), 
-              autoAudit, monitorTypes)}.list.apply
+              autoAudit, monitorTypes, monitorTypeStd)}.list.apply
     }
     
   var map:Map[Value, Monitor] = Map(monitorList.map{e=>Value(e.id)->e}:_*)
@@ -46,14 +53,14 @@ object Monitor extends Enumeration{
   
   def updateMonitorTypes(m:Monitor.Value, mt:Seq[MonitorType.Value])={
     val oldM = map(m)
-    val newM = Monitor(oldM.id, oldM.name, oldM.lat, oldM.lng, oldM.url, oldM.autoAudit, mt)
+    val newM = Monitor(oldM.id, oldM.name, oldM.lat, oldM.lng, oldM.url, oldM.autoAudit, mt, oldM.monitorTypeStds)
     updateMonitor(newM)
     map = map + (m -> newM)
   }
   
   def updateMonitorAutoAudit(m:Monitor.Value, autoAudit:AutoAudit)={
     val oldM = map(m)
-    val newM = Monitor(oldM.id, oldM.name, oldM.lat, oldM.lng, oldM.url, autoAudit, oldM.monitorTypes)
+    val newM = Monitor(oldM.id, oldM.name, oldM.lat, oldM.lng, oldM.url, autoAudit, oldM.monitorTypes, oldM.monitorTypeStds)
     updateMonitor(newM)
     map = map + (m -> newM)
   }
@@ -68,6 +75,18 @@ object Monitor extends Enumeration{
     val newMap = map + (Monitor.withName(m.id)->m)
     map = newMap
   }
+  
+  def updateImgUrl(m:Monitor.Value, url:String)(implicit session: DBSession = AutoSession) = {
+    val oldM = map(m)
+    val newM = Monitor(oldM.id, oldM.name, oldM.lat, oldM.lng, url, oldM.autoAudit, oldM.monitorTypes, oldM.monitorTypeStds)
+    sql"""
+        Update Monitor
+        Set imageUrl=${url}
+        Where DP_NO=${oldM.id}  
+        """.update.apply
+    val newMap = map + (m->newM)
+    map = newMap
+  }
 }
 
 case class MonitorType(id:String, desp:String, unit:String, 
@@ -75,13 +94,14 @@ case class MonitorType(id:String, desp:String, unit:String,
     std_day:Option[Float], std_year:Option[Float], 
     zd_internal:Option[Float], zd_law:Option[Float],
     sd_internal:Option[Float], sd_law:Option[Float],
-    epa_mapping:Option[String])
+    epa_mapping:Option[String],
+    prec:Int)
     
 object MonitorType extends Enumeration{
   implicit val mtReads: Reads[MonitorType.Value] = EnumUtils.enumReads(MonitorType)
   implicit val mtWrites: Writes[MonitorType.Value] = EnumUtils.enumWrites
   
-  val mtList:List[MonitorType] =
+  private def mtList:List[MonitorType] =
     DB readOnly{ implicit session =>
       sql"""
         Select *
@@ -98,11 +118,12 @@ object MonitorType extends Enumeration{
           zd_law = r.floatOpt(11),
           sd_internal = r.floatOpt(12),
           sd_law = r.floatOpt(13),
-          epa_mapping = r.stringOpt(14)
+          epa_mapping = r.stringOpt(14),
+          prec = r.int(15)
           )}.list.apply
     }
   
-  val map:Map[Value, MonitorType] = Map(mtList.map{e=>Value(e.id)->e}:_*) - MonitorType.withName("A325")
+  var map:Map[Value, MonitorType] = Map(mtList.map{e=>Value(e.id)->e}:_*) - MonitorType.withName("A325")
   val mtvAllList = mtList.map(mt=>MonitorType.withName(mt.id)).filter { !List(MonitorType.withName("A325"), MonitorType.withName("C911"), MonitorType.withName("C912")).contains(_) }
   
   def mtvList = {
@@ -125,7 +146,43 @@ object MonitorType extends Enumeration{
     }
         
      mtSet.filter { !List(MonitorType.withName("C911"), MonitorType.withName("C912")).contains(_)}.toList 
-  } 
+  }
+
+  def updateMonitorType(mt: MonitorType.Value, colname: String, newValue: String) = {
+    DB localTx { implicit session =>
+      val col = SQLSyntax.createUnsafely(s"${colname}")
+      sql"""
+        Update MonitorType
+        Set ${col}=${newValue}
+        Where ITEM=${mt.toString}  
+        """.update.apply
+
+      val old = map(mt)
+
+      val newMtOpt =
+        sql"""
+          Select *
+          From MonitorType
+          Where ITEM=${mt.toString}
+        """.map { r =>
+          MonitorType(id = r.string(1),
+            desp = r.string(2),
+            unit = r.string(3),
+            std_internal = r.floatOpt(5),
+            std_law = r.floatOpt(6),
+            std_hour = r.floatOpt(7),
+            std_day = r.floatOpt(8),
+            std_year = r.floatOpt(9),
+            zd_internal = r.floatOpt(10),
+            zd_law = r.floatOpt(11),
+            sd_internal = r.floatOpt(12),
+            sd_law = r.floatOpt(13),
+            epa_mapping = r.stringOpt(14),
+            prec = r.int(15))
+        }.single.apply
+        map = (map + (mt-> newMtOpt.get))
+    }
+  }
   
   val psiList = List(MonitorType.withName("A214"),MonitorType.withName("A222"), MonitorType.withName("A224"), MonitorType.withName("A225"), MonitorType.withName("A293") )
   val windDirList = List(MonitorType.withName("C212"), MonitorType.withName("C912"))

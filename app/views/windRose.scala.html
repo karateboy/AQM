@@ -27,6 +27,31 @@
 	            			</div>	            			            		
 	                    </div>
 	                    <div class="form-group">
+	            			<label class="col-lg-1 control-label">測項</label>						
+	            			<div class="col-lg-11 btn-group" data-toggle="buttons">
+	            			@for(mt<-MonitorType.myMtvList(privilege)){
+	            				@if(mt == MonitorType.myMtvList(privilege).head){
+	            					<label class="btn btn-outline btn-primary dim active">
+									<input type="radio" name="monitorType" id="@mt" checked>@MonitorType.map(mt).desp</label>
+	            				}else{
+	            					<label class="btn btn-outline btn-primary dim">
+									<input type="radio" name="monitorType" id="@mt">@MonitorType.map(mt).desp</label>
+	            				}	            						
+	            			}
+	            			</div>            		
+	                    </div>
+	                    <div class="form-group">
+	            			<label class="col-lg-1 control-label">方位</label>						
+	            			<div class="col-lg-11 btn-group" data-toggle="buttons">
+	            				<label class="btn btn-outline btn-primary dim active">
+									<input type="radio" name="nWay" checked value="8">8</label>
+								<label class="btn btn-outline btn-primary dim">
+									<input type="radio" name="nWay" value="16">16</label>
+								<label class="btn btn-outline btn-primary dim">
+									<input type="radio" name="nWay" value="32">32</label>
+	            			</div>            		
+	                    </div>	                    
+	                    <div class="form-group">
 	            			<label class="col-lg-1 control-label">查詢區間</label>	
 	            			<div class="col-lg-5">
 	            				<div class="input-daterange input-group" id="datepicker">
@@ -50,6 +75,28 @@
 					<div id="reportDiv" align="center" style="overflow-x:auto">
 					            		
             		</div>
+            		<table id="frequency" class="table">
+            			<thead>
+            				<th>風向</th>
+            				<th>&lt1 m/s</th>
+            				<th>1~2 m/s</th>
+            				<th>2~5 m/s</th>
+            				<th>5~15 m/s</th>
+            				<th>&gt 15 m/s</th>
+            				<th>總和</th>
+            			</thead>
+            			<tbody>
+            			</tbody>
+            			<tfoot>
+            				<th>風向</th>
+            				<th>&lt1 m/s</th>
+            				<th>1~2 m/s</th>
+            				<th>2~5 m/s</th>
+            				<th>5~15 m/s</th>
+            				<th>&gt 15 m/s</th>
+            				<th>總和</th>            			
+            			</tfoot>
+            		</table>
             	</div>
         	</div> <!-- end of panel group -->    	
 	</div>
@@ -66,16 +113,13 @@ $( document ).ready(function() {
 	});
 
 
-	var monitors, reportStart, reportEnd;
+	var monitor, monitorType, nWay, reportStart, reportEnd;
 	
 	function validate(){
-		monitors = $("input[name='monitor']:checked");
-
-		if (monitors.length == 0) {
-			alert("請選擇測站");
-			return false;
-		}
-
+		monitor = $("input[name='monitor']:checked").attr("id");
+		monitorType = $("input[name='monitorType']:checked").attr("id");
+		nWay = $("input[name='nWay']:checked").val();
+		
 		reportStart = $('#reportStart').val();
 		if(reportStart.length === 0){
 			alert('請選擇開始日期');
@@ -102,10 +146,8 @@ $( document ).ready(function() {
 		$('#reportDiv').html('');
 		$("body").css("cursor", "progress");
 
-		var monitor = monitors[0].id;
-			
-		var url = "/WindRoseReport/" + monitor + "/" + reportStart + "/" + reportEnd;
-		
+		var url = "/WindRoseReport/" + monitor + "/" + monitorType + "/" + nWay + "/" + reportStart + "/" + reportEnd;
+		console.log(url);
 		$.ajax({
 			url : url,
 			data : "",

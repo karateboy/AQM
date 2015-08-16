@@ -1,0 +1,71 @@
+@* monitorTypeConfig Template File *@
+@import MonitorStatus._
+<div class="row">
+    <div class="col-lg-12">
+    	<div class="panel-group" id="accordion">
+        <div class="panel panel-primary" id="reportPanel">
+        <div class="panel-heading panel-title"" >
+        	<a data-toggle="collapse" data-parent="#accordion" href="#monitorType">點擊測項參數加以編輯</a>	
+        </div>
+        <div class="panel-body panel-collapse" id="monitorType">    		
+			<div id="monitorTypeDiv" align="center">
+            	<table id="monitorTypeTable" class="table" cellspacing="0" width="100%">
+            		<thead>
+            			<tr>
+            				<th>類別</th>
+            				<th>代碼</th>
+            				<th>說明</th>
+            			</tr>
+            		</thead>
+            		<tbody>
+            			@for(ms<-MonitorStatus.msList){
+            				<tr id="@MonitorStatus.getTagStr(ms)">
+            					<th>@StatusType.map(ms.statusType)</th>
+            					<th>@ms.id</th>
+            					<td>@ms.desp</td>
+            				</tr>
+            			}
+            		</tbody>
+            	</table>          		
+            </div>
+       </div>
+       </div>
+    	</div>
+	</div>
+</div>
+<script src='@routes.Assets.at("js/plugins/jeditable/jquery.jeditable.js")'></script>
+<script>
+var dataTableL10N = '@routes.Assets.at("localization/zh_tw.json")';
+</script>
+<script>
+	$(document).ready(function() {
+        /* Init DataTables */
+        
+        var oTable = $('#monitorTypeTable').dataTable({
+        	language: {
+				url: dataTableL10N,							
+			},
+        	searching: false,
+        	ordering:  false,
+			paging: false
+        });
+		
+        /* Apply the jEditable handlers to the table */
+        oTable.$('td').editable( '/SaveMonitorStatusConfig', {
+        	indicator : '儲存中...',
+            tooltip   : '點擊該項目加以編輯...',
+            cancel    : '取消',
+            submit    : '確認',            
+            name : 'data', 
+            submitdata: function ( value, settings ) {
+                var $me = $(this);
+                return {                    
+                    id: $me.parent().attr("id")
+                };
+            },
+
+            "width": "90%",
+            "height": "100%"
+        } );
+	});
+</script>

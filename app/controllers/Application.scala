@@ -11,11 +11,14 @@ import play.api.libs.json._
 import play.api.libs.functional.syntax._
 import play.api.libs.json.Json
 import play.api.Play.current
+import play.api.data._
+import play.api.data.Forms._
 import play.api.libs.ws._
 import play.api.libs.ws.ning.NingAsyncHttpClientConfigBuilder
 import scala.concurrent.Future
 import PdfUtility._
-
+import play.api.libs.json._
+import play.api.libs.functional.syntax._
 object Application extends Controller {
 
   val title = "麥寮廠區空氣品質及氣象監測系統"
@@ -30,7 +33,6 @@ object Application extends Controller {
         val group = Group.getGroup(userInfo.groupID).get
         Ok(views.html.index(title, userInfo, group.privilege))
       }
-
   }
 
   def monitor(monitor: String) = Security.Authenticated {
@@ -40,12 +42,15 @@ object Application extends Controller {
       Ok(views.html.monitor(m))
   }
 
-  def getMonitorTypes(monitorStr: String) = Security.Authenticated {
+  case class MonitorInfo(mt:Seq[MonitorType.Value], imgUrl:String)
+  implicit val mInfoWrite = Json.writes[MonitorInfo]
+  
+  def getMonitorInfo(monitorStr: String) = Security.Authenticated {
     implicit request =>
       val m = Monitor.withName(monitorStr)
-      val monitorTypes = Monitor.map(m).monitorTypes
+      val info = MonitorInfo(Monitor.map(m).monitorTypes, Monitor.map(m).url)
 
-      Ok(Json.toJson(monitorTypes))
+      Ok(Json.toJson(info))
   }
 
   def setMonitorTypes(monitorStr: String) = Security.Authenticated(BodyParsers.parse.json) {
@@ -59,15 +64,84 @@ object Application extends Controller {
           BadRequest(Json.obj("ok" -> false, "msg" -> JsError.toFlatJson(error)))
         },
         mt => {
-          val oriM = Monitor.map(monitor)
           Monitor.updateMonitorTypes(monitor, mt)
           Ok(Json.obj("ok" -> true))
         })
   }
 
+  def setMonitorImgUrl(monitorStr: String) = Security.Authenticated(BodyParsers.parse.json) {
+    implicit request =>
+      val monitor = Monitor.withName(monitorStr)
+      val imgUrlResult = request.body.validate[String]
+
+      imgUrlResult.fold(
+        error => {
+          Logger.error(JsError.toFlatJson(error).toString())
+          BadRequest(Json.obj("ok" -> false, "msg" -> JsError.toFlatJson(error)))
+        },
+        imgUrl => {
+           Monitor.updateImgUrl(monitor, imgUrl)
+          Ok(Json.obj("ok" -> true))
+        })
+  }
   def monitorTypeConfig = Security.Authenticated {
     implicit request =>
       Ok(views.html.monitorTypeConfig())
+  }
+
+  case class EditData(id: String, data: String)
+  def saveMonitorTypeConfig() = Security.Authenticated {
+    implicit request =>
+      try {
+        val mtForm = Form(
+          mapping(
+            "id" -> text,
+            "data" -> text)(EditData.apply)(EditData.unapply))
+
+        val mtData = mtForm.bindFromRequest.get
+        val mtInfo = mtData.id.split(":")
+        val mt = MonitorType.withName(mtInfo(0))
+
+        MonitorType.updateMonitorType(mt, mtInfo(1), mtData.data)
+
+        Ok(mtData.data)
+      } catch {
+        case e: Exception =>
+          Logger.error(e.toString)
+          BadRequest(e.toString)
+        case e: Throwable =>
+          Logger.error(e.toString)
+          BadRequest(e.toString)
+      }
+  }
+
+  def monitorStatusConfig = Security.Authenticated {
+    implicit request =>
+      Ok(views.html.monitorStatusConfig())
+  }
+
+  def saveMonitorStatusConfig() = Security.Authenticated {
+   implicit request =>
+      try {
+        val mtForm = Form(
+          mapping(
+            "id" -> text,
+            "data" -> text)(EditData.apply)(EditData.unapply))
+
+        val msData = mtForm.bindFromRequest.get
+
+        Logger.debug(msData.toString())
+        MonitorStatus.update(msData.id, msData.data)
+
+        Ok(msData.data)
+      } catch {
+        case e: Exception =>
+          Logger.error(e.toString)
+          BadRequest(e.toString)
+        case e: Throwable =>
+          Logger.error(e.toString)
+          BadRequest(e.toString)
+      }
   }
 
   def recordValidation = Security.Authenticated {
@@ -313,23 +387,23 @@ object Application extends Controller {
 
       Ok(views.html.auditConfig(group.privilege))
   }
-  
-  def getMonitorAuditConfig(monitorStr:String) = Security.Authenticated {
+
+  def getMonitorAuditConfig(monitorStr: String) = Security.Authenticated {
     implicit request =>
       val userInfo = Security.getUserinfo(request).get
       val group = Group.getGroup(userInfo.groupID).get
       val m = Monitor.withName(monitorStr)
-      
+
       val auditConfig = Monitor.map(m).autoAudit
-      
+
       Ok(Json.toJson(auditConfig))
   }
 
-  def setMonitorAuditConfig(monitorStr:String) = Security.Authenticated(BodyParsers.parse.json) {
+  def setMonitorAuditConfig(monitorStr: String) = Security.Authenticated(BodyParsers.parse.json) {
     implicit request =>
       val monitor = Monitor.withName(monitorStr)
       val autoAuditResult = request.body.validate[AutoAudit]
-      
+
       autoAuditResult.fold(
         error => {
           Logger.error(JsError.toFlatJson(error).toString())

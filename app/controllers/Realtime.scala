@@ -9,6 +9,7 @@ import models.ModelHelper._
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
 import PdfUtility._
+import models.ModelHelper._
 
 object Realtime extends Controller {
   def realtimeStat(outputTypeStr: String) = Security.Authenticated {
@@ -47,107 +48,124 @@ object Realtime extends Controller {
       Ok(views.html.realtimeTrend(group.privilege))
   }
 
-  case class RealtimeTrendParam(monitors: Seq[Monitor.Value], monitorTypes: Seq[MonitorType.Value])
-
-  implicit val monitorTypeReader: Reads[MonitorType.Value] = (__ \ "id").read[String].map(MonitorType.withName _)
-  implicit val monitorReader: Reads[Monitor.Value] = (__ \ "id").read[String].map(Monitor.withName _)
-  implicit val realtimeTrendParamRBuilder: Reads[RealtimeTrendParam] =
-    ((__ \ "monitor").read[Seq[Monitor.Value]] and
-      (__ \ "monitorType").read[Seq[MonitorType.Value]])(RealtimeTrendParam.apply _)
-
-  case class MorrisBarChart(data: Seq[MorrisBarChartDataElem], xkey: String, ykeys: Seq[String], labels: Seq[String], title: String)
-  case class MorrisBarChartDataElem(elem: Seq[(String, String)])
-  implicit val morrisBarChartDataElemWritter = new Writes[MorrisBarChartDataElem] {
-    def writes(dataElem: MorrisBarChartDataElem): JsObject = {
-      val ret1: Seq[(String, Json.JsValueWrapper)] = dataElem.elem.map(r => {
-        val wrapper: Json.JsValueWrapper = r._2
-        (r._1, wrapper)
-      })
-      Json.obj(ret1: _*)
-    }
-  }
-  implicit val morrisBarChartWritter: Writes[MorrisBarChart] = (
-    (__ \ "data").write[Seq[MorrisBarChartDataElem]] and
-    (__ \ "xkey").write[String] and
-    (__ \ "ykeys").write[Seq[String]] and
-    (__ \ "labels").write[Seq[String]] and
-    (__ \ "title").write[String])(unlift(MorrisBarChart.unapply))
-
-  def realtimeTrendJSON = Security.Authenticated(BodyParsers.parse.json) {
+  def realtimeTrendJSON(monitorStr: String, monitorTypeStr: String) = Security.Authenticated{
     implicit request =>
-      val realtimeTrendParam = request.body.validate[RealtimeTrendParam]
+      val monitorStrArray = monitorStr.split(':')
+      val monitors = monitorStrArray.map { Monitor.withName }
+      val monitorTypeStrArray = monitorTypeStr.split(':')
+      val monitorTypes = monitorTypeStrArray.map { MonitorType.withName }
 
-      realtimeTrendParam.fold(
-        error => {
-          Logger.error(JsError.toFlatJson(error).toString())
-          BadRequest(Json.obj("ok" -> false, "msg" -> JsError.toFlatJson(error)))
-        },
-        param => {
-          assert(param.monitorTypes.length == 1 || param.monitors.length == 1)
-          val json =
-            if (param.monitorTypes.length != 1) {
-              Json.toJson("more than 1 types")
-            } else {
-              val current = getLatestRecordTime(TableType.Hour).get
-              val trend =
-                realtimeMonitorTrend(current, param.monitors, param.monitorTypes(0))
+      val current = getLatestRecordTime(TableType.Hour).get
+      val reportUnit = ReportUnit.Hour
+      val monitorStatusFilter = MonitorStatusFilter.All
+      val start = current.toDateTime - 1.day
+      val end = current
 
-              val data =
-                for { i <- 8 to 0 by -1 } yield {
-                  val hour_data =
-                    for {
-                      m <- param.monitors
-                      record = trend.get(m).get(i)
-                    } yield {
-                      val value =
-                        if (record._2.isDefined)
-                          "%.2f".format(record._2.get)
-                        else
-                          "0"
+      def statusFilter(data: (DateTime, (Option[Float], Option[String]))): Boolean = {
+        if (data._2._2.isEmpty)
+          return false
 
-                      (m.toString() -> value)
-                    }
-                  //val time = trend.get(param.monitors.head).get(i)._1  
-                  //MorrisBarChartDataElem(hour_data :+("time", time.getTime.toString))
+        val stat = data._2._2.get
 
-                  if (i != 0)
-                    MorrisBarChartDataElem(hour_data :+ ("time", "%d 小時前".format(i)))
-                  else
-                    MorrisBarChartDataElem(hour_data :+ ("time", "即時"))
+        MonitorStatusFilter.isMatched(monitorStatusFilter, stat)
+      }
 
-                }
+      var timeSet = Set[DateTime]()
+      val pairs =
+            for {
+              m <- monitors
+              records = Record.getHourRecords(m, start, end)
 
-              val xkey = "time"
-              val ykeys = param.monitors.map(_.toString)
-              val labels = param.monitors.map(Monitor.map(_).name)
-              val mt = MonitorType.map(param.monitorTypes(0))
-              val title = mt.desp + "(" + mt.unit + ")趨勢圖"
-
-              Json.toJson(MorrisBarChart(data, xkey, ykeys, labels, title))
+              mtPairs = for {
+                mt <- monitorTypes
+                mtRecords = records.map { rs => (Record.timeProjection(rs).toDateTime, Record.monitorTypeProject2(mt)(rs)) }
+                msfRecords = mtRecords.filter(statusFilter)
+              } yield {
+                val timeMap = Map(msfRecords: _*)
+                timeSet ++= timeMap.keySet
+                mt -> timeMap
+              }
+            } yield {
+              m -> Map(mtPairs: _*)
             }
-          Ok(json)
-        })
+
+      val recordMap = Map(pairs: _*)
+      val timeSeq = timeSet.toList.sorted
+
+      val series = for {
+        m <- monitors
+        mt <- monitorTypes
+        timeData = timeSeq.map(t => recordMap(m)(mt).getOrElse(t, (Some(0f), Some(""))))
+        data = timeData.map(_._1.getOrElse(0f))
+      } yield {
+        seqData(Monitor.map(m).name + "_" + MonitorType.map(mt).desp, data)
+      }
+
+      val title = if (monitorTypes.length == 1) {
+        MonitorType.map(monitorTypes(0)).desp + "及時趨勢圖"
+      } else
+        "綜合及時趨勢圖"
+
+      val axisLines = if (monitorTypes.length == 1) {
+        val mtCase = MonitorType.map(monitorTypes(0))
+        if (mtCase.std_internal.isEmpty || mtCase.std_law.isEmpty)
+          None
+        else
+          Some(Seq(AxisLine("#0000FF", 2, mtCase.std_internal.get, Some(AxisLineLabel("left", "內控值"))),
+            AxisLine("#FF0000", 2, mtCase.std_law.get, Some(AxisLineLabel("right", "法規值")))))
+      } else
+        None
+
+      val timeStrSeq = timeSeq.map(t => t.toString("MM/dd HH:mm"))
+      val c =
+        if (monitorTypes.length == 1) {
+          val mtCase = MonitorType.map(monitorTypes(0))
+
+          HighchartData(
+            Map("type" -> "line"),
+            Map("text" -> title),
+            XAxis(Some(timeStrSeq)),
+            Seq(YAxis(None, AxisTitle(Some(mtCase.unit)), axisLines)),
+            series)
+        } else {
+          HighchartData(
+            Map("type" -> "line"),
+            Map("text" -> title),
+            XAxis(Some(timeStrSeq)),
+            Seq(YAxis(None, AxisTitle(None), axisLines)),
+            series)
+        }
+
+      Results.Ok(Json.toJson(c))
   }
 
   case class XAxis(categories: Option[Seq[String]])
   case class AxisLineLabel(align: String, text: String)
   case class AxisLine(color: String, width: Int, value: Float, label: Option[AxisLineLabel])
   case class AxisTitle(text: Option[String])
-  case class YAxis(labels: Option[String], title: AxisTitle, plotLines: Option[Seq[AxisLine]])
-  case class seqData(name: String, data: Seq[Float])
+  case class YAxis(labels: Option[String], title: AxisTitle, plotLines: Option[Seq[AxisLine]], opposite:Boolean=false)
+  case class seqData(name: String, data: Seq[Float], yAxis:Int=0, chartType:Option[String]=None)
   case class HighchartData(chart: Map[String, String],
                            title: Map[String, String],
                            xAxis: XAxis,
-                           yAxis: YAxis,
+                           yAxis: Seq[YAxis],
                            series: Seq[seqData])
-
+  case class FrequencyTab(header:Seq[String], body:Seq[Seq[String]], footer:Seq[String])                         
+  case class WindRoseReport(chart:HighchartData, table:FrequencyTab)
   implicit val xaWrite = Json.writes[XAxis]
   implicit val axisLineLabelWrite = Json.writes[AxisLineLabel]
   implicit val axisLineWrite = Json.writes[AxisLine]
   implicit val axisTitleWrite = Json.writes[AxisTitle]
   implicit val yaWrite = Json.writes[YAxis]
-  implicit val seqDataWrite = Json.writes[seqData]
+  implicit val seqDataWrite:Writes[seqData] = (
+    (__ \ "name").write[String] and
+    (__ \ "data").write[Seq[Float]] and
+    (__ \ "yAxis").write[Int] and
+    (__ \ "type").write[Option[String]]
+  )(unlift(seqData.unapply))
   implicit val hcWrite = Json.writes[HighchartData]
+  implicit val feqWrite = Json.writes[FrequencyTab]
+  implicit val wrWrite = Json.writes[WindRoseReport]
 
   def highchartJson(monitorTypeStr: String) = Security.Authenticated {
     implicit request =>
@@ -195,7 +213,7 @@ object Realtime extends Controller {
         Map("type" -> "column"),
         Map("text" -> title),
         XAxis(Some(Seq(latestRecordTime.toString("yyyy-MM-dd HH:mm")))),
-        YAxis(None, AxisTitle(Some(mtCase.unit)), axisLines),
+        Seq(YAxis(None, AxisTitle(Some(mtCase.unit)), axisLines)),
         series)
 
       Ok(Json.toJson(c))

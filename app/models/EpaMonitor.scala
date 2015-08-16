@@ -12,11 +12,11 @@ object EpaMonitor extends Enumeration{
   val Mailiao = Value("Mailiao")
   
   val map=Map(
-    Erlin->EpaMonitor("二林站", 35),
-    Puzi->EpaMonitor("朴子站", 40),
-    Lunbei->EpaMonitor("崙背站", 38),
-    Taixi->EpaMonitor("臺西站", 41),
-    Mailiao->EpaMonitor("麥寮站", 83)
+    Erlin->EpaMonitor("環保署二林站", 35),
+    Puzi->EpaMonitor("環保署朴子站", 40),
+    Lunbei->EpaMonitor("環保署崙背站", 38),
+    Taixi->EpaMonitor("環保署臺西站", 41),
+    Mailiao->EpaMonitor("環保署麥寮站", 83)
   )
   
   val idMap = map.map(r=>(r._2.id, r._1))

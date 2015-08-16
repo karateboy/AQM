@@ -336,10 +336,10 @@ object Realtime {
       "PSI5"      
   }
   
-  def getRealtimePSI(current:DateTime)(implicit session: DBSession = AutoSession) = {
+  def getRealtimePSI(current:DateTime, monitorList:List[Monitor.Value] = Monitor.mvList)(implicit session: DBSession = AutoSession) = {
     val result =
       for {
-        m <- Monitor.mvList
+        m <- monitorList
       } yield {        
         m -> getMonitorRealtimePSI(m, current)
       }
@@ -369,43 +369,6 @@ object Realtime {
       FROM ${tab_name}
       ORDER BY M_DateTime  DESC
       """.map { r=>r.timestamp(1) }.single.apply  
-  }
-  
-  def realtimeMonitorTrend(current:DateTime, monitors: Seq[Monitor.Value], monitorType: MonitorType.Value)(implicit session: DBSession = AutoSession) = {
-    val tab_name = Record.getTabName(TableType.Hour, current.getYear)
-
-    def fillMissingRecord(monitor: Monitor.Value, data: List[HourRecord], expected: DateTime): List[HourRecord] = {
-      if (expected > current)
-        Nil
-      else if (data.isEmpty || data.head.date.millis != expected.getMillis) {
-        Record.emptyRecord(Monitor.map(monitor).id, expected) ::
-          fillMissingRecord(monitor, data, expected + 1.hour)
-      } else {
-        data.head :: fillMissingRecord(monitor, data.tail, expected + 1.hour)
-      }
-    }
-
-    val result =
-      for {
-        m <- monitors
-        hrList = sql"""
-      SELECT *
-      FROM ${tab_name}
-      WHERE DP_NO = ${Monitor.map(m).id} and M_DateTime >= ${current - 8.hour}
-      ORDER BY M_DateTime  DESC
-      """.map { Record.mapper }.list.apply
-        filledList = fillMissingRecord(m, hrList.reverse, current - 8.hour)
-        v = filledList.map { rs=>{
-          val t = timeProjection(rs)
-          val (v,s)= monitorTypeProject2(monitorType)(rs)
-          (t, v, s)
-          } 
-        }
-      } yield {
-        m -> v
-      }
-
-    Map(result: _*)
   }
   
   def getRealtimeMonitorValueMap(mt:MonitorType.Value, current:Timestamp)(implicit session: DBSession = AutoSession) = {

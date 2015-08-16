@@ -4,159 +4,192 @@
    	<div class="col-lg-12">
        	<div class="panel panel-primary" id="paramPanel">
            	<div class="panel-heading panel-title" >
-           		<a data-toggle="collapse" href="#reportParam">查詢項目</a>	
+           		<a data-toggle="collapse" href="#reportParam">查詢參數</a>	
             </div>
            	<div class="panel-body panel-collapse in" id="reportParam">
-           		<h5>測站</h5>
-           		<button id="select-all-monitors" class="btn btn-info">全選</button>
-           		<div class="btn-group" data-toggle="buttons">
-           			@for(m<-privilege.allowedMonitors){
-           				<label class="btn btn-outline btn-primary dim">
-							<input type="checkbox" name="monitor" id="@m">@Monitor.map(m).name</label>		
-           			}
-           		</div>
-				<h5>監測項目</h5>
-				<div class="btn-group" data-toggle="buttons">
-				    @for(mt<-privilege.allowedMonitorTypes){
-           				<label class="btn btn-outline btn-primary dim">
-							<input type="radio" name="monitorType" id="@MonitorType.map(mt).id">@MonitorType.map(mt).desp</label>		
-           			}
-				</div>
-				<h5>圖形種類</h5>
-				<div class="btn-group" data-toggle="buttons">
-					<label class="btn btn-outline btn-primary dim active">
-						<input type="radio" name="chartType" id="1" checked>柱狀圖</label>
-					<label class="btn btn-outline btn-primary dim">
-						<input type="radio" name="chartType" id="2">折線圖</label>
-					<label class="btn btn-outline btn-primary dim">
-						<input type="radio" name="chartType" id="3">折線面積圖</label>
-						
-				</div>
-				</br>
-				</br>
-				<button type="button" class="btn btn-primary" id="queryReport">查詢</button>				
+           		<form class="form-horizontal">
+	            		<div class="form-group">
+	            			<label class="col-lg-1 control-label">測站</label>
+	            			<div class="col-lg-11">
+	            				<button id="select-all-monitors" class="btn btn-info" type="button">全選</button>
+	            				<div class="btn-group" data-toggle="buttons">	            					            				
+	            					@for(m<-Monitor.myMvList(privilege)){
+	            						@if(m == Monitor.myMvList(privilege).head){
+	            							<label class="btn btn-outline btn-primary dim active">
+											<input type="checkbox" name="monitor" id="@m" checked>@Monitor.getDisplayName(m)</label>
+	            						}else{
+	            							<label class="btn btn-outline btn-primary dim">
+											<input type="checkbox" name="monitor" id="@m">@Monitor.getDisplayName(m)</label>
+	            						}
+	            						
+	            					}
+	            				</div>
+	            			</div>	            			            		
+	                    </div>
+	                    <div class="form-group">
+	            			<label class="col-lg-1 control-label">測項</label>
+	            			<div class="col-lg-11">
+	            				<button id="select-all-monitorTypes" class="btn btn-info" type="button">全選</button>
+	            				<div class="btn-group" data-toggle="buttons">	            				
+	            				@for(mt<-MonitorType.myMtvList(privilege)){
+	            					@if(mt == MonitorType.myMtvList(privilege).head){
+	            						<label class="btn btn-outline btn-primary dim active">
+										<input type="checkbox" name="monitorType" id="@mt" checked>@MonitorType.map(mt).desp</label>	
+	            					}else{
+	            						<label class="btn btn-outline btn-primary dim">
+										<input type="checkbox" name="monitorType" id="@mt">@MonitorType.map(mt).desp</label>
+	            					}	            					
+	            				}
+	            				</div>
+	            			</div>	            			            		
+	                    </div>
+	                    <div class="form-group">
+	            			<label class="col-lg-1 control-label">圖表類型</label>						
+	            			<div class="col-lg-11 btn-group" data-toggle="buttons">
+           						<label class="btn btn-outline btn-primary dim active">
+									<input type="radio" name="chartType" id="line" checked>折線圖</label>
+								<label class="btn btn-outline btn-primary dim">
+									<input type="radio" name="chartType" id="spline">曲線圖</label>
+								<label class="btn btn-outline btn-primary dim">
+									<input type="radio" name="chartType" id="area">面積圖</label>	
+								<label class="btn btn-outline btn-primary dim">
+									<input type="radio" name="chartType" id="areaspline">曲線面積圖</label>		
+								<label class="btn btn-outline btn-primary dim">
+									<input type="radio" name="chartType" id="column">柱狀圖</label>
+
+								<label class="btn btn-outline btn-primary dim">
+									<input type="radio" name="chartType" id="scatter">點圖</label>			
+	            			</div>            		
+	                    </div>	                    
+						<div class="form-group">
+							<div class="col-lg-1 col-lg-offset-1">
+								<button type="button" class="btn btn-primary" id="queryReport">查詢</button>
+							</div>							
+						</div>	                    	                    	                    
+            		</form>           	
            	</div>
        	</div>
-       	<div class="panel panel-success" style="display:none" id="reportPanel">
-           	<div class="panel-heading panel-title"" >
-           		<a data-toggle="collapse" href="#monitorReport">即時趨勢圖</a>	
-            </div>
-           	<div class="panel-body panel-collapse collapse" id="monitorReport">
-				<div id="reportWell" align="center" style="overflow-x:auto">
-					  <h3></h3>
-				      <div id="reportDiv">
-				      </div>      		
-           		</div>
-           	</div>
-       	</div> <!-- end of panel group -->
-	</div>
+        	<div class="panel panel-success" style="display:none" id="reportPanel">
+            	<div class="panel-body panel-collapse">
+					<div id="reportDiv" align="center" style="overflow-x:auto">
+            		</div>
+            	</div>
+        	</div>	
 </div>
-
-<script src='@routes.Assets.at("js/plugins/morris/raphael-2.1.0.min.js")'></script>
-<script src='@routes.Assets.at("js/plugins/morris/morris.js")'></script>
+</div>
+<script src='@routes.Assets.at("js/highcharts/highcharts-more.js")'></script>
+<script src='@routes.Assets.at("js/highcharts/modules/exporting.js")'></script>
 <script>
-	$(document).ready(function() {
-		$('#select-all-monitors').click(function(){
-			$('.btn-group input[name="monitor"]').each(function(){
-		            // toggle checkbox
-		            $(this).prop('checked',!$(this).prop('checked'));
-		            // toggle class
-		            $(this).parents('label').toggleClass('active');
-		        });
-		});
-		
-		var monitors, monitorTypes;
-
-		function validate() {
-			monitors = $("input[name='monitor']:checked");
-			console.log('monitor len=' + monitors.length);
-
-			monitorTypes = $("input[name='monitorType']:checked");
-			console.log('mt len=' + monitorTypes.length);
-
-			if (monitors.length == 0) {
-				alert("請選擇測站");
-				return false;
-			}
-
-			if (monitorTypes.length == 0) {
-				alert("請選擇監測項目");
-				return false;
-			}
-
-			if (monitors.length > 1 && monitorTypes.length > 1) {
-				alert("測站數和側項數不能同時大於一");
-				return false;
-			}
-			return true;
-		}
-
-		$('#queryReport').click(function() {
-			if (!validate())
-				return;
-
-			$("#reportPanel").css('display', 'block');
-			$("#reportParam").collapse();
-			$("#monitorReport").collapse();
-
-			var monitorParam = [];
-			for (var i = 0; i < monitors.length; i++) {
-				var obj = {};
-				obj.id = monitors[i].id;
-				monitorParam.push(obj);
-			}
-
-			var monitorTypeParam = [];
-			for (var i = 0; i < monitorTypes.length; i++) {
-				var obj = {};
-				obj.id = monitorTypes[i].id
-				monitorTypeParam.push(obj);
-			}
-
-			var obj = {
-				'monitor' : monitorParam,
-				'monitorType' : monitorTypeParam
-			};
-
-			$("body").css("cursor", "progress");
-
-			$.ajax({
-				url : "/JSON/realtimeTrend",
-				data : JSON.stringify(obj),
-				contentType : "application/json; charset=utf-8",
-				type : "POST",
-				dataType : "json",
-				success : function(result) {
-					$('#reportWell').find("h3").text(result.title);
-					$('#reportDiv').html('');
-					var monitorReport = $("#monitorReport");
-					monitorReport.collapse('show');
-					result.element = 'reportDiv';
-					//result.resize=true;
-					var chartType;
-					chartType = $("input[name='chartType']:checked")
-					console.log(chartType[0].id);
-					if (chartType[0].id == 1) {
-						Morris.Bar(result);
-					} else if (chartType[0].id == 2) {
-						result.parseTime = false;
-						Morris.Line(result);
-					} else {
-						result.parseTime = false;
-						Morris.Area(result)
-					}
-					monitorReport.collapse();
-					monitorReport.collapse('show');
-				},
-				error : function(xhr, status, errorThrown) {
-					console.log("錯誤訊息:" + status + "-" + errorThrown);
-				},
-
-				complete : function(xhr, status) {
-					$("body").css("cursor", "default");
-				}
-			});
-		});
-
+$( document ).ready(function() {
+	$('#select-all-monitors').click(function(){
+		$('.btn-group input[name="monitor"]').each(function(){
+	            // toggle checkbox
+	            $(this).prop('checked',!$(this).prop('checked'));
+	            // toggle class
+	            $(this).parents('label').toggleClass('active');
+	        });
 	});
+
+	$('#select-all-monitorTypes').click(function(){
+		$('.btn-group input[name="monitorType"]').each(function(){
+	            // toggle checkbox
+	            $(this).prop('checked',!$(this).prop('checked'));
+	            // toggle class
+	            $(this).parents('label').toggleClass('active');
+	        });
+	});
+	
+	$('#reportStart').datetimepicker({
+		format: 'YYYY-MM-D HH:mm',
+		defaultDate: moment().subtract(1, 'days'),
+    	locale: "zh-TW"
+	});
+	$('#reportEnd').datetimepicker({
+		format: 'YYYY-MM-D HH:mm',
+		defaultDate: moment().subtract(1, 'hours'),
+    	locale: "zh-TW"
+	});
+    $("#reportStart").on("dp.change", function (e) {
+        $('#reportEnd').data("DateTimePicker").minDate(e.date);
+    });
+    
+    $("#reportEnd").on("dp.change", function (e) {
+        $('#reportStart').data("DateTimePicker").maxDate(e.date);
+    });
+
+
+	var monitors, monitorTypes, chartType;
+	
+	function validate(){
+		monitors = $("input[name='monitor']:checked");
+		monitorTypes = $("input[name='monitorType']:checked");		
+		chartType = $("input[name='chartType']:checked").attr('id');
+		 
+		return true;
+	}
+	
+	$('#queryReport').click(function(){
+		if(!validate())
+			return;
+			
+		$('#reportDiv').html('');
+		$("body").css("cursor", "progress");
+
+		var monitorParam='';
+		for (var i = 0; i < monitors.length; i++) {
+			if(monitorParam=='')
+				monitorParam = monitors[i].id;
+			else
+				monitorParam += ':' + monitors[i].id;
+		}	
+
+		console.log(monitorTypes);
+		var monitorTypeParam='';
+		for (var i = 0; i < monitorTypes.length; i++) {
+			if(monitorTypeParam=='')
+				monitorTypeParam = monitorTypes[i].id;
+			else
+				monitorTypeParam += ':' + monitorTypes[i].id;
+		}	
+				
+		var url = "/JSON/realtimeTrend/" + monitorParam + "/" + monitorTypeParam;
+		
+		$.ajax({
+			url : url,
+			data : "",
+			contentType : "application/json; charset=utf-8",
+			type : "GET",
+			dataType : "json",
+			success : function(result) {
+				$("#reportPanel").css('display','block');
+				$("#reportParam").collapse();
+						
+				result.chart = {
+					type: chartType,
+					zoomType: 'x',
+		            panning: true,
+		            panKey: 'shift'
+				};
+				result.colors=[
+				'#7CB5EC','#434348','#90ED7D','#F7A35C','#8085E9','#F15C80',
+				'#E4D354','#2B908F','#FB9FA8','#91E8E1','#7CB5EC','#80C535','#969696'];
+				result.tooltip ={
+	            	valueDecimals: 2};
+	            result.legend={enabled:true};
+				result.credits={
+					enabled:false,
+					href:'http://www.wecc.com.tw/'
+				};
+				$('#reportDiv').highcharts(result);
+			},
+			error : function(xhr, status, errorThrown) {
+				console.log("錯誤訊息:" + status + "-" + errorThrown);
+			},
+
+			complete : function(xhr, status) {
+				$("body").css("cursor", "default");
+			}
+		});
+	});
+});
 </script>

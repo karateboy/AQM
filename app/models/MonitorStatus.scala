@@ -8,6 +8,7 @@ object StatusType extends Enumeration{
   val Internal = Value("0")
   val Auto     = Value("A")
   val Manual   = Value("M")
+  def map= Map(Internal->"系統", Auto->"自動校正", Manual->"使用者自訂")
 }
 
 case class MonitorStatus(statusType:StatusType.Value, id:String, desp:String, outage:Boolean, valid:Boolean)
@@ -18,14 +19,14 @@ case class TagInfo(statusType:StatusType.Value, id:String){
 }
 
 object MonitorStatus {
-  private val msList:List[MonitorStatus] =
+  def msList:List[MonitorStatus] =
     DB readOnly{ implicit session =>
       sql"""
         SELECT [statusNo],[statusName],[isOutage],[isValid]
         FROM [AQMSDB].[dbo].[Infor_Status]
       """.map { r =>  
         val tagInfo = getTagInfo(r.string(1)) 
-        MonitorStatus(tagInfo.statusType, tagInfo.id, r.string(2), r.boolean(3), r.boolean(4)    
+        MonitorStatus(tagInfo.statusType, tagInfo.id, r.string(2).trim(), r.boolean(3), r.boolean(4)    
       )}.list.apply
     }
   
@@ -127,8 +128,22 @@ object MonitorStatus {
         "Gold"
     }
   }
+  def update(tag:String, desp:String)={
+    DB localTx { implicit session =>
+      sql"""
+        Update Infor_Status
+        Set statusName=${desp}
+        Where statusNo=${tag}  
+        """.update.apply
+    }
+    refreshMap
+  }
   
-  private val _map:Map[String, MonitorStatus] = Map(msList.map{s=>getTagStr(s)->s}:_*)
+  private def refreshMap() = {
+    _map = Map(msList.map{s=>getTagStr(s)->s}:_*)
+    _map
+  }
+  private var _map:Map[String, MonitorStatus] = refreshMap
   val msvList = msList.map {r=>getTagStr(r)}
   val manualMonitorStatusList = {msvList.filter { _map(_).statusType == StatusType.Manual }}
   val alarmList = msvList.filter { _ != getTagInfo(NORMAL_STAT).toString }

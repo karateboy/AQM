@@ -7,9 +7,6 @@
 		<div class="ibox float-e-margins">
         	<div class="ibox-title">
             	<h5>@current.toString("YYYY-MM-dd HH:mm")</h5>
-            	<!--  
-            	<label class="btn btn-outline" data-toggle="tooltip" data-placement="bottom" title="PDF"><a href="/PDF/realtimeStatus" id="downloadPDF"><i class="fa fa-file-pdf-o fa-2x"></i></a></label>
-				--!>
             </div>
 <div class="ibox-content">
 <ul class="nav nav-tabs">
@@ -80,7 +77,11 @@
 			
 			@for(mtv<-psiList){
 				@if(rt_psi(m)._2(mtv)._2.isDefined){
-					<td>@("%.0f".format(rt_psi(m)._2(mtv)._2.get))</td>	
+					@if(rt_psi(m)._2(mtv)._2.get == rt_psi(m)._1.get){
+						<td><strong>@("%.0f".format(rt_psi(m)._2(mtv)._2.get))</strong></td>	
+					}else{
+						<td>@("%.0f".format(rt_psi(m)._2(mtv)._2.get))</td>
+					}						
 				}else{
 					<td>-</td>
 				}

@@ -166,7 +166,8 @@
             @if(user.isAdmin || privilege.allowedMenuRights.contains(MenuRight.SystemManagement)){
             <li>
                 <a href="#"><i class="fa fa-desktop"></i> <span class="nav-label">系統管理</span></a>
-                <ul class="nav nav-second-level">                    
+                <ul class="nav nav-second-level">
+                	<li><a href="#" onClick="loadPage('/MonitorStatusConfig','系統管理','狀態碼管理')">狀態碼管理</a></li>                    
                     <li><a href="#" onClick="loadPage('/MonitorTypeConfig','系統管理','測項參數')">測項參數</a></li>
                     <li><a href="#" onClick="loadPage('/Monitor','系統管理','測站管理')">測站管理</a></li>
                     <li><a href="#" onClick="loadPage('/Instrument','系統管理','儀器狀態')">儀器狀態</a></li>

@@ -27,6 +27,17 @@
 	            			</div>	            			            		
 	                    </div>
 	                    <div class="form-group">
+	            			<label class="col-lg-1 control-label">統計單位</label>
+	            			<div class="col-lg-11">	            				
+	            				<div class="btn-group" data-toggle="buttons">	            					            				
+	            					<label class="btn btn-outline btn-primary dim active">
+										<input type="radio" name="psiType" id="hourlyPSI" checked>小時PSI</label>
+									<label class="btn btn-outline btn-primary dim">
+										<input type="radio" name="psiType" id="dailyPSI">日PSI</label>
+	            				</div>
+	            			</div>	            			            		
+	                    </div>
+	                    <div class="form-group">
 	            			<label class="col-lg-1 control-label">查詢區間</label>	
 	            			<div class="col-lg-5">
 	            				<div class="input-daterange input-group" id="datepicker">
@@ -88,15 +99,16 @@ $( document ).ready(function() {
 	});
 
 
-	var monitors, reportStart, reportEnd;
+	var monitors, reportStart, reportEnd, dailyPsi;
 	
 	function validate(){
 		monitors = $("input[name='monitor']:checked");
-
 		if (monitors.length == 0) {
 			alert("請選擇測站");
 			return false;
 		}
+
+		dailyPsi  = $("#dailyPSI").prop("checked");
 		
 		reportStart = $('#reportStart').val();
 		if(reportStart.length === 0){
@@ -113,9 +125,16 @@ $( document ).ready(function() {
 		var start = new Date(reportStart);
 		var end = new Date(reportEnd);
 		var diff = end.getTime()-start.getTime();
-		if(diff > 7 * 24*60*60*1000){
-			alert("查詢區間必須小於7天");
-			return false;
+		if(dailyPsi){
+			if(diff > 7 * 24*60*60*1000){
+				alert("查詢區間必須小於7天");
+				return false;
+			}				
+		}else{
+			if(diff > 2 * 24*60*60*1000){
+				alert("查詢區間必須小於2天");
+				return false;
+			}
 		}
 		
 		return true;
@@ -139,7 +158,7 @@ $( document ).ready(function() {
 				monitorParam += ':' + monitors[i].id;
 		}	
 		var chartType = $("input[name='chartType']:checked").attr('id');	
-		var url = "/JSON/PsiTrend/" + monitorParam + "/" + reportStart + "/" + reportEnd;
+		var url = "/JSON/PsiTrend/" + monitorParam + "/" + reportStart + "/" + reportEnd + "/" + dailyPsi;
 		
 		$.ajax({
 			url : url,

@@ -341,8 +341,10 @@ object Record {
 
 
   def windAvg(sum_sin:Double, sum_cos:Double)={
-    if(Math.abs(sum_cos) <= 0.00001){
-      if(sum_sin >0)
+    if(Math.abs(sum_cos) <= 0.000001){
+      if(sum_sin == 0){
+        0
+      }else if(sum_sin >0)
         90
       else
         270
@@ -358,6 +360,77 @@ object Record {
         degree + 180
     }
   }
+  
+  def getPeriodReport(monitor: Monitor.Value, start: DateTime, period:Period, includeTypes: List[MonitorType.Value] = MonitorType.monitorReportList,
+                     monitorStatusFilter: MonitorStatusFilter.Value = MonitorStatusFilter.Normal) = {
+    DB localTx { implicit session =>
+      
+      val isHourRecord = (start+period >= start + 1.hour)
+      val end = start + period
+      val totalPeriod = new Period(start, end)
+      
+      val originalPeriodRecordList = 
+        if(isHourRecord)
+          getHourRecords(monitor, start, start + period)
+        else
+          getMinRecords(monitor, start, start + period)
+   
+      val reportList =
+          originalPeriodRecordList
+
+      def statusFilter(data: (DateTime, (Option[Float], Option[String]))): Boolean = {
+        if (data._2._2.isEmpty)
+          return false
+
+        val stat = data._2._2.get
+
+        MonitorStatusFilter.isMatched(monitorStatusFilter, stat)
+      }
+
+      val usedMonitoredTypes = Monitor.map(monitor).monitorTypes.filter { includeTypes.contains(_) }
+
+      val actualMonitoredTypes =
+        if (usedMonitoredTypes.length == 0)
+          includeTypes
+        else
+          usedMonitoredTypes
+
+      val typeResultList =
+        for {
+          mt <- includeTypes
+          t = monitorTypeProject2(mt)
+          total = reportList.size
+          projections = reportList.map(rs => (rs.date, t(rs)._1, t(rs)._2))
+          validStat = { t: (Timestamp, Option[Float], Option[String]) =>
+            statusFilter(t._1, (t._2, t._3))
+          }
+
+          validValues = projections.filter(validStat).map(t => t._2.getOrElse {
+            Logger.error("Unexpected Null value!")
+            0f
+          })
+          count = validValues.length
+
+          max = if (count != 0) validValues.max else Float.MinValue
+          min = if (count != 0) validValues.min else Float.MaxValue
+        } yield {
+          val avg = if (MonitorType.windDirList.contains(mt)) {
+            val sum_sin = validValues.map(v => Math.sin(Math.toRadians(v))).sum
+            val sum_cos = validValues.map(v => Math.cos(Math.toRadians(v))).sum
+            windAvg(sum_sin, sum_cos)
+          } else {
+            val sum = validValues.sum
+            if (count != 0) sum / count else 0
+          }
+
+          val stat = Stat(avg, min, max, count, total, 0)
+          MonitorTypeRecord(mt, projections, stat)
+        }
+
+      DailyReport(typeResultList.toArray)
+    }
+  }
+  
   def getDailyReport(monitor: Monitor.Value, start: DateTime, includeTypes: List[MonitorType.Value] = MonitorType.monitorReportList,
                      monitorStatusFilter: MonitorStatusFilter.Value = MonitorStatusFilter.Normal) = {
     DB localTx { implicit session =>
@@ -531,7 +604,7 @@ object Record {
     Map(statList: _*)
   }
 
-  def getWindRose(monitor: Monitor.Value, start: DateTime, end: DateTime, nDiv: Int = 16) = {
+  def getWindRose(monitor: Monitor.Value, start: DateTime, end: DateTime, level:List[Float], nDiv: Int = 16) = {
     val records = getHourRecords(monitor, start, end)
     val windRecords = records.map { r => (r.wind_dir, r.wind_speed) }
     assert(windRecords.length != 0)
@@ -547,29 +620,26 @@ object Record {
     var total = 0
     for (w <- windRecords) {
       if (w._1.isDefined && w._2.isDefined) {
-        val dir = (w._1.get / step).toInt
+        val dir = (((w._1.get - (step/2)) / step).toInt)% nDiv
         windMap(dir) += w._2.get
         total += 1
       }
     }
 
     def winSpeedPercent(winSpeedList: ListBuffer[Float]) = {
-      val count = new Array[Float](7)
+      val count = new Array[Float](level.length+1)
+      def getIdx(v:Float):Int={
+        for(i <- 0 to level.length-1){
+          if(v < level(i))
+            return i
+        }
+        
+        return level.length
+      }
+      
       for (w <- winSpeedList) {
-        if (w < 0.5)
-          count(0) += 1
-        else if (w < 2)
-          count(1) += 1
-        else if (w < 4)
-          count(2) += 1
-        else if (w < 6)
-          count(3) += 1
-        else if (w < 8)
-          count(4) += 1
-        else if (w < 10)
-          count(5) += 1
-        else
-          count(6) += 1
+        val i = getIdx(w)
+        count(i) +=1
       }
 
       assert(total != 0)

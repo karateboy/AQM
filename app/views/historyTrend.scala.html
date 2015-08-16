@@ -111,7 +111,7 @@
         	</div>
         	<div class="panel panel-success" style="display:none" id="reportPanel">
             	<div class="panel-body panel-collapse">
-					<div id="reportDiv" align="center" style="overflow-x:auto">
+					<div id="reportDiv" style="width:99%">
             		</div>
             	</div>
         	</div>
@@ -198,7 +198,7 @@ $( document ).ready(function() {
 			return false;
 		}
 
-		if(reportUnit == "min"){
+		if(reportUnit == "min" || reportUnit == "ten_min"){
 			var start = new Date(reportStart);
 			var end = new Date(reportEnd);
 			var diff = end.getTime()-start.getTime();
@@ -237,7 +237,7 @@ $( document ).ready(function() {
 				monitorTypeParam += ':' + monitorTypes[i].id;
 		}	
 				
-		var url = "/JSON/HistoryTrend/" + monitorParam + "/" + monitorTypeParam + "/" + reportUnit +"/"+ monitorStatusFilter + "/"+reportStart + "/" + reportEnd;
+		var url = "/JSON/HistoryTrend/" + monitorParam + "/None/" + monitorTypeParam + "/" + reportUnit +"/"+ monitorStatusFilter + "/"+reportStart + "/" + reportEnd;
 		
 		$.ajax({
 			url : url,
