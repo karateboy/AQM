@@ -717,16 +717,19 @@ object Record {
     val end: Timestamp = endTime
     val monitorId = EpaMonitor.map(epaMonitor).id
     val monitorTypeStrOpt = MonitorType.map(monitorType).epa_mapping
-    assert(monitorTypeStrOpt.isDefined)
-    val monitorTypeStr = monitorTypeStrOpt.get
-    sql"""
+    if (monitorTypeStrOpt.isEmpty)
+      List.empty[EpaHourRecord]
+    else {
+      val monitorTypeStr = monitorTypeStrOpt.get
+      sql"""
         Select * 
         From hour_data
         Where MStation=${monitorId} and MItem=${monitorTypeStr} and MDate >= ${start} and MDate < ${end}
         ORDER BY MDate ASC
       """.map {
-      rs => EpaHourRecord(EpaMonitor.idMap(rs.int(2)), rs.timestamp(3), MonitorType.epaMap(rs.string(4)), rs.float(5))
-    }.list().apply()
+        rs => EpaHourRecord(EpaMonitor.idMap(rs.int(2)), rs.timestamp(3), MonitorType.epaMap(rs.string(4)), rs.float(5))
+      }.list().apply()
+    }
   }
 
   def compareEpaReport(monitor: Monitor.Value, epaMonitor: EpaMonitor.Value, start: DateTime, end: DateTime) = {

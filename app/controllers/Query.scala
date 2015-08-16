@@ -149,6 +149,10 @@ object Query extends Controller {
       import scala.collection.JavaConverters._
       val monitorStrArray = monitorStr.split(':')
       val monitors = monitorStrArray.map { Monitor.withName }
+      val epaMonitors = if(epaMonitorStr.equalsIgnoreCase("None"))
+          Array.empty[EpaMonitor.Value]
+      else
+          epaMonitorStr.split(':').map {EpaMonitor.withName}
       val monitorTypeStrArray = monitorTypeStr.split(':')
       val monitorTypes = monitorTypeStrArray.map { MonitorType.withName }
       val reportUnit = ReportUnit.withName(reportUnitStr)
@@ -237,9 +241,9 @@ object Query extends Controller {
       import Realtime._
 
       val windMtv = MonitorType.withName("C212")
-      val series =
+      val local_series =
         if (monitorTypes.length > 1 && monitorTypes.contains(windMtv)) {
-          val noWinMt = monitorTypes.filter { _ != windMtv }
+          //val noWinMt = monitorTypes.filter { _ != windMtv }
           for {
             m <- monitors
             mt <- monitorTypes
@@ -262,6 +266,43 @@ object Query extends Controller {
           }
         }
 
+      def epaSeries() = {
+        val epaMonitorPairs =
+          for {
+            m <- epaMonitors
+          } yield {
+            val epaMtPairs =
+              for {
+                mt <- monitorTypes
+                epaRecord = Record.getEpaHourRecord(m, mt, start, end)
+                epaPairs = epaRecord.map { r => r.time -> r.value }
+                epaMap = Map(epaPairs: _*)
+              } yield {
+                mt -> epaMap
+              }
+            m -> Map(epaMtPairs: _*)
+          }
+        val epaRecordMap = Map(epaMonitorPairs: _*)
+        for {
+          m <- epaMonitors
+          mt <- monitorTypes
+          timeData = timeSeq.map(t => epaRecordMap(m)(mt).getOrElse(t, 0f))
+        } yield {
+          if (monitorTypes.length > 1 && monitorTypes.contains(windMtv)) {
+            if (mt != windMtv)
+              seqData(EpaMonitor.map(m).name + "_" + MonitorType.map(mt).desp, timeData)
+            else
+              seqData(EpaMonitor.map(m).name + "_" + MonitorType.map(mt).desp, timeData, 1, Some("scatter"))
+          } else {
+            seqData(EpaMonitor.map(m).name + "_" + MonitorType.map(mt).desp, timeData)
+          }
+        }
+      }
+      
+      val epa_series = epaSeries()
+
+      val series = local_series ++ epa_series
+          
       val title = {
         val mNames = monitors.map{Monitor.map(_).name}
         val mtNames = monitorTypes.map {MonitorType.map(_).desp}

@@ -27,6 +27,17 @@
 	            			</div>	            			            		
 	                    </div>
 	                    <div class="form-group">
+	            			<label class="col-lg-1 control-label">環保署測站</label>
+	            			<div class="col-lg-11">
+	            				<div class="btn-group" data-toggle="buttons">	            					            				
+	            					@for(m<-EpaMonitor.values.toList.sorted){
+	            						<label class="btn btn-outline btn-primary dim">
+										<input type="radio" name="epaMonitor" id="@m">@EpaMonitor.map(m).name</label>		            						
+	            					}
+	            				</div>
+	            			</div>	            			            		
+	                    </div>
+	                    <div class="form-group">
 	            			<label class="col-lg-1 control-label">測項</label>
 	            			<div class="col-lg-11">
 	            				<button id="select-all-monitorTypes" class="btn btn-info" type="button">全選</button>
@@ -157,8 +168,30 @@ $( document ).ready(function() {
         $('#reportStart').data("DateTimePicker").maxDate(e.date);
     });
 
-
-	var monitors, monitorTypes, reportUnit, monitorStatusFilter, reportStart, reportEnd, chartType;
+    $("input[name='reportUnit']").change(function(){
+		var me = $(this)
+		if(me.attr('id') != 'hour'){
+			//Disable EPA 
+			var $epaMonitors = $("input[name='epaMonitor']");
+			for(var i=0;i<$epaMonitors.length;i++){
+				var $epa = $epaMonitors.eq(i);
+				$epa.prop('disabled', true);
+				$epa.prop('checked', false);
+				$epa.parent().removeClass("active");
+				$epa.parent().addClass("disabled");  
+			}				
+		} else{
+			//Enable EPA
+			var $epaMonitors = $("input[name='epaMonitor']");
+			for(var i=0;i<$epaMonitors.length;i++){
+				var $epa = $epaMonitors.eq(i);
+				$epa.prop('disabled', false);				
+				$epa.parent().removeClass("disabled");				  
+			}
+		}
+	});
+	
+	var monitors, epaMonitors, monitorTypes, reportUnit, monitorStatusFilter, reportStart, reportEnd, chartType;
 	
 	function validate(){
 		monitors = $("input[name='monitor']:checked");
@@ -167,6 +200,8 @@ $( document ).ready(function() {
 			alert("請選擇測站");
 			return false;
 		}
+
+		epaMonitors = $("input[name='epaMonitor']:checked");
 
 		monitorTypes = $("input[name='monitorType']:checked");
 		if(monitorTypes.length == 0) {
@@ -227,7 +262,18 @@ $( document ).ready(function() {
 			else
 				monitorParam += ':' + monitors[i].id;
 		}	
-
+		var epaMonitorParam='';
+		if (epaMonitors.length == 0) {
+			epaMonitorParam = 'None'
+		}else{
+			for (var i = 0; i < epaMonitors.length; i++) {
+				if(epaMonitorParam=='')
+					epaMonitorParam = epaMonitors[i].id;
+				else
+					epaMonitorParam += ':' + epaMonitors[i].id;
+			}	
+		}
+		
 		console.log(monitorTypes);
 		var monitorTypeParam='';
 		for (var i = 0; i < monitorTypes.length; i++) {
@@ -237,7 +283,7 @@ $( document ).ready(function() {
 				monitorTypeParam += ':' + monitorTypes[i].id;
 		}	
 				
-		var url = "/JSON/HistoryTrend/" + monitorParam + "/None/" + monitorTypeParam + "/" + reportUnit +"/"+ monitorStatusFilter + "/"+reportStart + "/" + reportEnd;
+		var url = "/JSON/HistoryTrend/" + monitorParam + "/" + epaMonitorParam + "/" + monitorTypeParam + "/" + reportUnit +"/"+ monitorStatusFilter + "/"+reportStart + "/" + reportEnd;
 		
 		$.ajax({
 			url : url,
