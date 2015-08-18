@@ -37,7 +37,6 @@ object Application extends Controller {
 
   def monitor(monitor: String) = Security.Authenticated {
     implicit request =>
-      Logger.debug("monitor=>" + monitor)
       val m = Monitor.withName(monitor)
       Ok(views.html.monitor(m))
   }
@@ -130,7 +129,6 @@ object Application extends Controller {
 
         val msData = mtForm.bindFromRequest.get
 
-        Logger.debug(msData.toString())
         MonitorStatus.update(msData.id, msData.data)
 
         Ok(msData.data)
@@ -312,7 +310,6 @@ object Application extends Controller {
           BadRequest(Json.obj("ok" -> false, "msg" -> JsError.toFlatJson(error)))
         },
         param => {
-          Logger.debug(param.toString)
           Group.newGroup(param)
           Ok(Json.obj("ok" -> true))
         })

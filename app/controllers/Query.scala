@@ -36,7 +36,7 @@ object Query extends Controller {
     implicit request =>
       val userInfo = Security.getUserinfo(request).get
       val group = Group.getGroup(userInfo.groupID).get
-      Ok(views.html.history("/AuditedQueryReport/", group.privilege))
+      Ok(views.html.history("/AuditedQueryReport/", group.privilege, true))
   }
 
   def auditedReport(monitorStr: String, monitorTypeStr: String, recordTypeStr: String, startStr: String, endStr: String, outputTypeStr: String) = Security.Authenticated {
@@ -52,14 +52,16 @@ object Query extends Controller {
       val outputType = OutputType.withName(outputTypeStr)
 
       var timeSet = Set[DateTime]()
+      for (m <- monitors)
+        Auditor.auditHourData(m, Monitor.map(m).autoAudit, start, end)
+      
       val pairs =
         for {
           m <- monitors
-          records = if (tabType == TableType.Hour)
-            Record.getHourRecords(m, start, end)
-          else
-            Record.getMinRecords(m, start, end)
-          mtRecords = records.map { rs => (Record.timeProjection(rs).toDateTime, Record.monitorTypeProject2(monitorType)(rs)) }
+          records = Record.getInvalidHourRecords(m, start, end)
+          mtPreRecords = records.map { rs => (Record.timeProjection(rs).toDateTime, Record.monitorTypeProject2(monitorType)(rs)) }
+          mtRecords = mtPreRecords.filter(r=>r._2._1.isDefined && r._2._2.isDefined && 
+              MonitorStatus.getTagInfo(r._2._2.get).statusType == StatusType.Auto)
           timeMap = Map(mtRecords: _*)
         } yield {
           timeSet ++= timeMap.keySet
@@ -69,7 +71,7 @@ object Query extends Controller {
       val recordMap = Map(pairs: _*)
 
       val title = "無效資料查詢"
-      val output = views.html.historyReport(false, monitors, monitorType, start, end, timeSet.toList.sorted, recordMap)
+      val output = views.html.auditedReport(false, monitors, monitorType, start, end, timeSet.toList.sorted, recordMap)
       outputType match {
         case OutputType.html =>
           Ok(output)
@@ -484,7 +486,7 @@ object Query extends Controller {
         result ++= overList
       }
 
-      val output = views.html.overLawStdReport(monitorType, start, end, result)
+      val output = views.html.overLawStdReport(monitorType, start, end-1.day, result)
       val title = "超過法規報表"
       outputType match {
         case OutputType.html =>
@@ -500,8 +502,6 @@ object Query extends Controller {
     implicit request =>
       val userInfo = Security.getUserinfo(request).get
       val group = Group.getGroup(userInfo.groupID).get
-      Logger.debug(MonitorType.values.toList.sorted.toString)
-      Logger.debug(MonitorType.map.keySet.toList.sorted.toString)
       Ok(views.html.effectivePercentage(group.privilege))
   }
 
@@ -517,7 +517,7 @@ object Query extends Controller {
         for (m <- group.privilege.allowedMonitors) yield {
           Record.getMonitorEffectiveRate(m, start, end)
         }
-      val output = views.html.effectivePercentageReport(start, end, reports, group.privilege)
+      val output = views.html.effectivePercentageReport(start, end-1.day, reports, group.privilege)
       val title = "有效率報表"
       outputType match {
         case OutputType.html =>

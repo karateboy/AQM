@@ -40,6 +40,41 @@ object MonitorStatus {
     }
   }
 
+  def getAutoAuditTagStr(mask:Int)={
+    assert(mask < (1<<8))
+    val id = "%02x".format(mask)
+    TagInfo(StatusType.Auto, id).toString
+  }
+  
+  def getExplainStr(tag:String)={
+    val tagInfo = getTagInfo(tag)
+    if(tagInfo.statusType == StatusType.Auto){
+      val mask = Integer.parseInt(tagInfo.id, 16)
+      import scala.collection.mutable.StringBuilder
+      val buf = new StringBuilder()
+      if((mask & AutoAudit.default.minMaxRule.mask) != 0){
+        buf.append("|極大極小值")
+      }
+      if((mask & AutoAudit.default.compareRule.mask) != 0){
+        buf.append("|合理性")
+      }
+      if((mask & AutoAudit.default.differenceRule.mask) != 0){
+        buf.append("|單調性")
+      }
+      if((mask & AutoAudit.default.spikeRule.mask) != 0){
+        buf.append("|突波高值")
+      }
+      if((mask & AutoAudit.default.persistenceRule.mask) != 0){
+        buf.append("|持續性")
+      }
+      buf.delete(0, 1)
+      buf.toString
+    }else {
+      val ms = map(tag)
+      ms.desp
+    }
+  }
+  
   val NORMAL_STAT = "010"
   val OVER_STAT = "011"
   val BELOW_STAT = "012"

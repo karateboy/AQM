@@ -69,8 +69,8 @@
         		@for(mt<-MonitorType.mtvList){
         			<tr>
         				<th><input type="checkbox" name="monitorType" id='@mt' disabled>@MonitorType.map(mt).desp</th>
-        				<td><input type="number" name="maxValue" id='@mt' value='@MonitorType.map(mt).std_internal' disabled></td>
-        				<td><input type="number" name="minValue" id='@mt' value='0' disabled></td>
+        				<td><input name="maxValue" id='@mt' value='@MonitorType.map(mt).std_internal' disabled></td>
+        				<td><input name="minValue" id='@mt' value='0' disabled></td>
         			</tr>
         		}
         	</tbody>
@@ -146,7 +146,7 @@
 <div id="spikeRule" class="tab-pane" align="left">
 	<br/>
 	<h3>說明:</h3>
-	<p>該測值大於前後平均值的設定倍數</p>
+	<p>該測值超過前後平均的絕對值範圍</p>
 	<form id="spikeForm" class="form-horizontal">
 		<div class="form-group">
         	<div class="col-lg-10">
@@ -165,7 +165,7 @@
         		@for(mt<-MonitorType.mtvList){
         			<tr>
         				<th><input type="checkbox" name="monitorType" id='@mt' disabled>@MonitorType.map(mt).desp</th>
-        				<td><input type="number" name="absValue" id='@mt' value='10' disabled></td>
+        				<td><input name="absValue" id='@mt' value='10' disabled></td>
         			</tr>
         		}
         	</tbody>
@@ -297,14 +297,11 @@ $( document ).ready(function(){
 	$('#minMaxForm :input[name="enabled"]').click(function(){
 		var $me=$(this);
 		var $inputs = $('#minMaxParameter :input');
-		var disabled = !$me.prop('checked'); 
+		var disabled = !$me.prop('checked');
+		console.log($inputs); 
 		for(var i=0;i<$inputs.length;i++){
 			var $check = $inputs.eq(i);
 			$check.prop("disabled", disabled);
-			var $max = $check.parent().next().children();
-			$max.val(mt.max);
-			var $min = $max.parent().next().children();
-			$min.val(mt.min);
 		}
 	});
 

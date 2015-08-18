@@ -160,8 +160,6 @@ object Report extends Controller {
           Record.getDailyReport(monitor, day, List(monitorType))
         }
 
-      Logger.debug("dailyReports=" + dailyReports.length)
-
       def getHourRecord(i: Int) = {
         dailyReports.map { _.typeList(0).dataList(i) }
       }

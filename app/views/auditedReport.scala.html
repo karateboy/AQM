@@ -1,9 +1,9 @@
 @* historyReport Template File *@
 @import com.github.nscala_time.time.Imports._
-@(editable:Boolean, monitors:Seq[Monitor.Value], monitorType:MonitorType.Value, start:DateTime, end:DateTime, timeSeq:Seq[DateTime], recordMap: Map[Monitor.Value, Map[DateTime, (Option[Float], Option[String])]], showSec:Boolean = false)
+@(editable:Boolean, monitors:Seq[Monitor.Value], monitorType:MonitorType.Value, start:DateTime, end:DateTime, timeSeq:Seq[DateTime], recordMap: Map[Monitor.Value, Map[DateTime, (Option[Float], Option[String])]])
 
 <H3>測項:@MonitorType.map(monitorType).desp (@MonitorType.map(monitorType).unit)</H3>
-<H5>區間:@start.toString("YYYY-MM-dd HH:mm")~@end.toString("YYYY-MM-dd HH:mm")</H5>
+<H5>區間:@start.toString("YYYY-MM-dd")~@end.toString("YYYY-MM-dd")</H5>
 
 <div class="col-lg-offset-6 col-lg-6">
 <table class="table">
@@ -25,7 +25,8 @@
 	<tr>
 		<th>時間</th>
 		@for(m<-monitors){
-			<th>@Monitor.map(m).name</th>	
+			<th>@Monitor.map(m).name</th>
+			<th>錯誤說明</th>	
 		}
 		
 	</tr>
@@ -33,11 +34,7 @@
 <tbody>
 	@for(t <- timeSeq){
 		<tr>
-			@if(!showSec){
-				<th>@t.toString("YYYY-MM-dd HH:mm")</th>	
-			}else{
-				<th>@t.toString("YYYY-MM-dd HH:mm:ss")</th>
-			}
+			<th>@t.toString("YYYY-MM-dd HH:mm")</th>	
 			
 			@for(m<-monitors){
 				@if(recordMap(m).get(t).isEmpty||recordMap(m)(t)._1.isEmpty||recordMap(m)(t)._2.isEmpty){
@@ -52,7 +49,12 @@
 					}else{
 						<td style="background-color:@MonitorStatus.getCssColorStr(recordMap(m)(t)._2.get)">@("%.2f".format(recordMap(m)(t)._1.get))</td>
 					}
-				}				
+				}
+				@if(recordMap(m)(t)._2.isEmpty){
+					<td>-</td>
+				}else{
+					<td>@MonitorStatus.getExplainStr(recordMap(m)(t)._2.get)</td>
+				}								
 			}
 		</tr>
 	}

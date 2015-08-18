@@ -159,6 +159,19 @@ object Record {
       """.map { mapper }.list().apply()
   }
 
+  def getInvalidHourRecords(monitor: Monitor.Value, startTime: DateTime, endTime: DateTime)(implicit session: DBSession = AutoSession) = {
+    val start: Timestamp = startTime
+    val end: Timestamp = endTime
+    val monitorName = monitor.toString()
+    val tab_name = getTabName(TableType.Hour, startTime.getYear)
+    sql"""
+        Select * 
+        From ${tab_name}
+        Where DP_NO=${monitorName} and M_DateTime >= ${start} and M_DateTime < ${end} and CHK = 'BAD'
+        ORDER BY M_DateTime ASC
+      """.map { mapper }.list().apply()
+  }
+
   def getMinRecords(monitor: Monitor.Value, startTime: DateTime, endTime: DateTime)(implicit session: DBSession = AutoSession) = {
     val start: Timestamp = startTime
     val end: Timestamp = endTime
