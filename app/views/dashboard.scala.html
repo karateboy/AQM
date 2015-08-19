@@ -459,6 +459,13 @@ var statusMarkerArray = [];
 					enabled : false,
 					href : 'http://www.wecc.com.tw/'
 				};
+				
+				result.navigation={
+		            buttonOptions: {
+		                enabled: false
+		            }
+		        };
+		        
 				$(id).highcharts(result);
 			},
 			error : function(xhr, status, errorThrown) {
