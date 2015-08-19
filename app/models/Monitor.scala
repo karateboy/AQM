@@ -95,7 +95,7 @@ case class MonitorType(id:String, desp:String, unit:String,
     zd_internal:Option[Float], zd_law:Option[Float],
     sd_internal:Option[Float], sd_law:Option[Float],
     epa_mapping:Option[String],
-    prec:Int)
+    prec:Int, order:Int)
     
 object MonitorType extends Enumeration{
   implicit val mtReads: Reads[MonitorType.Value] = EnumUtils.enumReads(MonitorType)
@@ -119,7 +119,8 @@ object MonitorType extends Enumeration{
           sd_internal = r.floatOpt(12),
           sd_law = r.floatOpt(13),
           epa_mapping = r.stringOpt(14),
-          prec = r.int(15)
+          prec = r.int(15),
+          order = r.int(16)
           )}.list.apply
     }
   
@@ -132,11 +133,11 @@ object MonitorType extends Enumeration{
       mtSet = mtSet.union(Monitor.map(m).monitorTypes.toSet)
     }
     
-    mtvAllList.filter {mtSet.contains}
+    mtvAllList.filter {mtSet.contains}.sortBy { map(_).order }
   }
   
   def myMtvList(implicit p:Privilege)={
-    mtvList.filter { p.allowedMonitorTypes.contains }
+    mtvList.filter { p.allowedMonitorTypes.contains }.sortBy { map(_).order }
   }
   
   def realtimeList = {
@@ -145,7 +146,7 @@ object MonitorType extends Enumeration{
       mtSet = mtSet.union(Monitor.map(m).monitorTypes.toSet)
     }
         
-     mtSet.filter { !List(MonitorType.withName("C911"), MonitorType.withName("C912")).contains(_)}.toList 
+     mtSet.filter { !List(MonitorType.withName("C911"), MonitorType.withName("C912")).contains(_)}.toList.sortBy { map(_).order } 
   }
 
   def updateMonitorType(mt: MonitorType.Value, colname: String, newValue: String) = {
@@ -178,7 +179,8 @@ object MonitorType extends Enumeration{
             sd_internal = r.floatOpt(12),
             sd_law = r.floatOpt(13),
             epa_mapping = r.stringOpt(14),
-            prec = r.int(15))
+            prec = r.int(15),
+            order = r.int(16))
         }.single.apply
         map = (map + (mt-> newMtOpt.get))
     }
