@@ -141,7 +141,6 @@ $( document ).ready(function() {
 				monitorParam += ':' + monitors[i].id;
 		}	
 
-		console.log(monitorTypes);
 		var monitorTypeParam='';
 		for (var i = 0; i < monitorTypes.length; i++) {
 			if(monitorTypeParam=='')
@@ -160,7 +159,6 @@ $( document ).ready(function() {
 			dataType : "json",
 			success : function(result) {
 				$("#reportPanel").css('display','block');
-				$("#reportParam").collapse();
 						
 				result.chart = {
 					type: chartType,

@@ -1,6 +1,15 @@
 @* calibrationQueryResult Template File *@
 @import Calibration._
-@(report:Seq[CalibrationItem])
+@import com.github.nscala_time.time.Imports._
+
+@(report:Seq[CalibrationItem], title:String="", start:DateTime, end:DateTime)
+<h3>@title - 
+@if(start == end){
+	@start.toString("YYYY-MM-dd")
+}else{
+	@start.toString("YYYY-MM-dd")~@end.toString("YYYY-MM-dd")</h3>	
+}
+</h3>	
 
 <p>顏色說明</p>
 <span style="color:blue">超過內控值</span>
@@ -88,7 +97,7 @@ $( document ).ready(function() {
 		},
 		"tableTools": {
         	"sSwfPath": "@routes.Assets.at("js/plugins/dataTables/swf/copy_csv_xls_pdf.swf")",
-        	"aButtons": ["copy", "print", "csv", "xls"]
+        	"aButtons": ["copy", "print", "csv"]
         },
         searching: false,
         paging:false

@@ -12,6 +12,7 @@ import PdfUtility._
 import java.io.File
 import java.nio.file.Files
 import Record.windAvg
+import models.ModelHelper._
 
 object PeriodReport extends Enumeration {
   val DailyReport = Value
@@ -736,6 +737,88 @@ object Report extends Controller {
                 play.utils.UriEncoding.encodePathSegment(title + reportDate.toString("YYYY-MM-dd") + ".pdf", "UTF-8"))
         }
       }      
+  }
+  
+  def calibration() = Security.Authenticated {
+    implicit request =>
+      val userInfo = Security.getUserinfo(request).get
+      val group = Group.getGroup(userInfo.groupID).get
+      Ok(views.html.calibrationReportForm(group.privilege))
+  }
+
+  object CalibrationReportType extends Enumeration{
+      val Daily = Value("daily")
+      val Summary = Value("summary")
+      val Monthly = Value("monthly") 
+      val map = Map(Daily->"日報", Summary->"彙總表", Monthly->"月報")
+  }
+
+  def calibrationReport(monitorStr: String, monitorTypeStr:String, reportTypeStr: String, reportDateStr: String, outputTypeStr: String) = Security.Authenticated {
+    implicit request =>
+      val monitors = monitorStr.split(":").map{Monitor.withName}.toList
+      val monitorType = MonitorType.withName(monitorTypeStr)
+      val reportType = CalibrationReportType.withName(reportTypeStr)
+      val reportDate = DateTime.parse(reportDateStr)
+      val outputType = OutputType.withName(outputTypeStr)
+
+      if (outputType == OutputType.excel) {
+        val (title, excelFile) =
+        reportType match {
+            case CalibrationReportType.Daily =>
+              val title = "校正日報"
+              val reports= monitors.flatMap { m => Calibration.calibrationQueryReport(m, reportDate, reportDate + 1.day)}              
+              (title, ExcelUtility.calibrationDailyReport(title, reportDate, reports))
+            case CalibrationReportType.Summary=>
+              val title = "校正彙總表"
+              val reports= monitors.flatMap { m => Calibration.calibrationSummary(m, reportDate, reportDate + 1.day)}
+              (title, ExcelUtility.calibrationDailyReport(title, reportDate, reports))
+            case CalibrationReportType.Monthly=>
+              val title = "月報"
+              val adjustedDate = DateTime.parse(reportDate.toString("YYYY-MM-01"))
+              
+              val reportMap= Calibration.calibrationMonthly(monitors(0), monitorType, adjustedDate)
+              val days = getDays(adjustedDate, adjustedDate + 1.month)
+              val nDay = days.length
+
+              (title, ExcelUtility.calibrationMonthlyReport("測站:"+Monitor.map(monitors(0)).name, reportDate, reportMap, nDay))              
+          }
+        Ok.sendFile(excelFile, fileName = _ =>
+          play.utils.UriEncoding.encodePathSegment(title + reportDate.toString("YYMMdd") + ".xlsx", "UTF-8"),
+          onClose = () => { Files.deleteIfExists(excelFile.toPath()) })
+      } else {
+        val (title, output) =
+          reportType match {
+            case CalibrationReportType.Daily =>
+              val title = "校正日報"
+              val reports= monitors.flatMap { m => Calibration.calibrationQueryReport(m, reportDate, reportDate + 1.day)}
+              val report = views.html.calibrationQueryResult(reports, title, reportDate, reportDate)
+              (title, report)
+            case CalibrationReportType.Summary=>
+              val title = "校正彙總表"
+              val reports= monitors.flatMap { m => Calibration.calibrationSummary(m, reportDate, reportDate + 1.day)} 
+              val report = views.html.calibrationQueryResult(reports, title, reportDate, reportDate)
+              (title, report)
+            case CalibrationReportType.Monthly=>
+              val title = "月報"
+              val adjustedDate = DateTime.parse(reportDate.toString("YYYY-MM-01"))
+              
+              val reportMap= Calibration.calibrationMonthly(monitors(0), monitorType, adjustedDate)
+              val reports = reportMap.values.toList.sortBy { item => item.startTime }
+              val report = views.html.calibrationQueryResult(reports, title, adjustedDate, adjustedDate)
+              (title, report)
+          }
+
+        outputType match {
+          case OutputType.html =>
+            Ok(output)
+          case OutputType.pdf =>
+            Ok.sendFile(creatPdfWithReportHeader(title, output),
+              fileName = _ =>
+                play.utils.UriEncoding.encodePathSegment(title + reportDate.toString("YYYYMMdd") + ".pdf", "UTF-8"))
+        }
+
+      }
+
   }
 }
 

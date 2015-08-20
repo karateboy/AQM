@@ -70,6 +70,7 @@
         	</div>
 	</div>
 </div>
+<script src='@routes.Assets.at("js/highcharts/highcharts-regression.js")'></script>
 <script>
 $( document ).ready(function() {
 	
@@ -117,8 +118,6 @@ $( document ).ready(function() {
 			return;
 			
 		$("#reportPanel").css('display','block');
-		$("#reportParam").collapse();
-		$("#reportPanel").collapse('show');
 
 		$('#reportDiv').html('');
 		$("body").css("cursor", "progress");

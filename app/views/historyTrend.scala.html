@@ -290,8 +290,7 @@ $( document ).ready(function() {
 			type : "GET",
 			dataType : "json",
 			success : function(result) {
-				$("#reportPanel").css('display','block');
-				$("#reportParam").collapse();
+				$("#reportPanel").css('display','block');				
 						
 				result.chart = {
 					type: chartType,

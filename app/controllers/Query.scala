@@ -812,10 +812,10 @@ object Query extends Controller {
       val start = DateTime.parse(startStr)
       val end = DateTime.parse(endStr) + 1.day
       val outputType = OutputType.withName(outputTypeStr)
-
       val result = Calibration.calibrationQueryReport(monitor, start, end)
-      val output = views.html.calibrationQueryResult(result)
       val title = "校正報表"
+      val output = views.html.calibrationQueryResult(result, title, start, end)
+      
       outputType match {
         case OutputType.html =>
           Ok(output)

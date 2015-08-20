@@ -78,8 +78,7 @@
         	<div class="panel panel-success" style="display:none" id="reportPanel">
             	<div class="panel-body panel-collapse" id="monitorReport">
             		<div align="right">
-            			<label class="btn btn-outline" data-toggle="tooltip" data-placement="bottom" title="PDF"><a href="#" id="downloadPDF"><i class="fa fa-file-pdf-o fa-2x"></i></a></label>
-            			<label class="btn btn-outline" data-toggle="tooltip" data-placement="bottom" title="Excel"><a href="#" id="downloadExcel"><i class="fa fa-file-excel-o fa-2x"></i></a></label>            			
+            			<label class="btn btn-outline" data-toggle="tooltip" data-placement="bottom" title="PDF"><a href="#" id="downloadPDF"><i class="fa fa-file-pdf-o fa-2x"></i></a></label>            			            			
                 	</div>
  
 					<div id="reportDiv" align="center" style="overflow-x:auto">
@@ -209,10 +208,6 @@ $( document ).ready(function() {
 		if(!validate())
 			return;
 
-		$("#reportPanel").css('display','block');
-		$("#reportParam").collapse();
-		$("#reportPanel").collapse('show');
-
 		$('#reportDiv').html('');
 		$("body").css("cursor", "progress");
 
@@ -239,6 +234,10 @@ $( document ).ready(function() {
 			success: function(result){
 				$('#reportDiv').html(result);
 				$("#downloadPDF").prop("href", "/PDF" + url);
+				$("#reportPanel").css('display','block');
+				//$("#reportParam").collapse();
+				//$("#reportPanel").collapse('show');
+						
 			},
 			error: function(xhr, status, errorThrown){
 				console.log("錯誤訊息:" + status + "-" + errorThrown);

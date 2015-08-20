@@ -16,6 +16,11 @@ GET		/monitorMonthlyHourReport/:monitor/:monitorType/:startDate	controllers.Repo
 GET		/PDF/monitorMonthlyHourReport/:monitor/:monitorType/:startDate	controllers.Report.monthlyHourReport(monitor, monitorType, startDate, outputTypeStr="pdf")
 GET		/Excel/monitorMonthlyHourReport/:monitor/:monitorType/:startDate	controllers.Report.monthlyHourReport(monitor, monitorType, startDate, outputTypeStr="excel")
 
+GET		/CalibrationReportForm		controllers.Report.calibration
+GET		/CalibrationReport/:monitor/:monitorType/:reportType/:reportDate		controllers.Report.calibrationReport(monitor, monitorType, reportType, reportDate, outputTypeStr="html")
+GET		/PDF/CalibrationReport/:monitor/:monitorType/:reportType/:reportDate		controllers.Report.calibrationReport(monitor, monitorType, reportType, reportDate, outputTypeStr="pdf")
+GET		/Excel/CalibrationReport/:monitor/:monitorType/:reportType/:reportDate		controllers.Report.calibrationReport(monitor, monitorType, reportType, reportDate, outputTypeStr="excel")
+
 
 GET		/realtimeStatus				controllers.Realtime.realtimeStat(outputTypeStr = "html")
 GET		/PDF/realtimeStatus			controllers.Realtime.realtimeStat(outputTypeStr = "pdf")

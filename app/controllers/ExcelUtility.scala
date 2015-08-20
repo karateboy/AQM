@@ -660,4 +660,110 @@ object ExcelUtility {
     }
     finishExcel(reportFilePath, pkg, wb)
   }
+  
+  import Calibration._
+  def calibrationDailyReport(title:String, reportDate:DateTime, report:List[CalibrationItem]) ={
+    val (reportFilePath, pkg, wb) = prepareTemplate("calibration_daily.xlsx")
+    val evaluator = wb.getCreationHelper().createFormulaEvaluator()
+
+    val sheet = wb.getSheetAt(0)
+    sheet.getRow(0).getCell(0).setCellValue(title)
+    sheet.getRow(1).getCell(11).setCellValue("查詢日期:" + DateTime.now.toString("YYYY/MM/dd"))
+    sheet.getRow(2).getCell(11).setCellValue("資料日期:" + reportDate.toString("YYYY/MM/dd"))
+
+    val internalStyle = wb.getSheetAt(0).getRow(2).getCell(8).getCellStyle
+    val lawStyle = wb.getSheetAt(0).getRow(2).getCell(8).getCellStyle
+
+    for{
+      row <- 4 to (4+ report.length -1)
+      item = report(row-4)
+    }{
+      sheet.getRow(row).getCell(0).setCellValue(Monitor.map(item.monitor).name)
+      sheet.getRow(row).getCell(1).setCellValue(item.startTime.toString("HH:mm"))
+      sheet.getRow(row).getCell(2).setCellValue(MonitorType.map(item.monitorType).desp)
+      if(item.z_val > MonitorType.map(item.monitorType).zd_law.get){
+        sheet.getRow(row).getCell(3).setCellStyle(lawStyle)
+      }else if(item.z_val > MonitorType.map(item.monitorType).zd_internal.get){
+        sheet.getRow(row).getCell(3).setCellStyle(internalStyle)
+      }
+      sheet.getRow(row).getCell(3).setCellValue(item.z_val)
+      sheet.getRow(row).getCell(4).setCellValue(MonitorType.map(item.monitorType).zd_internal.get)
+      sheet.getRow(row).getCell(5).setCellValue(MonitorType.map(item.monitorType).zd_law.get)
+      sheet.getRow(row).getCell(6).setCellValue(item.sd_val)
+      sheet.getRow(row).getCell(7).setCellValue(item.s_sval)
+      if(item.sd_pnt > MonitorType.map(item.monitorType).sd_law.get){
+        sheet.getRow(row).getCell(8).setCellStyle(lawStyle)
+      }else if(item.sd_pnt > MonitorType.map(item.monitorType).sd_internal.get){
+        sheet.getRow(row).getCell(8).setCellStyle(lawStyle)
+      }
+      sheet.getRow(row).getCell(8).setCellValue(item.sd_pnt)
+      sheet.getRow(row).getCell(9).setCellValue(MonitorType.map(item.monitorType).sd_internal.get)
+      sheet.getRow(row).getCell(10).setCellValue(MonitorType.map(item.monitorType).sd_law.get)
+      if(item.z_val > MonitorType.map(item.monitorType).zd_law.get || item.sd_pnt > MonitorType.map(item.monitorType).sd_law.get){
+          sheet.getRow(row).getCell(11).setCellStyle(lawStyle)
+          sheet.getRow(row).getCell(11).setCellValue("失敗")
+        }else {
+          if(item.z_val > MonitorType.map(item.monitorType).zd_internal.get || item.sd_pnt > MonitorType.map(item.monitorType).sd_internal.get){
+            sheet.getRow(row).getCell(11).setCellStyle(internalStyle)
+          }
+          sheet.getRow(row).getCell(11).setCellValue("成功")
+        }
+    }
+    finishExcel(reportFilePath, pkg, wb)
+  }
+  
+  import com.github.nscala_time.time.Imports._
+  def calibrationMonthlyReport(title:String, reportDate:DateTime, map:Map[String, Calibration.CalibrationItem], nDays:Int) ={
+    val (reportFilePath, pkg, wb) = prepareTemplate("calibration_monthly.xlsx")
+    val evaluator = wb.getCreationHelper().createFormulaEvaluator()
+
+    val sheet = wb.getSheetAt(0)
+    sheet.getRow(1).getCell(11).setCellValue("查詢日期:" + DateTime.now.toString("YYYY/MM/dd"))
+    sheet.getRow(2).getCell(11).setCellValue("資料日期:" + reportDate.toString("YYYY/MM/dd"))
+    sheet.getRow(2).getCell(0).setCellValue(title)
+
+    val internalStyle = wb.getSheetAt(0).getRow(2).getCell(8).getCellStyle
+    val lawStyle = wb.getSheetAt(0).getRow(2).getCell(8).getCellStyle
+
+    for {
+      row <- 4 to (4 + nDays - 1)
+      itemOpt = map.get((row - 4).toString)
+    } {
+      if (itemOpt.isDefined) {
+        val item = itemOpt.get
+        sheet.getRow(row).getCell(1).setCellValue(item.startTime.toString("HH:mm"))
+        sheet.getRow(row).getCell(2).setCellValue(MonitorType.map(item.monitorType).desp)
+        if (item.z_val > MonitorType.map(item.monitorType).zd_law.get) {
+          sheet.getRow(row).getCell(3).setCellStyle(lawStyle)
+        } else if (item.z_val > MonitorType.map(item.monitorType).zd_internal.get) {
+          sheet.getRow(row).getCell(3).setCellStyle(internalStyle)
+        }
+        sheet.getRow(row).getCell(3).setCellValue(item.z_val)
+        sheet.getRow(row).getCell(4).setCellValue(MonitorType.map(item.monitorType).zd_internal.get)
+        sheet.getRow(row).getCell(5).setCellValue(MonitorType.map(item.monitorType).zd_law.get)
+        sheet.getRow(row).getCell(6).setCellValue(item.sd_val)
+        sheet.getRow(row).getCell(7).setCellValue(item.s_sval)
+        if (item.sd_pnt > MonitorType.map(item.monitorType).sd_law.get) {
+          sheet.getRow(row).getCell(8).setCellStyle(lawStyle)
+        } else if (item.sd_pnt > MonitorType.map(item.monitorType).sd_internal.get) {
+          sheet.getRow(row).getCell(8).setCellStyle(lawStyle)
+        }
+        sheet.getRow(row).getCell(8).setCellValue(item.sd_pnt)
+        sheet.getRow(row).getCell(9).setCellValue(MonitorType.map(item.monitorType).sd_internal.get)
+        sheet.getRow(row).getCell(10).setCellValue(MonitorType.map(item.monitorType).sd_law.get)
+        if (item.z_val > MonitorType.map(item.monitorType).zd_law.get || item.sd_pnt > MonitorType.map(item.monitorType).sd_law.get) {
+          sheet.getRow(row).getCell(11).setCellStyle(lawStyle)
+          sheet.getRow(row).getCell(11).setCellValue("失敗")
+        } else {
+          if (item.z_val > MonitorType.map(item.monitorType).zd_internal.get || item.sd_pnt > MonitorType.map(item.monitorType).sd_internal.get) {
+            sheet.getRow(row).getCell(11).setCellStyle(internalStyle)
+          }
+          sheet.getRow(row).getCell(11).setCellValue("成功")
+        }
+
+      }
+    }
+    finishExcel(reportFilePath, pkg, wb)
+  }
+  
 }
