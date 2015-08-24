@@ -208,7 +208,7 @@ object Report extends Controller {
       }
       val result = MonthHourReport(monthHourStats.toArray, dailyReports.toArray, Stat(avg, min, max, count, total, 0))
 
-      val output = views.html.monthlyHourReport(Monitor.map(monitor).name, startDate, result, nDay)
+      val output = views.html.monthlyHourReport(Monitor.map(monitor).name, monitorType, startDate, result, nDay)
       val title = "月份時報表"
       outputType match {
         case OutputType.html =>

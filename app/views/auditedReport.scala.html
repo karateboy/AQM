@@ -1,5 +1,6 @@
 @* historyReport Template File *@
 @import com.github.nscala_time.time.Imports._
+@import MonitorStatus._
 @(editable:Boolean, monitors:Seq[Monitor.Value], monitorType:MonitorType.Value, start:DateTime, end:DateTime, timeSeq:Seq[DateTime], recordMap: Map[Monitor.Value, Map[DateTime, (Option[Float], Option[String])]])
 
 <H3>測項:@MonitorType.map(monitorType).desp (@MonitorType.map(monitorType).unit)</H3>
@@ -9,12 +10,12 @@
 <table class="table">
 <tbody>
 <tr>
-	<td class="col-lg-1" style="background-color:Chartreuse">校正</td>
-	<td class="col-lg-1" style="background-color:DarkOrchid">維修</td>
-	<td class="col-lg-1" style="background-color:DarkOrange">定保</td>
-	<td class="col-lg-1" style="background-color:Crimson">異常</td>
-	<td class="col-lg-1" style="background-color:Cyan">自動檢核</td>
-	<td class="col-lg-1" style="background-color:Gold">人工註記</td>
+	<td class="col-lg-1" style="color:black;background-color:@CalibrationColor">校正</td>
+	<td class="col-lg-1" style="color:black;background-color:@RepairColor">維修</td>
+	<td class="col-lg-1" style="color:black;background-color:@MaintanceColor">定保</td>
+	<td class="col-lg-1" style="color:black;background-color:@AbnormalColor">異常</td>
+	<td class="col-lg-1" style="color:black;background-color:@AutoAuditColor">自動檢核</td>
+	<td class="col-lg-1" style="color:black;background-color:@ManualAuditColor">人工註記</td>
 </tr>
 </tbody>
 </table>
@@ -47,7 +48,7 @@
 						}
 						</td>
 					}else{
-						<td style="background-color:@MonitorStatus.getCssColorStr(recordMap(m)(t)._2.get)">@("%.2f".format(recordMap(m)(t)._1.get))</td>
+						<td style="@getCssStyleStr(recordMap(m)(t)._2.get)">@("%.2f".format(recordMap(m)(t)._1.get))</td>
 					}
 				}
 				@if(recordMap(m)(t)._2.isEmpty){

@@ -26,8 +26,10 @@ GET		/realtimeStatus				controllers.Realtime.realtimeStat(outputTypeStr = "html"
 GET		/PDF/realtimeStatus			controllers.Realtime.realtimeStat(outputTypeStr = "pdf")
 GET		/realtimeImage				controllers.Realtime.realtimeImg
 GET		/realtimeTrend				controllers.Realtime.realtimeTrend
+GET		/realtimeMinTrend			controllers.Realtime.realtimeMinTrend
 GET		/JSON/realtime/map			controllers.Realtime.realtimeMap
-GET		/JSON/realtimeTrend/:monitor/:monitorType			controllers.Realtime.realtimeTrendJSON(monitor, monitorType)
+GET		/JSON/realtimeTrend/:monitor/:monitorType			controllers.Realtime.realtimeHourTrendChart(monitor, monitorType)
+GET		/JSON/realtimeMinTrend/:monitor/:monitorType		controllers.Realtime.realtimeMinTrendChart(monitor, monitorType)
 GET 	/JSON/realtimeHighchart/:monitorType controllers.Realtime.highchartJson(monitorType)	
 
 GET		/report/*reportType			controllers.Report.getReport(reportType)

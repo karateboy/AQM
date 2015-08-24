@@ -20,7 +20,7 @@
 		<tr>
 			<td>@Monitor.map(r.monitor).name</td>
 			<td>@r.time.toString("YYYY/MM/dd hh:mm")</td>
-			<td>@("%.2f".format(r.value))</td>
+			<td>@MonitorType.format(monitorType, Some(r.value))</td>
 		</tr>
 	}
 </tbody>

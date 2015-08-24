@@ -141,26 +141,48 @@ object MonitorStatus {
   
   def getTagStr(s:MonitorStatus)=TagInfo(s.statusType, s.id).toString()
   
-  def getCssColorStr(tag:String)={
+  def getCssStyleStr(tag:String, overInternal:Boolean=false, overLaw:Boolean=false)={
+   val bkColor =  getBkColorStr(tag)
+   val fgColor = 
+     if(overLaw)
+       "Red"
+     else if(overInternal)
+       "Blue"
+     else
+       "Black"
+    s"Color:${fgColor};background-color:${bkColor}"
+  }
+  
+  val OverInternalColor = "Blue"
+  val OverLawColor = "Red"
+  val NormalColor = "White"
+  val CalibrationColor = "Chartreuse"
+  val RepairColor = "DarkOrchid"
+  val MaintanceColor = "DarkOrange"
+  val AbnormalColor = "DarkRed"
+  val AutoAuditColor = "Cyan"
+  val ManualAuditColor = "Gold"
+  
+  def getBkColorStr(tag:String)={
     val info=getTagInfo(tag)
     info.statusType match {
       case StatusType.Internal=>
         {
           if(isNormalStat(tag))
-            "White"
+            NormalColor
           else if(isCalbration(tag))
-            "Chartreuse"
+            CalibrationColor
           else if(isRepairing(tag))
-            "DarkOrchid"
+            RepairColor
           else if(isMaintance(tag))
-            "DarkOrange"
+            MaintanceColor
           else 
-            "Crimson"
+            AbnormalColor
         }
       case StatusType.Auto=>
-        "Cyan"
+        AutoAuditColor
       case StatusType.Manual=>
-        "Gold"
+        ManualAuditColor
     }
   }
   def update(tag:String, desp:String)={

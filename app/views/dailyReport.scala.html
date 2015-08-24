@@ -20,7 +20,7 @@
 				@if(t.stat.count==0){
 					<td>-</td>
 				}else{
-				<td>@("%.1f".format(t.stat.avg))</td>
+				<td>@MonitorType.format(t.monitorType, Some(t.stat.avg))</td>
 				}
 			}
 		</tr>
@@ -30,7 +30,7 @@
 				@if(t.stat.count==0){
 					<td>-</td>
 				}else{
-				<td>@("%.1f".format(t.stat.max))</td>
+				<td>@MonitorType.format(t.monitorType, Some(t.stat.max))</td>
 				}
 			}
 		</tr>
@@ -40,7 +40,7 @@
 				@if(t.stat.count==0){
 					<td>-</td>
 				}else{
-				<td>@("%.1f".format(t.stat.min))</td>
+				<td>@MonitorType.format(t.monitorType, Some(t.stat.min))</td>
 				}
 			}
 		</tr>
@@ -56,20 +56,11 @@
 			<tr>
 			<th>@("%02d:00".format(i))</th>
 			@for(t<-report.typeList){
-				<td>@if(!t.dataList(i)._2.isEmpty && !t.dataList(i)._3.isEmpty){
-						@if(MonitorStatus.isNormalStat(t.dataList(i)._3.get)){
-							@("%.1f".format(t.dataList(i)._2.get))	
-						}else{
-							<span style="background-color:yellow">@("%.1f".format(t.dataList(i)._2.get))</span>
-						}
-						
-					}else{
-						-
-					}
-				</td>	
+				<td style="@MonitorType.getStyleStr(t.monitorType, (t.dataList(i)._2, t.dataList(i)._3))">
+					@MonitorType.format(t.monitorType, t.dataList(i)._2)	
+				</td>
 			}
 			</tr>
 		}
 	</tbody>
 </table>            		
- 

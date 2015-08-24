@@ -1,6 +1,7 @@
 @* realtimeStatus Template File *@
 @import models.Realtime._
 @import com.github.nscala_time.time.Imports._
+@import MonitorStatus._
 @(current:DateTime, rt_status: Map[Monitor.Value, Map[MonitorType.Value, (Option[Float], Option[String])]], psiList:List[MonitorType.Value], rt_psi: Map[Monitor.Value, (Option[Float], Map[MonitorType.Value, (Option[Float], Option[Float])])], privilege: Privilege)
 <div class="row">
 	<div class="col-lg-12">
@@ -28,6 +29,18 @@
 			}
 		</tr>
 	</thead>
+	<tfoot>
+		<tr>			  
+			<th>法規值</th>			
+			@for(mt <- MonitorType.realtimeList.filter(privilege.allowedMonitorTypes.contains)){
+				@if(MonitorType.map(mt).std_law.isDefined){
+					<th style="color:@OverLawColor">@MonitorType.map(mt).std_law</th>	
+				}else{
+					<th style="color:@OverLawColor">-</th>
+				}				
+			}
+		</tr>	
+	</tfoot>	
 	<tbody>
 		@for(m <- privilege.allowedMonitors){
 			<tr>
@@ -35,16 +48,35 @@
 				
 			@for(mt <- MonitorType.realtimeList.filter(privilege.allowedMonitorTypes.contains)){
 				@if(rt_status(m)(mt)._1.isEmpty){
-						<td>-</td>						
-					}else{
-						<td>@("%.2f".format(rt_status(m)(mt)._1.get))</td>
+						@if(Monitor.map(m).monitorTypes.contains(mt)){
+							<td>-</td>	
+						}else{
+							<td>N/A</td>
+						}												
+					}else{						
+						<td style="@MonitorType.getStyleStr(mt, rt_status(m)(mt))">@MonitorType.format(mt, (rt_status(m)(mt)._1))</td>
 					}
 			}
 			
 			</tr>
 		}
 	</tbody>
-</table> 
+</table>
+<div>
+<table class="table">
+<tbody>
+<tr>
+	<td class="col-lg-1" style="color:black"><strong>標示說明:</strong></td>
+	<td class="col-lg-1" style="color:@OverInternalColor">超過內控值</td>
+	<td class="col-lg-1" style="color:@OverLawColor">超過法規值</td>	
+	<td class="col-lg-1" style="color:black;background-color:@CalibrationColor">校正</td>
+	<td class="col-lg-1" style="color:black;background-color:@RepairColor">維修</td>
+	<td class="col-lg-1" style="color:black;background-color:@MaintanceColor">定保</td>
+	<td class="col-lg-1" style="color:black;background-color:@AbnormalColor">異常</td>
+</tr>
+</tbody>
+</table>
+</div> 
 </div>
 <div id="psiDiv" class="tab-pane" align="center">
 
@@ -85,11 +117,8 @@
 				}else{
 					<td>-</td>
 				}
-				@if(rt_psi(m)._2(mtv)._1.isDefined){
-					<td>@("%.2f".format(rt_psi(m)._2(mtv)._1.get))</td>	
-				}else{
-					<td>-</td>
-				}				
+
+				<td>@MonitorType.format(mtv, rt_psi(m)._2(mtv)._1)</td>	
 			}
 		}else{
 			<td>@Monitor.map(m).name</td>
@@ -165,8 +194,9 @@ $( document ).ready(function() {
         	"sSwfPath": "@routes.Assets.at("js/plugins/dataTables/swf/copy_csv_xls_pdf.swf")",
         	"aButtons": ["copy", "print", "csv", "xls"]
         },
-		"paging":   false,
-		"searching": false
+		paging:   false,
+		searching: false,
+		info: false
 	    } );
 	
 	$('#psiTable').dataTable( {

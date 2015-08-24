@@ -1,18 +1,33 @@
 @* monthlyHourReport Template File *@
 @import controllers.Report._
 @import com.github.nscala_time.time.Imports._
-@(monitor:String, reportDate:DateTime, report: MonthHourReport, nDays:Int)
+@import MonitorStatus._
+@(monitor:String, mt:MonitorType.Value, reportDate:DateTime, report: MonthHourReport, nDays:Int)
 
 <h3>監測月分時報表</h3>
 <h4>監測站:@monitor</h4>
 <h4>日期:@reportDate.toString("yyyy年MM月")</h4>
 
+<div class="col-lg-offset-6 col-lg-6">
+<table class="table">
+<tbody>
+<tr>
+	<td class="col-lg-1" style="color:black;background-color:@CalibrationColor">校正</td>
+	<td class="col-lg-1" style="color:black;background-color:@RepairColor">維修</td>
+	<td class="col-lg-1" style="color:black;background-color:@MaintanceColor">定保</td>
+	<td class="col-lg-1" style="color:black;background-color:@AbnormalColor">異常</td>
+	<td class="col-lg-1" style="color:black;background-color:@AutoAuditColor">自動檢核</td>
+	<td class="col-lg-1" style="color:black;background-color:@ManualAuditColor">人工註記</td>
+</tr>
+</tbody>
+</table>
+</div>
 <table id="reportTable" class="table" cellspacing="0" width="100%">
 	<thead>
 		<tr>
-			<th>X</th>
+			<th>日\時</th>
 			@for(t<- 0 to 23){
-				<td>@t 時</td>
+				<td>@t</td>
 			}
 			<td>平均</td>
 			<td>最大</td>
@@ -27,11 +42,11 @@
 				@if(stat.count==0){
 					<td>-</td>
 				}else{
-				<td>@("%.1f".format(stat.avg))</td>
+				<td>@MonitorType.format(mt, Some(stat.avg))</td>
 				}
 			}
 			@if(report.StatStat.count != 0){
-				<td>@("%.1f".format(report.StatStat.avg))</td>
+				<td>@MonitorType.format(mt, Some(report.StatStat.avg))</td>
 			}else{
 				<td></td>
 			}
@@ -45,12 +60,12 @@
 				@if(stat.count==0){
 					<td>-</td>
 				}else{
-				<td>@("%.1f".format(stat.max))</td>
+				<td>@MonitorType.format(mt, Some(stat.max))</td>
 				}
 			}
 			<td></td>
 			@if(report.StatStat.count != 0){
-				<td>@("%.1f".format(report.StatStat.max))</td>
+				<td>@MonitorType.format(mt, Some(report.StatStat.max))</td>
 			}else{
 				<td></td>
 			}
@@ -63,13 +78,13 @@
 				@if(stat.count==0){
 					<td>-</td>
 				}else{
-				<td>@("%.1f".format(stat.min))</td>
+				<td>@MonitorType.format(mt, Some(stat.min))</td>
 				}
 			}
 			<td></td>
 			<td></td>
 			@if(report.StatStat.count != 0){
-				<td>@("%.1f".format(report.StatStat.min))</td>	
+				<td>@MonitorType.format(mt, Some(report.StatStat.min))</td>	
 			}else{
 				<td>-</td>
 			}
@@ -82,30 +97,22 @@
 			<tr>
 			<th>@("%02d".format(d+1))</th>
 			@for(hour<-0 to 23){
-				<td>@if(!report.dailyReports(d).typeList(0).dataList(hour)._2.isEmpty && 
-					!report.dailyReports(d).typeList(0).dataList(hour)._3.isEmpty){
-						@if(MonitorStatus.isNormalStat(report.dailyReports(d).typeList(0).dataList(hour)._3.get)){
-							@("%.1f".format(report.dailyReports(d).typeList(0).dataList(hour)._2.get))	
-						}else{
-							<span style="background-color:yellow">@("%.1f".format(report.dailyReports(d).typeList(0).dataList(hour)._2.get))</span>
-						}	
-					}else{
-						-
-					}
-				</td>	
+				<td style="@MonitorType.getStyleStr(mt, (report.dailyReports(d).typeList(0).dataList(hour)._2, report.dailyReports(d).typeList(0).dataList(hour)._3))">
+					@MonitorType.format(mt, report.dailyReports(d).typeList(0).dataList(hour)._2)</span>
+				</td>
 			}
 			@if(report.dailyReports(d).typeList(0).stat.count != 0){
-				<td>@("%.1f".format(report.dailyReports(d).typeList(0).stat.avg))</td>	
+				<td>@MonitorType.format(mt, Some(report.dailyReports(d).typeList(0).stat.avg))</td>	
 			}else{
 				<td>-</td>
 			}
 			@if(report.dailyReports(d).typeList(0).stat.count != 0){
-				<td>@("%.1f".format(report.dailyReports(d).typeList(0).stat.max))</td>	
+				<td>@MonitorType.format(mt, Some(report.dailyReports(d).typeList(0).stat.max))</td>	
 			}else{
 				<td>-</td>
 			}
 			@if(report.dailyReports(d).typeList(0).stat.count != 0){
-				<td>@("%.1f".format(report.dailyReports(d).typeList(0).stat.min))</td>	
+				<td>@MonitorType.format(mt, Some(report.dailyReports(d).typeList(0).stat.min))</td>	
 			}else{
 				<td>-</td>
 			}

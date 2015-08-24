@@ -1,20 +1,23 @@
 @* historyReport Template File *@
 @import com.github.nscala_time.time.Imports._
+@import MonitorStatus._
 @(editable:Boolean, monitors:Seq[Monitor.Value], monitorType:MonitorType.Value, start:DateTime, end:DateTime, timeSeq:Seq[DateTime], recordMap: Map[Monitor.Value, Map[DateTime, (Option[Float], Option[String])]], showSec:Boolean = false)
 
 <H3>測項:@MonitorType.map(monitorType).desp (@MonitorType.map(monitorType).unit)</H3>
 <H5>區間:@start.toString("YYYY-MM-dd HH:mm")~@end.toString("YYYY-MM-dd HH:mm")</H5>
 
-<div class="col-lg-offset-6 col-lg-6">
+<div class="col-lg-offset-4 col-lg-8">
 <table class="table">
 <tbody>
 <tr>
-	<td class="col-lg-1" style="background-color:Chartreuse">校正</td>
-	<td class="col-lg-1" style="background-color:DarkOrchid">維修</td>
-	<td class="col-lg-1" style="background-color:DarkOrange">定保</td>
-	<td class="col-lg-1" style="background-color:Crimson">異常</td>
-	<td class="col-lg-1" style="background-color:Cyan">自動檢核</td>
-	<td class="col-lg-1" style="background-color:Gold">人工註記</td>
+	<td class="col-lg-1" style="color:black"><strong>標示說明:</strong></td>
+	<td class="col-lg-1" style="color:@OverLawColor">超過法規值</td>
+	<td class="col-lg-1" style="color:black;background-color:@CalibrationColor">校正</td>
+	<td class="col-lg-1" style="color:black;background-color:@RepairColor">維修</td>
+	<td class="col-lg-1" style="color:black;background-color:@MaintanceColor">定保</td>
+	<td class="col-lg-1" style="color:black;background-color:@AbnormalColor">異常</td>
+	<td class="col-lg-1" style="color:black;background-color:@AutoAuditColor">自動檢核</td>
+	<td class="col-lg-1" style="color:black;background-color:@ManualAuditColor">人工註記</td>
 </tr>
 </tbody>
 </table>
@@ -43,15 +46,11 @@
 				@if(recordMap(m).get(t).isEmpty||recordMap(m)(t)._1.isEmpty||recordMap(m)(t)._2.isEmpty){
 					<td>-</td>
 				}else{
-					@if(MonitorStatus.isNormalStat(MonitorStatus.getTagInfo(recordMap(m)(t)._2.get).toString)){
-						<td>@("%.2f".format(recordMap(m)(t)._1.get))
+					<td style="@MonitorType.getStyleStr(monitorType, recordMap(m)(t))">@MonitorType.format(monitorType, recordMap(m)(t)._1)
 						@if(editable){
 							<input type="checkbox" id="@m:@monitorType:@t.getMillis">
 						}
-						</td>
-					}else{
-						<td style="background-color:@MonitorStatus.getCssColorStr(recordMap(m)(t)._2.get)">@("%.2f".format(recordMap(m)(t)._1.get))</td>
-					}
+					</td>
 				}				
 			}
 		</tr>

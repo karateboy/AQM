@@ -41,14 +41,21 @@ object Realtime extends Controller {
       Ok(views.html.realtimeImage(group.privilege))
   }
 
-  def realtimeTrend = Security.Authenticated {
+  def realtimeTrend() = Security.Authenticated {
     implicit request =>
       val userInfo = Security.getUserinfo(request).get
-      val group = Group.getGroup(userInfo.groupID).get
-      Ok(views.html.realtimeTrend(group.privilege))
+      val group = Group.getGroup(userInfo.groupID).get      
+      Ok(views.html.realtimeTrend(group.privilege, false))
+  }
+  
+  def realtimeMinTrend() = Security.Authenticated {
+    implicit request =>
+     val userInfo = Security.getUserinfo(request).get
+      val group = Group.getGroup(userInfo.groupID).get      
+      Ok(views.html.realtimeTrend(group.privilege, true))
   }
 
-  def realtimeTrendJSON(monitorStr: String, monitorTypeStr: String) = Security.Authenticated{
+  def realtimeHourTrendChart(monitorStr: String, monitorTypeStr: String) = Security.Authenticated{
     implicit request =>
       val monitorStrArray = monitorStr.split(':')
       val monitors = monitorStrArray.map { Monitor.withName }
@@ -57,86 +64,33 @@ object Realtime extends Controller {
 
       val current = getLatestRecordTime(TableType.Hour).get
       val reportUnit = ReportUnit.Hour
-      val monitorStatusFilter = MonitorStatusFilter.All
+      val monitorStatusFilter = MonitorStatusFilter.Normal_Over
       val start = current.toDateTime - 1.day
       val end = current
 
-      def statusFilter(data: (DateTime, (Option[Float], Option[String]))): Boolean = {
-        if (data._2._2.isEmpty)
-          return false
+      import Query.trendHelper
+      val chart = trendHelper(monitors, Array.empty[EpaMonitor.Value], monitorTypes, reportUnit, monitorStatusFilter, start, end)
+      
+      Results.Ok(Json.toJson(chart))
+  }
 
-        val stat = data._2._2.get
+  def realtimeMinTrendChart(monitorStr: String, monitorTypeStr: String) = Security.Authenticated{
+    implicit request =>
+      val monitorStrArray = monitorStr.split(':')
+      val monitors = monitorStrArray.map { Monitor.withName }
+      val monitorTypeStrArray = monitorTypeStr.split(':')
+      val monitorTypes = monitorTypeStrArray.map { MonitorType.withName }
 
-        MonitorStatusFilter.isMatched(monitorStatusFilter, stat)
-      }
+      val current = getLatestRecordTime(TableType.Min).get
+      val reportUnit = ReportUnit.Min
+      val monitorStatusFilter = MonitorStatusFilter.Normal_Over
+      val start = current.toDateTime - 4.hour
+      val end = current
 
-      var timeSet = Set[DateTime]()
-      val pairs =
-            for {
-              m <- monitors
-              records = Record.getHourRecords(m, start, end)
-
-              mtPairs = for {
-                mt <- monitorTypes
-                mtRecords = records.map { rs => (Record.timeProjection(rs).toDateTime, Record.monitorTypeProject2(mt)(rs)) }
-                msfRecords = mtRecords.filter(statusFilter)
-              } yield {
-                val timeMap = Map(msfRecords: _*)
-                timeSet ++= timeMap.keySet
-                mt -> timeMap
-              }
-            } yield {
-              m -> Map(mtPairs: _*)
-            }
-
-      val recordMap = Map(pairs: _*)
-      val timeSeq = timeSet.toList.sorted
-
-      val series = for {
-        m <- monitors
-        mt <- monitorTypes
-        timeData = timeSeq.map(t => recordMap(m)(mt).getOrElse(t, (Some(0f), Some(""))))
-        data = timeData.map(_._1.getOrElse(0f))
-      } yield {
-        seqData(Monitor.map(m).name + "_" + MonitorType.map(mt).desp, data)
-      }
-
-      val title = if (monitorTypes.length == 1) {
-        MonitorType.map(monitorTypes(0)).desp + "及時趨勢圖"
-      } else
-        "綜合及時趨勢圖"
-
-      val axisLines = if (monitorTypes.length == 1) {
-        val mtCase = MonitorType.map(monitorTypes(0))
-        if (mtCase.std_internal.isEmpty || mtCase.std_law.isEmpty)
-          None
-        else
-          Some(Seq(AxisLine("#0000FF", 2, mtCase.std_internal.get, Some(AxisLineLabel("left", "內控值"))),
-            AxisLine("#FF0000", 2, mtCase.std_law.get, Some(AxisLineLabel("right", "法規值")))))
-      } else
-        None
-
-      val timeStrSeq = timeSeq.map(t => t.toString("MM/dd HH:mm"))
-      val c =
-        if (monitorTypes.length == 1) {
-          val mtCase = MonitorType.map(monitorTypes(0))
-
-          HighchartData(
-            Map("type" -> "line"),
-            Map("text" -> title),
-            XAxis(Some(timeStrSeq)),
-            Seq(YAxis(None, AxisTitle(Some(mtCase.unit)), axisLines)),
-            series)
-        } else {
-          HighchartData(
-            Map("type" -> "line"),
-            Map("text" -> title),
-            XAxis(Some(timeStrSeq)),
-            Seq(YAxis(None, AxisTitle(None), axisLines)),
-            series)
-        }
-
-      Results.Ok(Json.toJson(c))
+      import Query.trendHelper
+      val chart = trendHelper(monitors, Array.empty[EpaMonitor.Value], monitorTypes, reportUnit, monitorStatusFilter, start, end)
+      
+      Results.Ok(Json.toJson(chart))
   }
 
   case class XAxis(categories: Option[Seq[String]])

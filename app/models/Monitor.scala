@@ -233,4 +233,37 @@ object MonitorType extends Enumeration{
   val C214 = MonitorType.withName("C214")
   val C215 = MonitorType.withName("C215")
   val C216 = MonitorType.withName("C216")
+
+  def getStyleStr(mt: MonitorType.Value, v: (Option[Float], Option[String])) = {
+    val mtCase = map(mt)
+    if (v._1.isEmpty || v._2.isEmpty)
+      s"Color:Black;background-color:White"
+    else {
+      val value = v._1.get
+      val status = v._2.get
+      
+      val overInternal =
+        if (mtCase.std_internal.isDefined && (value > mtCase.std_internal.get))
+          true
+        else
+          false
+      
+      val overLaw =
+        if (mtCase.std_law.isDefined && (value > mtCase.std_law.get))
+          true
+        else
+          false
+
+      MonitorStatus.getCssStyleStr(status, overInternal, overLaw)
+    }
+  }
+  
+  def format(mt: MonitorType.Value, v: Option[Float])={
+    if(v.isEmpty)
+      "-"
+    else{
+      val prec = map(mt).prec
+      s"%.${prec}f".format(v.get)
+    }
+  }
 }

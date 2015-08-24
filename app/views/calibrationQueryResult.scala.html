@@ -59,15 +59,15 @@
 				}
 				<td>@MonitorType.map(item.monitorType).zd_internal</td>
 				<td>@MonitorType.map(item.monitorType).zd_law</td>
-				<td>@item.s_sval</td>
-				<td>@item.sd_val</td>
+				<td>@MonitorType.format(item.monitorType, Some(item.s_sval))</td>
+				<td>@MonitorType.format(item.monitorType, Some(item.sd_val))</td>
 				@if(item.sd_pnt > MonitorType.map(item.monitorType).sd_law.get){
-					<td style="color:red">@item.sd_pnt</td>
+					<td style="color:red">@MonitorType.format(item.monitorType, Some(item.sd_pnt))</td>
 				}else {
 					@if(item.sd_pnt > MonitorType.map(item.monitorType).sd_internal.get){
-						<td style="color:blue">@item.sd_pnt</td>
+						<td style="color:blue">@MonitorType.format(item.monitorType, Some(item.sd_pnt))</td>
 					}else{
-						<td>@item.sd_pnt</td>	
+						<td>@MonitorType.format(item.monitorType, Some(item.sd_pnt))</td>	
 					}
 				} 
 				

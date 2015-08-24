@@ -146,6 +146,223 @@ object Query extends Controller {
       Ok(views.html.historyTrend(group.privilege))
   }
 
+  def trendHelper(monitors: Array[Monitor.Value], epaMonitors: Array[EpaMonitor.Value],
+                  monitorTypes: Array[MonitorType.Value], reportUnit: ReportUnit.Value, monitorStatusFilter: MonitorStatusFilter.Value,
+                  start: DateTime, end: DateTime) = {
+    def statusFilter(data: (DateTime, (Option[Float], Option[String]))): Boolean = {
+      if (data._2._2.isEmpty)
+        return false
+
+      val stat = data._2._2.get
+
+      MonitorStatusFilter.isMatched(monitorStatusFilter, stat)
+    }
+
+    var timeSet = Set[DateTime]()
+    val pairs =
+      if (reportUnit == ReportUnit.Min || reportUnit == ReportUnit.Hour) {
+        val ps =
+          for {
+            m <- monitors
+            records = reportUnit match {
+              case ReportUnit.Min =>
+                Record.getMinRecords(m, start, end)
+              case ReportUnit.Hour =>
+                Record.getHourRecords(m, start, end)
+            }
+
+            mtPairs = for {
+              mt <- monitorTypes
+              mtRecords = records.map { rs => (Record.timeProjection(rs).toDateTime, Record.monitorTypeProject2(mt)(rs)) }
+              msfRecords = mtRecords.filter(statusFilter)
+            } yield {
+              val timeMap = Map(msfRecords: _*)
+              timeSet ++= timeMap.keySet
+              mt -> timeMap
+            }
+          } yield {
+            m -> Map(mtPairs: _*)
+          }
+        ps
+      } else {
+        import controllers.Report._
+        val ps =
+          for {
+            m <- monitors
+          } yield {
+            reportUnit match {
+              case ReportUnit.TenMin =>
+                m -> getPeriodReportMap(m, start, end, monitorStatusFilter, 10.minute)
+              case ReportUnit.EightHour =>
+                m -> getPeriodReportMap(m, start, end, monitorStatusFilter, 8.hour)
+              case ReportUnit.Day =>
+                m -> getPeriodReportMap(m, start, end, monitorStatusFilter, 1.day)
+              case ReportUnit.Week =>
+                m -> getWeeklyReportMap(m, start, end, monitorStatusFilter)
+              case ReportUnit.Month =>
+                m -> getMonthlyReportMap(m, start, end, monitorStatusFilter)
+              case ReportUnit.Quarter =>
+                m -> getQuarterReportMap(m, start, end, monitorStatusFilter)
+            }
+          }
+        reportUnit match {
+          case ReportUnit.TenMin =>
+            timeSet ++= Report.getPeriods(DateTime.parse(start.toString("YYYY-MM-dd")), DateTime.parse(end.toString("YYYY-MM-dd")) + 1.day, 10.minute)
+          case ReportUnit.EightHour =>
+            timeSet ++= Report.getPeriods(DateTime.parse(start.toString("YYYY-MM-dd")), DateTime.parse(end.toString("YYYY-MM-dd")) + 1.day, 8.hour)
+          case ReportUnit.Day =>
+            timeSet ++= Report.getDays(DateTime.parse(start.toString("YYYY-MM-dd")), DateTime.parse(end.toString("YYYY-MM-dd")))
+          case ReportUnit.Week =>
+            timeSet ++= Report.getWeeks(DateTime.parse(adjustWeekDay(start).toString("YYYY-MM-dd")),
+              DateTime.parse(adjustWeekDay(end).toString("YYYY-MM-dd")) + 1.weeks)
+          case ReportUnit.Month =>
+            timeSet ++= Report.getMonths(DateTime.parse(start.toString("YYYY-MM-01")), DateTime.parse(end.toString("YYYY-MM-01")) + 1.months)
+          case ReportUnit.Quarter =>
+            timeSet ++= Report.getQuarters(DateTime.parse(s"${start.getYear}-${1 + (start.getMonthOfYear - 1) / 3 * 3}-01"),
+              DateTime.parse(s"${end.getYear}-${1 + (end.getMonthOfYear - 1) / 3 * 3}-01") + 3.month)
+
+        }
+        ps
+      }
+
+    val recordMap = Map(pairs: _*)
+    val timeSeq = timeSet.toList.sorted
+    import Realtime._
+
+    val windMtv = MonitorType.withName("C212")
+    val local_series =
+      if (monitorTypes.length > 1 && monitorTypes.contains(windMtv)) {
+        //val noWinMt = monitorTypes.filter { _ != windMtv }
+        for {
+          m <- monitors
+          mt <- monitorTypes
+          timeData = timeSeq.map(t => recordMap(m)(mt).getOrElse(t, (Some(0f), Some(""))))
+          data = timeData.map(_._1.getOrElse(0f))
+        } yield {
+          if (mt != windMtv)
+            seqData(Monitor.map(m).name + "_" + MonitorType.map(mt).desp, data)
+          else
+            seqData(Monitor.map(m).name + "_" + MonitorType.map(mt).desp, data, 1, Some("scatter"))
+        }
+      } else {
+        for {
+          m <- monitors
+          mt <- monitorTypes
+          timeData = timeSeq.map(t => recordMap(m)(mt).getOrElse(t, (Some(0f), Some(""))))
+          data = timeData.map(_._1.getOrElse(0f))
+        } yield {
+          seqData(Monitor.map(m).name + "_" + MonitorType.map(mt).desp, data)
+        }
+      }
+
+    def epaSeries() = {
+      val epaMonitorPairs =
+        for {
+          m <- epaMonitors
+        } yield {
+          val epaMtPairs =
+            for {
+              mt <- monitorTypes
+              epaRecord = Record.getEpaHourRecord(m, mt, start, end)
+              epaPairs = epaRecord.map { r => r.time -> r.value }
+              epaMap = Map(epaPairs: _*)
+            } yield {
+              mt -> epaMap
+            }
+          m -> Map(epaMtPairs: _*)
+        }
+      val epaRecordMap = Map(epaMonitorPairs: _*)
+      for {
+        m <- epaMonitors
+        mt <- monitorTypes
+        timeData = timeSeq.map(t => epaRecordMap(m)(mt).getOrElse(t, 0f))
+      } yield {
+        if (monitorTypes.length > 1 && monitorTypes.contains(windMtv)) {
+          if (mt != windMtv)
+            seqData(EpaMonitor.map(m).name + "_" + MonitorType.map(mt).desp, timeData)
+          else
+            seqData(EpaMonitor.map(m).name + "_" + MonitorType.map(mt).desp, timeData, 1, Some("scatter"))
+        } else {
+          seqData(EpaMonitor.map(m).name + "_" + MonitorType.map(mt).desp, timeData)
+        }
+      }
+    }
+
+    val epa_series = epaSeries()
+
+    val series = local_series ++ epa_series
+
+    val title = {
+      val mNames = monitors.map { Monitor.map(_).name }
+      val mtNames = monitorTypes.map { MonitorType.map(_).desp }
+      mNames.mkString + mtNames.mkString + "趨勢圖"
+    }
+
+    val timeStrSeq = timeSeq.map(t =>
+      reportUnit match {
+        case ReportUnit.Min =>
+          t.toString("YYYY/MM/dd HH:mm")
+        case ReportUnit.TenMin =>
+          t.toString("YYYY/MM/dd HH:mm")
+        case ReportUnit.Hour =>
+          t.toString("YYYY/MM/dd HH:mm")
+        case ReportUnit.EightHour =>
+          t.toString("YYYY/MM/dd HH:mm")
+        case ReportUnit.Day =>
+          t.toString("YYYY/MM/dd")
+        case ReportUnit.Week =>
+          t.toString("YYYY/MM/dd")
+        case ReportUnit.Month =>
+          t.toString("YYYY/MM")
+        case ReportUnit.Quarter =>
+          s"${t.getYear}/${1 + (t.getMonthOfYear - 1) / 3}Q"
+      })
+
+    def getAxisLines(mtCase: MonitorType) = {
+      if (mtCase.std_internal.isEmpty || mtCase.std_law.isEmpty)
+        None
+      else
+        Some(Seq(AxisLine("#0000FF", 2, mtCase.std_internal.get, Some(AxisLineLabel("left", "內控值"))),
+          AxisLine("#FF0000", 2, mtCase.std_law.get, Some(AxisLineLabel("right", "法規值")))))
+    }
+
+    val chart =
+      if (monitorTypes.length == 1) {
+        val mtCase = MonitorType.map(monitorTypes(0))
+
+        HighchartData(
+          Map("type" -> "line"),
+          Map("text" -> title),
+          XAxis(Some(timeStrSeq)),
+          Seq(YAxis(None, AxisTitle(Some(s"${mtCase.desp} (${mtCase.unit})")), getAxisLines(mtCase))),
+          series)
+      } else {
+        val yAxis =
+          if (monitorTypes.length > 1 && monitorTypes.contains(windMtv)) {
+            val windMtCase = MonitorType.map(MonitorType.withName("C212"))
+            if (monitorTypes.length == 2) {
+              val mtCase = MonitorType.map(monitorTypes.filter { !MonitorType.windDirList.contains(_) }(0))
+
+              Seq(YAxis(None, AxisTitle(Some(s"${mtCase.desp} (${mtCase.unit})")), getAxisLines(mtCase)),
+                YAxis(None, AxisTitle(Some(s"${windMtCase.desp} (${windMtCase.unit})")), None, true))
+            } else {
+              Seq(YAxis(None, AxisTitle(None), None), YAxis(None, AxisTitle(Some(s"${windMtCase.desp} (${windMtCase.unit})")), None, true))
+            }
+          } else {
+            Seq(YAxis(None, AxisTitle(None), None))
+          }
+
+        HighchartData(
+          Map("type" -> "line"),
+          Map("text" -> title),
+          XAxis(Some(timeStrSeq)),
+          yAxis,
+          series)
+      }
+
+    chart
+  }
+  
   def historyTrendChart(monitorStr: String, epaMonitorStr:String, monitorTypeStr: String, reportUnitStr: String, msfStr: String, startStr: String, endStr: String) = Security.Authenticated {
     implicit request =>
       import scala.collection.JavaConverters._
@@ -162,218 +379,8 @@ object Query extends Controller {
       val start = DateTime.parse(startStr, DateTimeFormat.forPattern("YYYY-MM-dd HH:mm"))
       val end = DateTime.parse(endStr, DateTimeFormat.forPattern("YYYY-MM-dd HH:mm"))
 
-      def statusFilter(data: (DateTime, (Option[Float], Option[String]))): Boolean = {
-        if (data._2._2.isEmpty)
-          return false
-
-        val stat = data._2._2.get
-
-        MonitorStatusFilter.isMatched(monitorStatusFilter, stat)
-      }
-
-      var timeSet = Set[DateTime]()
-      val pairs =
-        if (reportUnit == ReportUnit.Min || reportUnit == ReportUnit.Hour) {
-          val ps =
-            for {
-              m <- monitors
-              records = reportUnit match {
-                case ReportUnit.Min =>
-                  Record.getMinRecords(m, start, end)
-                case ReportUnit.Hour =>
-                  Record.getHourRecords(m, start, end)
-              }
-
-              mtPairs = for {
-                mt <- monitorTypes
-                mtRecords = records.map { rs => (Record.timeProjection(rs).toDateTime, Record.monitorTypeProject2(mt)(rs)) }
-                msfRecords = mtRecords.filter(statusFilter)
-              } yield {
-                val timeMap = Map(msfRecords: _*)
-                timeSet ++= timeMap.keySet
-                mt -> timeMap
-              }
-            } yield {
-              m -> Map(mtPairs: _*)
-            }
-          ps
-        } else {
-          import controllers.Report._
-          val ps =
-            for {
-              m <- monitors
-            } yield {
-              reportUnit match {
-                case ReportUnit.TenMin =>
-                  m -> getPeriodReportMap(m, start, end, monitorStatusFilter, 10.minute)
-                case ReportUnit.EightHour =>
-                  m -> getPeriodReportMap(m, start, end, monitorStatusFilter, 8.hour)
-                case ReportUnit.Day =>
-                  m -> getPeriodReportMap(m, start, end, monitorStatusFilter, 1.day)
-                case ReportUnit.Week =>
-                  m -> getWeeklyReportMap(m, start, end, monitorStatusFilter)
-                case ReportUnit.Month =>
-                  m -> getMonthlyReportMap(m, start, end, monitorStatusFilter)
-                case ReportUnit.Quarter =>
-                  m -> getQuarterReportMap(m, start, end, monitorStatusFilter)
-              }
-            }
-          reportUnit match {
-            case ReportUnit.TenMin =>
-              timeSet ++= Report.getPeriods(DateTime.parse(start.toString("YYYY-MM-dd")), DateTime.parse(end.toString("YYYY-MM-dd")) + 1.day, 10.minute)
-            case ReportUnit.EightHour =>
-              timeSet ++= Report.getPeriods(DateTime.parse(start.toString("YYYY-MM-dd")), DateTime.parse(end.toString("YYYY-MM-dd")) + 1.day, 8.hour)
-            case ReportUnit.Day =>
-              timeSet ++= Report.getDays(DateTime.parse(start.toString("YYYY-MM-dd")), DateTime.parse(end.toString("YYYY-MM-dd")))
-            case ReportUnit.Week =>
-              timeSet ++= Report.getWeeks(DateTime.parse(adjustWeekDay(start).toString("YYYY-MM-dd")),
-                DateTime.parse(adjustWeekDay(end).toString("YYYY-MM-dd")) + 1.weeks)
-            case ReportUnit.Month =>
-              timeSet ++= Report.getMonths(DateTime.parse(start.toString("YYYY-MM-01")), DateTime.parse(end.toString("YYYY-MM-01")) + 1.months)
-            case ReportUnit.Quarter =>
-              timeSet ++= Report.getQuarters(DateTime.parse(s"${start.getYear}-${1 + (start.getMonthOfYear - 1) / 3 * 3}-01"),
-                DateTime.parse(s"${end.getYear}-${1 + (end.getMonthOfYear - 1) / 3 * 3}-01") + 3.month)
-
-          }
-          ps
-        }
-
-      val recordMap = Map(pairs: _*)
-      val timeSeq = timeSet.toList.sorted
-      import Realtime._
-
-      val windMtv = MonitorType.withName("C212")
-      val local_series =
-        if (monitorTypes.length > 1 && monitorTypes.contains(windMtv)) {
-          //val noWinMt = monitorTypes.filter { _ != windMtv }
-          for {
-            m <- monitors
-            mt <- monitorTypes
-            timeData = timeSeq.map(t => recordMap(m)(mt).getOrElse(t, (Some(0f), Some(""))))
-            data = timeData.map(_._1.getOrElse(0f))
-          } yield {
-            if (mt != windMtv)
-              seqData(Monitor.map(m).name + "_" + MonitorType.map(mt).desp, data)
-            else
-              seqData(Monitor.map(m).name + "_" + MonitorType.map(mt).desp, data, 1, Some("scatter"))
-          }
-        } else {
-          for {
-            m <- monitors
-            mt <- monitorTypes
-            timeData = timeSeq.map(t => recordMap(m)(mt).getOrElse(t, (Some(0f), Some(""))))
-            data = timeData.map(_._1.getOrElse(0f))
-          } yield {
-            seqData(Monitor.map(m).name + "_" + MonitorType.map(mt).desp, data)
-          }
-        }
-
-      def epaSeries() = {
-        val epaMonitorPairs =
-          for {
-            m <- epaMonitors
-          } yield {
-            val epaMtPairs =
-              for {
-                mt <- monitorTypes
-                epaRecord = Record.getEpaHourRecord(m, mt, start, end)
-                epaPairs = epaRecord.map { r => r.time -> r.value }
-                epaMap = Map(epaPairs: _*)
-              } yield {
-                mt -> epaMap
-              }
-            m -> Map(epaMtPairs: _*)
-          }
-        val epaRecordMap = Map(epaMonitorPairs: _*)
-        for {
-          m <- epaMonitors
-          mt <- monitorTypes
-          timeData = timeSeq.map(t => epaRecordMap(m)(mt).getOrElse(t, 0f))
-        } yield {
-          if (monitorTypes.length > 1 && monitorTypes.contains(windMtv)) {
-            if (mt != windMtv)
-              seqData(EpaMonitor.map(m).name + "_" + MonitorType.map(mt).desp, timeData)
-            else
-              seqData(EpaMonitor.map(m).name + "_" + MonitorType.map(mt).desp, timeData, 1, Some("scatter"))
-          } else {
-            seqData(EpaMonitor.map(m).name + "_" + MonitorType.map(mt).desp, timeData)
-          }
-        }
-      }
+      val chart = trendHelper(monitors, epaMonitors, monitorTypes, reportUnit, monitorStatusFilter, start, end)
       
-      val epa_series = epaSeries()
-
-      val series = local_series ++ epa_series
-          
-      val title = {
-        val mNames = monitors.map{Monitor.map(_).name}
-        val mtNames = monitorTypes.map {MonitorType.map(_).desp}
-        mNames.mkString +mtNames.mkString + "趨勢圖"
-      } 
-        
-
-      val timeStrSeq = timeSeq.map(t =>
-        reportUnit match {
-          case ReportUnit.Min =>
-            t.toString("YYYY/MM/dd HH:mm")
-          case ReportUnit.TenMin =>
-            t.toString("YYYY/MM/dd HH:mm")
-          case ReportUnit.Hour =>
-            t.toString("YYYY/MM/dd HH:mm")
-          case ReportUnit.EightHour =>
-            t.toString("YYYY/MM/dd HH:mm")
-          case ReportUnit.Day =>
-            t.toString("YYYY/MM/dd")
-          case ReportUnit.Week =>
-            t.toString("YYYY/MM/dd")
-          case ReportUnit.Month =>
-            t.toString("YYYY/MM")
-          case ReportUnit.Quarter =>
-            s"${t.getYear}/${1 + (t.getMonthOfYear - 1) / 3}Q"
-        })
-        
-      def getAxisLines(mtCase:MonitorType)={
-        if (mtCase.std_internal.isEmpty || mtCase.std_law.isEmpty)
-              None
-            else
-              Some(Seq(AxisLine("#0000FF", 2, mtCase.std_internal.get, Some(AxisLineLabel("left", "內控值"))),
-                AxisLine("#FF0000", 2, mtCase.std_law.get, Some(AxisLineLabel("right", "法規值")))))
-      }
-      
-      val chart =
-        if (monitorTypes.length == 1) {
-          val mtCase = MonitorType.map(monitorTypes(0))
-
-          HighchartData(
-            Map("type" -> "line"),
-            Map("text" -> title),
-            XAxis(Some(timeStrSeq)),
-            Seq(YAxis(None, AxisTitle(Some(s"${mtCase.desp} (${mtCase.unit})")), getAxisLines(mtCase))),
-            series)
-        } else {
-          val yAxis =
-            if (monitorTypes.length > 1 && monitorTypes.contains(windMtv)) {
-              val windMtCase = MonitorType.map(MonitorType.withName("C212"))
-              if (monitorTypes.length == 2) {
-                val mtCase = MonitorType.map(monitorTypes.filter { !MonitorType.windDirList.contains(_) }(0))
-
-                Seq(YAxis(None, AxisTitle(Some(s"${mtCase.desp} (${mtCase.unit})")), getAxisLines(mtCase)),
-                  YAxis(None, AxisTitle(Some(s"${windMtCase.desp} (${windMtCase.unit})")), None, true))
-              } else {
-                Seq(YAxis(None, AxisTitle(None), None), YAxis(None, AxisTitle(Some(s"${windMtCase.desp} (${windMtCase.unit})")), None, true))
-              }
-            } else {
-              Seq(YAxis(None, AxisTitle(None), None))
-            }
-
-          HighchartData(
-            Map("type" -> "line"),
-            Map("text" -> title),
-            XAxis(Some(timeStrSeq)),
-            yAxis,
-            series)
-        }
-
       Results.Ok(Json.toJson(chart))
   }
 

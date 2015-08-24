@@ -24,7 +24,7 @@
 				@if(t.stat.count==0){
 					<td>-</td>
 				}else{
-				<td>@("%.1f".format(t.stat.avg))</td>
+				<td>@MonitorType.format(t.monitorType, Some(t.stat.avg))</td>
 				}
 			}
 		</tr>
@@ -34,7 +34,7 @@
 				@if(t.stat.count==0){
 					<td>-</td>
 				}else{
-				<td>@("%.1f".format(t.stat.max))</td>
+				<td>@MonitorType.format(t.monitorType, Some(t.stat.max))</td>
 				}
 			}
 		</tr>
@@ -44,14 +44,14 @@
 				@if(t.stat.count==0){
 					<td>-</td>
 				}else{
-				<td>@("%.1f".format(t.stat.min))</td>
+				<td>@MonitorType.format(t.monitorType, Some(t.stat.min))</td>
 				}
 			}
 		</tr>
 		<tr>
 			<td>有效率(%)</td>
 			@for(t<-report.typeArray){
-				<td>@("%.1f".format(t.stat.count.toFloat/t.stat.total*100))</td>
+				<td>@("%.0f".format(t.stat.count.toFloat/t.stat.total*100))</td>
 			}
 		</tr>
 	</tfoot>
@@ -61,7 +61,7 @@
 			<th>@(i+1)</th>
 			@for(t<-report.typeArray){
 				<td>@if(t.dataList(i).count != 0){
-					@("%.1f".format(t.dataList(i).avg))	
+					@MonitorType.format(t.monitorType, Some(t.dataList(i).avg))	
 					}else{
 					-
 					}
@@ -71,5 +71,3 @@
 		}
 	</tbody>
 </table>            		
- 
-
