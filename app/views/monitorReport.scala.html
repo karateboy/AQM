@@ -29,13 +29,16 @@
 	                    <div class="form-group">
 	            			<label class="col-lg-1 control-label">報表種類</label>
 	            			<div class="col-lg-11">
-	            				<div class="btn-group" data-toggle="buttons">	            					            				
-	            					<label class="btn btn-outline btn-primary dim active">
-										<input type="radio" name="reportType" id="@PeriodReport.DailyReport" checked>日報</label>
-									<label class="btn btn-outline btn-primary dim">
-										<input type="radio" name="reportType" id="@PeriodReport.MonthlyReport">月報</label>
-									<label class="btn btn-outline btn-primary dim">
-										<input type="radio" name="reportType" id="@PeriodReport.YearlyReport">年報</label>
+	            				<div class="btn-group" data-toggle="buttons">
+	            					@for(rt <- PeriodReport.values.toList.sorted){
+	            						@if(rt == PeriodReport.values.toList.sorted.head){
+	            							<label class="btn btn-outline btn-primary dim active">
+												<input type="radio" name="reportType" id="@rt" checked>@PeriodReport.map(rt)</label>									
+	            						}else{
+	            							<label class="btn btn-outline btn-primary dim">
+												<input type="radio" name="reportType" id="@rt">@PeriodReport.map(rt)</label>
+	            						}
+	            					}
 	            				</div>
 	            			</div>	            			            		
 	                    </div>
@@ -69,11 +72,26 @@
 	</div>
 </div>
 <script>
+	var l10n_url = '@routes.Assets.at("localization/zh_tw.json")';
+	var swf_path = "@routes.Assets.at("js/plugins/dataTables/swf/copy_csv_xls_pdf.swf")";
+</script>
+<script>
 $( document ).ready(function() {
-	$('#reportDate').datepicker({
-		format: 'yyyy-mm-dd',
-	    todayBtn: "linked",
-	    language: "zh-TW"
+	$('#reportDate').datetimepicker({
+		format: 'YYYY-MM-D',
+		defaultDate: moment().subtract(1, 'days'),
+    	locale: "zh-TW"
+	});
+	
+    $("input[name='reportType']").change(function(){
+		var me = $(this)
+		if(me.attr('id') == 'daily'){
+			$('#reportDate').data("DateTimePicker").format("YYYY-M-D");			
+		}else if(me.attr('id') == 'monthly'){
+			$('#reportDate').data("DateTimePicker").format("YYYY-M");
+		}else{
+			$('#reportDate').data("DateTimePicker").format("YYYY");			
+		}		
 	});
 
 	var monitor, reportType, reportDate;
@@ -129,10 +147,10 @@ $( document ).ready(function() {
 					responsive: true,
 					"dom": 'T<"clear">lfrtip',
 					language: {
-						url: '@routes.Assets.at("localization/zh_tw.json")',							
+						url: l10n_url,							
 					},
 					"tableTools": {
-        				"sSwfPath": "@routes.Assets.at("js/plugins/dataTables/swf/copy_csv_xls_pdf.swf")",
+        				"sSwfPath": swf_path,
         				"aButtons": ["copy", "print", "csv"]
         			},
 					"paging":   false,

@@ -9,10 +9,10 @@ import play.api.libs.json._
 import play.api.libs.functional.syntax._
 import PdfUtility._
 import models.MonitorStatusFilter
+import java.nio.file.Files
 
-object ReportUnit extends Enumeration
-{
-  val Min  = Value("min")
+object ReportUnit extends Enumeration {
+  val Min = Value("min")
   val TenMin = Value("ten_min")
   val Hour = Value("hour")
   val EightHour = Value("eight_hour")
@@ -20,7 +20,7 @@ object ReportUnit extends Enumeration
   val Week = Value("week")
   val Month = Value("month")
   val Quarter = Value("quarter")
-  val map = Map((Min->"分"), (TenMin->"十分"),(Hour->"小時"), (EightHour->"八小時"),(Day->"日"),(Week->"周"), (Month->"月"),(Quarter->"季"))
+  val map = Map((Min -> "分"), (TenMin -> "十分"), (Hour -> "小時"), (EightHour -> "八小時"), (Day -> "日"), (Week -> "周"), (Month -> "月"), (Quarter -> "季"))
 }
 
 object Query extends Controller {
@@ -47,21 +47,30 @@ object Query extends Controller {
       val monitors = monitorStrArray.map { Monitor.withName }
       val monitorType = MonitorType.withName(monitorTypeStr)
       val tabType = TableType.withName(recordTypeStr)
-      val start = DateTime.parse(startStr, DateTimeFormat.forPattern("YYYY-MM-dd HH:mm"))
-      val end = DateTime.parse(endStr, DateTimeFormat.forPattern("YYYY-MM-dd HH:mm"))
+      val start =
+        if (tabType == TableType.Hour)
+          DateTime.parse(startStr, DateTimeFormat.forPattern("YYYY-M-dd"))
+        else
+          DateTime.parse(startStr, DateTimeFormat.forPattern("YYYY-MM-dd HH:mm"))
+
+      val end =
+        if (tabType == TableType.Hour)
+          DateTime.parse(endStr, DateTimeFormat.forPattern("YYYY-MM-dd"))
+        else
+          DateTime.parse(endStr, DateTimeFormat.forPattern("YYYY-MM-dd HH:mm"))
       val outputType = OutputType.withName(outputTypeStr)
 
       var timeSet = Set[DateTime]()
       for (m <- monitors)
         Auditor.auditHourData(m, Monitor.map(m).autoAudit, start, end)
-      
+
       val pairs =
         for {
           m <- monitors
           records = Record.getInvalidHourRecords(m, start, end)
           mtPreRecords = records.map { rs => (Record.timeProjection(rs).toDateTime, Record.monitorTypeProject2(monitorType)(rs)) }
-          mtRecords = mtPreRecords.filter(r=>r._2._1.isDefined && r._2._2.isDefined && 
-              MonitorStatus.getTagInfo(r._2._2.get).statusType == StatusType.Auto)
+          mtRecords = mtPreRecords.filter(r => r._2._1.isDefined && r._2._2.isDefined &&
+            MonitorStatus.getTagInfo(r._2._2.get).statusType == StatusType.Auto)
           timeMap = Map(mtRecords: _*)
         } yield {
           timeSet ++= timeMap.keySet
@@ -90,8 +99,18 @@ object Query extends Controller {
       val monitors = monitorStrArray.map { Monitor.withName }
       val monitorType = MonitorType.withName(monitorTypeStr)
       val tableType = TableType.withName(recordTypeStr)
-      val start = DateTime.parse(startStr, DateTimeFormat.forPattern("YYYY-MM-dd HH:mm"))
-      val end = DateTime.parse(endStr, DateTimeFormat.forPattern("YYYY-MM-dd HH:mm"))
+      val start =
+        if (tableType == TableType.Hour)
+          DateTime.parse(startStr, DateTimeFormat.forPattern("YYYY-M-dd"))
+        else
+          DateTime.parse(startStr, DateTimeFormat.forPattern("YYYY-MM-dd HH:mm"))
+
+      val end =
+        if (tableType == TableType.Hour)
+          DateTime.parse(endStr, DateTimeFormat.forPattern("YYYY-MM-dd"))
+        else
+          DateTime.parse(endStr, DateTimeFormat.forPattern("YYYY-MM-dd HH:mm"))
+
       val outputType = OutputType.withName(outputTypeStr)
 
       var timeSet = Set[DateTime]()
@@ -113,7 +132,7 @@ object Query extends Controller {
           for {
             m <- monitors
             records = Record.getSecRecords(m, start, end)
-            mtRecords = records.flatMap { rs => Record.secRecordProject(monitorType)(rs)}              
+            mtRecords = records.flatMap { rs => Record.secRecordProject(monitorType)(rs) }
             timeMap = Map(mtRecords: _*)
           } yield {
             timeSet ++= timeMap.keySet
@@ -125,7 +144,7 @@ object Query extends Controller {
 
       val title = "歷史資料查詢"
       val output =
-        if(tableType == TableType.SixSec)
+        if (tableType == TableType.SixSec)
           views.html.historyReport(edit, monitors, monitorType, start, end, timeSet.toList.sorted, recordMap, true)
         else
           views.html.historyReport(edit, monitors, monitorType, start, end, timeSet.toList.sorted, recordMap)
@@ -362,28 +381,49 @@ object Query extends Controller {
 
     chart
   }
-  
-  def historyTrendChart(monitorStr: String, epaMonitorStr:String, monitorTypeStr: String, reportUnitStr: String, msfStr: String, startStr: String, endStr: String) = Security.Authenticated {
+
+  def historyTrendChart(monitorStr: String, epaMonitorStr: String, monitorTypeStr: String, 
+      reportUnitStr: String, msfStr: String, startStr: String, endStr: String, outputTypeStr:String) = Security.Authenticated {
     implicit request =>
       import scala.collection.JavaConverters._
       val monitorStrArray = monitorStr.split(':')
       val monitors = monitorStrArray.map { Monitor.withName }
-      val epaMonitors = if(epaMonitorStr.equalsIgnoreCase("None"))
-          Array.empty[EpaMonitor.Value]
+      val epaMonitors = if (epaMonitorStr.equalsIgnoreCase("None"))
+        Array.empty[EpaMonitor.Value]
       else
-          epaMonitorStr.split(':').map {EpaMonitor.withName}
+        epaMonitorStr.split(':').map { EpaMonitor.withName }
       val monitorTypeStrArray = monitorTypeStr.split(':')
       val monitorTypes = monitorTypeStrArray.map { MonitorType.withName }
       val reportUnit = ReportUnit.withName(reportUnitStr)
       val monitorStatusFilter = MonitorStatusFilter.withName(msfStr)
-      val start = DateTime.parse(startStr, DateTimeFormat.forPattern("YYYY-MM-dd HH:mm"))
-      val end = DateTime.parse(endStr, DateTimeFormat.forPattern("YYYY-MM-dd HH:mm"))
+      val (start, end) = 
+        if(reportUnit == ReportUnit.Min || reportUnit == ReportUnit.TenMin){
+          (DateTime.parse(startStr, DateTimeFormat.forPattern("YYYY-MM-dd HH:mm")), 
+              DateTime.parse(endStr, DateTimeFormat.forPattern("YYYY-MM-dd HH:mm")))
+        }else if(reportUnit == ReportUnit.Month || reportUnit == ReportUnit.Quarter){
+          (DateTime.parse(startStr, DateTimeFormat.forPattern("YYYY-M")), 
+              DateTime.parse(endStr, DateTimeFormat.forPattern("YYYY-M")))
+        }else
+        {
+          (DateTime.parse(startStr, DateTimeFormat.forPattern("YYYY-MM-dd")), 
+              DateTime.parse(endStr, DateTimeFormat.forPattern("YYYY-MM-dd")))          
+        }
+      val outputType = OutputType.withName(outputTypeStr)
+
 
       val chart = trendHelper(monitors, epaMonitors, monitorTypes, reportUnit, monitorStatusFilter, start, end)
-      
-      Results.Ok(Json.toJson(chart))
+
+      if(outputType == OutputType.excel){
+         val excelFile = ExcelUtility.exportChartData(chart, monitorTypes)
+         Ok.sendFile(excelFile, fileName = _ =>
+          play.utils.UriEncoding.encodePathSegment(chart.title("text") + ".xlsx", "UTF-8"),
+          onClose = () => { Files.deleteIfExists(excelFile.toPath()) })
+      }else{
+         Results.Ok(Json.toJson(chart)) 
+      }
   }
 
+  
   def psiTrend = Security.Authenticated {
     implicit request =>
       val userInfo = Security.getUserinfo(request).get
@@ -391,13 +431,14 @@ object Query extends Controller {
       Ok(views.html.psiTrend(group.privilege))
   }
 
-  def psiTrendChart(monitorStr: String, startStr: String, endStr: String, isDailyPsi:Boolean = true) = Security.Authenticated {
+  def psiTrendChart(monitorStr: String, startStr: String, endStr: String, isDailyPsi: Boolean, outputTypeStr:String) = Security.Authenticated {
     implicit request =>
       import scala.collection.JavaConverters._
       val monitorStrArray = monitorStr.split(':')
       val monitors = monitorStrArray.map { Monitor.withName }
       val start = DateTime.parse(startStr)
       val end = DateTime.parse(endStr) + 1.day
+      val outputType = OutputType.withName(outputTypeStr)
 
       import scala.collection.mutable.Map
       def getPsiMap(m: Monitor.Value) = {
@@ -411,7 +452,7 @@ object Query extends Controller {
             val psi = v.psi.getOrElse(0f)
             map += (current -> psi)
             current += 1.day
-          }else{
+          } else {
             val v = getRealtimePSI(current, List(m))
             val psi = v(m)._1.getOrElse(0f)
             map += (current -> psi)
@@ -437,20 +478,28 @@ object Query extends Controller {
         seqData(Monitor.map(m).name, timeData)
       }
 
-      val timeStrSeq = 
-        if(isDailyPsi)
+      val timeStrSeq =
+        if (isDailyPsi)
           timeSeq.map(_.toString("YY/MM/dd"))
         else
           timeSeq.map(_.toString("MM/dd HH:00"))
-          
-      val c = HighchartData(
+
+      val chart = HighchartData(
         scala.collection.immutable.Map("type" -> "column"),
         scala.collection.immutable.Map("text" -> title),
         XAxis(Some(timeStrSeq)),
         Seq(YAxis(None, AxisTitle(Some("")), None)),
         series)
 
-      Results.Ok(Json.toJson(c))
+      
+      if(outputType == OutputType.excel){
+          val excelFile = ExcelUtility.exportChartData(chart, Array(2))
+          Results.Ok.sendFile(excelFile, fileName = _ =>
+          play.utils.UriEncoding.encodePathSegment(chart.title("text") + ".xlsx", "UTF-8"),
+          onClose = () => { Files.deleteIfExists(excelFile.toPath()) })
+      }else{
+          Results.Ok(Json.toJson(chart))  
+      }   
 
   }
 
@@ -493,7 +542,7 @@ object Query extends Controller {
         result ++= overList
       }
 
-      val output = views.html.overLawStdReport(monitorType, start, end-1.day, result)
+      val output = views.html.overLawStdReport(monitorType, start, end - 1.day, result)
       val title = "超過法規報表"
       outputType match {
         case OutputType.html =>
@@ -524,7 +573,7 @@ object Query extends Controller {
         for (m <- group.privilege.allowedMonitors) yield {
           Record.getMonitorEffectiveRate(m, start, end)
         }
-      val output = views.html.effectivePercentageReport(start, end-1.day, reports, group.privilege)
+      val output = views.html.effectivePercentageReport(start, end - 1.day, reports, group.privilege)
       val title = "有效率報表"
       outputType match {
         case OutputType.html =>
@@ -577,20 +626,21 @@ object Query extends Controller {
       Ok(views.html.windRose(group.privilege))
   }
 
-  def windRoseReport(monitorStr: String, monitorTypeStr:String, nWay:Int, startStr: String, endStr: String) = Security.Authenticated {
+  def windRoseReport(monitorStr: String, monitorTypeStr: String, nWay: Int, startStr: String, endStr: String, outputTypeStr:String) = Security.Authenticated {
     val monitor = Monitor.withName(monitorStr)
     val monitorType = MonitorType.withName(monitorTypeStr)
     val start = DateTime.parse(startStr)
     val end = DateTime.parse(endStr) + 1.day
-
-    assert(nWay == 8 || nWay==16 || nWay == 32)
+    val outputType = OutputType.withName(outputTypeStr)
     
+    assert(nWay == 8 || nWay == 16 || nWay == 32)
+
     try {
       val level = List(1f, 2f, 5f, 15f)
       val windMap = Record.getWindRose(monitor, start, end, level, nWay)
       val nRecord = windMap.values.map { _.length }.sum
 
-      val dirMap = 
+      val dirMap =
         Map(
           (0 -> "北"), (1 -> "北北東"), (2 -> "東北"), (3 -> "東北東"), (4 -> "東"),
           (5 -> "東南東"), (6 -> "東南"), (7 -> "南南東"), (8 -> "南"),
@@ -610,10 +660,7 @@ object Query extends Controller {
           } else
             dir
         } yield dirMap.getOrElse(dirKey, "")
-          
- 
-          
-          
+
       var last = 0f
       val speedLevel = level.flatMap { l =>
         if (l == level.head) {
@@ -629,7 +676,6 @@ object Query extends Controller {
           ret
         }
       }
-      
 
       import Realtime._
 
@@ -637,23 +683,30 @@ object Query extends Controller {
         level <- 0 to level.length
       } yield {
         val data =
-          for (dir <- 0 to nWay-1)
+          for (dir <- 0 to nWay - 1)
             yield windMap(dir)(level)
 
         seqData(speedLevel(level), data)
       }
 
       val title = "風瑰圖"
-      val c = HighchartData(
+      val chart = HighchartData(
         scala.collection.immutable.Map("polar" -> "true", "type" -> "column"),
         scala.collection.immutable.Map("text" -> title),
         XAxis(Some(dirStrSeq)),
         Seq(YAxis(None, AxisTitle(Some("")), None)),
         series)
 
-      Results.Ok(Json.toJson(c))
-    }catch{
-      case e:AssertionError=>
+      if(outputType == OutputType.excel){
+          val excelFile = ExcelUtility.exportChartData(chart, Array(MonitorType.C211))
+          Results.Ok.sendFile(excelFile, fileName = _ =>
+          play.utils.UriEncoding.encodePathSegment(chart.title("text") + ".xlsx", "UTF-8"),
+          onClose = () => { Files.deleteIfExists(excelFile.toPath()) })
+      }else{
+          Results.Ok(Json.toJson(chart))  
+      }      
+    } catch {
+      case e: AssertionError =>
         Logger.error(e.toString())
         BadRequest("無資料")
     }
@@ -710,7 +763,7 @@ object Query extends Controller {
       Ok(views.html.calculateStat(group.privilege))
   }
 
-  case class Stat(avg: Float, min: Float, max: Float, sd: Float)
+  case class PeriodStat(avg: Float, min: Float, max: Float, sd: Float, minDate:DateTime, maxDate:DateTime)
   def calculateStatReport(monitorStr: String, monitorTypeStr: String, startStr: String, endStr: String, outputTypeStr: String) = Security.Authenticated {
     implicit request =>
       import scala.collection.JavaConverters._
@@ -728,18 +781,22 @@ object Query extends Controller {
         for {
           m <- monitors
           records = Record.getHourRecords(m, start, end)
-          typeRecords = records.map { r => Record.monitorTypeProject2(monitorType)(r) }
+          typeRecords = records.map { r => (Record.timeProjection(r), Record.monitorTypeProject2(monitorType)(r)) }
           normalRecords = typeRecords.filter {
-            r => (r._1.isDefined && r._2.isDefined && MonitorStatus.isNormalStat(getTagInfo(r._2.get).toString))
-          }.map(_._1.get)
-          len = normalRecords.length
-          avg = normalRecords.sum / len
-          max = if (len > 0) normalRecords.max else Float.NaN
-          min = if (len > 0) normalRecords.min else Float.NaN
-          dev = if (len > 0) normalRecords.map(r => (r - avg) * (r - avg)) else List[Float]()
-          sd = if (len > 0) Math.sqrt(dev.sum / len) else Double.NaN
+            r =>
+                val dt = r._1
+                val rec = r._2
+                rec._1.isDefined && rec._2.isDefined && MonitorStatus.isNormalStat(getTagInfo(rec._2.get).toString)
+          }.map(r => (r._1, r._2._1.get))
+          len = normalRecords.length if(len >0)
+          avg = normalRecords.map(_._2).sum / len
+          sortedRecord = normalRecords.sortBy(_._2)
+          max = sortedRecord.last
+          min = sortedRecord.head
+          dev = sortedRecord.map(r => (r._2 - avg) * (r._2 - avg))
+          sd = Math.sqrt(dev.sum / len)
         } yield {
-          (m -> Stat(avg, max, min, sd.toFloat))
+          (m -> PeriodStat(avg, min._2, max._2, sd.toFloat, min._1, max._1))
         }
 
       val statMap = Map(result: _*)
@@ -822,7 +879,7 @@ object Query extends Controller {
       val result = Calibration.calibrationQueryReport(monitor, start, end)
       val title = "校正報表"
       val output = views.html.calibrationQueryResult(result, title, start, end)
-      
+
       outputType match {
         case OutputType.html =>
           Ok(output)

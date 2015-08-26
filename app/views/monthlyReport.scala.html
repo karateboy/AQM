@@ -1,5 +1,4 @@
 @* monthlyReport Template File *@
-
 @import com.github.nscala_time.time.Imports._
 @import Report._
 @(monitor: String, reportDate:DateTime, report:MonthlyReport, nDays:Int)
@@ -7,6 +6,16 @@
 <h3>監測月報表</h3>
 <h4>監測站:@monitor</h4>
 <h4>日期:@reportDate.toString("yyyy年MM月")</h4>
+<div class="col-lg-offset-10 col-lg-2">
+<table class="table">
+<tbody>
+<tr>
+	<td class="col-lg-1" style="color:black"><strong>標示說明:</strong></td>
+	<td class="col-lg-1" style="color:black;background-color:red">無效數據</td>
+</tr>
+</tbody>
+</table>
+</div>
 
 <table id="reportTable" class="table" cellspacing="0" width="100%">
 	<thead>
@@ -24,7 +33,7 @@
 				@if(t.stat.count==0){
 					<td>-</td>
 				}else{
-				<td>@MonitorType.format(t.monitorType, Some(t.stat.avg))</td>
+					<td>@MonitorType.format(t.monitorType, Some(t.stat.avg))</td>
 				}
 			}
 		</tr>
@@ -34,7 +43,7 @@
 				@if(t.stat.count==0){
 					<td>-</td>
 				}else{
-				<td>@MonitorType.format(t.monitorType, Some(t.stat.max))</td>
+					<td>@MonitorType.format(t.monitorType, Some(t.stat.max))</td>
 				}
 			}
 		</tr>
@@ -44,7 +53,7 @@
 				@if(t.stat.count==0){
 					<td>-</td>
 				}else{
-				<td>@MonitorType.format(t.monitorType, Some(t.stat.min))</td>
+					<td>@MonitorType.format(t.monitorType, Some(t.stat.min))</td>
 				}
 			}
 		</tr>
@@ -60,12 +69,15 @@
 			<tr>
 			<th>@(i+1)</th>
 			@for(t<-report.typeArray){
-				<td>@if(t.dataList(i).count != 0){
-					@MonitorType.format(t.monitorType, Some(t.dataList(i).avg))	
+				@if(t.dataList(i).count != 0){
+					@if(t.dataList(i).effectPercent >= 0.75){
+						<td>@MonitorType.format(t.monitorType, Some(t.dataList(i).avg))</td>
 					}else{
-					-
-					}
-				</td>	
+						<td style="color:black;background-color:red">@MonitorType.format(t.monitorType, Some(t.dataList(i).avg))</td>
+					}					
+				}else{
+					<td>-</td>
+				}						
 			}
 			</tr>
 		}

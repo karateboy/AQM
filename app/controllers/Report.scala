@@ -15,10 +15,10 @@ import Record.windAvg
 import models.ModelHelper._
 
 object PeriodReport extends Enumeration {
-  val DailyReport = Value
-  val MonthlyReport = Value
-  val MonthlyHourReport = Value
-  val YearlyReport = Value
+  val DailyReport = Value("daily")
+  val MonthlyReport = Value("monthly")
+  val YearlyReport = Value("yearly")
+  def map = Map(DailyReport->"日報", MonthlyReport->"月報", YearlyReport->"年報")
 }
 
 object ReportType extends Enumeration {

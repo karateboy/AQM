@@ -74,6 +74,9 @@
         	</div>
         	<div class="panel panel-success" style="display:none" id="reportPanel">
              	<div class="panel-body panel-collapse" id="monitorReport">
+             		<div align="right">            			
+            			<label class="btn btn-outline" data-toggle="tooltip" data-placement="bottom" title="Excel"><a href="#" id="downloadExcel"><i class="fa fa-file-excel-o fa-2x"></i></a></label>            			
+                	</div>
 					<div id="reportDiv" align="center" style="overflow-x:auto">					            		
             		</div>
             	</div>
@@ -155,8 +158,9 @@ $( document ).ready(function() {
 			else
 				monitorParam += ':' + monitors[i].id;
 		}	
-		var chartType = $("input[name='chartType']:checked").attr('id');	
-		var url = "/JSON/PsiTrend/" + monitorParam + "/" + reportStart + "/" + reportEnd + "/" + dailyPsi;
+		var chartType = $("input[name='chartType']:checked").attr('id');
+		var base_url = monitorParam + "/" + reportStart + "/" + reportEnd + "/" + dailyPsi;
+		var url = "/JSON/PsiTrend/" + base_url;
 		
 		$.ajax({
 			url : url,
@@ -182,6 +186,7 @@ $( document ).ready(function() {
 					enabled:false,
 					href:'http://www.wecc.com.tw/'
 				};
+				$("#downloadExcel").prop("href", "/Excel/PsiTrend/" + base_url);
 				$('#reportDiv').highcharts(result);
 				$("#reportPanel").collapse('show');
 				

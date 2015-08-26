@@ -11,6 +11,7 @@ import com.github.nscala_time.time.Imports._
 import java.io._
 import java.nio.file.Files
 import java.nio.file._
+import org.apache.poi.ss.usermodel._
 
 /**
  * @author user
@@ -40,57 +41,88 @@ object ExcelUtility {
     new File(reportFilePath.toAbsolutePath().toString())
   }
 
+  def createStyle(mt: MonitorType.Value)(implicit wb: XSSFWorkbook) = {
+    val prec = MonitorType.map(mt).prec
+    val format_str = "0." + "0" * prec
+    val style = wb.createCellStyle();
+    val format = wb.createDataFormat();
+    style.setDataFormat(format.getFormat(format_str))
+    style
+  }
+
+  def createColorStyle(fgColors: Array[XSSFColor], mt: MonitorType.Value)(implicit wb: XSSFWorkbook) = {
+    fgColors.map {
+      color =>
+        val style = createStyle(mt)
+        style.setFillForegroundColor(color)
+        style.setFillPattern(FillPatternType.SOLID_FOREGROUND)
+        style
+    }
+  }
+
+  def getStyle(tag: String, normalStyle: XSSFCellStyle, abnormalStyles: Array[XSSFCellStyle]) = {
+    import MonitorStatus._
+    val info = MonitorStatus.getTagInfo(tag)
+    info.statusType match {
+      case StatusType.Internal =>
+        {
+          if (isNormalStat(tag))
+            normalStyle
+          else if (isCalbration(tag))
+            abnormalStyles(0)
+          else if (isRepairing(tag))
+            abnormalStyles(1)
+          else if (isMaintance(tag))
+            abnormalStyles(2)
+          else
+            abnormalStyles(3)
+        }
+      case StatusType.Auto =>
+        abnormalStyles(4)
+      case StatusType.Manual =>
+        abnormalStyles(5)
+    }
+  }
+
   def createDailyReport(monitor: Monitor.Value, reportDate: DateTime, data: DailyReport) = {
 
-    val (reportFilePath, pkg, wb) = prepareTemplate("daily_report.xlsx")
-
+    implicit val (reportFilePath, pkg, wb) = prepareTemplate("daily_report.xlsx")
+    val format = wb.createDataFormat();
     val sheet = wb.getSheetAt(0)
     val titleRow = sheet.getRow(2)
     val titleCell = titleRow.getCell(0)
 
-    val calStyle = titleRow.getCell(8).getCellStyle
-    val repairStyle = titleRow.getCell(9).getCellStyle
-    val maintanceStyle = titleRow.getCell(10).getCellStyle
-    val invalidStyle = titleRow.getCell(11).getCellStyle
-    val dataLostStyle = titleRow.getCell(13).getCellStyle
-    val defaultStyle = sheet.getRow(4).getCell(1).getCellStyle
-    
+    val fgColors =
+      {
+        val seqColors =
+          for (col <- 8 to 13)
+            yield titleRow.getCell(col).getCellStyle.getFillForegroundXSSFColor
+        seqColors.toArray
+      }
+
     titleCell.setCellValue("監測站:" + Monitor.map(monitor).name)
     sheet.getRow(1).getCell(16).setCellValue("查詢日期:" + DateTime.now.toString("YYYY/MM/dd"))
     titleRow.getCell(16).setCellValue("資料日期:" + reportDate.toString("YYYY/MM/dd"))
 
     for {
       col <- 1 to data.typeList.length
-      row <- 4 to 27
       mtRecord = data.typeList(col - 1)
+      normalStyle = createStyle(mtRecord.monitorType)
+      abnormalStyles = createColorStyle(fgColors, mtRecord.monitorType)
+      row <- 4 to 27
       cell = sheet.getRow(row).getCell(col)
       cellData = mtRecord.dataList(row - 4)
     } {
       val (date, valueOpt, statusOpt) = cellData
       if (valueOpt.isEmpty || statusOpt.isEmpty) {
-        cell.setCellValue("-")        
-        cell.setCellStyle(dataLostStyle)
+        cell.setCellValue("-")
       } else {
         val value = valueOpt.get
         val status = statusOpt.get
         cell.setCellValue(value)
-        val style =
-          if (MonitorStatus.isCalbration(status)) {
-            calStyle
-          } else if (MonitorStatus.isRepairing(status)) {
-            repairStyle
-          } else if (MonitorStatus.isMaintance(status)) {
-            maintanceStyle
-          } else if (MonitorStatus.isInvalidData(status)) {
-            invalidStyle
-          } else if (MonitorStatus.isDataLost(status)) {
-            dataLostStyle
-          } else if (MonitorStatus.isNormal(status))
-            defaultStyle
-          else
-            invalidStyle
 
-        cell.setCellStyle(style)
+        val cellStyle = getStyle(status, normalStyle, abnormalStyles)
+        cell.setCellStyle(cellStyle)
       }
     }
 
@@ -115,16 +147,16 @@ object ExcelUtility {
   }
 
   def createMonthlyReport(monitor: Monitor.Value, reportDate: DateTime, data: MonthlyReport, nDay: Int) = {
-    val (reportFilePath, pkg, wb) = prepareTemplate("monthly_report.xlsx")
+    implicit val (reportFilePath, pkg, wb) = prepareTemplate("monthly_report.xlsx")
     val evaluator = wb.getCreationHelper().createFormulaEvaluator()
 
-    val calStyle = wb.getSheetAt(2).getRow(2).getCell(17).getCellStyle
-    val repairStyle = wb.getSheetAt(2).getRow(2).getCell(18).getCellStyle
-    val maintanceStyle = wb.getSheetAt(2).getRow(2).getCell(19).getCellStyle
-    val invalidStyle = wb.getSheetAt(2).getRow(2).getCell(20).getCellStyle
-    val dataLostStyle = wb.getSheetAt(2).getRow(2).getCell(21).getCellStyle
-    val defaultStyle = wb.getSheetAt(2).getRow(4).getCell(1).getCellStyle
-
+    val fgColors =
+      {
+        val seqColors =
+          for (col <- 17 to 22)
+            yield wb.getSheetAt(2).getRow(2).getCell(col).getCellStyle.getFillForegroundXSSFColor
+        seqColors.toArray
+      }
 
     def fillEffectSheet(sheet: XSSFSheet) = {
       val titleRow = sheet.getRow(2)
@@ -165,17 +197,32 @@ object ExcelUtility {
       sheet.getRow(1).getCell(16).setCellValue("查詢日期:" + DateTime.now.toString("YYYY/MM/dd"))
       titleRow.getCell(16).setCellValue("資料日期:" + reportDate.toString("YYYY年MM月"))
 
+      val abnormalColor =
+        {
+          val seqColors =
+            for (col <- 13 to 13)
+              yield titleRow.getCell(col).getCellStyle.getFillForegroundXSSFColor
+          seqColors.toArray
+        }
+
       for {
         col <- 1 to data.typeArray.length
-        row <- 5 to (5 + nDay - 1)
         mtRecord = data.typeArray(col - 1)
+        normalStyle = createStyle(mtRecord.monitorType)
+        abnormalStyles = createColorStyle(abnormalColor, mtRecord.monitorType)
+        row <- 5 to (5 + nDay - 1)
         cell = sheet.getRow(row).getCell(col)
         cellData = mtRecord.dataList(row - 5)
       } {
         if (cellData.count == 0)
           cell.setCellValue("-")
-        else
+        else {
           cell.setCellValue(cellData.avg)
+          if (cellData.effectPercent >= 0.75)
+            cell.setCellStyle(normalStyle)
+          else
+            cell.setCellStyle(abnormalStyles(0))
+        }
       }
 
       for {
@@ -203,36 +250,21 @@ object ExcelUtility {
       for {
         sheetIndex <- 2 to 19 - 1
         sheet = wb.getSheetAt(sheetIndex)
-        col <- 1 to 24
+        mt = report.dailyReports(0).typeList(sheetIndex - 2).monitorType
+        normalStyle = createStyle(mt)
+        abnormalStyles = createColorStyle(fgColors, mt)
         row <- 4 to (4 + nDay - 1)
         dayRecord = report.dailyReports(row - 4)
+        col <- 1 to 24
         cell = sheet.getRow(row).getCell(col)
         cellData = dayRecord.typeList(sheetIndex - 2).dataList(col - 1)
       } {
         val (date, valueOpt, statusOpt) = cellData
         if (valueOpt.isEmpty || statusOpt.isEmpty) {
           cell.setCellValue("-")
-          cell.setCellStyle(dataLostStyle)
         } else {
-          val value = valueOpt.get
-          val status = statusOpt.get
-          cell.setCellValue(value)
-          val style =
-            if (MonitorStatus.isCalbration(status)) {
-              calStyle
-            } else if (MonitorStatus.isRepairing(status)) {
-              repairStyle
-            } else if (MonitorStatus.isMaintance(status)) {
-              maintanceStyle
-            } else if (MonitorStatus.isInvalidData(status)) {
-              invalidStyle
-            } else if (MonitorStatus.isDataLost(status)) {
-              dataLostStyle
-            } else if (MonitorStatus.isNormal(status))
-              defaultStyle
-            else
-              invalidStyle
-
+          cell.setCellValue(valueOpt.get)
+          val style = getStyle(statusOpt.get, normalStyle, abnormalStyles)
           cell.setCellStyle(style)
         }
       }
@@ -280,25 +312,25 @@ object ExcelUtility {
           sheet.getRow(37).getCell(col).setCellValue("-")
           sheet.getRow(38).getCell(col).setCellValue("-")
           sheet.getRow(39).getCell(col).setCellValue("-")
-        }        
+        }
       }
 
       for {
         sheetIndex <- 2 to 19 - 1
         sheet = wb.getSheetAt(sheetIndex)
-      }{
+      } {
         evaluator.evaluateFormulaCell(sheet.getRow(35).getCell(25))
         evaluator.evaluateFormulaCell(sheet.getRow(36).getCell(26))
         evaluator.evaluateFormulaCell(sheet.getRow(37).getCell(27))
         evaluator.evaluateFormulaCell(sheet.getRow(38).getCell(28))
         evaluator.evaluateFormulaCell(sheet.getRow(39).getCell(29))
       }
-      
+
       //Re-evaluate
       for {
         sheetIndex <- 2 to 19 - 1
         sheet = wb.getSheetAt(sheetIndex)
-        col <- 1 to (1 + nDay - 1)        
+        col <- 1 to (1 + nDay - 1)
       } {
         evaluator.evaluateFormulaCell(sheet.getRow(45).getCell(col))
         evaluator.evaluateFormulaCell(sheet.getRow(46).getCell(col))
@@ -334,53 +366,71 @@ object ExcelUtility {
         row_start += dayReport.typeList(0).dataList.length
       }
     }
-    
+
     // 有效率月報
     fillEffectSheet(wb.getSheetAt(0))
     fillMonthlySheet(wb.getSheetAt(1))
     val monthlyHourReport = monthlyHourReportHelper(monitor, reportDate)
     fillMonthlyHourSheet(monthlyHourReport)
     fillGraphHourSheet(monthlyHourReport)
-    
+
     finishExcel(reportFilePath, pkg, wb)
   }
 
   def createYearlyReport(monitor: Monitor.Value, reportDate: DateTime, report: IntervalReport) = {
-    val (reportFilePath, pkg, wb) = prepareTemplate("yearly_report.xlsx")
-    val evaluator = wb.getCreationHelper().createFormulaEvaluator()
+    implicit val (reportFilePath, pkg, wb) = prepareTemplate("yearly_report.xlsx")
     val sheet = wb.getSheetAt(0)
     sheet.getRow(2).getCell(0).setCellValue("監測站:" + Monitor.map(monitor).name)
     sheet.getRow(1).getCell(16).setCellValue("查詢日期:" + DateTime.now.toString("YYYY/MM/dd"))
     sheet.getRow(2).getCell(16).setCellValue("資料日期:" + reportDate.toString("YYYY年"))
 
-    for{
-      row <- 4 to 4+12-1
+    val abnormalColor =
+        {
+          val seqColors =
+            for (col <- 10 to 10)
+              yield sheet.getRow(2).getCell(col).getCellStyle.getFillForegroundXSSFColor
+          seqColors.toArray
+        }
+
+    for {
       col <- 1 to 17
-      data = report.typeArray(col-1).dataList(row-4)
-    }{
-      if(data.count != 0)
-        sheet.getRow(row).getCell(col).setCellValue(data.avg)
-      else
-        sheet.getRow(row).getCell(col).setCellValue("-")
-    }
-    
-    for{
-      col <- 1 to 17
-      stat = report.typeArray(col-1).stat
-    }{
-      if(stat.count != 0){
+      mt = report.typeArray(col - 1).monitorType
+        normalStyle = createStyle(mt)
+        abnormalStyles = createColorStyle(abnormalColor, mt)
+    } {
+      for {
+        row <- 4 to 4 + 12 - 1
+        data = report.typeArray(col - 1).dataList(row - 4)
+      } {
+        val cell = sheet.getRow(row).getCell(col) 
+        if (data.count != 0){
+          cell.setCellValue(data.avg)
+          if(data.effectPercent >= 0.75)
+            cell.setCellStyle(normalStyle)
+          else
+            cell.setCellStyle(abnormalStyles(0))
+        }          
+        else
+          sheet.getRow(row).getCell(col).setCellValue("-")
+      }
+      val stat = report.typeArray(col - 1).stat
+      if (stat.count != 0) {
         sheet.getRow(16).getCell(col).setCellValue(stat.avg)
+        sheet.getRow(16).getCell(col).setCellStyle(normalStyle)
         sheet.getRow(17).getCell(col).setCellValue(stat.max)
+        sheet.getRow(17).getCell(col).setCellStyle(normalStyle)
         sheet.getRow(18).getCell(col).setCellValue(stat.min)
-        sheet.getRow(19).getCell(col).setCellValue(stat.effectPercent*100)
-      }else{
+        sheet.getRow(18).getCell(col).setCellStyle(normalStyle)
+        sheet.getRow(19).getCell(col).setCellValue(stat.effectPercent * 100)
+        sheet.getRow(19).getCell(col).setCellStyle(normalStyle)
+      } else {
         sheet.getRow(16).getCell(col).setCellValue("-")
         sheet.getRow(17).getCell(col).setCellValue("-")
         sheet.getRow(18).getCell(col).setCellValue("-")
-        sheet.getRow(19).getCell(col).setCellValue(0)        
+        sheet.getRow(19).getCell(col).setCellValue(0)
       }
     }
-    
+
     finishExcel(reportFilePath, pkg, wb)
   }
 
@@ -393,22 +443,22 @@ object ExcelUtility {
     sheet.getRow(1).getCell(16).setCellValue("查詢日期:" + DateTime.now.toString("YYYY/MM/dd"))
     sheet.getRow(2).getCell(16).setCellValue("資料日期:" + reportDate.toString("YYYY年"))
 
-    for{
-      row <- 4 to 4+12-1
+    for {
+      row <- 4 to 4 + 12 - 1
       mt <- MonitorType.monitorReportList.zipWithIndex
-      data = rateList(row-4)
+      data = rateList(row - 4)
       cell = sheet.getRow(row).getCell(mt._2 + 1)
-    }{
-      cell.setCellValue(data.rateMap(mt._1)*100)
+    } {
+      cell.setCellValue(data.rateMap(mt._1) * 100)
     }
-    
-    for{
+
+    for {
       mt <- MonitorType.monitorReportList.zipWithIndex
       stat = statMap(mt._1)
-    }{
-      sheet.getRow(16).getCell(mt._2 + 1).setCellValue(stat.min*100)
-      sheet.getRow(17).getCell(mt._2 + 1).setCellValue(stat.max*100)
-      sheet.getRow(18).getCell(mt._2 + 1).setCellValue(stat.avg*100)
+    } {
+      sheet.getRow(16).getCell(mt._2 + 1).setCellValue(stat.min * 100)
+      sheet.getRow(17).getCell(mt._2 + 1).setCellValue(stat.max * 100)
+      sheet.getRow(18).getCell(mt._2 + 1).setCellValue(stat.avg * 100)
     }
     finishExcel(reportFilePath, pkg, wb)
   }
@@ -433,20 +483,20 @@ object ExcelUtility {
       row <- 4 to 4 + 12 - 1
       m <- Monitor.mvList.zipWithIndex
       data = rateList(row - 4).rateMap(m._1)
-      cell = sheet.getRow(row).getCell(m._2+1)
+      cell = sheet.getRow(row).getCell(m._2 + 1)
     } {
-      cell.setCellValue(data*100)      
+      cell.setCellValue(data * 100)
     }
 
     for {
       m <- Monitor.mvList.zipWithIndex
       stat = statMap(m._1)
-    }{
-      sheet.getRow(16).getCell(m._2+1).setCellValue(stat.min * 100)
-      sheet.getRow(17).getCell(m._2+1).setCellValue(stat.max * 100)
-      sheet.getRow(18).getCell(m._2+1).setCellValue(stat.avg * 100)
+    } {
+      sheet.getRow(16).getCell(m._2 + 1).setCellValue(stat.min * 100)
+      sheet.getRow(17).getCell(m._2 + 1).setCellValue(stat.max * 100)
+      sheet.getRow(18).getCell(m._2 + 1).setCellValue(stat.avg * 100)
     }
-    
+
     finishExcel(reportFilePath, pkg, wb)
   }
 
@@ -495,23 +545,23 @@ object ExcelUtility {
         mtv <- MonitorType.psiList.zipWithIndex
         psi = data._2(mtv._1)
       } {
-        if(psi._1.isDefined)
-          sheet.getRow(row).getCell(2 + mtv._2*2+1).setCellValue(psi._1.get)
+        if (psi._1.isDefined)
+          sheet.getRow(row).getCell(2 + mtv._2 * 2 + 1).setCellValue(psi._1.get)
         else
-          sheet.getRow(row).getCell(2 + mtv._2*2+1).setCellValue("-")
-          
-        if(psi._2.isDefined)
-          sheet.getRow(row).getCell(2 + mtv._2*2).setCellValue(psi._2.get)
+          sheet.getRow(row).getCell(2 + mtv._2 * 2 + 1).setCellValue("-")
+
+        if (psi._2.isDefined)
+          sheet.getRow(row).getCell(2 + mtv._2 * 2).setCellValue(psi._2.get)
         else
-          sheet.getRow(row).getCell(2 + mtv._2*2).setCellValue("-")
+          sheet.getRow(row).getCell(2 + mtv._2 * 2).setCellValue("-")
       }
     }
 
     finishExcel(reportFilePath, pkg, wb)
   }
-  
+
   import models.Realtime._
-  def psiMonthlyReport(monitor: Monitor.Value, reportDate:DateTime, psiDailyList: List[PsiReport], nDays: Int)={
+  def psiMonthlyReport(monitor: Monitor.Value, reportDate: DateTime, psiDailyList: List[PsiReport], nDays: Int) = {
     val (reportFilePath, pkg, wb) = prepareTemplate("psi_monthly.xlsx")
     val evaluator = wb.getCreationHelper().createFormulaEvaluator()
 
@@ -553,15 +603,15 @@ object ExcelUtility {
         mtv <- MonitorType.psiList.zipWithIndex
         psi = data.sub_map(mtv._1)
       } {
-        if(psi._1.isDefined)
-          sheet.getRow(row).getCell(2 + mtv._2*2+1).setCellValue(psi._1.get)
+        if (psi._1.isDefined)
+          sheet.getRow(row).getCell(2 + mtv._2 * 2 + 1).setCellValue(psi._1.get)
         else
-          sheet.getRow(row).getCell(2 + mtv._2*2+1).setCellValue("-")
-          
-        if(psi._2.isDefined)
-          sheet.getRow(row).getCell(2 + mtv._2*2).setCellValue(psi._2.get)
+          sheet.getRow(row).getCell(2 + mtv._2 * 2 + 1).setCellValue("-")
+
+        if (psi._2.isDefined)
+          sheet.getRow(row).getCell(2 + mtv._2 * 2).setCellValue(psi._2.get)
         else
-          sheet.getRow(row).getCell(2 + mtv._2*2).setCellValue("-")
+          sheet.getRow(row).getCell(2 + mtv._2 * 2).setCellValue("-")
       }
     }
 
@@ -589,15 +639,15 @@ object ExcelUtility {
       row = mt._2 * 2 + 5
     } {
       sheet.getRow(row).getCell(1).setCellValue(Monitor.map(monitor).name)
-      sheet.getRow(row+1).getCell(1).setCellValue(EpaMonitor.map(epaMonitor).name)      
+      sheet.getRow(row + 1).getCell(1).setCellValue(EpaMonitor.map(epaMonitor).name)
       for {
         hr <- hours.zipWithIndex
         col = hr._2 + 2
         cell = sheet.getRow(row).getCell(col)
       } {
-        val vOpt = myMap(mt._1)._1.get(hr._1)        
+        val vOpt = myMap(mt._1)._1.get(hr._1)
         if (vOpt.isDefined) {
-          val p = vOpt.get          
+          val p = vOpt.get
           cell.setCellValue(p._1.get)
           val status = p._2.get
           val style =
@@ -616,53 +666,53 @@ object ExcelUtility {
             else
               invalidStyle
           cell.setCellStyle(style)
-        }else{
+        } else {
           cell.setCellValue("-")
           cell.setCellStyle(dataLostStyle)
-        }        
+        }
       }
-      
-      if(myMap(mt._1)._2.count !=0){
+
+      if (myMap(mt._1)._2.count != 0) {
         val stat = myMap(mt._1)._2
         sheet.getRow(row).getCell(26).setCellValue(stat.min)
         sheet.getRow(row).getCell(27).setCellValue(stat.max)
         sheet.getRow(row).getCell(28).setCellValue(stat.avg)
-      }else{
+      } else {
         sheet.getRow(row).getCell(26).setCellValue("-")
         sheet.getRow(row).getCell(27).setCellValue("-")
         sheet.getRow(row).getCell(28).setCellValue("-")
       }
-      
+
       for {
         hr <- hours.zipWithIndex
         col = hr._2 + 2
-        cell = sheet.getRow(row+1).getCell(col)
+        cell = sheet.getRow(row + 1).getCell(col)
       } {
-         val vOpt = epaMap(mt._1)._1.get(hr._1) 
-         if(vOpt.isEmpty){
-           cell.setCellValue("-")
-         }else{
-           val epaRecord = vOpt.get
-           cell.setCellValue(epaRecord.value)
-         }
-      } 
-      
-      if(epaMap(mt._1)._2.count !=0){
+        val vOpt = epaMap(mt._1)._1.get(hr._1)
+        if (vOpt.isEmpty) {
+          cell.setCellValue("-")
+        } else {
+          val epaRecord = vOpt.get
+          cell.setCellValue(epaRecord.value)
+        }
+      }
+
+      if (epaMap(mt._1)._2.count != 0) {
         val stat = epaMap(mt._1)._2
-        sheet.getRow(row+1).getCell(26).setCellValue(stat.min)
-        sheet.getRow(row+1).getCell(27).setCellValue(stat.max)
-        sheet.getRow(row+1).getCell(28).setCellValue(stat.avg)
-      }else{
-        sheet.getRow(row+1).getCell(26).setCellValue("-")
-        sheet.getRow(row+1).getCell(27).setCellValue("-")
-        sheet.getRow(row+1).getCell(28).setCellValue("-")
-      }      
+        sheet.getRow(row + 1).getCell(26).setCellValue(stat.min)
+        sheet.getRow(row + 1).getCell(27).setCellValue(stat.max)
+        sheet.getRow(row + 1).getCell(28).setCellValue(stat.avg)
+      } else {
+        sheet.getRow(row + 1).getCell(26).setCellValue("-")
+        sheet.getRow(row + 1).getCell(27).setCellValue("-")
+        sheet.getRow(row + 1).getCell(28).setCellValue("-")
+      }
     }
     finishExcel(reportFilePath, pkg, wb)
   }
-  
+
   import Calibration._
-  def calibrationDailyReport(title:String, reportDate:DateTime, report:List[CalibrationItem]) ={
+  def calibrationDailyReport(title: String, reportDate: DateTime, report: List[CalibrationItem]) = {
     val (reportFilePath, pkg, wb) = prepareTemplate("calibration_daily.xlsx")
     val evaluator = wb.getCreationHelper().createFormulaEvaluator()
 
@@ -674,16 +724,16 @@ object ExcelUtility {
     val internalStyle = wb.getSheetAt(0).getRow(2).getCell(8).getCellStyle
     val lawStyle = wb.getSheetAt(0).getRow(2).getCell(8).getCellStyle
 
-    for{
-      row <- 4 to (4+ report.length -1)
-      item = report(row-4)
-    }{
+    for {
+      row <- 4 to (4 + report.length - 1)
+      item = report(row - 4)
+    } {
       sheet.getRow(row).getCell(0).setCellValue(Monitor.map(item.monitor).name)
       sheet.getRow(row).getCell(1).setCellValue(item.startTime.toString("HH:mm"))
       sheet.getRow(row).getCell(2).setCellValue(MonitorType.map(item.monitorType).desp)
-      if(item.z_val > MonitorType.map(item.monitorType).zd_law.get){
+      if (item.z_val > MonitorType.map(item.monitorType).zd_law.get) {
         sheet.getRow(row).getCell(3).setCellStyle(lawStyle)
-      }else if(item.z_val > MonitorType.map(item.monitorType).zd_internal.get){
+      } else if (item.z_val > MonitorType.map(item.monitorType).zd_internal.get) {
         sheet.getRow(row).getCell(3).setCellStyle(internalStyle)
       }
       sheet.getRow(row).getCell(3).setCellValue(item.z_val)
@@ -691,29 +741,29 @@ object ExcelUtility {
       sheet.getRow(row).getCell(5).setCellValue(MonitorType.map(item.monitorType).zd_law.get)
       sheet.getRow(row).getCell(6).setCellValue(item.sd_val)
       sheet.getRow(row).getCell(7).setCellValue(item.s_sval)
-      if(item.sd_pnt > MonitorType.map(item.monitorType).sd_law.get){
+      if (item.sd_pnt > MonitorType.map(item.monitorType).sd_law.get) {
         sheet.getRow(row).getCell(8).setCellStyle(lawStyle)
-      }else if(item.sd_pnt > MonitorType.map(item.monitorType).sd_internal.get){
+      } else if (item.sd_pnt > MonitorType.map(item.monitorType).sd_internal.get) {
         sheet.getRow(row).getCell(8).setCellStyle(lawStyle)
       }
       sheet.getRow(row).getCell(8).setCellValue(item.sd_pnt)
       sheet.getRow(row).getCell(9).setCellValue(MonitorType.map(item.monitorType).sd_internal.get)
       sheet.getRow(row).getCell(10).setCellValue(MonitorType.map(item.monitorType).sd_law.get)
-      if(item.z_val > MonitorType.map(item.monitorType).zd_law.get || item.sd_pnt > MonitorType.map(item.monitorType).sd_law.get){
-          sheet.getRow(row).getCell(11).setCellStyle(lawStyle)
-          sheet.getRow(row).getCell(11).setCellValue("失敗")
-        }else {
-          if(item.z_val > MonitorType.map(item.monitorType).zd_internal.get || item.sd_pnt > MonitorType.map(item.monitorType).sd_internal.get){
-            sheet.getRow(row).getCell(11).setCellStyle(internalStyle)
-          }
-          sheet.getRow(row).getCell(11).setCellValue("成功")
+      if (item.z_val > MonitorType.map(item.monitorType).zd_law.get || item.sd_pnt > MonitorType.map(item.monitorType).sd_law.get) {
+        sheet.getRow(row).getCell(11).setCellStyle(lawStyle)
+        sheet.getRow(row).getCell(11).setCellValue("失敗")
+      } else {
+        if (item.z_val > MonitorType.map(item.monitorType).zd_internal.get || item.sd_pnt > MonitorType.map(item.monitorType).sd_internal.get) {
+          sheet.getRow(row).getCell(11).setCellStyle(internalStyle)
         }
+        sheet.getRow(row).getCell(11).setCellValue("成功")
+      }
     }
     finishExcel(reportFilePath, pkg, wb)
   }
-  
+
   import com.github.nscala_time.time.Imports._
-  def calibrationMonthlyReport(title:String, reportDate:DateTime, map:Map[String, Calibration.CalibrationItem], nDays:Int) ={
+  def calibrationMonthlyReport(title: String, reportDate: DateTime, map: Map[String, Calibration.CalibrationItem], nDays: Int) = {
     val (reportFilePath, pkg, wb) = prepareTemplate("calibration_monthly.xlsx")
     val evaluator = wb.getCreationHelper().createFormulaEvaluator()
 
@@ -765,5 +815,52 @@ object ExcelUtility {
     }
     finishExcel(reportFilePath, pkg, wb)
   }
-  
+
+  import controllers.Realtime.HighchartData
+  def exportChartData(chart: HighchartData, monitorTypes: Array[MonitorType.Value]): File = {
+    val precArray = monitorTypes.map { mt => MonitorType.map(mt).prec }
+    exportChartData(chart, precArray)
+  }
+
+  def exportChartData(chart: HighchartData, precArray: Array[Int]) = {
+    val (reportFilePath, pkg, wb) = prepareTemplate("chart_export.xlsx")
+    val evaluator = wb.getCreationHelper().createFormulaEvaluator()
+    val format = wb.createDataFormat();
+
+    val sheet = wb.getSheetAt(0)
+    val headerRow = sheet.createRow(0)
+    headerRow.createCell(0).setCellValue("時間")
+
+    for {
+      col <- 1 to chart.series.length
+      series = chart.series(col - 1)
+    } {
+      headerRow.createCell(col).setCellValue(series.name)
+    }
+
+    val styles = precArray.map { prec =>
+      val format_str = "0." + "0" * prec
+      val style = wb.createCellStyle();
+      style.setDataFormat(format.getFormat(format_str))
+      style
+    }
+
+    val timeList = chart.xAxis.categories.get
+    for (row <- timeList.zipWithIndex) {
+      val rowNo = row._2 + 1
+      val thisRow = sheet.createRow(rowNo)
+      thisRow.createCell(0).setCellValue(row._1)
+
+      for {
+        col <- 1 to chart.series.length
+        series = chart.series(col - 1)
+      } {
+        val cell = thisRow.createCell(col)
+        cell.setCellStyle(styles(col - 1))
+        cell.setCellValue(series.data(rowNo - 1))
+
+      }
+    }
+    finishExcel(reportFilePath, pkg, wb)
+  }
 }

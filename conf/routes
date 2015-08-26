@@ -52,9 +52,12 @@ GET		/HistoryQueryReport/:edit/:monitor/:monitorType/:recordType/:start/:end	con
 GET		/PDF/HistoryQueryReport/:edit/:monitor/:monitorType/:recordType/:start/:end	controllers.Query.historyReport(edit:Boolean, monitor, monitorType, recordType, start, end, outputType="pdf")
 
 GET		/HistoryTrend			controllers.Query.historyTrend
-GET		/JSON/HistoryTrend/:monitor/:epaMonitor/:monitorType/:reportUnit/:msf/:start/:end	controllers.Query.historyTrendChart(monitor, epaMonitor, monitorType, reportUnit, msf, start, end)
+GET		/JSON/HistoryTrend/:monitor/:epaMonitor/:monitorType/:reportUnit/:msf/:start/:end	controllers.Query.historyTrendChart(monitor, epaMonitor, monitorType, reportUnit, msf, start, end, outputTypeStr="html")
+GET		/Excel/HistoryTrend/:monitor/:epaMonitor/:monitorType/:reportUnit/:msf/:start/:end	controllers.Query.historyTrendChart(monitor, epaMonitor, monitorType, reportUnit, msf, start, end, outputTypeStr="excel")
+
 GET		/PsiTrend				controllers.Query.psiTrend
-GET		/JSON/PsiTrend/:monitor/:start/:end/:dailyPsi		controllers.Query.psiTrendChart(monitor, start, end, dailyPsi:Boolean)
+GET		/JSON/PsiTrend/:monitor/:start/:end/:dailyPsi		controllers.Query.psiTrendChart(monitor, start, end, dailyPsi:Boolean, outputType="html")
+GET		/Excel/PsiTrend/:monitor/:start/:end/:dailyPsi		controllers.Query.psiTrendChart(monitor, start, end, dailyPsi:Boolean, outputType="excel")
 
 GET		/OverLawStd				controllers.Query.overLawStd
 GET		/OverLawStdReport/:monitor/:monitorType/:start/:end	controllers.Query.overLawStdReport(monitor, monitorType, start, end, outputTypeStr="html")
@@ -69,7 +72,9 @@ GET		/AlarmReport/:monitor/:status/:start/:end	controllers.Query.alarmReport(mon
 GET		/PDF/AlarmReport/:monitor/:status/:start/:end	controllers.Query.alarmReport(monitor, status, start, end, outputTypeStr="pdf")
 
 GET		/WindRose				controllers.Query.windRose
-GET		/WindRoseReport/:monitor/:monitorType/:nWays/:start/:end	controllers.Query.windRoseReport(monitor, monitorType, nWays:Int, start, end)
+GET		/WindRoseReport/:monitor/:monitorType/:nWays/:start/:end	controllers.Query.windRoseReport(monitor, monitorType, nWays:Int, start, end, outputType="html")
+GET		/Excel/WindRoseReport/:monitor/:monitorType/:nWays/:start/:end	controllers.Query.windRoseReport(monitor, monitorType, nWays:Int, start, end, outputType="excel")
+
 GET		/CompareLastYear		controllers.Query.compareLastYear
 GET		/JSON/CompareLastYearChart/:monitor/:monitorType/:start/:end	controllers.Query.compareLastYearChart(monitor, monitorType, start, end)
 GET		/CalculateStat			controllers.Query.calculateStat

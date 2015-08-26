@@ -1,7 +1,7 @@
 @* historyReport Template File *@
 @import com.github.nscala_time.time.Imports._
 @import Query._
-@(monitorType:MonitorType.Value, start:DateTime, end:DateTime, map:Map[Monitor.Value, Query.Stat])
+@(monitorType:MonitorType.Value, start:DateTime, end:DateTime, map:Map[Monitor.Value, Query.PeriodStat])
 
 <H3>測項:@MonitorType.map(monitorType).desp (@MonitorType.map(monitorType).unit)</H3>
 <H5>開始:@start.toString("YYYY-MM-dd") 結束(不含):@end.toString("YYYY-MM-dd")</H5>
@@ -26,10 +26,10 @@
 				<td>-</td>
 				<td>-</td>
 			}else{
-				<td>@("%.2f".format(r._2.avg))</td>
-				<td>@("%.2f".format(r._2.min))</td>
-				<td>@("%.2f".format(r._2.max))</td>
-				<td>@("%.2f".format(r._2.sd))</td>
+				<td>@MonitorType.format(monitorType, Some(r._2.avg))</td>
+				<td>@MonitorType.format(monitorType, Some(r._2.min)) (@r._2.minDate.toString("YYYY-MM-d HH:mm"))</td>
+				<td>@MonitorType.format(monitorType, Some(r._2.max)) (@r._2.maxDate.toString("YYYY-MM-d HH:mm"))</td>
+				<td>@MonitorType.format(monitorType, Some(r._2.sd))</td>
 			}
 		</tr>
 	}

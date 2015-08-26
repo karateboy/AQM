@@ -78,7 +78,7 @@
         	<div class="panel panel-success" style="display:none" id="reportPanel">
             	<div class="panel-body panel-collapse" id="monitorReport">
             		<div align="right">
-            			<label class="btn btn-outline" data-toggle="tooltip" data-placement="bottom" title="PDF"><a href="#" id="downloadPDF"><i class="fa fa-file-pdf-o fa-2x"></i></a></label>            			            			
+            			<label class="btn btn-outline" data-toggle="tooltip" data-placement="bottom" title="PDF"><a href="#" id="downloadPDF"><i class="fa fa-file-pdf-o fa-2x pdf"></i></a></label>            			            			
                 	</div>
  
 					<div id="reportDiv" align="center" style="overflow-x:auto">
@@ -102,24 +102,20 @@ $( document ).ready(function() {
 	});
 
 	$('#reportStart').datetimepicker({
-		format: 'YYYY-MM-D HH:mm',
+		format: 'YYYY-MM-D',
 		defaultDate: moment().subtract(1, 'days'),
     	locale: "zh-TW"
 	});
 	$('#reportEnd').datetimepicker({
-		format: 'YYYY-MM-D HH:mm',
+		format: 'YYYY-MM-D',
 		defaultDate: moment().subtract(12, 'hours'),
     	locale: "zh-TW"
 	});
     $("#reportStart").on("dp.change", function (e) {
         $('#reportEnd').data("DateTimePicker").minDate(e.date);
-        $('#reportEnd').data("DateTimePicker").date(e.date.add(12, 'hours'));
+        //$('#reportEnd').data("DateTimePicker").date(e.date.add(12, 'hours'));
     });
     
-    $("#reportEnd").on("dp.change", function (e) {
-        $('#reportStart').data("DateTimePicker").maxDate(e.date);
-    });
-
 	$('#SixSec').parent().click(function() {
 		var $monitorTypes = $("input[name='monitorType']");
 		for(var i=0;i<$monitorTypes.length;i++){
@@ -136,7 +132,9 @@ $( document ).ready(function() {
 			var $mt = $("#C211");
 			$mt.prop('checked', true);
 			$mt.parent().addClass("active");
-		}		
+		}
+
+		enableHour(true);		
 	});
 
 	function enableMT(){
@@ -147,12 +145,25 @@ $( document ).ready(function() {
 			$mt.parent().removeClass("disabled");  
 		}
 	}
+
+	function enableHour(enabled){
+		if(enabled){
+			$('#reportStart').data("DateTimePicker").format("YYYY-M-D HH:mm");
+			$('#reportEnd').data("DateTimePicker").format("YYYY-M-D HH:mm");
+		}else{
+			$('#reportStart').data("DateTimePicker").format("YYYY-M-D");
+			$('#reportEnd').data("DateTimePicker").format("YYYY-M-D");			
+		}
+	}
 	
 	$('#Min').parent().click(function(){
 		enableMT();
+		enableHour(true);
 	});
+	
 	$('#Hour').parent().click(function(){
 		enableMT();
+		enableHour(false);
 	});
 	
 	var monitors, monitorType, tableType, reportStart, reportEnd;
@@ -164,7 +175,6 @@ $( document ).ready(function() {
 			alert("請選擇測站");
 			return false;
 		}
-
 
 		monitorType = $("input[name='monitorType']:checked").attr('id');
 		if(!monitorType) {
@@ -219,11 +229,7 @@ $( document ).ready(function() {
 				monitorParam += ':' + monitors[i].id;
 		}
 
-		console.log("tableType=" + tableType);
-		
 		var url = url_head + monitorParam + "/" + monitorType + "/" + tableType + "/" +reportStart + "/" + reportEnd;
-
-		console.log(url);
 		
 		$.ajax({
 			url: url,

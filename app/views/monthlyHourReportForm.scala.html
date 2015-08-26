@@ -75,10 +75,10 @@
 </div>
 <script>
 $( document ).ready(function() {
-	$('#reportDate').datepicker({
-		format: 'yyyy-mm-dd',
-	    todayBtn: "linked",
-	    language: "zh-TW"
+	$('#reportDate').datetimepicker({
+		format: 'YYYY-MM',
+		defaultDate: moment(),
+    	locale: "zh-TW"
 	});
 
 	var monitor, monitorType, reportDate;

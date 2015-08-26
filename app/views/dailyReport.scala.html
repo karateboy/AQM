@@ -1,9 +1,26 @@
 @* dailyReport Template File *@
 @import com.github.nscala_time.time.Imports._
+@import MonitorStatus._
 @(monitor: Monitor.Value, reportDate:DateTime, report:DailyReport)
 <h3>監測日報表</h3>
 <h4>監測站:@Monitor.map(monitor).name</h4>
 <h4>日期:@reportDate.toString("yyyy年MM月dd日")</h4>
+<div class="col-lg-offset-4 col-lg-8">
+<table class="table">
+<tbody>
+<tr>
+	<td class="col-lg-1" style="color:black"><strong>標示說明:</strong></td>
+	<td class="col-lg-1" style="color:@OverLawColor">超過法規值</td>
+	<td class="col-lg-1" style="color:black;background-color:@CalibrationColor">校正</td>
+	<td class="col-lg-1" style="color:black;background-color:@RepairColor">維修</td>
+	<td class="col-lg-1" style="color:black;background-color:@MaintanceColor">定保</td>
+	<td class="col-lg-1" style="color:black;background-color:@AbnormalColor">異常</td>
+	<td class="col-lg-1" style="color:black;background-color:@AutoAuditColor">自動檢核</td>
+	<td class="col-lg-1" style="color:black;background-color:@ManualAuditColor">人工註記</td>
+</tr>
+</tbody>
+</table>
+</div>
 <table id="reportTable" class="table" cellspacing="0" width="100%">
 	<thead>
 		<tr>

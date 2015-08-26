@@ -151,10 +151,22 @@ object MonitorType extends Enumeration{
 
   def updateMonitorType(mt: MonitorType.Value, colname: String, newValue: String) = {
     DB localTx { implicit session =>
+      val updateValue =
+        if (newValue == "-")
+          None
+        else {
+          import java.lang.Float
+          val v = Float.parseFloat(newValue)
+          if (v == 0)
+            None
+          else
+            Some(v)
+        }
+
       val col = SQLSyntax.createUnsafely(s"${colname}")
       sql"""
         Update MonitorType
-        Set ${col}=${newValue}
+        Set ${col}=${updateValue}
         Where ITEM=${mt.toString}  
         """.update.apply
 
@@ -182,7 +194,7 @@ object MonitorType extends Enumeration{
             prec = r.int(15),
             order = r.int(16))
         }.single.apply
-        map = (map + (mt-> newMtOpt.get))
+      map = (map + (mt -> newMtOpt.get))
     }
   }
   
