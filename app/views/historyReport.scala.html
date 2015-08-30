@@ -1,7 +1,7 @@
 @* historyReport Template File *@
 @import com.github.nscala_time.time.Imports._
 @import MonitorStatus._
-@(editable:Boolean, monitors:Seq[Monitor.Value], monitorType:MonitorType.Value, start:DateTime, end:DateTime, timeSeq:Seq[DateTime], recordMap: Map[Monitor.Value, Map[DateTime, (Option[Float], Option[String])]], showSec:Boolean = false)
+@(editable:Boolean, monitors:Seq[Monitor.Value], epaMonitors:Seq[EpaMonitor.Value], monitorType:MonitorType.Value, start:DateTime, end:DateTime, timeSeq:Seq[DateTime], recordMap: Map[Monitor.Value, Map[DateTime, (Option[Float], Option[String])]], epaRecordMap: Map[EpaMonitor.Value, Map[DateTime, Float]], showSec:Boolean = false)
 
 <H3>測項:@MonitorType.map(monitorType).desp (@MonitorType.map(monitorType).unit)</H3>
 <H5>區間:@start.toString("YYYY-MM-dd HH:mm")~@end.toString("YYYY-MM-dd HH:mm")</H5>
@@ -30,7 +30,9 @@
 		@for(m<-monitors){
 			<th>@Monitor.map(m).name</th>	
 		}
-		
+		@for(epa<-epaMonitors){
+			<th>@EpaMonitor.map(epa).name</th>
+		}
 	</tr>
 </thead>
 <tbody>
@@ -52,6 +54,14 @@
 						}
 					</td>
 				}				
+			}
+			
+			@for(epa<-epaMonitors){
+				@if(epaRecordMap.get(epa).isEmpty||epaRecordMap(epa).get(t).isEmpty){
+					<td>-</td>
+				}else{
+					<td>@MonitorType.format(monitorType, Some(epaRecordMap(epa)(t)))</td>
+				}
 			}
 		</tr>
 	}

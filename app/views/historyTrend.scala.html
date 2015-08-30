@@ -32,7 +32,7 @@
 	            				<div class="btn-group" data-toggle="buttons">	            					            				
 	            					@for(m<-EpaMonitor.values.toList.sorted){
 	            						<label class="btn btn-outline btn-primary dim">
-										<input type="radio" name="epaMonitor" id="@m">@EpaMonitor.map(m).name</label>		            						
+										<input type="checkbox" name="epaMonitor" id="@m">@EpaMonitor.map(m).name</label>		            						
 	            					}
 	            				</div>
 	            			</div>	            			            		

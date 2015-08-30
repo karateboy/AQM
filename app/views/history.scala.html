@@ -25,6 +25,17 @@
 	            				</div>
 	            			</div>	            			            		
 	                    </div>
+	                    <div class="form-group" id="epaDiv">
+	            			<label class="col-lg-1 control-label">環保署測站</label>
+	            			<div class="col-lg-11">
+	            				<div class="btn-group" data-toggle="buttons">	            					            				
+	            					@for(m<-EpaMonitor.values.toList.sorted){
+	            						<label class="btn btn-outline btn-primary dim">
+										<input type="checkbox" name="epaMonitor" id="@m">@EpaMonitor.map(m).name</label>		            						
+	            					}
+	            				</div>
+	            			</div>	            			            		
+	                    </div>
 	                    <div class="form-group">
 	            			<label class="col-lg-1 control-label">測項</label>						
 	            			<div class="col-lg-11 btn-group" data-toggle="buttons">
@@ -88,7 +99,8 @@
 	</div>
 </div>
 <script>
-	var url_head = "@requestUrl"; 
+	var url_head = "@requestUrl";
+	console.log(url_head);
 </script>
 <script>
 $( document ).ready(function() {
@@ -101,6 +113,10 @@ $( document ).ready(function() {
 	        });
 	});
 
+	if(url_head != "/HistoryQueryReport/false/"){
+		$("#epaDiv").css('display','none');				
+	}
+	
 	$('#reportStart').datetimepicker({
 		format: 'YYYY-MM-D',
 		defaultDate: moment().subtract(1, 'days'),
@@ -134,18 +150,34 @@ $( document ).ready(function() {
 			$mt.parent().addClass("active");
 		}
 
-		enableHour(true);		
+		enableHour(true);
+		enableEpa(false);		
 	});
 
 	function enableMT(){
 		var $monitorTypes = $("input[name='monitorType']");
 		for(var i=0;i<$monitorTypes.length;i++){
-			var $mt = $monitorTypes.eq(i);
+			var $mt = $monitorTypes.eq(i);			
 			$mt.prop('disabled', false);
 			$mt.parent().removeClass("disabled");  
 		}
 	}
 
+	function enableEpa(enabled){
+		var $epaMonitors = $("input[name='epaMonitor']");
+		for(var i=0;i<$epaMonitors.length;i++){
+			var $mt = $epaMonitors.eq(i);
+			$mt.prop('disabled', !enabled);
+			if(enabled){
+				$mt.parent().removeClass("disabled");
+			}else{
+				$mt.prop('checked', false);
+				$mt.parent().removeClass("active");
+				$mt.parent().addClass("disabled");
+			}
+		}
+	}
+	
 	function enableHour(enabled){
 		if(enabled){
 			$('#reportStart').data("DateTimePicker").format("YYYY-M-D HH:mm");
@@ -159,14 +191,16 @@ $( document ).ready(function() {
 	$('#Min').parent().click(function(){
 		enableMT();
 		enableHour(true);
+		enableEpa(false);
 	});
 	
 	$('#Hour').parent().click(function(){
 		enableMT();
 		enableHour(false);
+		enableEpa(true);
 	});
 	
-	var monitors, monitorType, tableType, reportStart, reportEnd;
+	var monitors, epaMonitors, monitorType, tableType, reportStart, reportEnd;
 
 	function validate(){
 		monitors = $("input[name='monitor']:checked");
@@ -176,6 +210,8 @@ $( document ).ready(function() {
 			return false;
 		}
 
+		epaMonitors = $("input[name='epaMonitor']:checked");
+		
 		monitorType = $("input[name='monitorType']:checked").attr('id');
 		if(!monitorType) {
 			alert('請選擇測項');
@@ -229,7 +265,24 @@ $( document ).ready(function() {
 				monitorParam += ':' + monitors[i].id;
 		}
 
-		var url = url_head + monitorParam + "/" + monitorType + "/" + tableType + "/" +reportStart + "/" + reportEnd;
+		var epaMonitorParam='';
+		if (epaMonitors.length == 0) {
+			epaMonitorParam = 'None'
+		}else{
+			for (var i = 0; i < epaMonitors.length; i++) {
+				if(epaMonitorParam=='')
+					epaMonitorParam = epaMonitors[i].id;
+				else
+					epaMonitorParam += ':' + epaMonitors[i].id;
+			}	
+		}
+		
+		var url;
+		if(url_head != "/HistoryQueryReport/false/"){
+			url= url_head + monitorParam + "/" + monitorType + "/" + tableType + "/" +reportStart + "/" + reportEnd;		  	
+		}else{
+			url= url_head + monitorParam + "/" + epaMonitorParam + "/" + monitorType + "/" + tableType + "/" +reportStart + "/" + reportEnd;
+		}
 		
 		$.ajax({
 			url: url,

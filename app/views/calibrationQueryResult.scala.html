@@ -1,7 +1,7 @@
 @* calibrationQueryResult Template File *@
 @import Calibration._
 @import com.github.nscala_time.time.Imports._
-
+@import MonitorType._
 @(report:Seq[CalibrationItem], title:String="", start:DateTime, end:DateTime)
 <h3>@title - 
 @if(start == end){
@@ -49,12 +49,12 @@
 					<td>@item.endTime.toString("hh:mm")</td>
 				}
 				@if(item.z_val > MonitorType.map(item.monitorType).zd_law.get){
-					<td style="color:red">@item.z_val</td>
+					<td style="color:red">@MonitorType.format(item.monitorType, Some(item.z_val))</td>
 				}else {
 					@if(item.z_val > MonitorType.map(item.monitorType).zd_internal.get){
-						<td style="color:blue">@item.z_val</td>
+						<td style="color:blue">@MonitorType.format(item.monitorType, Some(item.z_val))</td>
 					}else{
-						<td>@item.z_val</td>	
+						<td>@MonitorType.format(item.monitorType, Some(item.z_val))</td>	
 					}
 				}
 				<td>@MonitorType.map(item.monitorType).zd_internal</td>

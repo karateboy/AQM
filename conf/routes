@@ -48,8 +48,8 @@ GET		/PDF/EffectiveAnnualReport/:reportType/:start/:param	controllers.Report.eff
 GET		/Excel/EffectiveAnnualReport/:reportType/:start/:param	controllers.Report.effectiveAnnualReport(reportType, start, param, outputTypeStr="excel")
 
 GET		/HistoryQuery			controllers.Query.history
-GET		/HistoryQueryReport/:edit/:monitor/:monitorType/:recordType/:start/:end	controllers.Query.historyReport(edit:Boolean, monitor, monitorType, recordType, start, end, outputType="html")
-GET		/PDF/HistoryQueryReport/:edit/:monitor/:monitorType/:recordType/:start/:end	controllers.Query.historyReport(edit:Boolean, monitor, monitorType, recordType, start, end, outputType="pdf")
+GET		/HistoryQueryReport/:edit/:monitor/:epaMonitor/:monitorType/:recordType/:start/:end	controllers.Query.historyReport(edit:Boolean, monitor, epaMonitor, monitorType, recordType, start, end, outputType="html")
+GET		/PDF/HistoryQueryReport/:edit/:monitor/:monitorType/:recordType/:start/:end	controllers.Query.historyReport(edit:Boolean, monitor, epaMonitor, monitorType, recordType, start, end, outputType="pdf")
 
 GET		/HistoryTrend			controllers.Query.historyTrend
 GET		/JSON/HistoryTrend/:monitor/:epaMonitor/:monitorType/:reportUnit/:msf/:start/:end	controllers.Query.historyTrendChart(monitor, epaMonitor, monitorType, reportUnit, msf, start, end, outputTypeStr="html")
@@ -100,6 +100,8 @@ POST	/SaveMonitorStatusConfig		controllers.Application.saveMonitorStatusConfig
 GET 	/RecordValidation			controllers.Application.recordValidation
 GET		/HTML/RecordValidation/:start	controllers.Application.recordValidationHtml(start)
 GET		/RealtimeEpaRecord			controllers.Application.realtimeEpaRecord
+POST	/Equipment					controllers.Application.updateEquipment
+DELETE  /Equipment/:id				controllers.Application.deleteEquipment(id)
 
 GET		/epaCompare			controllers.Report.epaCompare
 GET		/epaCompareReport/:monitor/:epaMonitor/:reportDate controllers.Report.epaCompareReport(monitor, epaMonitor, reportDate, outputType="html")

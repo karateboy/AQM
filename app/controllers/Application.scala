@@ -41,13 +41,14 @@ object Application extends Controller {
       Ok(views.html.monitor(m))
   }
 
-  case class MonitorInfo(mt:Seq[MonitorType.Value], imgUrl:String)
+  case class MonitorInfo(mt:Seq[MonitorType.Value], imgUrl:String, equipments:List[Equipment])
+  implicit val equipmentWrite = Json.writes[Equipment]
   implicit val mInfoWrite = Json.writes[MonitorInfo]
   
   def getMonitorInfo(monitorStr: String) = Security.Authenticated {
     implicit request =>
       val m = Monitor.withName(monitorStr)
-      val info = MonitorInfo(Monitor.map(m).monitorTypes, Monitor.map(m).url)
+      val info = MonitorInfo(Monitor.map(m).monitorTypes, Monitor.map(m).url, Equipment.map.getOrElse(m, List.empty))
 
       Ok(Json.toJson(info))
   }
@@ -113,7 +114,41 @@ object Application extends Controller {
           BadRequest(e.toString)
       }
   }
+  
+  def updateEquipment() = Security.Authenticated{
+    implicit request =>
+      try {
+        val mtForm = Form(
+          mapping(
+            "id" -> text,
+            "data" -> text)(EditData.apply)(EditData.unapply))
 
+        val mtData = mtForm.bindFromRequest.get
+        val ids = mtData.id.split(":")
+
+        Logger.debug("len=" + ids.length)
+        Logger.debug(ids(0))
+        Logger.debug(ids(1))
+        Logger.debug(ids(2))
+        
+        Equipment.updateEquipment(ids, mtData.data)        
+
+        Ok(mtData.data)
+      } catch {
+        case e: Exception =>
+          Logger.error(e.toString)
+          BadRequest(e.toString)
+        case e: Throwable =>
+          Logger.error(e.toString)
+          BadRequest(e.toString)
+      }    
+  }
+
+  def deleteEquipment(ids:String) = Security.Authenticated{
+    Logger.debug(ids)
+    Ok(Json.obj("ok" -> true))
+  }
+  
   def monitorStatusConfig = Security.Authenticated {
     implicit request =>
       Ok(views.html.monitorStatusConfig())

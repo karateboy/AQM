@@ -91,12 +91,17 @@ object Query extends Controller {
       }
   }
 
-  def historyReport(edit: Boolean, monitorStr: String, monitorTypeStr: String, recordTypeStr: String, startStr: String, endStr: String, outputTypeStr: String) = Security.Authenticated {
+  def historyReport(edit: Boolean, monitorStr: String, epaMonitorStr:String, monitorTypeStr: String, recordTypeStr: String, startStr: String, endStr: String, outputTypeStr: String) = Security.Authenticated {
     implicit request =>
 
       import scala.collection.JavaConverters._
       val monitorStrArray = monitorStr.split(':')
       val monitors = monitorStrArray.map { Monitor.withName }
+      val epaMonitors = if (epaMonitorStr.equalsIgnoreCase("None"))
+        Array.empty[EpaMonitor.Value]
+      else
+        epaMonitorStr.split(':').map { EpaMonitor.withName }
+
       val monitorType = MonitorType.withName(monitorTypeStr)
       val tableType = TableType.withName(recordTypeStr)
       val start =
@@ -142,12 +147,22 @@ object Query extends Controller {
 
       val recordMap = Map(pairs: _*)
 
+      val epa_pairs =
+        for{epa <- epaMonitors
+          records = Record.getEpaHourRecord(epa, monitorType, start, end)
+          timeRecords = records.map { t => t.time -> t.value }
+          timeMap = Map(timeRecords: _*)
+          }yield{
+            epa -> timeMap
+          }
+      val epaRecordMap = Map(epa_pairs :_*)
+      
       val title = "歷史資料查詢"
       val output =
         if (tableType == TableType.SixSec)
-          views.html.historyReport(edit, monitors, monitorType, start, end, timeSet.toList.sorted, recordMap, true)
+          views.html.historyReport(edit, monitors, epaMonitors, monitorType, start, end, timeSet.toList.sorted, recordMap, epaRecordMap, true)
         else
-          views.html.historyReport(edit, monitors, monitorType, start, end, timeSet.toList.sorted, recordMap)
+          views.html.historyReport(edit, monitors, epaMonitors, monitorType, start, end, timeSet.toList.sorted, recordMap, epaRecordMap)
       outputType match {
         case OutputType.html =>
           Ok(output)

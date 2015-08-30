@@ -47,6 +47,14 @@ object ExcelUtility {
     val style = wb.createCellStyle();
     val format = wb.createDataFormat();
     style.setDataFormat(format.getFormat(format_str))
+    style.setBorderBottom(CellStyle.BORDER_THIN);
+    style.setBottomBorderColor(IndexedColors.BLACK.getIndex());
+    style.setBorderLeft(CellStyle.BORDER_THIN);
+    style.setLeftBorderColor(IndexedColors.BLACK.getIndex());
+    style.setBorderRight(CellStyle.BORDER_THIN);
+    style.setRightBorderColor(IndexedColors.BLACK.getIndex());
+    style.setBorderTop(CellStyle.BORDER_THIN);
+    style.setTopBorderColor(IndexedColors.BLACK.getIndex());
     style
   }
 
@@ -619,7 +627,7 @@ object ExcelUtility {
   }
 
   def epaCompareReport(monitor: Monitor.Value, epaMonitor: EpaMonitor.Value, reportDate: DateTime, myMap: Map[MonitorType.Value, (Map[DateTime, (Option[Float], Option[String])], Stat)], epaMap: Map[MonitorType.Value, (Map[DateTime, EpaHourRecord], Stat)], hours: List[DateTime]) = {
-    val (reportFilePath, pkg, wb) = prepareTemplate("epa_compare.xlsx")
+    implicit val (reportFilePath, pkg, wb) = prepareTemplate("epa_compare.xlsx")
     val evaluator = wb.getCreationHelper().createFormulaEvaluator()
 
     val sheet = wb.getSheetAt(0)
@@ -627,15 +635,19 @@ object ExcelUtility {
     sheet.getRow(1).getCell(24).setCellValue("查詢日期:" + DateTime.now.toString("YYYY/MM/dd"))
     sheet.getRow(2).getCell(24).setCellValue("資料日期:" + reportDate.toString("YYYY年MM月dd"))
 
-    val calStyle = wb.getSheetAt(0).getRow(2).getCell(10).getCellStyle
-    val repairStyle = wb.getSheetAt(0).getRow(2).getCell(12).getCellStyle
-    val maintanceStyle = wb.getSheetAt(0).getRow(2).getCell(14).getCellStyle
-    val invalidStyle = wb.getSheetAt(0).getRow(2).getCell(16).getCellStyle
-    val dataLostStyle = wb.getSheetAt(0).getRow(2).getCell(18).getCellStyle
-    val defaultStyle = wb.getSheetAt(0).getRow(5).getCell(2).getCellStyle
+    val abnormalColor =
+        {
+          val seqColors =
+            for (col <- 9 to 14)
+              yield wb.getSheetAt(0).getRow(2).getCell(col).getCellStyle.getFillForegroundXSSFColor            
+              
+          seqColors.toArray
+        }
 
     for {
       mt <- MonitorType.epaReportList.zipWithIndex
+      normalStyle = createStyle(mt._1)
+      abnormalStyles = createColorStyle(abnormalColor, mt._1)
       row = mt._2 * 2 + 5
     } {
       sheet.getRow(row).getCell(1).setCellValue(Monitor.map(monitor).name)
@@ -650,25 +662,10 @@ object ExcelUtility {
           val p = vOpt.get
           cell.setCellValue(p._1.get)
           val status = p._2.get
-          val style =
-            if (MonitorStatus.isCalbration(status)) {
-              calStyle
-            } else if (MonitorStatus.isRepairing(status)) {
-              repairStyle
-            } else if (MonitorStatus.isMaintance(status)) {
-              maintanceStyle
-            } else if (MonitorStatus.isInvalidData(status)) {
-              invalidStyle
-            } else if (MonitorStatus.isDataLost(status)) {
-              dataLostStyle
-            } else if (MonitorStatus.isNormal(status))
-              defaultStyle
-            else
-              invalidStyle
-          cell.setCellStyle(style)
+          val cellStyle = getStyle(status, normalStyle, abnormalStyles)
+          cell.setCellStyle(cellStyle)
         } else {
           cell.setCellValue("-")
-          cell.setCellStyle(dataLostStyle)
         }
       }
 
@@ -694,6 +691,7 @@ object ExcelUtility {
         } else {
           val epaRecord = vOpt.get
           cell.setCellValue(epaRecord.value)
+          cell.setCellStyle(normalStyle)
         }
       }
 
@@ -721,12 +719,13 @@ object ExcelUtility {
     sheet.getRow(1).getCell(11).setCellValue("查詢日期:" + DateTime.now.toString("YYYY/MM/dd"))
     sheet.getRow(2).getCell(11).setCellValue("資料日期:" + reportDate.toString("YYYY/MM/dd"))
 
-    val internalStyle = wb.getSheetAt(0).getRow(2).getCell(8).getCellStyle
-    val lawStyle = wb.getSheetAt(0).getRow(2).getCell(8).getCellStyle
+    val internalStyle = wb.getSheetAt(0).getRow(2).getCell(9).getCellStyle
+    val lawStyle = wb.getSheetAt(0).getRow(2).getCell(10).getCellStyle
 
     for {
       row <- 4 to (4 + report.length - 1)
       item = report(row - 4)
+      mt = item.monitorType
     } {
       sheet.getRow(row).getCell(0).setCellValue(Monitor.map(item.monitor).name)
       sheet.getRow(row).getCell(1).setCellValue(item.startTime.toString("HH:mm"))

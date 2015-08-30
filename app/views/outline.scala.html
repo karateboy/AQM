@@ -55,6 +55,7 @@
 	<script src='@routes.Assets.at("js/highcharts/highcharts.js")'></script>
 	<script src='@routes.Assets.at("js/highcharts/highcharts-more.js")'></script>
 	<script src='@routes.Assets.at("js/highcharts/modules/exporting.js")'></script>
+	<script src='@routes.Assets.at("js/plugins/jeditable/jquery.jeditable.js")'></script>
 	
 	<!-- Custom and plugin javascript -->
 	<script src='@routes.Assets.at("js/inspinia.js")'></script>
@@ -177,6 +178,13 @@
                     <li><a href="#" onClick="loadPage('/RecordValidation','系統管理','資料傳輸狀況')">資料傳輸狀況</a></li>
                     <li><a href="#" onClick="loadPage('/RealtimeEpaRecord','系統管理','環保署及時資料')">環保署及時資料</a></li>
                  </ul>
+            </li>
+            <li>
+            	<a href="#"><i class="fa fa-tasks"></i> <span class="nav-label">維護保養</span></a>
+            	<ul class="nav nav-second-level">
+            		<li><a href="#" onClick="loadPage('/NewMaintance','維護保養','新增報修案件')">新增報修案件</a></li>
+            		<li><a href="#" onClick="loadPage('/NewMaintance','維護保養','修改報修案件')">修改報修案件</a></li>
+            	</ul>
             </li>
             }
         </ul>
