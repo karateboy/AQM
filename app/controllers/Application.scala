@@ -114,7 +114,30 @@ object Application extends Controller {
           BadRequest(e.toString)
       }
   }
-  
+
+  def newEquipment = Security.Authenticated(BodyParsers.parse.json) {
+    implicit request =>
+      val newEquipmentResult = request.body.validate[Equipment]
+
+      newEquipmentResult.fold(
+        error => {
+          Logger.error(JsError.toFlatJson(error).toString())
+          BadRequest(Json.obj("ok" -> false, "msg" -> JsError.toFlatJson(error)))
+        },
+        param => {
+          Logger.debug(param.toString())
+          try {
+            Equipment.create(param)
+          } catch {
+            case e: Exception =>
+              Logger.error(e.toString())
+              BadRequest(Json.obj("ok" -> false, "msg" -> e.toString()))
+          }
+
+          Ok(Json.obj("ok" -> true))
+        })
+  }
+
   def updateEquipment() = Security.Authenticated{
     implicit request =>
       try {
@@ -125,13 +148,8 @@ object Application extends Controller {
 
         val mtData = mtForm.bindFromRequest.get
         val ids = mtData.id.split(":")
-
-        Logger.debug("len=" + ids.length)
-        Logger.debug(ids(0))
-        Logger.debug(ids(1))
-        Logger.debug(ids(2))
-        
-        Equipment.updateEquipment(ids, mtData.data)        
+       
+        Equipment.update(ids, mtData.data)        
 
         Ok(mtData.data)
       } catch {
@@ -144,8 +162,9 @@ object Application extends Controller {
       }    
   }
 
-  def deleteEquipment(ids:String) = Security.Authenticated{
-    Logger.debug(ids)
+  def deleteEquipment(idStr:String) = Security.Authenticated{
+    val ids = idStr.split(":")
+    Equipment.delete(Monitor.withName(ids(0)), ids(1))
     Ok(Json.obj("ok" -> true))
   }
   

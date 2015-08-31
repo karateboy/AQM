@@ -1,0 +1,246 @@
+@* monitorTypeConfig Template File *@
+@(parts:List[Part])
+<div class="row">
+    <div class="col-lg-12">
+        <div class="panel panel-primary">
+        <div class="panel-heading panel-title"" >
+        	<a data-toggle="collapse" data-parent="#accordion" href="#monitorType">點擊料件加以編輯</a>	
+        </div>
+        <div class="panel-body panel-collapse">
+        	<div class="col-lg-1 col-lg-offset-1">
+				<button type="button" class="btn btn-primary" data-toggle="modal" data-target="#newPartModal">新增料件</button>							
+			</div>
+			<div class="col-lg-1">							
+				<button type="button" class="btn btn-primary" id="deletePart">刪除料件</button>
+			</div>
+  			<div class="modal fade" id="newPartModal" role="dialog">
+    			<div class="modal-dialog">
+      			<div class="modal-content">
+        		<div class="modal-header">
+          			<button type="button" class="close" data-dismiss="modal">&times;</button>
+          			<h4 class="modal-title">新增料件</h4>
+        		</div>        						
+        		<div class="modal-body">
+          			<form class="form-horizontal">
+          				<div class="form-group">
+							<label class="col-lg-3 control-label">料號</label>
+							<div class="col-lg-3">
+								<input type="text" id="partID" class="form-control" required>
+							</div>																												
+						</div>
+						<div class="form-group">
+							<label class="col-lg-3 control-label">名稱</label>
+							<div class="col-lg-3">
+								<input type="text" id="partName" class="form-control" required>
+							</div>																		
+						</div>
+						<div class="form-group">
+							<label class="col-lg-3 control-label">設備</label>
+							<div class="col-lg-3">
+								<input type="text" id="partEquipment" class="form-control" required>
+							</div>																		
+						</div>
+						
+						<div class="form-group">
+							<label class="col-lg-3 control-label">廠牌</label>
+							<div class="col-lg-3">
+								<input type="text" id="partBrand" class="form-control" required>
+							</div>																						
+						</div>
+						<div class="form-group">
+							<label class="col-lg-3 control-label">型號</label>
+							<div class="col-lg-3">
+								<input type="text" id="partModel" class="form-control" required>
+							</div>																													
+						</div>
+					</form>
+        		</div>
+        		<div class="modal-footer">
+        			<button id="newPart" class="btn btn-primary" data-dismiss="modal">新增</button>
+					<button id="cancelPart" class="btn btn-primary" data-dismiss="modal">取消</button>        							          							
+        		</div>        						
+      		</div>
+    		</div>
+  		</div>							
+        	    		
+			<div align="center">
+            	<table id="partTable" class="table" cellspacing="0" width="100%">
+            		<thead>
+            			<tr>
+            				<th>料號</th>
+            				<th>名稱</th>
+            				<th>設備</th>
+            				<th>廠牌</th>
+            				<th>型號</th>
+            			</tr>
+            		</thead>
+            		<tbody>
+            			@for(p<-parts){
+            				<tr id="@p.id">
+            					<th>@p.id</th>
+            					<td col="name">@p.name</td>
+            					<td col="equipment">@p.equipment</td>
+            					<td col="brand">@p.brand</td>
+            					<td col="model">@p.model</td>
+            				</tr>
+            			}
+            		</tbody>
+            	</table>          		
+            </div>
+       </div>
+       </div>
+	</div>
+</div>
+<script>
+var dataTableL10N = '@routes.Assets.at("localization/zh_tw.json")';
+</script>
+<script>
+$(document).ready(function() {
+        /* Init DataTables */
+        
+        var oTable = $('#partTable').dataTable({
+        	language: {
+				url: dataTableL10N							
+			}
+        });
+
+    	$('#partTable tbody').on('click', 'tr',
+    			function() {
+            		if ( $(this).hasClass('selected') ) {
+                		$(this).removeClass('selected');
+            		}
+            		else {
+            			oTable.$('tr.selected').removeClass('selected');
+                		$(this).addClass('selected');
+            		}
+    			});
+    		
+        /* Apply the jEditable handlers to the table */
+        oTable.$('td').editable( '/Part', {
+        	indicator : '儲存中...',
+            tooltip   : '點擊項目加以編輯...',
+            cancel    : '取消',
+            submit    : '確認',            
+            name : 'data', 
+            callback: function( sValue, y ) {
+                console.log("callback");
+                console.log(sValue);
+                console.log(y);
+            },           
+            submitdata: function ( value, settings ) {
+                var $me = $(this);
+                return {                    
+                    id: $me.parent().attr("id") + ":" + $me.attr("col")
+                };
+            },
+
+            "width": "90%",
+            "height": "100%"
+        } );
+
+        var partModalCanHide = true;
+    	$("#newPartModal").on('hide.bs.modal',function(e){		   
+ 		   if(!partModalCanHide){			   
+ 		      e.preventDefault();
+ 		   }
+ 		});
+         
+    	function equipChecker(obj, selector){
+    		if(obj.length == 0){
+    			$(selector).parent().parent().addClass("has-error");
+    			return false;
+    		}else{
+    			$(selector).parent().parent().removeClass("has-error");
+    			return true;
+    		}		
+    	}
+    	
+    	$("#newPart").click(function(event) {
+    		partModalCanHide = false;
+    		var id, name, brand, model, equipment;
+    		id = $("#partID").val();
+    		if(!equipChecker(id, "#partID"))
+    			return;
+    		
+    		name = $("#partName").val();
+    		if(!equipChecker(name, "#partName"))
+    			return;
+
+    		equipment = $("#partEquipment").val();
+    		if(!equipChecker(equipment, "#partEquipment"))
+    			return;
+    		
+    		brand = $("#partBrand").val();
+    		if(!equipChecker(brand, "#partBrand"))
+    			return;
+    		
+    		model = $("#partModel").val();
+    		if(!equipChecker(model, "#partModel"))
+    			return;
+    		
+
+    		var part={
+    			id:id,
+    			name:name,
+    			brand:brand,
+    			model:model,
+    			equipment:equipment
+    		};
+        		
+    		$.ajax({
+    			url : "/Part",
+    			data : JSON.stringify(part),
+    			contentType : "application/json; charset=utf-8",
+    			method : "PUT",
+    			dataType : "json",
+    			success : function(result) {
+    				alert("成功");
+    	    		var api = oTable.api();
+        			api.row.add([ id, name, equipment, brand, model]);    				
+    			},
+    			error : function(xhr,status,errorThrown) {
+    				alert("失敗:"+ errorThrown);
+    			},
+
+    			complete : function(xhr, status) {
+    				partModalCanHide = true;
+    			}
+    		});		
+    	});
+    	
+    	$("#cancelPart").click(function(event) {
+    		partModalCanHide = true; 
+    	});
+
+    	$("#deletePart").click(function(event) {
+    		var api = oTable.api();
+    		if(api.rows('.selected').data().length == 0){
+    			alert("請點擊選取要刪除的料件");
+    		}else{
+    			var $trs = api.rows('.selected').data();
+    		    var values={};
+    		    values['id']=$trs[0][0]; 
+    				
+    			$.ajax({
+    				url : "/Part/" + $trs[0][0],
+    				data : JSON.stringify(values),
+    				contentType : "application/json; charset=utf-8",
+    				method : "DELETE",
+    				dataType : "json",
+    				success : function(result) {
+    					alert("成功");
+    					api.rows('.selected').remove().draw( false );
+    				},
+    				error : function(xhr,status,errorThrown) {
+    					alert("失敗:"+ errorThrown);
+    				},
+
+    				complete : function(xhr, status) {
+    				}
+    			});				
+    		}
+
+    		event.preventDefault();
+    	});    	
+});	
+</script>

@@ -7,11 +7,12 @@ import EnumUtils._
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
 
-case class Equipment(m:Monitor.Value, id:String, name:String, brand:String, model:String, serial:String, bought:String)
+case class Equipment(monitor:Monitor.Value, id:String, name:String, brand:String, model:String, serial:String, bought:String)
 /**
  * @author user
  */
 object Equipment {
+  implicit val equipRead = Json.reads[Equipment]
   def getList = {
     DB readOnly { implicit session =>
       sql"""
@@ -29,15 +30,30 @@ object Equipment {
     val equipments = getList
     val map = Map.empty[Monitor.Value, List[Equipment]]
     for(e <- equipments){
-      val list = map.getOrElse(e.m, List.empty[Equipment])
+      val list = map.getOrElse(e.monitor, List.empty[Equipment])
       
-      map.put(e.m, e::list)
+      map.put(e.monitor, e::list)
     }
     map
   }
   var map = generateMap
   
-  def updateEquipment(ids:Array[String], newValue:String)={
+  def create(newEquip:Equipment)={
+    DB localTx { implicit session =>
+      sql"""
+        Insert into Equipment(DP_NO, id, name, brand, model, serial, bought)
+        Values(${newEquip.monitor.toString}, ${newEquip.id}, ${newEquip.name}, ${newEquip.brand}, ${newEquip.model}, ${newEquip.serial}, ${newEquip.bought})
+        """.update.apply
+    }
+    
+    val monitor = newEquip.monitor
+    val equipList = map.getOrElse(monitor, List.empty[Equipment])
+    val newList = newEquip::equipList
+    
+    map = map + (monitor->newList)
+  }
+  
+  def update(ids:Array[String], newValue:String) = {
     assert(ids.length == 3)
     val m = Monitor.withName(ids(0))
     val equip_id = ids(1)
@@ -51,8 +67,6 @@ object Equipment {
         Where DP_NO=${m.toString} and id=${equip_id}  
         """.update.apply
 
-      val oldList = map(m)
-
       val newList =
         sql"""
           Select *
@@ -64,7 +78,19 @@ object Equipment {
       
       map = (map + (m -> newList))
     }
-
+  }
+  
+  def delete(monitor:Monitor.Value, id:String)={
+    DB localTx { implicit session =>
+      sql"""
+        Delete from Equipment
+        Where DP_NO = ${monitor.toString} and id = ${id}
+        """.update.apply
+    }
+    
+    val oldList = map.getOrElse(monitor, List.empty)
+    val newList = oldList.filter { equip => !(equip.monitor == monitor && equip.id == id) }
+    map = (map + (monitor -> newList))
   }
 }
 

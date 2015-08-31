@@ -31,7 +31,9 @@
 
     <link href='@routes.Assets.at("css/animate.css")' rel="stylesheet">
     <link href='@routes.Assets.at("css/style.css")' rel="stylesheet">
+    <link href='@routes.Assets.at("css/plugins/awesome-bootstrap-checkbox/awesome-bootstrap-checkbox.css")' rel="stylesheet">
 	<link href='@routes.Assets.at("css/aqm.css")' rel="stylesheet">
+	
 
 	<!-- Mainly scripts -->
 	<script src='@routes.Assets.at("js/jquery-2.1.4.min.js")'></script>
@@ -61,7 +63,7 @@
 	<script src='@routes.Assets.at("js/inspinia.js")'></script>
 	<script src='@routes.Assets.at("js/plugins/pace/pace.min.js")'></script>	
 	<script src='@routes.Assets.at("js/plugins/slimscroll/jquery.slimscroll.min.js")'></script>    
-	
+	<script src='@routes.Assets.at("js/plugins/iCheck/icheck.min.js")'></script>
     <!-- HTML5 Shim and Respond.js IE8 support of HTML5 elements and media queries -->
     <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
     <!--[if lt IE 9]>
@@ -180,10 +182,17 @@
                  </ul>
             </li>
             <li>
-            	<a href="#"><i class="fa fa-tasks"></i> <span class="nav-label">維護保養</span></a>
+            	<a href="#"><i class="fa fa-tasks"></i> <span class="nav-label">維修保養</span></a>
             	<ul class="nav nav-second-level">
-            		<li><a href="#" onClick="loadPage('/NewMaintance','維護保養','新增報修案件')">新增報修案件</a></li>
-            		<li><a href="#" onClick="loadPage('/NewMaintance','維護保養','修改報修案件')">修改報修案件</a></li>
+            		<li><a href="#" onClick="loadPage('/MyCase','維修保養','我的案件')">我的案件</a></li>
+            		<li><a href="#" onClick="loadPage('/NewRepair','維修保養','新增維修案件')">新增維修案件</a></li>
+            		<li><a href="#" onClick="loadPage('/RepairManagement','維修保養','維修案件管理')">維修案件管理</a></li>
+            		<li><a href="#" onClick="loadPage('/NewMaintance','維修保養','新增保養案件')">新增保養案件</a></li>
+            		<li><a href="#" onClick="loadPage('/MaintanceManagement','維修保養','保養案件管理')">保養案件管理</a></li>
+            		<li><a href="#" onClick="loadPage('/EquipmentHistory','維修保養','儀器保養履歷')">儀器保養履歷</a></li>
+            		<li><a href="#" onClick="loadPage('/MonitorJournal','維修保養','測站工作日誌')">測站工作日誌</a></li>
+            		<li><a href="#" onClick="loadPage('/EquipmentManagement','維修保養','設備管理')">設備管理</a></li>
+            		<li><a href="#" onClick="loadPage('/PartManagement','維修保養','料件管理')">料件管理</a></li>            		
             	</ul>
             </li>
             }
