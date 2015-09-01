@@ -713,7 +713,7 @@ object Query extends Controller {
         series)
 
       if(outputType == OutputType.excel){
-          val excelFile = ExcelUtility.exportChartData(chart, Array(MonitorType.C211))
+          val excelFile = ExcelUtility.exportChartData(chart, Array.fill(nWay)(MonitorType.C211))
           Results.Ok.sendFile(excelFile, fileName = _ =>
           play.utils.UriEncoding.encodePathSegment(chart.title("text") + ".xlsx", "UTF-8"),
           onClose = () => { Files.deleteIfExists(excelFile.toPath()) })
