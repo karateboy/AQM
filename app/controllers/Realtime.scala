@@ -66,7 +66,7 @@ object Realtime extends Controller {
       val reportUnit = ReportUnit.Hour
       val monitorStatusFilter = MonitorStatusFilter.Normal_Over
       val start = current.toDateTime - 1.day
-      val end = current
+      val end = current.toDateTime + 1.hour
 
       import Query.trendHelper
       val chart = trendHelper(monitors, Array.empty[EpaMonitor.Value], monitorTypes, reportUnit, monitorStatusFilter, start, end)
@@ -85,7 +85,7 @@ object Realtime extends Controller {
       val reportUnit = ReportUnit.Min
       val monitorStatusFilter = MonitorStatusFilter.Normal_Over
       val start = current.toDateTime - 4.hour
-      val end = current
+      val end = current.toDateTime + 1.minute
 
       import Query.trendHelper
       val chart = trendHelper(monitors, Array.empty[EpaMonitor.Value], monitorTypes, reportUnit, monitorStatusFilter, start, end)

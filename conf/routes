@@ -138,10 +138,9 @@ GET		/InstrumentReport/:monitor/:instrument/:start/:end controllers.Application.
 GET		/PDF/InstrumentReport/:monitor/:instrument/:start/:end controllers.Application.instrumentReport(monitor, instrument, start, end, outputTypeStr="pdf")
 
 GET		/MyCase				controllers.Maintance.myCase
-GET		/NewRepair			controllers.Maintance.newRepair
-GET		/RepairManagement	controllers.Maintance.repairManagement
-GET 	/NewMaintance		controllers.Maintance.newMaintance
-GET		/MaintanceManagement	controllers.Maintance.maintanceManagement
+GET		/NewTicket			controllers.Maintance.newTicket
+GET		/UpdateTicket		controllers.Maintance.updateTicket
+GET		/CloseTicket		controllers.Maintance.closeTicket
 GET		/EquipmentHistory	controllers.Maintance.equipmentHistory
 GET		/MonitorJournal		controllers.Maintance.monitorJournal
 GET		/EquipmentManagement	controllers.Maintance.equipmentManagement

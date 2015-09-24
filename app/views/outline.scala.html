@@ -57,7 +57,7 @@
 	<script src='@routes.Assets.at("js/highcharts/highcharts.js")'></script>
 	<script src='@routes.Assets.at("js/highcharts/highcharts-more.js")'></script>
 	<script src='@routes.Assets.at("js/highcharts/modules/exporting.js")'></script>
-	<script src='@routes.Assets.at("js/plugins/jeditable/jquery.jeditable.js")'></script>
+	<script src='@routes.Assets.at("js/plugins/jeditable/jquery.jeditable.js")'></script>	
 	
 	<!-- Custom and plugin javascript -->
 	<script src='@routes.Assets.at("js/inspinia.js")'></script>
@@ -184,11 +184,21 @@
             <li>
             	<a href="#"><i class="fa fa-tasks"></i> <span class="nav-label">維修保養</span></a>
             	<ul class="nav nav-second-level">
-            		<li><a href="#" onClick="loadPage('/MyCase','維修保養','我的案件')">我的案件</a></li>
-            		<li><a href="#" onClick="loadPage('/NewRepair','維修保養','新增維修案件')">新增維修案件</a></li>
-            		<li><a href="#" onClick="loadPage('/RepairManagement','維修保養','維修案件管理')">維修案件管理</a></li>
-            		<li><a href="#" onClick="loadPage('/NewMaintance','維修保養','新增保養案件')">新增保養案件</a></li>
-            		<li><a href="#" onClick="loadPage('/MaintanceManagement','維修保養','保養案件管理')">保養案件管理</a></li>
+            		<li>
+                    	<a href="#">案件管理<span class="fa arrow"></span></a>
+                            <ul class="nav nav-third-level">
+                                <li>
+                                    <a href="#" onClick="loadPage('/NewTicket','維修保養','新增案件')">新增案件</a>
+                                </li>
+                                <li>
+                                    <a href="#" onClick="loadPage('/UpdateTicket','維修保養','更新案件')">更新案件</a>
+                                </li>
+                                <li>
+                                    <a href="#" onClick="loadPage('/EndTicket','維修保養','結束案件')">結束案件</a>
+                                </li>
+                            </ul>
+                        </li>
+            		<li><a href="#" onClick="loadPage('/MyTicket','維修保養','我的案件')">我的案件</a></li>
             		<li><a href="#" onClick="loadPage('/EquipmentHistory','維修保養','儀器保養履歷')">儀器保養履歷</a></li>
             		<li><a href="#" onClick="loadPage('/MonitorJournal','維修保養','測站工作日誌')">測站工作日誌</a></li>
             		<li><a href="#" onClick="loadPage('/EquipmentManagement','維修保養','設備管理')">設備管理</a></li>
@@ -272,7 +282,6 @@
 		
     </div>
 </div>
-
 
 <div class="wrapper wrapper-content animated fadeInRight" id="wrapper-content">
 @content

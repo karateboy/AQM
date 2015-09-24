@@ -76,6 +76,18 @@ object User {
     }.list.apply()
   }
 
+  def getAdminUsers()(implicit session: DBSession = AutoSession) = {
+    sql"""
+      Select *
+      From Users
+      Where isAdmin = 1
+      """.map { r =>
+      User(Some(r.int("ID")), r.string("Email"),
+        r.string("Password"), r.string("Name"), r.string("Phone"), r.boolean("isAdmin"),
+        r.int("GroupID"))
+    }.list.apply()
+  }
+  
   def getCountGroupID(groupID: Int)(implicit session: DBSession = AutoSession) = {
     sql"""
       Select Count(GroupID)

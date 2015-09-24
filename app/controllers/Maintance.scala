@@ -31,21 +31,23 @@ object Maintance extends Controller {
       }
   }
 
-  def newRepair = Security.Authenticated {
+  def newTicket = Security.Authenticated {
+    implicit request =>
+    val userInfo = Security.getUserinfo(request).get
+    val group = Group.getGroup(userInfo.groupID).get
+    val adminUsers = User.getAdminUsers()
+    
+    Ok(views.html.newTicket(group.privilege, adminUsers))
+  }
+
+  def updateTicket = Security.Authenticated {
     Ok("")
   }
 
-  def repairManagement = Security.Authenticated {
+  def closeTicket = Security.Authenticated {
     Ok("")
   }
 
-  def newMaintance = Security.Authenticated {
-    Ok("")
-  }
-
-  def maintanceManagement = Security.Authenticated {
-    Ok("")
-  }
 
   def equipmentHistory = Security.Authenticated {
     Ok("")

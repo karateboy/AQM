@@ -18,4 +18,5 @@ server.pid
 .classpath
 .cache-*
 /.settings
+/.sbtserver
 /conf/application.conf
