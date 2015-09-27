@@ -1,0 +1,181 @@
+@* queryTicket Template File *@
+@import controllers.Security.UserInfo
+@(userInfo:UserInfo, privilege: Privilege, adminUsers:List[User])
+<div class="row">
+   	<div class="col-lg-12">
+        <div class="panel panel-primary" id="paramPanel">
+           	<div class="panel-heading panel-title" >
+            	<a data-toggle="collapse" data-parent="#accordion" href="#newTicket">案件查詢</a>	
+            </div>
+            <div class="panel-body panel-collapse in">
+            	<form class="form-horizontal" id="newTicketForm">
+            		<div class="form-group">
+            			<label class="col-lg-1 control-label">案件類別</label>
+            			<div class="col-lg-11">
+            			<div class="btn-group" data-toggle="buttons">	            					            				
+	            				@for(tt<-TicketType.values.toList.sorted){
+	            					@if(tt == TicketType.values.toList.sorted.head){
+	            						<label class="btn btn-outline btn-primary dim active">
+										<input type="checkbox" name="ticketType" id="@tt" checked>@TicketType.map(tt)</label>
+	            					}else{
+	            						<label class="btn btn-outline btn-primary dim">
+										<input type="checkbox" name="ticketType" id="@tt">@TicketType.map(tt)</label>
+	            					}	            								
+	            				}
+	            		</div>
+	            		</div>
+            		</div>
+	            	<div class="form-group" id="monitor">
+	            		<label class="col-lg-1 control-label">測站</label>
+	            		<div class="col-lg-11">
+	            			<button id="select-all-monitors" class="btn btn-info" type="button">全選</button>
+	            			<div class="btn-group" data-toggle="buttons">	            					            				
+	            				@for(m<-Monitor.myMvList(privilege)){
+	            					@if(m == Monitor.myMvList(privilege).head){
+	            						<label class="btn btn-outline btn-primary dim active">
+										<input type="checkbox" name="monitor" id="@m" checked>@Monitor.getDisplayName(m)</label>
+	            					}else{
+	            						<label class="btn btn-outline btn-primary dim">
+										<input type="checkbox" name="monitor" id="@m">@Monitor.getDisplayName(m)</label>
+	            					}	            								
+	            				}
+	            			</div>
+	            		</div>	            			            		
+	                </div>
+	                <div class="form-group">
+	            			<label class="col-lg-1 control-label">查詢區間</label>	
+	            			<div class="col-lg-5">
+	            				<div class="input-daterange input-group" id="datepicker">
+                    			<span class="input-group-addon"><i class="fa fa-calendar"></i></span><input type="text" class="input-sm form-control" name="start" id="reportStart" required/>
+                       			<span class="input-group-addon">至</span>
+                        		<input type="text" class="input-sm form-control" name="end" id="reportEnd" required/>                        
+                    		</div>
+	            			</div>												
+	                </div>
+
+	                
+					<div class="form-group">
+						<div class="col-lg-1 col-lg-offset-1">
+							<button type="button" class="btn btn-primary" id="queryTicket">查詢</button>
+						</div>							
+					</div>	                    	                    	                    
+            	</form>
+            </div>
+		</div>
+        <div class="panel panel-success" style="display:none" id="reportPanel">
+        	<div class="panel-body panel-collapse" id="monitorReport">
+ 				<div id="reportDiv" style="overflow-x:auto">
+            	</div>
+            </div>
+        </div>
+	</div>
+</div>
+<script>
+$( document ).ready(function() {
+	$('#select-all-monitors').click(function(){
+		$('.btn-group input[name="monitor"]').each(function(){
+	            // toggle checkbox
+	            $(this).prop('checked',!$(this).prop('checked'));
+	            // toggle class
+	            $(this).parents('label').toggleClass('active');
+	        });
+	});
+	$('#reportStart').datetimepicker({
+		format: 'YYYY-MM-D',
+		defaultDate: moment().subtract(1, 'days'),
+    	locale: "zh-TW"
+	});
+	$('#reportEnd').datetimepicker({
+		format: 'YYYY-MM-D',
+		defaultDate: moment().subtract(12, 'hours'),
+    	locale: "zh-TW"
+	});
+    $("#reportStart").on("dp.change", function (e) {
+        $('#reportEnd').data("DateTimePicker").minDate(e.date);
+        //$('#reportEnd').data("DateTimePicker").date(e.date.add(12, 'hours'));
+    });
+    
+
+	var ticketTypes, monitors, reportStart, reportEnd;
+	
+	function validate(){
+		ticketTypes = $("input[name='ticketType']:checked");
+		if (ticketTypes.length == 0) {
+			alert("案件種類");
+			return false;
+		}
+		
+		monitors = $("input[name='monitor']:checked");
+
+		if (monitors.length == 0) {
+			alert("請選擇測站");
+			return false;
+		}
+
+		reportStart = $('#reportStart').val();
+		if(reportStart.length === 0){
+			alert('請選擇開始日期');
+			return false;
+		}
+		
+		reportEnd = $('#reportEnd').val();
+		if(reportStart.length === 0){
+			alert('請選擇結束日期');
+			return false;
+		}
+
+		return true;
+	}
+	
+	
+	$("#queryTicket").click(function(){
+		if(!validate())
+			return;
+					
+		$('#reportDiv').html('');
+		$("body").css("cursor", "progress");
+
+
+		var ticketTypeParam='';
+		for (var i = 0; i < ticketTypes.length; i++) {
+			if(ticketTypeParam=='')
+				ticketTypeParam = ticketTypes[i].id;
+			else
+				ticketTypeParam += ':' + ticketTypes[i].id;
+		}
+		
+		var monitorParam='';
+		for (var i = 0; i < monitors.length; i++) {
+			if(monitorParam=='')
+				monitorParam = monitors[i].id;
+			else
+				monitorParam += ':' + monitors[i].id;
+		}	
+
+		var url = "/TicketReport/" + ticketTypeParam + "/" + monitorParam + "/" + reportStart + "/" + reportEnd; 
+
+		console.log(url);
+		
+		$.ajax({
+			url : url,
+			data : "",
+			contentType : "application/json; charset=utf-8",
+			type : "GET",
+			dataType : "html",
+			success : function(result) {
+				$('#reportDiv').html(result);
+				$("#reportPanel").css('display','block');
+						
+			},
+			error : function(xhr, status, errorThrown) {
+				console.log("錯誤訊息:" + status + "-" + errorThrown);
+			},
+
+			complete : function(xhr, status) {
+				$("body").css("cursor", "default");
+			}
+		});
+		
+	});
+});
+</script>

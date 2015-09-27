@@ -18,6 +18,14 @@ object ModelHelper {
     new DateTime(st)
   }
 
+  implicit def getDateTime(d: java.sql.Date) = {
+    new DateTime(d)
+  }
+  
+  implicit def getSqlDate(d:DateTime) = {
+    new java.sql.Date(d.getMillis)  
+  }
+  
   def main(args: Array[String]) {
     val timestamp = DateTime.parse("2015-04-01")
     println(timestamp.toString())

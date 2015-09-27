@@ -46,6 +46,12 @@ object ExcelUtility {
     val format_str = "0." + "0" * prec
     val style = wb.createCellStyle();
     val format = wb.createDataFormat();
+        // Create a new font and alter it.
+    val font = wb.createFont();
+    font.setFontHeightInPoints(10);
+    font.setFontName("標楷體");
+
+    style.setFont(font)
     style.setDataFormat(format.getFormat(format_str))
     style.setBorderBottom(CellStyle.BORDER_THIN);
     style.setBottomBorderColor(IndexedColors.BLACK.getIndex());

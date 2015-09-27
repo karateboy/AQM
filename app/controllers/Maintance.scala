@@ -33,13 +33,80 @@ object Maintance extends Controller {
 
   def newTicket = Security.Authenticated {
     implicit request =>
-    val userInfo = Security.getUserinfo(request).get
-    val group = Group.getGroup(userInfo.groupID).get
-    val adminUsers = User.getAdminUsers()
-    
-    Ok(views.html.newTicket(group.privilege, adminUsers))
+      val userInfo = Security.getUserinfo(request).get
+      val group = Group.getGroup(userInfo.groupID).get
+      val adminUsers = User.getAdminUsers()
+
+      Ok(views.html.newTicket(userInfo, group.privilege, adminUsers))
   }
 
+  case class NewTicketParam(ticketType: TicketType.Value, monitors: Seq[Monitor.Value],
+                            monitorTypes: Seq[MonitorType.Value], reason: String, owner:Int, executeDate: Seq[String])
+
+  implicit val newTicketParamRead = Json.reads[NewTicketParam]
+
+  def newTicketAction(idStr: String) = Security.Authenticated(BodyParsers.parse.json) {
+    implicit request =>
+      val submiterId = Integer.parseInt(idStr)
+      val newTicketJson = request.body.validate[NewTicketParam]
+
+      newTicketJson.fold(
+        error => {
+          Logger.error(JsError.toFlatJson(error).toString())
+          BadRequest(Json.obj("ok" -> false, "msg" -> JsError.toFlatJson(error)))
+        },
+        ticketParam => {
+          val tickets =
+            if (ticketParam.ticketType != TicketType.repair) {
+              for {
+                m <- ticketParam.monitors
+                date <- ticketParam.executeDate
+              } yield {
+                Ticket(0, DateTime.now, true, ticketParam.ticketType, submiterId,
+                  ticketParam.owner, m, None, ticketParam.reason, DateTime.parse(date))
+              }
+            } else {
+              for {
+                m <- ticketParam.monitors
+                mt <- ticketParam.monitorTypes
+                date <- ticketParam.executeDate
+              } yield {
+                Ticket(0, DateTime.now, true, ticketParam.ticketType, submiterId,
+                  ticketParam.owner, m, Some(mt), ticketParam.reason, DateTime.parse(date))
+              }
+            }
+          Logger.debug("# of ticket=" + tickets.length)
+          for (t <- tickets)
+            Ticket.newTicket(t)
+
+          Ok(Json.obj("ok" -> true, "nNewCase"->tickets.length))
+        })
+
+  }
+
+  def queryTicket = Security.Authenticated {
+    implicit request =>
+      val userInfo = Security.getUserinfo(request).get
+      val group = Group.getGroup(userInfo.groupID).get
+      val adminUsers = User.getAdminUsers()
+
+      Ok(views.html.queryTicket(userInfo, group.privilege, adminUsers))
+  }
+  
+  def ticketReport(ticketTypeStr:String, monitorStr:String, startStr:String, endStr:String) = Security.Authenticated {
+    val ticketTypes = ticketTypeStr.split(":").map { TicketType.withName }
+    val monitors = monitorStr.split(":").map { Monitor.withName }
+    val start = DateTime.parse(startStr)
+    val end = DateTime.parse(endStr) + 1.day
+    
+    val tickets = Ticket.queryTickets(start, end)
+    val filterTicket = tickets.filter { t => ticketTypes.contains(t.ticketType) && monitors.contains(t.monitor) }
+    val adminUsers = User.getAdminUsers()
+    val usrMap = Map(adminUsers.map{u=>(u.id.get->u)} :_*)
+    
+    Ok(views.html.ticketReport(filterTicket, usrMap))
+  }
+  
   def updateTicket = Security.Authenticated {
     Ok("")
   }
@@ -47,7 +114,6 @@ object Maintance extends Controller {
   def closeTicket = Security.Authenticated {
     Ok("")
   }
-
 
   def equipmentHistory = Security.Authenticated {
     Ok("")
@@ -117,7 +183,7 @@ object Maintance extends Controller {
         })
   }
 
-  def deletePart(id:String) = Security.Authenticated{
+  def deletePart(id: String) = Security.Authenticated {
     Part.delete(id)
     Ok(Json.obj("ok" -> true))
   }

@@ -35,16 +35,24 @@ object TicketType extends Enumeration{
     else
       throw new NoSuchElementException
   }
+  
+  implicit val tReads: Reads[TicketType.Value] = EnumUtils.enumReads(TicketType)
+  implicit val tWrites: Writes[TicketType.Value] = EnumUtils.enumWrites
 }
 
 case class Ticket(id:Int, submit_date:DateTime, active:Boolean, ticketType:TicketType.Value, submiter_id:Int, owner_id:Int, monitor:Monitor.Value, 
-    monitorType:MonitorType.Value)
+    monitorType:Option[MonitorType.Value], reason:String, executeDate:DateTime)
 /**
  * @author user
  */
 object Ticket {
+  import scala.collection.mutable.ArrayBuffer
+
   def newTicket(ticket: Ticket)(implicit session: DBSession = AutoSession) = {
     DB localTx { implicit session =>
+      val submit_tt:java.sql.Timestamp = ticket.submit_date
+      val execute_date:java.sql.Date = ticket.executeDate
+      
       sql"""
         Insert into Ticket(
         [submit_date]
@@ -53,9 +61,11 @@ object Ticket {
         ,[submiter_id]
         ,[owner_id]
         ,[monitor]
-        ,[monitorType])
-        Values(${ticket.submit_date}, ${ticket.active}, ${ticket.ticketType.toString}, 
-          ${ticket.submiter_id}, ${ticket.owner_id}, ${ticket.monitor.toString}, ${ticket.monitorType.toString})
+        ,[monitorType]
+        ,[reason]
+        ,[execute_date])
+        values(${submit_tt}, ${ticket.active}, ${ticket.ticketType.id}, ${ticket.submiter_id}, ${ticket.owner_id}, ${ticket.monitor.toString},
+          ${ticket.monitorType}, ${ticket.reason}, ${execute_date})
         """.update.apply
     }
   }
@@ -67,8 +77,31 @@ object Ticket {
       Order by submit_date      
       """.map { r =>
       Ticket(r.int(1), r.timestamp(2), r.boolean(3), TicketType.withId(r.int(4)), 
-          r.int(5), r.int(6), Monitor.withName(r.string(7)), MonitorType.withName(r.string(8)))
+          r.int(5), r.int(6), Monitor.withName(r.string(7)), 
+          if(r.stringOpt(8).isEmpty)
+            None
+          else
+            Some(MonitorType.withName(r.string(8))),
+          r.string(9), r.date(10))
     }.list().apply()
+  }
+  
+  def queryTickets(start:DateTime, end:DateTime)(implicit session: DBSession = AutoSession) = {
+        sql"""
+      Select *
+      From Ticket
+      Where submit_date between ${start} and ${end}
+      Order by submit_date      
+      """.map { r =>
+      Ticket(r.int(1), r.timestamp(2), r.boolean(3), TicketType.withId(r.int(4)), 
+          r.int(5), r.int(6), Monitor.withName(r.string(7)), 
+          if(r.stringOpt(8).isEmpty)
+            None
+          else
+            Some(MonitorType.withName(r.string(8))),
+          r.string(9), r.date(10))
+    }.list().apply()
+
   }
   
 }

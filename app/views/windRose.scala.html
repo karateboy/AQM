@@ -71,35 +71,13 @@
             	</div>
         	</div>
         	<div class="panel panel-success" style="display:none" id="reportPanel">
-            	<div class="panel-body panel-collapse" id="monitorReport">
-            		<div align="right">            			
+            	<div class="panel-body panel-collapse">
+            	    <div align="right">            			
             			<label class="btn btn-outline" data-toggle="tooltip" data-placement="bottom" title="Excel"><a href="#" id="downloadExcel"><i class="fa fa-file-excel-o fa-2x"></i></a></label>            			
                 	</div>
-					<div id="reportDiv" align="center">
-					            		
+            	
+					<div id="reportDiv" align="center">					            		
             		</div>
-            		<table id="frequency" class="table" style="display:none">
-            			<thead>
-            				<th>風向</th>
-            				<th>&lt1 m/s</th>
-            				<th>1~2 m/s</th>
-            				<th>2~5 m/s</th>
-            				<th>5~15 m/s</th>
-            				<th>&gt 15 m/s</th>
-            				<th>總和</th>
-            			</thead>
-            			<tbody>
-            			</tbody>
-            			<tfoot>
-            				<th>風向</th>
-            				<th>&lt1 m/s</th>
-            				<th>1~2 m/s</th>
-            				<th>2~5 m/s</th>
-            				<th>5~15 m/s</th>
-            				<th>&gt 15 m/s</th>
-            				<th>總和</th>            			
-            			</tfoot>
-            		</table>
             	</div>
         	</div> <!-- end of panel group -->    	
 	</div>
@@ -107,14 +85,25 @@
 
 <script>
 $( document ).ready(function() {
-	
-	$('#datepicker').datepicker({
-		format: 'yyyy-mm-dd',
-	    todayBtn: "linked",
-	    language: "zh-TW"
+
+	$('#reportStart').datetimepicker({
+		format: 'YYYY-M-D HH:00',
+		defaultDate: moment().subtract(1, 'days'),
+    	locale: "zh-TW"
 	});
-
-
+	$('#reportEnd').datetimepicker({
+		format: 'YYYY-M-D HH:00',
+		defaultDate: moment().subtract(1, 'hours'),
+    	locale: "zh-TW"
+	});
+    $("#reportStart").on("dp.change", function (e) {
+        $('#reportEnd').data("DateTimePicker").minDate(e.date);
+    });
+    
+    $("#reportEnd").on("dp.change", function (e) {
+        $('#reportStart').data("DateTimePicker").maxDate(e.date);
+    });
+	
 	var monitor, monitorType, nWay, reportStart, reportEnd;
 	
 	function validate(){
@@ -155,6 +144,7 @@ $( document ).ready(function() {
 			type : "GET",
 			dataType : "json",
 			success : function(result) {
+				//result.chart['height'] = chartHeight;
 				result.colors=[
 				'#7CB5EC','#434348','#90ED7D','#F7A35C','#8085E9','#F15C80',
 				'#E4D354','#2B908F','#FB9FA8','#91E8E1','#7CB5EC','#80C535','#969696'];

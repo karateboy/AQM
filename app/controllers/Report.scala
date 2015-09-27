@@ -546,23 +546,23 @@ object Report extends Controller {
           reportType match {
             case PeriodReport.DailyReport =>
               val dailyReport = Record.getDailyReport(monitor, startTime)
-              ("日報", ExcelUtility.createDailyReport(monitor, startTime, dailyReport))
+              ("日報" + startTime.toString("YYYYMMdd"), ExcelUtility.createDailyReport(monitor, startTime, dailyReport))
 
             case PeriodReport.MonthlyReport =>
               val adjustStartDate = DateTime.parse(startTime.toString("YYYY-MM-1"))
               val monthlyReport = getMonthlyReport(monitor, adjustStartDate)
               val nDay = monthlyReport.typeArray(0).dataList.length
-              ("月報", ExcelUtility.createMonthlyReport(monitor, adjustStartDate, monthlyReport, nDay))
+              ("月報" + startTime.toString("YYYYMM"), ExcelUtility.createMonthlyReport(monitor, adjustStartDate, monthlyReport, nDay))
 
             case PeriodReport.YearlyReport =>
               val adjustStartDate = DateTime.parse(startTime.toString("YYYY-1-1"))
               val yearlyReport = getYearlyReport(adjustStartDate)
 
-              ("年報", ExcelUtility.createYearlyReport(monitor, adjustStartDate, yearlyReport))
+              ("年報" + startTime.toString("YYYY"), ExcelUtility.createYearlyReport(monitor, adjustStartDate, yearlyReport))
           }
 
         Ok.sendFile(excelFile, fileName = _ =>
-          play.utils.UriEncoding.encodePathSegment(Monitor.map(monitor).name + title + startTime.toString("YYYYMMdd") + ".xlsx", "UTF-8"),
+          play.utils.UriEncoding.encodePathSegment(Monitor.map(monitor).name + title + ".xlsx", "UTF-8"),
           onClose = () => { Files.deleteIfExists(excelFile.toPath()) })
       }
   }

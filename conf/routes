@@ -139,6 +139,9 @@ GET		/PDF/InstrumentReport/:monitor/:instrument/:start/:end controllers.Applicat
 
 GET		/MyCase				controllers.Maintance.myCase
 GET		/NewTicket			controllers.Maintance.newTicket
+POST	/NewTicket/:id		controllers.Maintance.newTicketAction(id)
+GET		/QueryTicket		controllers.Maintance.queryTicket
+GET		/TicketReport/:ticketTypes/:monitors/:start/:end	controllers.Maintance.ticketReport(ticketTypes, monitors, start, end)
 GET		/UpdateTicket		controllers.Maintance.updateTicket
 GET		/CloseTicket		controllers.Maintance.closeTicket
 GET		/EquipmentHistory	controllers.Maintance.equipmentHistory

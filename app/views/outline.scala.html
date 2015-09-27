@@ -80,12 +80,24 @@
     
     <script>
     var myInterval;
+    var chartHeight=500;
 	function loadPage(url, root, title){
 		//var elem = $( this );
 		clearInterval(myInterval);
 		$("#breadcrumb-title").text(root + " > " + title);
 		document.title = title;
 		$("#wrapper-content").load(url);
+	}
+	function loadRefreshPage(url, root, title){
+		function refreshPage(){
+			$("#wrapper-content").load(url);
+		}
+		
+		clearInterval(myInterval);		
+		$("#breadcrumb-title").text(root + " > " + title);
+		document.title = title;
+		$("#wrapper-content").load(url);
+		myInterval = setInterval(refreshPage, 60 * 1000);		
 	}
     </script>
 </head>
@@ -119,7 +131,7 @@
                 <a href="index.html"><i class="fa fa-th-large"></i> <span class="nav-label">即時資訊</span> <span class="fa arrow"></span></a>
                 <ul class="nav nav-second-level">
                     <li ><a href="/">即時畫面</a></li>
-                    <li ><a href="#" onClick="loadPage('/realtimeStatus','即時資訊','即時數據')">即時數據</a></li>
+                    <li ><a href="#" onClick="loadRefreshPage('/realtimeStatus','即時資訊','即時數據')">即時數據</a></li>
                     <li ><a href="#" onClick="loadPage('/realtimeTrend','即時資訊','即時小時趨勢圖')">即時小時趨勢圖</a></li>
                     <li ><a href="#" onClick="loadPage('/realtimeMinTrend','即時資訊','即時分鐘趨勢圖')">即時分鐘趨勢圖</a></li>
                     <li ><a href="#" onClick="loadPage('/realtimeImage','即時資訊','即時影像')">即時影像</a></li>
@@ -191,7 +203,7 @@
                                     <a href="#" onClick="loadPage('/NewTicket','維修保養','新增案件')">新增案件</a>
                                 </li>
                                 <li>
-                                    <a href="#" onClick="loadPage('/UpdateTicket','維修保養','更新案件')">更新案件</a>
+                                    <a href="#" onClick="loadPage('/QueryTicket','維修保養','案件查詢')">案件查詢</a>
                                 </li>
                                 <li>
                                     <a href="#" onClick="loadPage('/EndTicket','維修保養','結束案件')">結束案件</a>

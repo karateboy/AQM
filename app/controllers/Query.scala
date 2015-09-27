@@ -644,8 +644,8 @@ object Query extends Controller {
   def windRoseReport(monitorStr: String, monitorTypeStr: String, nWay: Int, startStr: String, endStr: String, outputTypeStr:String) = Security.Authenticated {
     val monitor = Monitor.withName(monitorStr)
     val monitorType = MonitorType.withName(monitorTypeStr)
-    val start = DateTime.parse(startStr)
-    val end = DateTime.parse(endStr) + 1.day
+    val start = DateTime.parse(startStr, DateTimeFormat.forPattern("YYYY-MM-dd HH:mm"))
+    val end = DateTime.parse(endStr, DateTimeFormat.forPattern("YYYY-MM-dd HH:mm"))
     val outputType = OutputType.withName(outputTypeStr)
     
     assert(nWay == 8 || nWay == 16 || nWay == 32)

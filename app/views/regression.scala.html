@@ -131,6 +131,9 @@ $( document ).ready(function() {
 			type : "GET",
 			dataType : "json",
 			success : function(result) {
+				result.chart = {
+			    	height: chartHeight
+				};
 				result.colors=[
 				'#7CB5EC','#434348','#90ED7D','#F7A35C','#8085E9','#F15C80',
 				'#E4D354','#2B908F','#FB9FA8','#91E8E1','#7CB5EC','#80C535','#969696'];
