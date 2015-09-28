@@ -1,20 +1,20 @@
 @* newTicket Template File *@
 @import controllers.Security.UserInfo
-@(userInfo:UserInfo, privilege: Privilege, adminUsers:List[User])
+@(ticket:Ticket, privilege: Privilege, adminUsers:List[User])
 <div class="row">
    	<div class="col-lg-12">
         <div class="panel panel-primary" id="paramPanel">
            	<div class="panel-heading panel-title" >
-            	<a data-toggle="collapse" data-parent="#accordion" href="#newTicket">新增案件</a>	
+            	<a data-toggle="collapse" data-parent="#accordion" href="#newTicket">案件:@ticket.id</a>	
             </div>
             <div class="panel-body panel-collapse in">
-            	<form class="form-horizontal" id="newTicketForm">
+            	<form class="form-horizontal" id="newTicketForm">            		
             		<div class="form-group">
             			<label class="col-lg-1 control-label">案件類別</label>
             			<div class="col-lg-11">
             			<div class="btn-group" data-toggle="buttons">	            					            				
 	            				@for(tt<-TicketType.values.toList.sorted){
-	            					@if(tt == TicketType.values.toList.sorted.head){
+	            					@if(tt == ticket.ticketType){
 	            						<label class="btn btn-outline btn-primary dim active">
 										<input type="radio" name="ticketType" id="@tt" checked>@TicketType.map(tt)</label>
 	            					}else{
@@ -28,15 +28,14 @@
 	            	<div class="form-group" id="monitor">
 	            		<label class="col-lg-1 control-label">測站</label>
 	            		<div class="col-lg-11">
-	            			<button id="select-all-monitors" class="btn btn-info" type="button">全選</button>
 	            			<div class="btn-group" data-toggle="buttons">	            					            				
 	            				@for(m<-Monitor.myMvList(privilege)){
-	            					@if(m == Monitor.myMvList(privilege).head){
+	            					@if(m == ticket.monitor){
 	            						<label class="btn btn-outline btn-primary dim active">
-										<input type="checkbox" name="monitor" id="@m" checked>@Monitor.getDisplayName(m)</label>
+										<input type="radio" name="monitor" id="@m" checked>@Monitor.getDisplayName(m)</label>
 	            					}else{
 	            						<label class="btn btn-outline btn-primary dim">
-										<input type="checkbox" name="monitor" id="@m">@Monitor.getDisplayName(m)</label>
+										<input type="radio" name="monitor" id="@m">@Monitor.getDisplayName(m)</label>
 	            					}	            								
 	            				}
 	            			</div>
@@ -46,26 +45,28 @@
 	            		<label class="col-lg-1 control-label">測項</label>						
 	            		<div class="col-lg-11 btn-group" data-toggle="buttons">
 	            		@for(mt<-MonitorType.myMtvList(privilege)){
-	            			<label class="btn btn-outline btn-primary dim">
-							<input type="checkbox" name="monitorType" id="@mt">@MonitorType.map(mt).desp</label>
+	            			@if(ticket.monitorType.isDefined && ticket.monitorType.get == mt){
+	            				<label class="btn btn-outline btn-primary dim active">
+	            				<input type="radio" name="monitorType" id="@mt" checked>@MonitorType.map(mt).desp</label>
+	            			}else{
+	            				<label class="btn btn-outline btn-primary dim">
+	            				<input type="radio" name="monitorType" id="@mt">@MonitorType.map(mt).desp</label>
+	            			}	            										
 	            		}
 	            		</div>            		
 	                </div>
 	                <div class="form-group" id="repairReason">
 	                	<label class="col-lg-1 control-label" for="reason">維修原因</label>
 	                	<div class="col-lg-11">
-	                		<textarea class="form-control" rows="5" id="reason"></textarea>
+	                		<textarea class="form-control" rows="5" id="reason">@ticket.reason</textarea>
 	                	</div>	                	
 	                </div>
 	                <div class="form-group" id="executeDate">
 	            		<label class="col-lg-1 control-label">處理日期</label>	
 	            			<div class="col-lg-5">
 	            				<div class="input-group date">
-  									<span class="input-group-addon"><i class="fa fa-calendar"></i></span><input type="text" class="form-control" name="executeDate">
-  									<span class="input-group-addon"><i class="fa fa-calendar"></i></span><input type="text" class="form-control" name="executeDate">
-  									<span class="input-group-addon"><i class="fa fa-calendar"></i></span><input type="text" class="form-control" name="executeDate">
-  									<span class="input-group-addon"><i class="fa fa-calendar"></i></span><input type="text" class="form-control" name="executeDate">
-  									
+  									<span class="input-group-addon"><i class="fa fa-calendar"></i></span>
+  									<input type="text" class="form-control" name="executeDate" value="@ticket.executeDate.toString("YYYY-MM-d")">
   								</div>
 	            			</div>
 	                </div>
@@ -74,7 +75,7 @@
 	            		<div class="col-lg-11">
 	            		<div class="btn-group" data-toggle="buttons">	            					            				
 	            			@for(user<-adminUsers){
-	            				@if(user.id.get == userInfo.id){
+	            				@if(user.id.get == ticket.owner_id){
 	            					<label class="btn btn-outline btn-primary dim active">
 									<input type="radio" name="owner" id="@user.id.get" checked>@user.name</label>
 	            				}else{
@@ -88,40 +89,35 @@
 	                
 					<div class="form-group">
 						<div class="col-lg-1 col-lg-offset-1">
-							<button type="button" class="btn btn-primary" id="newTicket">新增</button>
+							<button type="button" class="btn btn-primary" id="updateTicket">更新</button>
 						</div>							
 					</div>	                    	                    	                    
             	</form>
             </div>
 		</div>
-        <div class="panel panel-success" style="display:none" id="reportPanel">
-        	<div class="panel-body panel-collapse" id="monitorReport">
- 				<div id="reportDiv" align="center" style="overflow-x:auto">
-            	</div>
+        <div class="panel panel-success" id="reportPanel">
+        	<div class="panel-heading panel-title" >
+            	<a data-toggle="collapse" data-parent="#accordion" href="#ticketForm">案件表單</a>	
+            </div>
+        	<div class="panel-body panel-collapse" id="ticketForm">
+ 				@weekMaintanceForm(ticket.id, ticket.form)
             </div>
         </div>
 	</div>
 </div>
 <script>
-	var myself = "@userInfo.id";
+	var ticketId = parseInt("@ticket.id");
 </script>
+
 <script>
 $( document ).ready(function() {
-	$('#select-all-monitors').click(function(){
-		$('.btn-group input[name="monitor"]').each(function(){
-	            // toggle checkbox
-	            $(this).prop('checked',!$(this).prop('checked'));
-	            // toggle class
-	            $(this).parents('label').toggleClass('active');
-	        });
-	});
-
 	$('input[name="executeDate"]').datetimepicker({
 		format: 'YYYY-MM-D',
     	locale: "zh-TW"
 	});
 
-
+	$("#ticketForm").load("/Form/"+ticketId);
+	
 	$("input[name='ticketType']").change(
 			function() {
 				var me = $(this)
@@ -130,10 +126,10 @@ $( document ).ready(function() {
 				
 				if(id == 'repair'){
 					$("#monitorType").css('display','block');
-					$("#repairReason").css('display','block');					
+					$("#repairReason").css('display','block');				
 				}else{
 					$("#monitorType").css('display','none');
-					$("#repairReason").css('display','none');				
+					$("#repairReason").css('display','none');
 				}
 			}					
 	);
@@ -188,7 +184,7 @@ $( document ).ready(function() {
 		return true;
 	}
 
-	$("#newTicket").click(function(){
+	$("#updateTicket").click(function(){
 		if(!validate())
 			return;
 
@@ -202,7 +198,7 @@ $( document ).ready(function() {
 		};
 
 		$("body").css("cursor", "progress");
-		var url = "/NewTicket/" + myself; 
+		var url = "/UpdateTicket/" + ticketId; 
 		
 		$.ajax({
 			url : url,
@@ -213,7 +209,7 @@ $( document ).ready(function() {
 			success : function(result) {
 				//$("#reportPanel").css('display','block');
 				if(result.ok){
-					alert("成功建立" + result.nNewCase + "個案件");
+					alert("成功更新");
 				}				
 			},
 			error : function(xhr, status, errorThrown) {

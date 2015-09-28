@@ -1,0 +1,178 @@
+@* quarterForm Template File *@
+@(ID:Int, f:FormData)
+<form class="form-horizontal" id="weekForm">
+	<li class="list-group-item">
+		氣體校正系統 (Calibrator)
+		<ol>
+			<li><input type="checkbox" @f.getBoolSeq>進行測漏檢查(註:測漏檢查應以阻塞管線之末端，觀察儀器之流量是否歸零，以判定管線有無洩漏。</li>
+		</ol>
+	</li>
+	<li class="list-group-item">
+		零氣體產生器 (Zero air)
+		<ol>
+			<li><input type="checkbox" @f.getBoolSeq>檢查加熱線圈感應器</li>
+			<li><input type="checkbox" @f.getBoolSeq>執行零值氣體之零點測試(註:零氣體鋼瓶規格:THC、CO濃度小於0.01ppm，NOx、SO2濃度小於0.001ppm)</li>
+			<li><input type="checkbox" @f.getBoolSeq>更換藥劑 (Purafil、Hopcalite)</li>
+		</ol>
+	</li>
+	<li class="list-group-item">
+		氮氧化物分析儀 (NOx)
+		<ol>
+			<li><input type="checkbox" @f.getBoolSeq>限流閥、濾光器清潔</li>
+			<li><input type="checkbox" @f.getBoolSeq>電位全幅功能測試執行</li>
+			<li><input type="checkbox" @f.getBoolSeq>GPT滴定校正</li>
+			<li><input type="checkbox" @f.getBoolSeq>鉬轉換器效率計算( < 98%更換)</li>
+			<li><input type="checkbox" @f.getBoolSeq>檢查幫浦有無異常狀況</li>
+			<li><input type="checkbox" @f.getBoolSeq>進行測漏檢查</li>			
+		</ol>
+	</li>
+	<li class="list-group-item">
+		二氧化硫分析儀 (SO2)
+		<ol>
+			<li><input type="checkbox" @f.getBoolSeq>清潔限流器</li>
+			<li><input type="checkbox" @f.getBoolSeq>電位全幅功能測試執行</li>
+			<li><input type="checkbox" @f.getBoolSeq>檢查幫浦有無異常狀況</li>
+			<li><input type="checkbox" @f.getBoolSeq>進行測漏檢查</li>			
+		</ol>
+	</li>
+	<li class="list-group-item">
+		一氧化碳分析儀 (CO)
+		<ol>
+			<li><input type="checkbox" @f.getBoolSeq>清潔限流器</li>
+			<li><input type="checkbox" @f.getBoolSeq>電位全幅功能測試執行</li>
+			<li><input type="checkbox" @f.getBoolSeq>檢查幫浦有無異常狀況</li>
+			<li><input type="checkbox" @f.getBoolSeq>進行測漏檢查</li>			
+		</ol>
+	</li>
+	<li class="list-group-item">
+		臭氧分析儀 (O3)
+		<ol>
+			<li><input type="checkbox" @f.getBoolSeq>清潔限流器</li>
+			<li><input type="checkbox" @f.getBoolSeq>電位全幅功能測試執行</li>
+			<li><input type="checkbox" @f.getBoolSeq>測試臭氧去除器（SCRUBBER）去除率( < 98%更換)</li>			
+			<li><input type="checkbox" @f.getBoolSeq>檢查幫浦有無異常狀況</li>
+			<li><input type="checkbox" @f.getBoolSeq>進行測漏檢查</li>			
+		</ol>
+	</li>
+	<li class="list-group-item">
+		碳氫化合物分析儀 (THC)
+		<ol>
+			<li><input type="checkbox" @f.getBoolSeq>電位全幅功能測試執行</li>
+			<li><input type="checkbox" @f.getBoolSeq>檢查幫浦有無異常狀況</li>
+			<li><input type="checkbox" @f.getBoolSeq>進行測漏檢查</li>			
+			<li><input type="checkbox" @f.getBoolSeq>NMHC去除藥劑更換</li>			
+		</ol>
+	</li>
+	<li class="list-group-item">
+		懸浮微粒連續測定分析儀 (PM10&TSP)
+		<ol>
+			<li><input type="checkbox" @f.getBoolSeq>檢查濾紙有無黑點擴散現象</li>
+			<li><input type="checkbox" @f.getBoolSeq>電位全幅功能測試執行</li>
+			<li><input type="checkbox" @f.getBoolSeq>採樣管及內部管路清潔</li>
+			<li><input type="checkbox" @f.getBoolSeq>更換採樣頭O-ring</li>
+			<li><input type="checkbox" @f.getBoolSeq>進行測漏檢查</li>
+		</ol>
+	</li>
+	<li class="list-group-item">
+		氣象儀器
+		<ol>
+			<li><input type="checkbox" @f.getBoolSeq>溫濕度計輻射罩清潔</li>
+			<li><input type="checkbox" @f.getBoolSeq>雨量計內部計數板軸承潤滑</li>
+			<li><input type="checkbox" @f.getBoolSeq>使用水平儀檢查風速風向之橫桿是否保持水平(颱風過後需進行此項檢查)</li>
+		</ol>
+	</li>
+	<li class="list-group-item">
+		站房
+		<ol>
+			<li><input type="checkbox" @f.getBoolSeq>採樣系統管路清洗</li>
+			<li><input type="checkbox" @f.getBoolSeq>氣瓶室清潔</li>
+			<li><input type="checkbox" @f.getBoolSeq>站房外部清洗</li>
+		</ol>
+	</li>	
+</ol>
+
+<div class="form-group">
+	<label class="col-lg-2 control-label">維修及改善建議 (問題與結果說明)</label>
+	<div class="col-lg-10">
+		<textarea class="form-control" rows="3" id="comment">@f.comments(0)</textarea>
+	</div>	                	
+</div>
+<div class="form-group">
+	<label class="col-lg-2 control-label">處理時間</label>
+	<div class="input-daterange input-group">
+		<span class="input-group-addon"><i class="fa fa-calendar"></i></span><input type="text" value="@f.getStrSeq" class="input-sm form-control" name="start" id="reportStart" required/>
+    	<span class="input-group-addon">至</span>
+    	<input type="text" value="@f.getStrSeq" class="input-sm form-control" name="end" id="reportEnd" required/>                        
+	</div>
+</div>
+<div class="form-group">
+	<div class="col-lg-1 col-lg-offset-1">
+		<button type="button" class="btn btn-primary" id="updateForm">更新</button>
+	</div>
+</div>
+</form>
+<script>
+	var ticketID = "@ID";
+</script>
+<script>
+$( document ).ready(function() {
+	$('#reportStart').datetimepicker({
+		format: 'YYYY-MM-D HH:mm',
+		defaultDate: moment().subtract(1, 'days'),
+    	locale: "zh-TW"
+	});
+	$('#reportEnd').datetimepicker({
+		format: 'YYYY-MM-D HH:mm',
+		defaultDate: moment().subtract(1, 'hours'),
+    	locale: "zh-TW"
+	});
+
+	$("#updateForm").click(function(){
+		var start = $('#reportStart').val();
+		var end = $('#reportEnd').val();
+			
+		var $boolValues = $("#weekForm :checkbox");
+		var boolValues = [];
+		for(var i=0;i<$boolValues.length;i++){
+			$check = $boolValues.eq(i);			
+			boolValues.push($check.prop("checked"));
+		}
+		
+		var $strValues = $("#weekForm :text");
+		var strValues = [];
+		for(var i=0;i<$strValues.length;i++){
+			strValues.push($strValues[i].value);
+		}
+		
+		var comments = [];
+		comments.push($("#comment").val());
+		
+		var formData = {
+			start: start, 
+			end: end, 
+			boolValues: boolValues, 
+			strValues: strValues, 
+			comments: comments
+		};
+
+		var url = "/UpdateForm/" + ticketID;
+		$.ajax({
+			url : url,
+			data : JSON.stringify(formData),
+			contentType : "application/json; charset=utf-8",
+			type : "POST",
+			dataType : "json",
+			success : function(result) {
+				alert("成功");
+			},
+			error : function(xhr, status, errorThrown) {
+				console.log("錯誤訊息:" + status + "-" + errorThrown);
+			},
+
+			complete : function(xhr, status) {
+				$("body").css("cursor", "default");
+			}
+		});		
+	});
+});	
+</script>

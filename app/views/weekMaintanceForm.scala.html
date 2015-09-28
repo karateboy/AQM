@@ -1,0 +1,267 @@
+@* weekMaintanceForm Template File *@
+@(ID:Int, f:FormData)
+<form class="form-horizontal" id="weekForm">
+<ol class="list-group">
+	<li class="list-group-item">
+		氣體校正系統 (Calibrator)
+		<ol>
+			<li><input type="checkbox" @f.getBoolSeq>確認校正系統啟動正常</li>
+			<li><input type="checkbox" @f.getBoolSeq>管路積水檢查</li>
+		</ol>
+	</li>
+	<li class="list-group-item">零氣體產生器(Zero air)
+		<ol>
+			<li><input type="checkbox" @f.getBoolSeq>洩水閥測試、自動排水功能正常</li>
+			<li><input type="checkbox" @f.getBoolSeq>確認空壓機工作正常、積水排除</li>
+			<li><input type="checkbox" @f.getBoolSeq>Air presser &nbsp;<input type="text" value="@f.getStrSeq">&nbsp;psi, 30±5</li>
+		</ol>
+	</li>
+	<li class="list-group-item">氮氧化物分析儀 (NOx)
+		<ol>
+			<li><input type="checkbox" @f.getBoolSeq>更換Filter</li>
+			<li>功能性檢查
+				<ol>
+					<li><input type="checkbox" @f.getBoolSeq>Sample flow <input type="text" value="@f.getStrSeq"> c.c/min, 500±50</li>
+					<li><input type="checkbox" @f.getBoolSeq>Ozone flow <input type="text" value="@f.getStrSeq"> c.c/min, 80±10</li>
+					<li><input type="checkbox" @f.getBoolSeq>HVPS <input type="text" value="@f.getStrSeq"> VDC, 400~900</li>
+					<li><input type="checkbox" @f.getBoolSeq>Rcell TEMP <input type="text" value="@f.getStrSeq"> ℃, 50±1</li>
+					<li><input type="checkbox" @f.getBoolSeq>PMT TEMP. <input type="text" value="@f.getStrSeq"> ℃, 7±2</li>
+					<li><input type="checkbox" @f.getBoolSeq>Moly TEMP. <input type="text" value="@f.getStrSeq"> ℃, 315±5</li>
+					<li><input type="checkbox" @f.getBoolSeq>Rcell press <input type="text" value="@f.getStrSeq">IN-Hg-A, &lt;10</li>
+					<li><input type="checkbox" @f.getBoolSeq>NO Slope <input type="text" value="@f.getStrSeq">1.0±0.3</li>
+					<li><input type="checkbox" @f.getBoolSeq>NOx Slope<input type="text" value="@f.getStrSeq"> 1.0±0.3</li>
+					<li><input type="checkbox" @f.getBoolSeq>NO Offset <input type="text" value="@f.getStrSeq"> -50~150</li>
+					<li><input type="checkbox" @f.getBoolSeq>NOx Offset<input type="text" value="@f.getStrSeq"> -50~150</li>
+				</ol>
+			</li>
+			<li><input type="checkbox" @f.getBoolSeq>確認無警訊顯示</li>			
+		</ol>
+	</li>
+	<li class="list-group-item">二氧化硫分析儀(SO2)
+		<ol>
+			<li><input type="checkbox" @f.getBoolSeq>更換Filter</li>
+			<li>功能性檢查
+				<ol>
+					<li><input type="checkbox" @f.getBoolSeq>Sample flow <input type="text" value="@f.getStrSeq"> c.c/min, 650±65</li>
+					<li><input type="checkbox" @f.getBoolSeq>UV Lamp<input type="text" value="@f.getStrSeq">mv, 2000~4400</li>
+					<li><input type="checkbox" @f.getBoolSeq>STR light<input type="text" value="@f.getStrSeq"> ppb, &lt;100</li>
+					<li><input type="checkbox" @f.getBoolSeq>DRK PMT<input type="text" value="@f.getStrSeq">mv, 200~325mv</li>
+					<li><input type="checkbox" @f.getBoolSeq>DRK Lamp<input type="text" value="@f.getStrSeq">mv, -50~200mv</li>
+					<li><input type="checkbox" @f.getBoolSeq>SO2 Slope<input type="text" value="@f.getStrSeq"> 1.0±0.5</li>
+					<li><input type="checkbox" @f.getBoolSeq>SO2 Offset<input type="text" value="@f.getStrSeq">&lt;250</li>
+					<li><input type="checkbox" @f.getBoolSeq>HVPS<input type="text" value="@f.getStrSeq">1.0±0.3</li>
+					<li><input type="checkbox" @f.getBoolSeq>Rx Cell TMP<input type="text" value="@f.getStrSeq">VDC, 400~900</li>
+					<li><input type="checkbox" @f.getBoolSeq>PMT TEMP.<input type="text" value="@f.getStrSeq"> ℃,50±1</li>
+					<li><input type="checkbox" @f.getBoolSeq>NOx Offset<input type="text" value="@f.getStrSeq"> ℃,9±2</li>
+				</ol>
+			</li>
+			<li><input type="checkbox" @f.getBoolSeq>確認無警訊顯示</li>
+		</ol>
+	</li>
+	<li class="list-group-item">一氧化碳分析儀(CO)
+		<ol>
+			<li><input type="checkbox" @f.getBoolSeq>更換Filter</li>
+			<li>功能性檢查
+				<ol>
+					<li><input type="checkbox" @f.getBoolSeq>Sample flow <input type="text" value="@f.getStrSeq"> c.c/min, 800±80</li>
+					<li><input type="checkbox" @f.getBoolSeq>Bench TEMP.<input type="text" value="@f.getStrSeq"> ℃(48±2)</li>
+					<li><input type="checkbox" @f.getBoolSeq>Mirror/wheel TEMP<input type="text" value="@f.getStrSeq"> ℃(68±2)</li>
+					<li><input type="checkbox" @f.getBoolSeq>CO MEAS<input type="text" value="@f.getStrSeq">CNTS/mv, AT ZERO</li>
+					<li><input type="checkbox" @f.getBoolSeq>CO REF<input type="text" value="@f.getStrSeq">CNTS/mv, AT ZERO</li>
+					<li><input type="checkbox" @f.getBoolSeq>MR RATIO<input type="text" value="@f.getStrSeq"></li>
+				</ol>
+			</li>
+			<li><input type="checkbox" @f.getBoolSeq>確認無警訊顯示</li>
+		</ol>
+	</li>
+	<li class="list-group-item">臭氧分析儀(O3)
+		<ol>
+			<li><input type="checkbox" @f.getBoolSeq>更換Filter</li>
+			<li>功能性檢查
+				<ol>
+					<li><input type="checkbox" @f.getBoolSeq>O3 MEAS<input type="text" value="@f.getStrSeq">mv, 2500~4800</li>
+					<li><input type="checkbox" @f.getBoolSeq>O3 REF<input type="text" value="@f.getStrSeq">mv, 2500~4800</li>
+					<li><input type="checkbox" @f.getBoolSeq>Sample flow<input type="text" value="@f.getStrSeq">c.c/min, 800±80</li>
+					<li><input type="checkbox" @f.getBoolSeq>Photo lamp TEMP<input type="text" value="@f.getStrSeq"> ℃, 58±1</li>
+				</ol>
+			</li>
+			<li><input type="checkbox" @f.getBoolSeq>確認無警訊顯示</li>
+		</ol>
+	</li>
+	<li class="list-group-item">碳氫化合物分析儀(THC)
+		<ol>
+			<li><input type="checkbox" @f.getBoolSeq>更換Filter</li>
+			<li>功能性檢查
+				<ol>
+					<li><input type="checkbox" @f.getBoolSeq>Sample flow<input type="text" value="@f.getStrSeq">c.c/min, >35</li>
+					<li><input type="checkbox" @f.getBoolSeq>Zero presser<input type="text" value="@f.getStrSeq">Bar, 1±0.1</li>
+					<li><input type="checkbox" @f.getBoolSeq>H2 presser<input type="text" value="@f.getStrSeq">Bar, 1±0.1</li>
+					<li><input type="checkbox" @f.getBoolSeq>Sample presser<input type="text" value="@f.getStrSeq">Bar, 0.5±0.1</li>
+				</ol>
+			</li>
+			<li><input type="checkbox" @f.getBoolSeq>檢查點火功能正常</li>
+			<li><input type="checkbox" @f.getBoolSeq>確認無警訊顯示</li>
+			<li><input type="checkbox" @f.getBoolSeq>H2產生器分子篩變色檢查(達50%以下需更換)</li>
+		</ol>
+	</li>
+	<li class="list-group-item">懸浮微粒連續測定分析儀(PM10&TSP)
+		<ol>
+			<li><input type="checkbox" @f.getBoolSeq>檢查濾紙帶存量</li>
+			<li><input type="checkbox" @f.getBoolSeq>確認幫浦運轉正常, 流量<input type="text" value="@f.getStrSeq">l/min, 16.8±1</li>			
+			<li><input type="checkbox" @f.getBoolSeq>檢查採樣管加熱裝置正常</li>
+			<li><input type="checkbox" @f.getBoolSeq>採樣口與分粒器清潔</li>
+			<li><input type="checkbox" @f.getBoolSeq>檢查濾紙運轉與採樣點採集是否正常</li>
+		</ol>
+	</li>
+	<li class="list-group-item">氣象儀器
+		<ol>
+			<li><input type="checkbox" @f.getBoolSeq>目視檢查風速風向運轉正常</li>
+			<li><input type="checkbox" @f.getBoolSeq>確認溫濕度計運作正常，記錄現場值. 溫度:<input type="text" value="@f.getStrSeq"> 濕度:<input type="text" value="@f.getStrSeq"></li>			
+			<li><input type="checkbox" @f.getBoolSeq>清潔溫濕度計進氣口</li>
+			<li><input type="checkbox" @f.getBoolSeq>確認雨量計固定良好</li>
+		</ol>
+	</li>
+	<li class="list-group-item">站房
+		<ol>
+			<li>站內
+				<ol>
+					<li><input type="checkbox" @f.getBoolSeq>站房溫度正常, <input type="text" value="@f.getStrSeq">℃</li>
+					<li><input type="checkbox" @f.getBoolSeq>門禁刷卡正常</li>
+					<li><input type="checkbox" @f.getBoolSeq>測站單周用電量計算, 用電量<input type="text" value="@f.getStrSeq"></li>
+					<li><input type="checkbox" @f.getBoolSeq>門鎖開關正常</li>
+					<li><input type="checkbox" @f.getBoolSeq>清潔室內及設備</li>
+					<li><input type="checkbox" @f.getBoolSeq>文件歸位(維護報表及操作手冊)</li>
+					<li><input type="checkbox" @f.getBoolSeq>警報器、攝影機等設備運作正常</li>
+					<li><input type="checkbox" @f.getBoolSeq>測站內無堆放雜物</li>
+				</ol>
+			</li>
+			<li>冷氣
+				<ol>
+					<li><input type="checkbox" @f.getBoolSeq>冷氣運作正常(無異聲)</li>
+					<li><input type="checkbox" @f.getBoolSeq>冷氣定時裝置正常</li>
+					<li><input type="checkbox" @f.getBoolSeq>冷氣吹風口冷度正常</li>
+					<li><input type="checkbox" @f.getBoolSeq>冷氣溫度設定正常</li>
+					<li><input type="checkbox" @f.getBoolSeq>電源及控制器固定正常</li>
+				</ol>
+			</li>			
+			<li>鋼瓶
+				<ol>
+					<li><input type="checkbox" @f.getBoolSeq>標準鋼瓶壓力正常, <input type="text" value="@f.getStrSeq">psig</li>
+					<li><input type="checkbox" @f.getBoolSeq>鋼瓶使用期限未逾期, 有效期限<input type="text" value="@f.getStrSeq"></li>
+					<li><input type="checkbox" @f.getBoolSeq>鋼瓶固定良好且無雜物與空瓶</li>
+					<li><input type="checkbox" @f.getBoolSeq>鋼瓶室抽風扇運轉及門鎖良好</li>
+					<li><input type="checkbox" @f.getBoolSeq>鋼瓶室及排風扇濾網清潔</li>
+				</ol>			
+			</li>
+			<li>電力及AVR系統
+				<ol>
+					<li><input type="checkbox" @f.getBoolSeq>指示燈正常</li>
+					<li><input type="checkbox" @f.getBoolSeq>輸入及輸出電壓正常</li>
+					<li><input type="checkbox" @f.getBoolSeq>檢查無漏電現象</li>
+					<li><input type="checkbox" @f.getBoolSeq>AVR動作正常</li>
+				</ol>			
+			</li>
+			<li>採樣系統
+				<ol>
+					<li><input type="checkbox" @f.getBoolSeq>採樣系統保持清潔無破損</li>
+					<li><input type="checkbox" @f.getBoolSeq>壓差計動作正常</li>
+					<li><input type="checkbox" @f.getBoolSeq>歧管處是否套上墊圈</li>
+					<li><input type="checkbox" @f.getBoolSeq>採樣風扇運轉正常</li>
+					<li><input type="checkbox" @f.getBoolSeq>採樣及校正鐵氟龍管無積水現象</li>
+					<li><input type="checkbox" @f.getBoolSeq>管路連接正常</li>
+				</ol>			
+			</li>
+			<li>PLC系統
+				<ol>
+					<li><input type="checkbox" @f.getBoolSeq>數據機傳送正常(TX，RX燈號正常)</li>
+					<li><input type="checkbox" @f.getBoolSeq>時間設定正常</li>
+				</ol>			
+			</li>
+		</ol>
+	</li>
+</ol>
+<div class="form-group">
+	<label class="col-lg-2 control-label">維修及改善建議 (問題與結果說明)</label>
+	<div class="col-lg-10">
+		<textarea class="form-control" rows="3" id="comment">@f.comments(0)</textarea>
+	</div>	                	
+</div>
+<div class="form-group">
+	<label class="col-lg-2 control-label">處理時間</label>
+	<div class="input-daterange input-group">
+		<span class="input-group-addon"><i class="fa fa-calendar"></i></span><input type="text" value="@f.getStrSeq" class="input-sm form-control" name="start" id="reportStart" required/>
+    	<span class="input-group-addon">至</span>
+    	<input type="text" value="@f.getStrSeq" class="input-sm form-control" name="end" id="reportEnd" required/>                        
+	</div>
+</div>
+<div class="form-group">
+	<div class="col-lg-1 col-lg-offset-1">
+		<button type="button" class="btn btn-primary" id="updateForm">更新</button>
+	</div>
+</div>
+</form>
+<script>
+	var ticketID = "@ID";
+</script>
+<script>
+$( document ).ready(function() {
+	$('#reportStart').datetimepicker({
+		format: 'YYYY-MM-D HH:mm',
+		defaultDate: moment().subtract(1, 'days'),
+    	locale: "zh-TW"
+	});
+	$('#reportEnd').datetimepicker({
+		format: 'YYYY-MM-D HH:mm',
+		defaultDate: moment().subtract(1, 'hours'),
+    	locale: "zh-TW"
+	});
+
+	$("#updateForm").click(function(){
+		var start = $('#reportStart').val();
+		var end = $('#reportEnd').val();
+			
+		var $boolValues = $("#weekForm :checkbox");
+		var boolValues = [];
+		for(var i=0;i<$boolValues.length;i++){
+			$check = $boolValues.eq(i);			
+			boolValues.push($check.prop("checked"));
+		}
+		
+		var $strValues = $("#weekForm :text");
+		var strValues = [];
+		for(var i=0;i<$strValues.length;i++){
+			strValues.push($strValues[i].value);
+		}
+		
+		var comments = [];
+		comments.push($("#comment").val());
+		
+		var formData = {
+			start: start, 
+			end: end, 
+			boolValues: boolValues, 
+			strValues: strValues, 
+			comments: comments
+		};
+
+		var url = "/UpdateForm/" + ticketID;
+		$.ajax({
+			url : url,
+			data : JSON.stringify(formData),
+			contentType : "application/json; charset=utf-8",
+			type : "POST",
+			dataType : "json",
+			success : function(result) {
+				alert("成功");
+			},
+			error : function(xhr, status, errorThrown) {
+				console.log("錯誤訊息:" + status + "-" + errorThrown);
+			},
+
+			complete : function(xhr, status) {
+				$("body").css("cursor", "default");
+			}
+		});		
+	});
+});	
+</script>

@@ -1,0 +1,261 @@
+@* biweekForm Template File *@
+@(ID:Int, f:FormData)
+<form class="form-horizontal" id="weekForm">
+<table class="table table-striped table-hover">
+<thead>
+	<tr>
+		<th>項目</th>
+		<th>零 點 讀 值</th>
+		<th>零 點 標 準</th>
+		<th>是否符合規範</th>
+	</tr>
+</thead>
+<tbody>
+	<tr>
+		<td>SO2(ppb)</td>
+		<td><input type="text" value="@f.getStrSeq"></td>
+		<td>3.00 ppb</td>
+		<td><input type="checkbox" @f.getBoolSeq></td>
+	</tr>
+	<tr>
+		<td>NOX(ppb)</td>
+		<td><input type="text" value="@f.getStrSeq"></td>
+		<td>5.00 ppb</td>
+		<td><input type="checkbox" @f.getBoolSeq></td>
+	</tr>
+	<tr>
+		<td>NO(ppb)</td>
+		<td><input type="text" value="@f.getStrSeq"></td>
+		<td>5.00 ppb</td>
+		<td><input type="checkbox" @f.getBoolSeq></td>
+	</tr>
+	<tr>
+		<td>CO(ppm)</td>
+		<td><input type="text" value="@f.getStrSeq"></td>
+		<td>0.10 ppb</td>
+		<td><input type="checkbox" @f.getBoolSeq></td>
+	</tr>
+	<tr>
+		<td>O3(ppb)</td>
+		<td><input type="text" value="@f.getStrSeq"></td>
+		<td>5.00 ppb</td>
+		<td><input type="checkbox" @f.getBoolSeq></td>
+	</tr>
+	<tr>
+		<td>CH4(ppb)</td>
+		<td><input type="text" value="@f.getStrSeq"></td>
+		<td>0.20 ppb</td>
+		<td><input type="checkbox" @f.getBoolSeq></td>
+	</tr>
+	<tr>
+		<td>NMHC(ppm)</td>
+		<td><input type="text" value="@f.getStrSeq"></td>
+		<td>0.10 ppb</td>
+		<td><input type="checkbox" @f.getBoolSeq></td>
+	</tr>
+</tbody>
+</table>
+<table class="table table-striped table-hover">
+<thead>
+	<tr>
+		<th>項目</th>
+		<th>全 幅 值</th>
+		<th>全 幅 讀 值</th>
+		<th>全 幅 偏 移 率</th>
+		<th>20% 檢 查</th>
+		<th>20% 偏 移 率</th>
+		<th>SLOPE</th>
+		<th>OFFSET</th>
+		<th>是否符合規範</th>
+	</tr>
+</thead>
+<tbody>
+	<tr>
+		<td>SO2(ppb)</td>
+		<td><input type="text" value="@f.getStrSeq"></td>
+		<td><input type="text" value="@f.getStrSeq"></td>
+		<td><input type="text" value="@f.getStrSeq"></td>
+		<td><input type="text" value="@f.getStrSeq"></td>
+		<td><input type="text" value="@f.getStrSeq"></td>
+		<td><input type="text" value="@f.getStrSeq"></td>
+		<td><input type="text" value="@f.getStrSeq"></td>		
+		<td><input type="checkbox" @f.getBoolSeq></td>
+	</tr>
+	<tr>
+		<td>NOX(ppb)</td>
+		<td><input type="text" value="@f.getStrSeq"></td>
+		<td><input type="text" value="@f.getStrSeq"></td>
+		<td><input type="text" value="@f.getStrSeq"></td>
+		<td><input type="text" value="@f.getStrSeq"></td>
+		<td><input type="text" value="@f.getStrSeq"></td>
+		<td><input type="text" value="@f.getStrSeq"></td>
+		<td><input type="text" value="@f.getStrSeq"></td>		
+		<td><input type="checkbox" @f.getBoolSeq></td>
+	</tr>	
+	<tr>
+		<td>NO(ppb)</td>
+		<td><input type="text" value="@f.getStrSeq"></td>
+		<td><input type="text" value="@f.getStrSeq"></td>
+		<td><input type="text" value="@f.getStrSeq"></td>
+		<td><input type="text" value="@f.getStrSeq"></td>
+		<td><input type="text" value="@f.getStrSeq"></td>
+		<td><input type="text" value="@f.getStrSeq"></td>
+		<td><input type="text" value="@f.getStrSeq"></td>				
+		<td><input type="checkbox" @f.getBoolSeq></td>
+	</tr>	
+	<tr>
+		<td>CO(ppm)</td>
+		<td><input type="text" value="@f.getStrSeq"></td>
+		<td><input type="text" value="@f.getStrSeq"></td>
+		<td><input type="text" value="@f.getStrSeq"></td>
+		<td><input type="text" value="@f.getStrSeq"></td>
+		<td><input type="text" value="@f.getStrSeq"></td>
+		<td><input type="text" value="@f.getStrSeq"></td>
+		<td><input type="text" value="@f.getStrSeq"></td>				
+		<td><input type="checkbox" @f.getBoolSeq></td>
+	</tr>	
+	<tr>
+		<td>O3(ppb)</td>
+		<td><input type="text" value="@f.getStrSeq"></td>
+		<td><input type="text" value="@f.getStrSeq"></td>
+		<td><input type="text" value="@f.getStrSeq"></td>
+		<td><input type="text" value="@f.getStrSeq"></td>
+		<td><input type="text" value="@f.getStrSeq"></td>
+		<td><input type="text" value="@f.getStrSeq"></td>
+		<td><input type="text" value="@f.getStrSeq"></td>		
+		<td><input type="checkbox" @f.getBoolSeq></td>
+	</tr>	
+	<tr>
+		<td>CH4(ppm)</td>
+		<td><input type="text" value="@f.getStrSeq"></td>
+		<td><input type="text" value="@f.getStrSeq"></td>
+		<td><input type="text" value="@f.getStrSeq"></td>
+		<td><input type="text" value="@f.getStrSeq"></td>
+		<td><input type="text" value="@f.getStrSeq"></td>
+		<td><input type="text" value="@f.getStrSeq"></td>
+		<td><input type="text" value="@f.getStrSeq"></td>				
+		<td><input type="checkbox" @f.getBoolSeq></td>
+	</tr>	
+	<tr>
+		<td>NMHC(ppm)</td>
+		<td><input type="text" value="@f.getStrSeq"></td>
+		<td><input type="text" value="@f.getStrSeq"></td>
+		<td><input type="text" value="@f.getStrSeq"></td>
+		<td><input type="text" value="@f.getStrSeq"></td>
+		<td><input type="text" value="@f.getStrSeq"></td>
+		<td><input type="text" value="@f.getStrSeq"></td>
+		<td><input type="text" value="@f.getStrSeq"></td>				
+		<td><input type="checkbox" @f.getBoolSeq></td>
+	</tr>		
+</tbody>
+</table>
+<ol class="list-group">
+	<li class="list-group-item">
+		懸浮微粒,連續測定分析儀(PM10&TSP)
+		<ol>
+			<li><input type="checkbox" @f.getBoolSeq>β-Count檢查</li>
+			<li><input type="checkbox" @f.getBoolSeq>以標準膜片進行ZERO/SPAN校正</li>
+			<li><input type="checkbox" @f.getBoolSeq>確認續採樣濾點為乾淨濾點</li>
+			<li><input type="checkbox" @f.getBoolSeq>日期、時間設定是否正常</li>			
+		</ol>
+	</li>
+	<li class="list-group-item">
+		氣象儀器
+		<ol>
+			<li><input type="checkbox" @f.getBoolSeq>清潔濕度計sensor</li>
+		</ol>
+	</li>
+	<li class="list-group-item">
+		站房
+		<ol>
+			<li><input type="checkbox" @f.getBoolSeq>站房外各電源線,信號線固定良好</li>
+			<li><input type="checkbox" @f.getBoolSeq>站房內桌椅,地板之清潔</li>
+		</ol>
+	</li>
+	
+</ol>
+<div class="form-group">
+	<label class="col-lg-2 control-label">維修及改善建議 (問題與結果說明)</label>
+	<div class="col-lg-10">
+		<textarea class="form-control" rows="3" id="comment">@f.comments(0)</textarea>
+	</div>	                	
+</div>
+<div class="form-group">
+	<label class="col-lg-2 control-label">處理時間</label>
+	<div class="input-daterange input-group">
+		<span class="input-group-addon"><i class="fa fa-calendar"></i></span><input type="text" value="@f.getStrSeq" class="input-sm form-control" name="start" id="reportStart" required/>
+    	<span class="input-group-addon">至</span>
+    	<input type="text" value="@f.getStrSeq" class="input-sm form-control" name="end" id="reportEnd" required/>                        
+	</div>
+</div>
+<div class="form-group">
+	<div class="col-lg-1 col-lg-offset-1">
+		<button type="button" class="btn btn-primary" id="updateForm">更新</button>
+	</div>
+</div>
+</form>
+<script>
+	var ticketID = "@ID";
+</script>
+<script>
+$( document ).ready(function() {
+	$('#reportStart').datetimepicker({
+		format: 'YYYY-MM-D HH:mm',
+		defaultDate: moment().subtract(1, 'days'),
+    	locale: "zh-TW"
+	});
+	$('#reportEnd').datetimepicker({
+		format: 'YYYY-MM-D HH:mm',
+		defaultDate: moment().subtract(1, 'hours'),
+    	locale: "zh-TW"
+	});
+
+	$("#updateForm").click(function(){
+		var start = $('#reportStart').val();
+		var end = $('#reportEnd').val();
+			
+		var $boolValues = $("#weekForm :checkbox");
+		var boolValues = [];
+		for(var i=0;i<$boolValues.length;i++){
+			$check = $boolValues.eq(i);			
+			boolValues.push($check.prop("checked"));
+		}
+		
+		var $strValues = $("#weekForm :text");
+		var strValues = [];
+		for(var i=0;i<$strValues.length;i++){
+			strValues.push($strValues[i].value);
+		}
+		
+		var comments = [];
+		comments.push($("#comment").val());
+		
+		var formData = {
+			start: start, 
+			end: end, 
+			boolValues: boolValues, 
+			strValues: strValues, 
+			comments: comments
+		};
+
+		var url = "/UpdateForm/" + ticketID;
+		$.ajax({
+			url : url,
+			data : JSON.stringify(formData),
+			contentType : "application/json; charset=utf-8",
+			type : "POST",
+			dataType : "json",
+			success : function(result) {
+				alert("成功");
+			},
+			error : function(xhr, status, errorThrown) {
+				console.log("錯誤訊息:" + status + "-" + errorThrown);
+			},
+
+			complete : function(xhr, status) {
+				$("body").css("cursor", "default");
+			}
+		});		
+	});
+});	
+</script>

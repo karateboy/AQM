@@ -1,0 +1,159 @@
+@* halfYearForm Template File *@
+@(ID:Int, f:FormData)
+<form class="form-horizontal" id="weekForm">
+	<li class="list-group-item">
+		氣體校正系統 (Calibrator)
+		<ol>
+			<li><input type="checkbox" @f.getBoolSeq>清理儀器內部管路</li>
+		</ol>
+	</li>
+
+	<li class="list-group-item">
+		零氣體產生器 (Zero air)
+		<ol>
+			<li><input type="checkbox" @f.getBoolSeq>清理儀器內部管路</li>
+		</ol>
+	</li>
+	<li class="list-group-item">
+		氮氧化物分析儀 (NOx)
+		<ol>
+			<li><input type="checkbox" @f.getBoolSeq>清理儀器內部管路</li>
+			<li><input type="checkbox" @f.getBoolSeq>DFU檢查，不良更換</li>
+			<li><input type="checkbox" @f.getBoolSeq>限流器濾片清理及檢查，不良更換</li>						
+		</ol>
+	</li>
+	<li class="list-group-item">
+		二氧化硫分析儀 (SO2)
+		<ol>
+			<li><input type="checkbox" @f.getBoolSeq>清理儀器內部管路</li>
+			<li><input type="checkbox" @f.getBoolSeq>DFU檢查，不良更換</li>
+			<li><input type="checkbox" @f.getBoolSeq>紫外燈管檢查調整及檢查，不良更換</li>
+		</ol>
+	</li>
+	<li class="list-group-item">
+		一氧化碳分析儀 (CO)
+		<ol>
+			<li><input type="checkbox" @f.getBoolSeq>清理儀器內部管路</li>
+			<li><input type="checkbox" @f.getBoolSeq>PUMP膜片及閥門檢查調整及檢查，不良更換</li>
+		</ol>
+	</li>
+	<li class="list-group-item">
+		臭氧分析儀 (O3)
+		<ol>
+			<li><input type="checkbox" @f.getBoolSeq>清理儀器內部管路</li>
+			<li><input type="checkbox" @f.getBoolSeq>限流器濾片清理/檢查，不良更換</li>
+			<li><input type="checkbox" @f.getBoolSeq>UV lamp 檢查是否良好</li>
+		</ol>
+	</li>
+	<li class="list-group-item">
+		碳氫化合物分析儀 (THC)
+		<ol>
+			<li><input type="checkbox" @f.getBoolSeq>清理儀器內部管路</li>
+			<li><input type="checkbox" @f.getBoolSeq>NMHC去除器（Scrubber）檢查，不良更換</li>
+			<li><input type="checkbox" @f.getBoolSeq>PUMP膜片及閥門檢查調整及檢查，不良更換</li>						
+		</ol>
+	</li>
+	<li class="list-group-item">
+		懸浮微粒連續測定分析儀 (PM10&TSP)
+		<ol>
+			<li><input type="checkbox" @f.getBoolSeq>流量/壓力計內部濾紙更換</li>
+			<li><input type="checkbox" @f.getBoolSeq>採樣動作檢查是否正常</li>
+			<li><input type="checkbox" @f.getBoolSeq>檢查幫浦有無異常狀況</li>						
+		</ol>
+	</li>
+	
+	<li class="list-group-item">
+		站房
+		<ol>
+			<li><input type="checkbox" @f.getBoolSeq>採樣管之鐵龍管清潔及第一截管更換</li>
+			<li><input type="checkbox" @f.getBoolSeq>檢查站房水泥基座是否破裂或需補強</li>
+			<li><input type="checkbox" @f.getBoolSeq>檢查外接電源固定良好、電表之接線盒及鎖頭正常</li>										
+		</ol>
+	</li>	
+</ol>
+
+<div class="form-group">
+	<label class="col-lg-2 control-label">維修及改善建議 (問題與結果說明)</label>
+	<div class="col-lg-10">
+		<textarea class="form-control" rows="3" id="comment">@f.comments(0)</textarea>
+	</div>	                	
+</div>
+<div class="form-group">
+	<label class="col-lg-2 control-label">處理時間</label>
+	<div class="input-daterange input-group">
+		<span class="input-group-addon"><i class="fa fa-calendar"></i></span><input type="text" value="@f.getStrSeq" class="input-sm form-control" name="start" id="reportStart" required/>
+    	<span class="input-group-addon">至</span>
+    	<input type="text" value="@f.getStrSeq" class="input-sm form-control" name="end" id="reportEnd" required/>                        
+	</div>
+</div>
+<div class="form-group">
+	<div class="col-lg-1 col-lg-offset-1">
+		<button type="button" class="btn btn-primary" id="updateForm">更新</button>
+	</div>
+</div>
+</form>
+<script>
+	var ticketID = "@ID";
+</script>
+<script>
+$( document ).ready(function() {
+	$('#reportStart').datetimepicker({
+		format: 'YYYY-MM-D HH:mm',
+		defaultDate: moment().subtract(1, 'days'),
+    	locale: "zh-TW"
+	});
+	$('#reportEnd').datetimepicker({
+		format: 'YYYY-MM-D HH:mm',
+		defaultDate: moment().subtract(1, 'hours'),
+    	locale: "zh-TW"
+	});
+
+	$("#updateForm").click(function(){
+		var start = $('#reportStart').val();
+		var end = $('#reportEnd').val();
+			
+		var $boolValues = $("#weekForm :checkbox");
+		var boolValues = [];
+		for(var i=0;i<$boolValues.length;i++){
+			$check = $boolValues.eq(i);			
+			boolValues.push($check.prop("checked"));
+		}
+		
+		var $strValues = $("#weekForm :text");
+		var strValues = [];
+		for(var i=0;i<$strValues.length;i++){
+			strValues.push($strValues[i].value);
+		}
+		
+		var comments = [];
+		comments.push($("#comment").val());
+		
+		var formData = {
+			start: start, 
+			end: end, 
+			boolValues: boolValues, 
+			strValues: strValues, 
+			comments: comments
+		};
+
+		var url = "/UpdateForm/" + ticketID;
+		$.ajax({
+			url : url,
+			data : JSON.stringify(formData),
+			contentType : "application/json; charset=utf-8",
+			type : "POST",
+			dataType : "json",
+			success : function(result) {
+				alert("成功");
+			},
+			error : function(xhr, status, errorThrown) {
+				console.log("錯誤訊息:" + status + "-" + errorThrown);
+			},
+
+			complete : function(xhr, status) {
+				$("body").css("cursor", "default");
+			}
+		});		
+	});
+});	
+</script>

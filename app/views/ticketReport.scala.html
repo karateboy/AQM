@@ -1,5 +1,6 @@
 @* ticketReport Template File *@
 @(tickets: List[Ticket], userMap:Map[Int, User])
+<p>點擊ID更新案件內容</p>
 <table id="ticketReport" class="table">
 <thead>
 	<tr>
@@ -18,7 +19,7 @@
 <tbody>
 @for(t <- tickets){
 	<tr>
-		<td>@t.id</td>
+		<td><a href="#" onClick="loadPage('/Ticket/'+'@t.id','維修保養','案件細節')">@t.id</a></td>
 		<td>@t.submit_date.toString("YYYY-MM-d hh:mm")</td>
 		<td>@userMap(t.submiter_id).name</td>
 		<td>@TicketType.map(t.ticketType)</td>
@@ -26,7 +27,7 @@
 		@if(t.monitorType.isEmpty){
 			<td>-</td>
 		}else{
-			<td>@t.monitorType.get</td>
+			<td>@MonitorType.map(t.monitorType.get).desp</td>
 		}
 		<td>@t.reason</td>
 		<td>@userMap(t.owner_id).name</td>

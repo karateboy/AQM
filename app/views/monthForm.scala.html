@@ -1,0 +1,191 @@
+@* monthForm Template File *@
+@(ID:Int, f:FormData)
+<form class="form-horizontal" id="weekForm">
+<ol class="list-group">
+	<li class="list-group-item">
+		氣體校正系統 (Calibrator)
+		<ol>
+			<li><input type="checkbox" @f.getBoolSeq>確認外部管路連接良好</li>
+			<li><input type="checkbox" @f.getBoolSeq>確認Cal/Dil 流量正常</li>
+			<li><input type="checkbox" @f.getBoolSeq>進行流量多點校正(紀錄格式請見附件1)</li>
+			<li><input type="checkbox" @f.getBoolSeq>確認氣體控制閥正常（Zero air、Gas 、O3）</li>
+			<li><input type="checkbox" @f.getBoolSeq>手動啟動校正系統功能檢查</li>			
+		</ol>
+	</li>
+	<li class="list-group-item">
+		零氣體產生器 (Zero air)
+		<ol>
+			<li><input type="checkbox" @f.getBoolSeq>更換轉換藥劑(Purakol)</li>
+			<li><input type="checkbox" @f.getBoolSeq>確認氣體控制閥是否正常</li>
+		</ol>
+	</li>
+	<li class="list-group-item">
+		氮氧化物分析儀 (NOx)
+		<ol>
+			<li><input type="checkbox" @f.getBoolSeq>檢查電磁閥切換正常</li>
+			<li><input type="checkbox" @f.getBoolSeq>確認儀器端與測站電腦端測值相同</li>
+			<li><input type="checkbox" @f.getBoolSeq>確認儀器內部電源線、訊號線、組件固定良好</li>
+			<li><input type="checkbox" @f.getBoolSeq>執行多點校正(紀錄格式請見附件2)</li>			
+		</ol>
+	</li>
+	<li class="list-group-item">
+		二氧化硫分析儀 (SO2)
+		<ol>
+			<li><input type="checkbox" @f.getBoolSeq>檢查電磁閥切換正常</li>
+			<li><input type="checkbox" @f.getBoolSeq>確認儀器端與測站電腦端測值相同</li>
+			<li><input type="checkbox" @f.getBoolSeq>確認儀器內部電源線、訊號線、組件固定良好</li>
+			<li><input type="checkbox" @f.getBoolSeq>執行多點校正(紀錄格式請見附件2)</li>			
+		</ol>
+	</li>
+	<li class="list-group-item">
+		一氧化碳分析儀 (CO)
+		<ol>
+			<li><input type="checkbox" @f.getBoolSeq>檢查電磁閥切換正常</li>
+			<li><input type="checkbox" @f.getBoolSeq>確認儀器端與測站電腦端測值相同</li>
+			<li><input type="checkbox" @f.getBoolSeq>確認儀器內部電源線、訊號線、組件固定良好</li>
+			<li><input type="checkbox" @f.getBoolSeq>執行多點校正(紀錄格式請見附件2)</li>			
+		</ol>
+	</li>
+	<li class="list-group-item">
+		臭氧分析儀 (O3)
+		<ol>
+			<li><input type="checkbox" @f.getBoolSeq>檢查電磁閥切換正常</li>
+			<li><input type="checkbox" @f.getBoolSeq>確認儀器端與測站電腦端測值相同</li>
+			<li><input type="checkbox" @f.getBoolSeq>確認儀器內部電源線、訊號線、組件固定良好</li>
+			<li><input type="checkbox" @f.getBoolSeq>執行多點校正(紀錄格式請見附件2)</li>			
+		</ol>
+	</li>
+	<li class="list-group-item">
+		碳氫化合物分析儀 (THC)
+		<ol>
+			<li><input type="checkbox" @f.getBoolSeq>檢查電磁閥切換正常</li>
+			<li><input type="checkbox" @f.getBoolSeq>ZERO/MET/NMHC 電子訊號正確</li>
+			<li><input type="checkbox" @f.getBoolSeq>確認儀器內部電源線、訊號線、組件固定良好</li>
+			<li><input type="checkbox" @f.getBoolSeq>H2產生器純水添加(EC< 2 μs/㎝)</li>			
+			<li><input type="checkbox" @f.getBoolSeq>執行多點校正(紀錄格式請見附件2)</li>			
+		</ol>
+	</li>
+	<li class="list-group-item">
+		懸浮微粒連續測定分析儀 (PM10&TSP)
+		<ol>
+			<li><input type="checkbox" @f.getBoolSeq>清潔PM10採樣頭，並噴上矽膠</li>
+			<li><input type="checkbox" @f.getBoolSeq>確認PM10/TSP管路及信號線路正常</li>
+			<li><input type="checkbox" @f.getBoolSeq>以傳輸標準流量計進行流量校正(紀錄格式請見附件3)</li>
+		</ol>
+	</li>
+	<li class="list-group-item">
+		氣象儀器
+		<ol>
+			<li><input type="checkbox" @f.getBoolSeq>檢查風向計橫桿指南北向</li>
+			<li><input type="checkbox" @f.getBoolSeq>清潔雨量計過濾網及天平量杯</li>
+			<li><input type="checkbox" @f.getBoolSeq>檢視感測器動作正常、順暢</li>
+			<li><input type="checkbox" @f.getBoolSeq>檢視鐵塔及支架無損傷且固定良好</li>
+			<li>依據儀器特性，分別進行氣象儀器檢查(紀錄格式請見附件4)
+				<ol>
+					<li><input type="checkbox" @f.getBoolSeq>溫度計比對測試</li>
+					<li><input type="checkbox" @f.getBoolSeq>濕度計比對測試</li>
+					<li><input type="checkbox" @f.getBoolSeq>風向計測試</li>
+					<li><input type="checkbox" @f.getBoolSeq>風速計測試:力矩測試</li>
+					<li><input type="checkbox" @f.getBoolSeq>雨量計測試</li>
+					<li><input type="checkbox" @f.getBoolSeq>大氣壓力計測試</li>
+					<li><input type="checkbox" @f.getBoolSeq>風向指標測試</li>					
+				</ol>
+			</li>
+		</ol>
+	</li>
+	<li class="list-group-item">
+		站房
+		<ol>
+			<li><input type="checkbox" @f.getBoolSeq>清潔Sample inlet之喇叭口</li>
+			<li><input type="checkbox" @f.getBoolSeq>冷氣機濾網清潔</li>
+			<li><input type="checkbox" @f.getBoolSeq>檢查配電盤無熔絲開關動作正常、內接線正常且並無不良之改裝</li>
+		</ol>
+	</li>
+	
+</ol>
+
+<div class="form-group">
+	<label class="col-lg-2 control-label">維修及改善建議 (問題與結果說明)</label>
+	<div class="col-lg-10">
+		<textarea class="form-control" rows="3" id="comment">@f.comments(0)</textarea>
+	</div>	                	
+</div>
+<div class="form-group">
+	<label class="col-lg-2 control-label">處理時間</label>
+	<div class="input-daterange input-group">
+		<span class="input-group-addon"><i class="fa fa-calendar"></i></span><input type="text" value="@f.getStrSeq" class="input-sm form-control" name="start" id="reportStart" required/>
+    	<span class="input-group-addon">至</span>
+    	<input type="text" value="@f.getStrSeq" class="input-sm form-control" name="end" id="reportEnd" required/>                        
+	</div>
+</div>
+<div class="form-group">
+	<div class="col-lg-1 col-lg-offset-1">
+		<button type="button" class="btn btn-primary" id="updateForm">更新</button>
+	</div>
+</div>
+</form>
+<script>
+	var ticketID = "@ID";
+</script>
+<script>
+$( document ).ready(function() {
+	$('#reportStart').datetimepicker({
+		format: 'YYYY-MM-D HH:mm',
+		defaultDate: moment().subtract(1, 'days'),
+    	locale: "zh-TW"
+	});
+	$('#reportEnd').datetimepicker({
+		format: 'YYYY-MM-D HH:mm',
+		defaultDate: moment().subtract(1, 'hours'),
+    	locale: "zh-TW"
+	});
+
+	$("#updateForm").click(function(){
+		var start = $('#reportStart').val();
+		var end = $('#reportEnd').val();
+			
+		var $boolValues = $("#weekForm :checkbox");
+		var boolValues = [];
+		for(var i=0;i<$boolValues.length;i++){
+			$check = $boolValues.eq(i);			
+			boolValues.push($check.prop("checked"));
+		}
+		
+		var $strValues = $("#weekForm :text");
+		var strValues = [];
+		for(var i=0;i<$strValues.length;i++){
+			strValues.push($strValues[i].value);
+		}
+		
+		var comments = [];
+		comments.push($("#comment").val());
+		
+		var formData = {
+			start: start, 
+			end: end, 
+			boolValues: boolValues, 
+			strValues: strValues, 
+			comments: comments
+		};
+
+		var url = "/UpdateForm/" + ticketID;
+		$.ajax({
+			url : url,
+			data : JSON.stringify(formData),
+			contentType : "application/json; charset=utf-8",
+			type : "POST",
+			dataType : "json",
+			success : function(result) {
+				alert("成功");
+			},
+			error : function(xhr, status, errorThrown) {
+				console.log("錯誤訊息:" + status + "-" + errorThrown);
+			},
+
+			complete : function(xhr, status) {
+				$("body").css("cursor", "default");
+			}
+		});		
+	});
+});	
+</script>
