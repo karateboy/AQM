@@ -204,6 +204,15 @@ object Ticket {
       """.map {ticketMapper}.list().apply()
   }
 
+  def queryRepairTickets(start: DateTime, end: DateTime)(implicit session: DBSession = AutoSession) = {
+    sql"""
+      Select *
+      From Ticket
+      Where submit_date between ${start} and ${end} and ticketType = ${TicketType.repair.id} and active = 0
+      Order by submit_date      
+      """.map {ticketMapper}.list().apply()
+  }
+  
   def myTickets(ID: Int)(implicit session: DBSession = AutoSession) = {
     sql"""
       Select *

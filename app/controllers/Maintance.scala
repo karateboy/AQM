@@ -155,12 +155,12 @@ object Maintance extends Controller {
               param.monitors(0),
               mt,
               param.reason,
-              executeDate, 
-              if(t.ticketType != param.ticketType)
+              executeDate,
+              if (t.ticketType != param.ticketType)
                 Ticket.defaultFormData
               else
-                t.form, 
-              if(t.ticketType != param.ticketType)
+                t.form,
+              if (t.ticketType != param.ticketType)
                 Ticket.defaultRepairFormData
               else
                 t.repairForm)
@@ -182,15 +182,15 @@ object Maintance extends Controller {
           BadRequest(Json.obj("ok" -> false, "msg" -> JsError.toFlatJson(error)))
         },
         form => {
-          Logger.debug("bool #=>"+ form.boolValues.length)
-          Logger.debug("str #=>"+ form.strValues.length)
-          Logger.debug("str #=>"+ form.comments.length)
-          
+          Logger.debug("bool #=>" + form.boolValues.length)
+          Logger.debug("str #=>" + form.strValues.length)
+          Logger.debug("str #=>" + form.comments.length)
+
           Ticket.updateTicketFormData(ID, form)
           Ok(Json.obj("ok" -> true))
         })
   }
-  
+
   def updateRepairForm(ID: Int) = Security.Authenticated(BodyParsers.parse.json) {
     import Ticket._
     implicit request =>
@@ -202,7 +202,7 @@ object Maintance extends Controller {
           BadRequest(Json.obj("ok" -> false, "msg" -> JsError.toFlatJson(error)))
         },
         form => {
-          Logger.debug(form.toString())          
+          Logger.debug(form.toString())
           Ticket.updateRepairFormData(ID, form)
           Ok(Json.obj("ok" -> true))
         })
@@ -214,29 +214,29 @@ object Maintance extends Controller {
     else {
       val t = ticketOpt.get
       t.ticketType match {
-          case TicketType.maintance_week=>
-            Ok(views.html.weekMaintanceForm(ID, t.form))
-          case TicketType.maintance_biweek=>
-            Ok(views.html.biweekForm(ID, t.form))
-          case TicketType.maintance_month=>
-            Ok(views.html.monthForm(ID, t.form))
-          case TicketType.maintance_quarter=>
-            Ok(views.html.quarterForm(ID, t.form))
-          case TicketType.maintance_half_year=>
-            Ok(views.html.halfYearForm(ID, t.form))
-          case TicketType.maintance_year=>
-            Ok(views.html.yearForm(ID, t.form))
-          case TicketType.repair=>
-            val equipList = Equipment.map(t.monitor)
-            val partIdNameMap = Part.getIdNameMap()
-            val partEquipMap = Part.getEquipPartMap()
-            if(t.repairForm.equipmentId.length() != 0){
-              val equipment = Equipment.getEquipment(t.repairForm.equipmentId).get
-              val partList = partEquipMap.getOrElse(equipment.name, List.empty[Part])
-              Ok(views.html.repairForm(ID, t.repairForm, equipList, partIdNameMap, partList))              
-            }else{
-              Ok(views.html.repairForm(ID, t.repairForm, equipList, partIdNameMap, List.empty[Part]))
-            }
+        case TicketType.maintance_week =>
+          Ok(views.html.weekMaintanceForm(ID, t.form))
+        case TicketType.maintance_biweek =>
+          Ok(views.html.biweekForm(ID, t.form))
+        case TicketType.maintance_month =>
+          Ok(views.html.monthForm(ID, t.form))
+        case TicketType.maintance_quarter =>
+          Ok(views.html.quarterForm(ID, t.form))
+        case TicketType.maintance_half_year =>
+          Ok(views.html.halfYearForm(ID, t.form))
+        case TicketType.maintance_year =>
+          Ok(views.html.yearForm(ID, t.form))
+        case TicketType.repair =>
+          val equipList = Equipment.map(t.monitor)
+          val partIdNameMap = Part.getIdNameMap()
+          val partEquipMap = Part.getEquipPartMap()
+          if (t.repairForm.equipmentId.length() != 0) {
+            val equipment = Equipment.getEquipment(t.repairForm.equipmentId).get
+            val partList = partEquipMap.getOrElse(equipment.name, List.empty[Part])
+            Ok(views.html.repairForm(ID, t.repairForm, equipList, partIdNameMap, partList))
+          } else {
+            Ok(views.html.repairForm(ID, t.repairForm, equipList, partIdNameMap, List.empty[Part]))
+          }
       }
     }
   }
@@ -256,10 +256,10 @@ object Maintance extends Controller {
         Ok(views.html.closeTickets(tickets, usrMap))
       }
   }
-  
-  def closeTicketAction(idStr:String) = Security.Authenticated {
+
+  def closeTicketAction(idStr: String) = Security.Authenticated {
     val ids = idStr.split(":").toList
-    val idInt = ids.map { Integer.parseInt}
+    val idInt = ids.map { Integer.parseInt }
     Ticket.closeTicket(idInt)
     Ok(Json.obj("ok" -> true))
   }
@@ -276,7 +276,7 @@ object Maintance extends Controller {
       val adminUsers = User.getAdminUsers()
       val usrMap = Map(adminUsers.map { u => (u.id.get -> u) }: _*)
 
-      val title = TicketType.map(ticket.ticketType)+ticket.id
+      val title = TicketType.map(ticket.ticketType) + ticket.id
       val excelFile =
         ticket.ticketType match {
           case TicketType.maintance_week =>
@@ -294,15 +294,33 @@ object Maintance extends Controller {
           case TicketType.repair =>
             ExcelUtility.exportRepairForm(ticket, usrMap)
         }
-      
+
       Ok.sendFile(excelFile, fileName = _ =>
         play.utils.UriEncoding.encodePathSegment(title + ".xlsx", "UTF-8"),
         onClose = () => { Files.deleteIfExists(excelFile.toPath()) })
     }
   }
-  
+
   def equipmentHistory = Security.Authenticated {
-    Ok("YES☑  NO□")
+    implicit request =>
+      val userInfo = Security.getUserinfo(request).get
+      val group = Group.getGroup(userInfo.groupID).get
+      val adminUsers = User.getAdminUsers()
+
+      Ok(views.html.equipmentHistory(userInfo, group.privilege, adminUsers))
+  }
+
+  def equipmentHistoryReport(monitorStr: String, startStr: String, endStr: String) = Security.Authenticated {
+      val monitors = monitorStr.split(":").map { Monitor.withName }
+      val start = DateTime.parse(startStr)
+      val end = DateTime.parse(endStr) + 1.day
+
+      val tickets = Ticket.queryRepairTickets(start, end)
+      val filterTicket = tickets.filter { t => monitors.contains(t.monitor) }
+      val adminUsers = User.getAdminUsers()
+      val usrMap = Map(adminUsers.map { u => (u.id.get -> u) }: _*)
+
+    Ok(views.html.equipmentHistoryReport(filterTicket, usrMap))
   }
 
   def monitorJournal = Security.Authenticated {

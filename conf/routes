@@ -152,6 +152,7 @@ GET		/DownloadForm/:ID	controllers.Maintance.downloadForm(ID:Int)
 
 GET		/Form/:ID	controllers.Maintance.getForm(ID:Int)
 GET		/EquipmentHistory	controllers.Maintance.equipmentHistory
+GET		/EquipmentHistoryReport/:monitors/:start/:end controllers.Maintance.equipmentHistoryReport(monitors, start, end)
 GET		/MonitorJournal		controllers.Maintance.monitorJournal
 GET		/EquipmentManagement	controllers.Maintance.equipmentManagement
 GET		/PartManagement		controllers.Maintance.partManagement
