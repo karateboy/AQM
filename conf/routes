@@ -145,7 +145,10 @@ GET		/TicketReport/:ticketTypes/:monitors/:start/:end	controllers.Maintance.tick
 GET		/Ticket/:ID			controllers.Maintance.ticket(ID:Int)
 POST	/UpdateTicket/:ID	controllers.Maintance.updateTicket(ID:Int)
 POST	/UpdateForm/:ID		controllers.Maintance.updateForm(ID:Int)
+POST	/UpdateRepairForm/:ID	controllers.Maintance.updateRepairForm(ID: Int)
 GET		/CloseTicket		controllers.Maintance.closeTicket
+POST	/CloseTicket/:ids	controllers.Maintance.closeTicketAction(ids)
+GET		/DownloadForm/:ID	controllers.Maintance.downloadForm(ID:Int)
 
 GET		/Form/:ID	controllers.Maintance.getForm(ID:Int)
 GET		/EquipmentHistory	controllers.Maintance.equipmentHistory

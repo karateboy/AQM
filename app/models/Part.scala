@@ -25,6 +25,39 @@ object Part {
     }
   }
   
+  def getPart(id:String) = {
+    DB readOnly { implicit session =>
+      sql"""
+        Select * 
+        From Part
+        Where id = ${id}
+        """.map { r =>
+        Part(r.string(1), r.string(2), r.string(3), r.string(4), r.string(5))
+      }.single.apply
+    }
+  }
+  
+  def getEquipPartMap()={
+    import scala.collection.mutable.Map
+    val parts = getList
+    val map = Map.empty[String, List[Part]]
+    for(p <- parts){
+      val list = map.getOrElse(p.equipment, List.empty[Part])
+      
+      map.put(p.equipment, p::list)
+    }
+    map
+  }
+
+  def getIdNameMap()={
+    val parts = getList
+    val pairs=
+      for(p<-parts)
+        yield
+        (p.id -> p.name)
+    
+    Map(pairs :_*)
+  }
   def create(newPart:Part)={
     DB localTx { implicit session =>
       sql"""

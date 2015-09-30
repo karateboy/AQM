@@ -1,0 +1,251 @@
+@* repairForm Template File *@
+@(ID:Int, f:RepairFormData, equips:List[Equipment], partNameMap:Map[String, String], partList:List[Part])
+<form class="form-horizontal" id="repairForm">
+<div class="form-group">
+	<label class="col-lg-1 control-label">儀器設備</label>
+	<div class="col-lg-3">
+	<select id="equipment">
+		@for(equip<-equips){
+			@if(equip.id == f.equipmentId){
+				<option value="@equip.id" selected>@equip.id (@equip.name)</option>
+			}else{
+				<option value="@equip.id">@equip.id (@equip.name)</option>
+			}
+		}
+	</select>
+	</div>
+</div>
+<div id="charge">
+<div class="form-group">
+	<label class="col-lg-1 control-label">使用者</label>
+	<div class="col-lg-4">
+		<input type="text" id="str2" value="@f.getStr(0)">
+	</div>
+</div>
+<div class="form-group">
+	<label class="col-lg-1 control-label">收費方式</label>
+	<div class="col-lg-4">
+		<ul class="list-group">
+			<li class="list-group-item"><input type="checkbox" @f.getChecked(0) id="chk0">免費</li>
+			<li class="list-group-item"><input type="checkbox" @f.getChecked(1) id="chk1">維護合約</li>
+			<li class="list-group-item"><input type="checkbox" @f.getChecked(2) id="chk2">收費 <input type="text" id="str2" value="@f.getStr(1)"></li>
+		</ul>
+	</div>
+</div>
+<div class="form-group">
+	<label class="col-lg-1 control-label">故 障 說 明 (問題說明)</label>
+	<div class="col-lg-10">
+		<textarea class="form-control" rows="3" id="explain">@f.explain</textarea>
+	</div>
+</div>
+<div class="form-group">
+	<label class="col-lg-1 control-label">修 理 經 過 (結果說明)</label>
+	<div class="col-lg-10">
+		<textarea class="form-control" rows="3" id="result">@f.result</textarea>
+	</div>
+</div>
+
+<div class="form-group">
+	<label class="col-lg-1 control-label">結果</label>
+	<div class="col-lg-4">
+		<ul class="list-group">
+			<li class="list-group-item"><input type="checkbox" @f.getChecked(3) id="chk3">已修好</li>
+			<li class="list-group-item"><input type="checkbox" @f.getChecked(4) id="chk4">未修好</li>
+			<li class="list-group-item"><input type="checkbox" @f.getChecked(5) id="chk5">待料</li>
+		</ul>
+	</div>
+</div>
+</div>
+
+
+<div class="form-group">
+	<label class="col-lg-1 control-label">更換零件</label>
+	<div class="col-lg-10">
+	<table class="table" id="parts">
+		<thead>
+			<tr>
+				<th>代碼</th>
+				<th>來源</th>
+				<th>收費</th>
+				<th>單價</th>
+				<th>數量</th>
+				<th>價錢</th>				
+			</tr>
+		</thead>
+		<tbody>
+			@for(part<-f.parts){
+				<tr>
+					<td>
+						<select>
+							<option value="">
+							@for(p<-partList){
+								@if(part.id == p.id){
+									<option value="@p.id" selected>@p.name</option>
+								}else{
+									<option value="@p.id">@p.name</option>
+								}								
+							}							
+						</select>
+					</td>
+					<td><input type="text" value="@part.source"></td>
+					<td><input type="checkbox" 
+						@if(part.charged){
+							checked
+						}
+					></td>
+					<td><input type="number" value="@part.unit_price"></td>
+					<td><input type="number" value="@part.amount"></td>
+					<td><input type="number" value="@part.total"></td>					
+				</tr>
+			}
+				<tr>
+					<td>
+						<select>
+							<option value="">
+							@for(p<-partList){
+								<option value="@p.id">@p.name</option>
+							}							
+						</select>
+					</td>
+					<td><input type="text"></td>
+					<td><input type="checkbox"></td>
+					<td><input type="number"></td>
+					<td><input type="number"></td>
+					<td><input type="number"></td>					
+				</tr>
+		</tbody>
+	</table>	
+	</div>
+</div>
+<div class="form-group">
+	<label class="col-lg-1 control-label">修理時間</label>
+	<div class="col-lg-4">
+		<div class="input-daterange input-group">
+			<span class="input-group-addon"><i class="fa fa-calendar"></i></span><input type="text" value="@f.start" class="input-sm form-control" name="start" id="reportStart" required/>
+    		<span class="input-group-addon">至</span>
+    		<input type="text" value="@f.end" class="input-sm form-control" name="end" id="reportEnd" required/>                        
+		</div>
+	</div>
+</div>
+<div class="form-group">
+	<label class="col-lg-1 control-label">附 註 及 客 戶 意 見</label>
+	<div class="col-lg-10">
+		<textarea class="form-control" rows="3" id="comment">@f.comment</textarea>
+	</div>	                	
+</div>
+<div class="form-group">
+	<div class="col-lg-1 col-lg-offset-1">
+		<button type="button" class="btn btn-primary" id="updateForm">更新</button>
+	</div>
+</div>
+</form>
+<script>
+	var ticketID = "@ID";
+</script>
+<script>
+$( document ).ready(function() {
+	$('#reportStart').datetimepicker({
+		format: 'YYYY-MM-D HH:mm',
+		defaultDate: moment().subtract(1, 'days'),
+    	locale: "zh-TW"
+	});
+	$('#reportEnd').datetimepicker({
+		format: 'YYYY-MM-D HH:mm',
+		defaultDate: moment().subtract(1, 'hours'),
+    	locale: "zh-TW"
+	});
+
+	function updateAndReload(show, collectPart){
+		var start = $('#reportStart').val();
+		var end = $('#reportEnd').val();
+			
+		var $boolValues = $("#charge :checkbox");
+		var boolValues = [];
+		for(var i=0;i<$boolValues.length;i++){
+			$check = $boolValues.eq(i);			
+			boolValues.push($check.prop("checked"));
+		}
+		
+		var $strValues = $("#charge :text");
+		var strValues = [];
+		for(var i=0;i<$strValues.length;i++){
+			strValues.push($strValues[i].value);
+		}
+		
+		var comment = $("#comment").val();
+		var equipmentId = $("#equipment").val();
+
+		var explain = $("#explain").val();
+		var result = $("#result").val();
+		
+		var parts=[];
+		if(collectPart){
+			var $parts = $('#parts :input');
+			console.log($parts.length);		
+			for(var i=0;i<$parts.length;){
+				var id = $parts.eq(i).val();
+				if(!id || id=="")
+					break;
+				
+				var source = $parts.eq(i+1).val();			
+				var charged =$parts.eq(i+2).prop("checked");						
+				var unit_price = $parts.eq(i+3).val();
+				var amount = $parts.eq(i+4).val();
+				var total = $parts.eq(i+5).val();
+				var part={
+					id: id,
+					source: source,
+					charged: charged,
+					unit_price: unit_price,
+					amount: amount,
+					total: total
+				};
+				parts.push(part);
+				i+=6;
+			}			
+		}
+		
+		var RepairFormData = {
+			start: start, 
+			end: end, 
+			equipmentId : equipmentId,
+			parts : parts,
+			explain : explain,
+			result : result,
+			comment : comment,
+			boolValues: boolValues, 
+			strValues: strValues
+		};
+
+		var url = "/UpdateRepairForm/" + ticketID;
+		$.ajax({
+			url : url,
+			data : JSON.stringify(RepairFormData),
+			contentType : "application/json; charset=utf-8",
+			type : "POST",
+			dataType : "json",
+			success : function(result) {
+				if(show)
+					alert("成功");
+				$("#ticketForm").load("/Form/"+ticketId);
+			},
+			error : function(xhr, status, errorThrown) {
+				console.log("錯誤訊息:" + status + "-" + errorThrown);
+			},
+
+			complete : function(xhr, status) {
+				$("body").css("cursor", "default");
+			}
+		});		
+	}
+	
+	$("#updateForm").click(function(){
+		updateAndReload(true, true);
+	});
+	
+	$("#equipment").change(function(){
+		updateAndReload(false, false);	
+	});
+	
+});	
+</script>

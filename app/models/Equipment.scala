@@ -92,5 +92,17 @@ object Equipment {
     val newList = oldList.filter { equip => !(equip.monitor == monitor && equip.id == id) }
     map = (map + (monitor -> newList))
   }
+
+  def getEquipment(id: String) = {
+    DB readOnly { implicit session =>
+      sql"""
+        Select * 
+        From Equipment
+        Where id=${id}
+        """.map { r =>
+        Equipment(Monitor.withName(r.string(1)), r.string(2), r.string(3), r.string(4), r.string(5), r.string(6), r.string(7))
+      }.single.apply
+    }
+  }
 }
 

@@ -100,7 +100,7 @@
             	<a data-toggle="collapse" data-parent="#accordion" href="#ticketForm">案件表單</a>	
             </div>
         	<div class="panel-body panel-collapse" id="ticketForm">
- 				@weekMaintanceForm(ticket.id, ticket.form)
+ 				
             </div>
         </div>
 	</div>
@@ -207,9 +207,9 @@ $( document ).ready(function() {
 			type : "POST",
 			dataType : "json",
 			success : function(result) {
-				//$("#reportPanel").css('display','block');
 				if(result.ok){
 					alert("成功更新");
+					$("#ticketForm").load("/Form/"+ticketId);
 				}				
 			},
 			error : function(xhr, status, errorThrown) {

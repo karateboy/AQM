@@ -51,7 +51,7 @@ object Maintance extends Controller {
                 date <- ticketParam.executeDate
               } yield {
                 Ticket(0, DateTime.now, true, ticketParam.ticketType, submiterId,
-                  ticketParam.owner, m, None, ticketParam.reason, DateTime.parse(date), Ticket.defaultFormData)
+                  ticketParam.owner, m, None, ticketParam.reason, DateTime.parse(date), Ticket.defaultFormData, Ticket.defaultRepairFormData)
               }
             } else {
               for {
@@ -60,7 +60,7 @@ object Maintance extends Controller {
                 date <- ticketParam.executeDate
               } yield {
                 Ticket(0, DateTime.now, true, ticketParam.ticketType, submiterId,
-                  ticketParam.owner, m, Some(mt), ticketParam.reason, DateTime.parse(date), Ticket.defaultFormData)
+                  ticketParam.owner, m, Some(mt), ticketParam.reason, DateTime.parse(date), Ticket.defaultFormData, Ticket.defaultRepairFormData)
               }
             }
           Logger.debug("# of ticket=" + tickets.length)
@@ -106,7 +106,7 @@ object Maintance extends Controller {
         val adminUsers = User.getAdminUsers()
         val usrMap = Map(adminUsers.map { u => (u.id.get -> u) }: _*)
 
-        Ok(views.html.ticketReport(tickets, usrMap))
+        Ok(views.html.myTicket(tickets, usrMap))
       }
   }
 
@@ -155,7 +155,15 @@ object Maintance extends Controller {
               param.monitors(0),
               mt,
               param.reason,
-              executeDate, t.form)
+              executeDate, 
+              if(t.ticketType != param.ticketType)
+                Ticket.defaultFormData
+              else
+                t.form, 
+              if(t.ticketType != param.ticketType)
+                Ticket.defaultRepairFormData
+              else
+                t.repairForm)
 
             Ticket.updateTicket(newT)
             Ok(Json.obj("ok" -> true))
@@ -183,6 +191,22 @@ object Maintance extends Controller {
         })
   }
   
+  def updateRepairForm(ID: Int) = Security.Authenticated(BodyParsers.parse.json) {
+    import Ticket._
+    implicit request =>
+      val formResult = request.body.validate[RepairFormData]
+
+      formResult.fold(
+        error => {
+          Logger.error(JsError.toFlatJson(error).toString())
+          BadRequest(Json.obj("ok" -> false, "msg" -> JsError.toFlatJson(error)))
+        },
+        form => {
+          Logger.debug(form.toString())          
+          Ticket.updateRepairFormData(ID, form)
+          Ok(Json.obj("ok" -> true))
+        })
+  }
   def getForm(ID: Int) = Security.Authenticated {
     val ticketOpt = Ticket.getTicket(ID)
     if (ticketOpt.isEmpty)
@@ -202,16 +226,83 @@ object Maintance extends Controller {
             Ok(views.html.halfYearForm(ID, t.form))
           case TicketType.maintance_year=>
             Ok(views.html.yearForm(ID, t.form))
+          case TicketType.repair=>
+            val equipList = Equipment.map(t.monitor)
+            val partIdNameMap = Part.getIdNameMap()
+            val partEquipMap = Part.getEquipPartMap()
+            if(t.repairForm.equipmentId.length() != 0){
+              val equipment = Equipment.getEquipment(t.repairForm.equipmentId).get
+              val partList = partEquipMap.getOrElse(equipment.name, List.empty[Part])
+              Ok(views.html.repairForm(ID, t.repairForm, equipList, partIdNameMap, partList))              
+            }else{
+              Ok(views.html.repairForm(ID, t.repairForm, equipList, partIdNameMap, List.empty[Part]))
+            }
       }
     }
   }
 
   def closeTicket = Security.Authenticated {
-    Ok("")
+    implicit request =>
+      val userInfoOpt = Security.getUserinfo(request)
+      if (userInfoOpt.isEmpty) {
+        Forbidden("Invalid access!")
+      } else {
+        val userInfo = userInfoOpt.get
+        val group = Group.getGroup(userInfo.groupID).get
+        val tickets = Ticket.ticketSubmittedByMe(userInfo.id)
+        val adminUsers = User.getAdminUsers()
+        val usrMap = Map(adminUsers.map { u => (u.id.get -> u) }: _*)
+
+        Ok(views.html.closeTickets(tickets, usrMap))
+      }
+  }
+  
+  def closeTicketAction(idStr:String) = Security.Authenticated {
+    val ids = idStr.split(":").toList
+    val idInt = ids.map { Integer.parseInt}
+    Ticket.closeTicket(idInt)
+    Ok(Json.obj("ok" -> true))
   }
 
+  def downloadForm(Id: Int) = Security.Authenticated {
+    val ticketOpt = Ticket.getTicket(Id)
+    import java.io.File
+    import java.nio.file.Files
+
+    if (ticketOpt.isEmpty) {
+      BadRequest("no such ticket!")
+    } else {
+      val ticket = ticketOpt.get
+      val adminUsers = User.getAdminUsers()
+      val usrMap = Map(adminUsers.map { u => (u.id.get -> u) }: _*)
+
+      val title = TicketType.map(ticket.ticketType)+ticket.id
+      val excelFile =
+        ticket.ticketType match {
+          case TicketType.maintance_week =>
+            ExcelUtility.exportWeekForm(ticket, usrMap)
+          case TicketType.maintance_biweek =>
+            ExcelUtility.exportBiWeekForm(ticket, usrMap)
+          case TicketType.maintance_month =>
+            ExcelUtility.exportMonthForm(ticket, usrMap)
+          case TicketType.maintance_quarter =>
+            ExcelUtility.exportQuarterForm(ticket, usrMap)
+          case TicketType.maintance_half_year =>
+            ExcelUtility.exportHalfYearForm(ticket, usrMap)
+          case TicketType.maintance_year =>
+            ExcelUtility.exportYearForm(ticket, usrMap)
+          case TicketType.repair =>
+            ExcelUtility.exportRepairForm(ticket, usrMap)
+        }
+      
+      Ok.sendFile(excelFile, fileName = _ =>
+        play.utils.UriEncoding.encodePathSegment(title + ".xlsx", "UTF-8"),
+        onClose = () => { Files.deleteIfExists(excelFile.toPath()) })
+    }
+  }
+  
   def equipmentHistory = Security.Authenticated {
-    Ok("")
+    Ok("YES☑  NO□")
   }
 
   def monitorJournal = Security.Authenticated {

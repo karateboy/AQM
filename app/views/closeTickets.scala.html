@@ -1,0 +1,53 @@
+@* closeTickets Template File *@
+@(tickets: List[Ticket], userMap:Map[Int, User])
+
+<div class="row">
+   	<div class="col-lg-12">
+   		<div class="panel panel-success">
+        	<div class="panel-body">
+ 				@ticketReport(tickets, userMap, true)
+            	<div class="col-lg-1 col-lg-offset-1">
+					<button type="button" class="btn btn-primary" id="closeTicket">結束案件</button>							
+				</div>            	
+            </div>
+        </div>
+	</div>
+</div>
+<script>
+$(document ).ready(function() {
+	$("#closeTicket").click(function(){
+		var $ids = $("#ticketReport :checked");
+		if($ids.length ==0)
+			return;
+		
+		var ticketId = [];
+		for(var i=0;i<$ids.length;i++){
+			var $check = $ids.eq(i);
+			ticketId.push(parseInt($check.val()));
+		}
+
+		var url = "/CloseTicket/" + ticketId.join(":"); 
+		
+		$.ajax({
+			url : url,
+			data : JSON.stringify(ticketId),
+			contentType : "application/json; charset=utf-8",
+			type : "POST",
+			dataType : "json",
+			success : function(result) {
+				if(result.ok){
+					alert("成功更新");
+					loadPage('/CloseTicket','維修保養','結束案件');
+				}				
+			},
+			error : function(xhr, status, errorThrown) {
+				console.log("錯誤訊息:" + status + "-" + errorThrown);
+			},
+
+			complete : function(xhr, status) {
+				$("body").css("cursor", "default");
+			}
+		});
+	});
+});
+</script>
