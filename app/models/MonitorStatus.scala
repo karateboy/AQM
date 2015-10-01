@@ -204,10 +204,18 @@ object MonitorStatus {
   val msvList = msList.map {r=>getTagStr(r)}
   val manualMonitorStatusList = {msvList.filter { _map(_).statusType == StatusType.Manual }}
   val alarmList = msvList.filter { _ != getTagInfo(NORMAL_STAT).toString }
-  def map(key:String)={
+  def map(key: String) = {
     _map.getOrElse(key, {
       val tagInfo = getTagInfo(key)
-      MonitorStatus(tagInfo.statusType, tagInfo.id, "未知的狀態:"+key, false, false)
-      })
+      tagInfo.statusType match {
+        case StatusType.Auto =>
+          MonitorStatus(tagInfo.statusType, tagInfo.id, "自動註記", false, false)
+        case StatusType.Manual =>
+          MonitorStatus(tagInfo.statusType, tagInfo.id, "人工註記", false, false)
+        case StatusType.Internal =>
+          MonitorStatus(tagInfo.statusType, tagInfo.id, "未知:" + key, false, false)
+      }
+
+    })
   }
 }

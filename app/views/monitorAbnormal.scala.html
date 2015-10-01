@@ -65,16 +65,9 @@ $( document ).ready(function() {
 
 		$("#reportPanel").css('display','block');
 		$("#reportPanel").collapse('show');
-
-		var obj = {
-			'monitor':monitor,
-			'reportType':reportType,
-			'startTime':reportDate
-		};
-
-		$('#reportDiv').html('');
+		$('#reportDiv').html('');		
 		$("body").css("cursor", "progress");
-		console.log(JSON.stringify(obj));
+		
 		var url="/MonitorAbnormalReport/"+reportDate;
 		$.ajax({
 			url: url,

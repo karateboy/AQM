@@ -2,7 +2,7 @@ package models
 import scalikejdbc._
 import play.api._
 import com.github.nscala_time.time.Imports._
-import models.ModelHelper._
+import ModelHelper._
 import models._
 import play.api.libs.json._
 import play.api.libs.functional.syntax._

@@ -828,7 +828,27 @@ object Report extends Controller {
       Ok(views.html.monitorAbnormal(group.privilege))
   }
 
-
+  def monitorAbnormalReport(dateStr:String, outputTypeStr:String) = Security.Authenticated {
+    implicit request =>
+      val userInfo = Security.getUserinfo(request).get
+      val group = Group.getGroup(userInfo.groupID).get
+      val date = DateTime.parse(dateStr)
+      val reportOpt = AbnormalReport.getReportFromDb(date)
+      val latestReport = AbnormalReport(date, AbnormalReport.generate(date))
+      val outputType = OutputType.withName(outputTypeStr)
+      
+      val title = "測站異常狀況反應表"
+      val output = views.html.monitorAbnormalReport(date, latestReport.report)
+      
+      outputType match {
+          case OutputType.html =>
+            Ok(output)
+          case OutputType.pdf =>
+            Ok.sendFile(creatPdfWithReportHeader(title, output),
+              fileName = _ =>
+                play.utils.UriEncoding.encodePathSegment(title + date.toString("YYYYMMdd") + ".pdf", "UTF-8"))
+        }
+  }
 }
 
 

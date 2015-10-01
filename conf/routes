@@ -48,6 +48,8 @@ GET		/PDF/EffectiveAnnualReport/:reportType/:start/:param	controllers.Report.eff
 GET		/Excel/EffectiveAnnualReport/:reportType/:start/:param	controllers.Report.effectiveAnnualReport(reportType, start, param, outputTypeStr="excel")
 
 GET		/MonitorAbnormal		controllers.Report.monitorAbnormal
+GET		/MonitorAbnormalReport/:date		controllers.Report.monitorAbnormalReport(date, outputTypeStr="html")
+GET		/PDF/MonitorAbnormalReport/:date		controllers.Report.monitorAbnormalReport(date, outputTypeStr="pdf")
 
 GET		/HistoryQuery			controllers.Query.history
 GET		/HistoryQueryReport/:edit/:monitor/:epaMonitor/:monitorType/:recordType/:start/:end	controllers.Query.historyReport(edit:Boolean, monitor, epaMonitor, monitorType, recordType, start, end, outputType="html")

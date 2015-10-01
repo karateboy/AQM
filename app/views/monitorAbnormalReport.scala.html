@@ -1,0 +1,23 @@
+@* abnormalReport Template File *@
+@import com.github.nscala_time.time.Imports._
+@(date: DateTime, entires:Seq[AbnormalEntry])
+<table class="table">
+<thead>
+	<tr>
+		<th>測站</th>
+		<th>測項</th>
+		<th>異常小時</th>
+		<th>異常解釋</th>
+	</tr>
+</thead>
+<tbody>
+@for(e<-entires){
+	<tr>
+		<td>@Monitor.map(e.monitor).name</td>
+		<td>@MonitorType.map(e.monitorType).desp</td>
+		<td>@e.invalidHours</td>
+		<td>@e.explain</td>
+	</tr>
+}
+</tbody>
+</table>
