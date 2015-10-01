@@ -47,6 +47,8 @@ GET		/EffectiveAnnualReport/:reportType/:start/:param	controllers.Report.effecti
 GET		/PDF/EffectiveAnnualReport/:reportType/:start/:param	controllers.Report.effectiveAnnualReport(reportType, start, param, outputTypeStr="pdf")
 GET		/Excel/EffectiveAnnualReport/:reportType/:start/:param	controllers.Report.effectiveAnnualReport(reportType, start, param, outputTypeStr="excel")
 
+GET		/MonitorAbnormal		controllers.Report.monitorAbnormal
+
 GET		/HistoryQuery			controllers.Query.history
 GET		/HistoryQueryReport/:edit/:monitor/:epaMonitor/:monitorType/:recordType/:start/:end	controllers.Query.historyReport(edit:Boolean, monitor, epaMonitor, monitorType, recordType, start, end, outputType="html")
 GET		/PDF/HistoryQueryReport/:edit/:monitor/:monitorType/:recordType/:start/:end	controllers.Query.historyReport(edit:Boolean, monitor, epaMonitor, monitorType, recordType, start, end, outputType="pdf")
@@ -123,7 +125,7 @@ POST	/Group/:id			controllers.Application.updateGroup(id: Int)
 DELETE	/Group/:id			controllers.Application.deleteGroup(id: Int)
 
 GET		/ManualAudit		controllers.Application.manualAudit
-POST	/ManualAudit		controllers.Application.manualAuditApply
+POST	/ManualAudit/:recordType		controllers.Application.manualAuditApply(recordType)
 
 GET		/AuditConfig			controllers.Application.auditConfig
 GET		/AuditConfig/:monitor	controllers.Application.getMonitorAuditConfig(monitor)

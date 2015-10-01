@@ -217,24 +217,45 @@ object Record {
     rs => rs.date
   }
 
-  def getFieldName(mt: MonitorType.Value) = {
+  def getFieldName(tabType:TableType.Value, mt: MonitorType.Value, recordTime:Timestamp) = {
     val name = mt.toString
     val head = name.charAt(0)
     val tail = name.substring(2)
 
-    SQLSyntax.createUnsafely(s"${head}5${tail}s")
+    tabType match {
+      case TableType.Hour=>
+        SQLSyntax.createUnsafely(s"${head}5${tail}s")
+      case TableType.Min=>
+        SQLSyntax.createUnsafely(s"${head}2${tail}s")
+      case TableType.SixSec=>
+        val idx = recordTime.toDateTime.getSecondOfMinute/6
+        SQLSyntax.createUnsafely(s"${head}9${tail}_${idx}s")
+    }
+    
   }
 
-  def updateHourRecordStatus(monitor: Monitor.Value, monitorType: MonitorType.Value, mill: Long, status: String)(implicit session: DBSession = AutoSession) = {
+  def updateRecordStatus(tabType:TableType.Value, monitor: Monitor.Value, monitorType: MonitorType.Value, mill: Long, status: String)(implicit session: DBSession = AutoSession) = {
     val recordTime = new Timestamp(mill)
     val monitorName = monitor.toString()
-    val tab_name = getTabName(TableType.Hour, recordTime.toDateTime.getYear)
-    val field_name = getFieldName(monitorType)
-    sql""" 
-        Update ${tab_name}
-        Set ${field_name}=${status}
-        Where DP_NO=${monitorName} and ${field_name} IS NOT NULL and M_DateTime = ${recordTime}        
-      """.update.apply
+    val tab_name = getTabName(tabType, recordTime.toDateTime.getYear)
+    val field_name = getFieldName(tabType, monitorType, recordTime)
+    if(tabType != TableType.SixSec){
+      sql""" 
+          Update ${tab_name}
+          Set ${field_name}=${status}
+          Where DP_NO=${monitorName} and ${field_name} IS NOT NULL and M_DateTime = ${recordTime}        
+        """.update.apply      
+    }else{
+      val rt = recordTime.toDateTime()
+      val rt1 = rt - rt.getSecondOfDay.second
+      val tt:Timestamp  = rt1
+      
+      sql""" 
+          Update ${tab_name}
+          Set ${field_name}=${status}
+          Where DP_NO=${monitorName} and ${field_name} IS NOT NULL and M_DateTime = ${tt}        
+        """.update.apply
+    }
   }
 
   val monitorTypeProjection: Map[MonitorType.Value, (HourRecord => Option[Float], HourRecord => Option[String])] = Map(

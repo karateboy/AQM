@@ -279,7 +279,7 @@ $( document ).ready(function() {
 		
 		var url;
 		if(url_head != "/HistoryQueryReport/false/"){
-			url= url_head + monitorParam + "/" + monitorType + "/" + tableType + "/" +reportStart + "/" + reportEnd;		  	
+			url= url_head + monitorParam + "/None/" + monitorType + "/" + tableType + "/" +reportStart + "/" + reportEnd;		  	
 		}else{
 			url= url_head + monitorParam + "/" + epaMonitorParam + "/" + monitorType + "/" + tableType + "/" +reportStart + "/" + reportEnd;
 		}
@@ -293,10 +293,7 @@ $( document ).ready(function() {
 			success: function(result){
 				$('#reportDiv').html(result);
 				$("#downloadPDF").prop("href", "/PDF" + url);
-				$("#reportPanel").css('display','block');
-				//$("#reportParam").collapse();
-				//$("#reportPanel").collapse('show');
-						
+				$("#reportPanel").css('display','block');						
 			},
 			error: function(xhr, status, errorThrown){
 				console.log("錯誤訊息:" + status + "-" + errorThrown);

@@ -1,7 +1,7 @@
 @* historyReport Template File *@
 @import com.github.nscala_time.time.Imports._
 @import MonitorStatus._
-@(editable:Boolean, monitors:Seq[Monitor.Value], epaMonitors:Seq[EpaMonitor.Value], monitorType:MonitorType.Value, start:DateTime, end:DateTime, timeSeq:Seq[DateTime], recordMap: Map[Monitor.Value, Map[DateTime, (Option[Float], Option[String])]], epaRecordMap: Map[EpaMonitor.Value, Map[DateTime, Float]], showSec:Boolean = false)
+@(editable:Boolean, monitors:Seq[Monitor.Value], epaMonitors:Seq[EpaMonitor.Value], monitorType:MonitorType.Value, start:DateTime, end:DateTime, timeSeq:Seq[DateTime], recordMap: Map[Monitor.Value, Map[DateTime, (Option[Float], Option[String])]], epaRecordMap: Map[EpaMonitor.Value, Map[DateTime, Float]], showSec:Boolean = false, recordType:String="Hour")
 
 <H3>測項:@MonitorType.map(monitorType).desp (@MonitorType.map(monitorType).unit)</H3>
 <H5>區間:@start.toString("YYYY-MM-dd HH:mm")~@end.toString("YYYY-MM-dd HH:mm")</H5>
@@ -69,71 +69,76 @@
 </table>
 @if(editable){
 <label>註記代碼</label>	
-<select id="manualStatusSelect">
+<select id="manualStatus">
 	@for(ms<-MonitorStatus.manualMonitorStatusList){
 		<option value='@ms'>@MonitorStatus.map(ms).desp</option>
 	}
+	<option value='010'>正常</option>
 </select>
 <button type="button" class="btn btn-primary" id="manualAuditApply">註記</button>
 	
 }
+<script>
+	var local_url = '@routes.Assets.at("localization/zh_tw.json")';
+	var sSwfPath = "@routes.Assets.at("js/plugins/dataTables/swf/copy_csv_xls_pdf.swf")";
+	var recordType = "@recordType";
+</script>
 <script>
 $(document ).ready(function() {
 	$('#historyReport').dataTable( {
 		responsive: true,
 		"dom": 'T&lt'+'clear'+'&gtlfrtip',
 		language: {
-			url: '@routes.Assets.at("localization/zh_tw.json")',							
+			url: local_url,							
 		},
 		"tableTools": {
-        	"sSwfPath": "@routes.Assets.at("js/plugins/dataTables/swf/copy_csv_xls_pdf.swf")",
+        	"sSwfPath": sSwfPath,
         	"aButtons": ["copy", "print", "csv", "xls"]
         },
 		"paging":   false,
 		searching: false
 	} );
 	
-	@if(editable){
-		$('#manualAuditApply').click(function(){
-			var $inputs=$("#historyReport :input:checked");
-			var $manualStatus = $('#manualStatusSelection :checked');
-			console.log($manualStatus);
-			var obj={};			
-			var manualAuditList=[];
-			for(var i=0;i<$inputs.length;i++){
-				$check = $inputs.eq(i);
-				var audit={};
-				var id = $check.prop('id');
-				var param = id.split(":");
-				audit.monitor=param[0];
-				audit.monitorType=param[1];
-				audit.time=parseInt(param[2]);
-				audit.status='M01';
-				manualAuditList.push(audit);
-			}
-			obj.list=manualAuditList;
-			$.ajax({
-				url: "/ManualAudit",
-				data: JSON.stringify(obj),
-				contentType: "application/json; charset=utf-8",
-				method:"POST",			
-				dataType: "json",
-				success: function(result){
-					if(result.ok){
-						alert("成功");
-					}else{
-						alert("失敗:"+result.msg);
-					}
-				},
-				error: function(xhr, status, errorThrown){
-					alert("失敗:" + status + "-" + errorThrown);
-				},
+	$('#manualAuditApply').click(function(){
+		var $inputs=$("#historyReport :input:checked");
+		var $manualStatus = $('#manualStatus').val();		
+		var obj={};			
+		var manualAuditList=[];
+		for(var i=0;i<$inputs.length;i++){
+			$check = $inputs.eq(i);
+			var audit={};
+			var id = $check.prop('id');
+			var param = id.split(":");
+			audit.monitor=param[0];
+			audit.monitorType=param[1];
+			audit.time=parseInt(param[2]);
+			audit.status=$manualStatus;
+			manualAuditList.push(audit);
+		}
+		obj.list=manualAuditList;
+		$.ajax({
+			url: "/ManualAudit/"+recordType,
+			data: JSON.stringify(obj),
+			contentType: "application/json; charset=utf-8",
+			method:"POST",			
+			dataType: "json",
+			success: function(result){
+				if(result.ok){
+					alert("成功");
+					$('#queryReport').click();
+				}else{
+					alert("失敗:"+result.msg);
+				}
+			},
+			error: function(xhr, status, errorThrown){
+				alert("失敗:" + status + "-" + errorThrown);
+			},
 
-				complete: function(xhr, status){
-				}					
-			});
-			
+			complete: function(xhr, status){
+			}					
 		});
-	}	
+		
+	});
+	
 });
 </script>

@@ -406,17 +406,17 @@ object Application extends Controller {
     implicit request =>
       val userInfo = Security.getUserinfo(request).get
       val group = Group.getGroup(userInfo.groupID).get
-      Ok(views.html.manualAudit(group.privilege))
+      Ok(views.html.history("/HistoryQueryReport/true/", group.privilege))
   }
 
   case class ManualAudit(monitor: Monitor.Value, monitorType: MonitorType.Value, time: Long, status: String)
   case class ManualAuditList(list: Seq[ManualAudit])
-  def manualAuditApply() = Security.Authenticated(BodyParsers.parse.json) {
+  def manualAuditApply(recordTypeStr:String) = Security.Authenticated(BodyParsers.parse.json) {
     implicit request =>
+      val tabType = TableType.withName(recordTypeStr)
       implicit val manualAuditReads = Json.reads[ManualAudit]
       implicit val manualAuditListReads = Json.reads[ManualAuditList]
       val manualAuditList = request.body.validate[ManualAuditList]
-      Logger.info("manualAuditApply")
       manualAuditList.fold(
         error => {
           Logger.error(JsError.toFlatJson(error).toString())
@@ -424,7 +424,7 @@ object Application extends Controller {
         },
         manualAuditList => {
           for (ma <- manualAuditList.list) {
-            Record.updateHourRecordStatus(ma.monitor, ma.monitorType, ma.time, ma.status)
+            Record.updateRecordStatus(tabType, ma.monitor, ma.monitorType, ma.time, ma.status)
           }
 
           Ok(Json.obj("ok" -> true))

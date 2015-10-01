@@ -820,6 +820,15 @@ object Report extends Controller {
       }
 
   }
+  
+  def monitorAbnormal() = Security.Authenticated {
+    implicit request =>
+      val userInfo = Security.getUserinfo(request).get
+      val group = Group.getGroup(userInfo.groupID).get
+      Ok(views.html.monitorAbnormal(group.privilege))
+  }
+
+
 }
 
 

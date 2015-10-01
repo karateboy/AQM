@@ -156,13 +156,12 @@ object Query extends Controller {
             epa -> timeMap
           }
       val epaRecordMap = Map(epa_pairs :_*)
-      
       val title = "歷史資料查詢"
       val output =
         if (tableType == TableType.SixSec)
-          views.html.historyReport(edit, monitors, epaMonitors, monitorType, start, end, timeSet.toList.sorted, recordMap, epaRecordMap, true)
+          views.html.historyReport(edit, monitors, epaMonitors, monitorType, start, end, timeSet.toList.sorted, recordMap, epaRecordMap, true, tableType.toString)
         else
-          views.html.historyReport(edit, monitors, epaMonitors, monitorType, start, end, timeSet.toList.sorted, recordMap, epaRecordMap)
+          views.html.historyReport(edit, monitors, epaMonitors, monitorType, start, end, timeSet.toList.sorted, recordMap, epaRecordMap, false, tableType.toString)
       outputType match {
         case OutputType.html =>
           Ok(output)
