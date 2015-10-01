@@ -12,10 +12,22 @@ case class AbnormalEntry(monitor:Monitor.Value, monitorType:MonitorType.Value, i
 case class AbnormalReport(date:DateTime, report:Seq[AbnormalEntry])
 object AbnormalReport {
   implicit val abEntriesReads = Json.reads[AbnormalEntry]
+  implicit val abEntriesWrites = Json.writes[AbnormalEntry]
   
+  val defaultExplain = Seq.empty[AbnormalEntry]
+  
+  def newReport(date:DateTime)(implicit session: DBSession = AutoSession)={
+    DB localTx{ implicit session=>
+      val explain = Json.toJson(defaultExplain).toString
+      sql"""
+        Insert into AbnormalReport([date],[explain])
+        values(${date.toString("YYYY-MM-dd")}, ${explain})
+        """.update.apply
+    }
+  }
   
   def getReportFromDb(date:DateTime)(implicit session: DBSession = AutoSession)={
-    DB localTx { implicit session =>
+    DB readOnly { implicit session =>
       sql"""
         Select * 
         From AbnormalReport
@@ -28,6 +40,17 @@ object AbnormalReport {
     }
   }
 
+  def updateReport(date:DateTime, explain:Seq[AbnormalEntry])(implicit session: DBSession = AutoSession)={
+    DB localTx{ implicit session=>
+      val explainJson = Json.toJson(explain).toString
+      sql"""
+        Update AbnormalReport
+        Set [explain] = ${explainJson}
+        Where [date] = ${date}
+        """.update.apply
+    }
+  }
+  
   def generate(date: DateTime)(implicit session: DBSession = AutoSession) = {
     import Record._
     val pairs =
@@ -46,12 +69,18 @@ object AbnormalReport {
               (hr, MonitorStatus.map(data._2.get).desp)
 
           def genDesc(start: Int, end: Int, status: String, list: List[(Int, String)]): String = {
+              def output = {
+                if(start != end)
+                  s"${status}(${start}-${end})"
+                else
+                  s"${status}(${start})"
+              }
             list match {
               case Nil =>
-                s"${status}(${start}-${end})"
+                 output 
               case head :: tail =>
                 if (status != head._2)
-                  s"${status}(${start}-${end}), " + genDesc(head._1, head._1, head._2, tail)
+                  output + " ," + genDesc(head._1, head._1, head._2, tail)
                 else
                   genDesc(start, head._1, head._2, tail)
             }

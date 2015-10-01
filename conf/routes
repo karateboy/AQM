@@ -50,6 +50,7 @@ GET		/Excel/EffectiveAnnualReport/:reportType/:start/:param	controllers.Report.e
 GET		/MonitorAbnormal		controllers.Report.monitorAbnormal
 GET		/MonitorAbnormalReport/:date		controllers.Report.monitorAbnormalReport(date, outputTypeStr="html")
 GET		/PDF/MonitorAbnormalReport/:date		controllers.Report.monitorAbnormalReport(date, outputTypeStr="pdf")
+POST	/SaveAbnormalReport/:date	controllers.Report.saveMonitorAbnormalReport(date)
 
 GET		/HistoryQuery			controllers.Query.history
 GET		/HistoryQueryReport/:edit/:monitor/:epaMonitor/:monitorType/:recordType/:start/:end	controllers.Query.historyReport(edit:Boolean, monitor, epaMonitor, monitorType, recordType, start, end, outputType="html")

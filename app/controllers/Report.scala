@@ -828,26 +828,63 @@ object Report extends Controller {
       Ok(views.html.monitorAbnormal(group.privilege))
   }
 
-  def monitorAbnormalReport(dateStr:String, outputTypeStr:String) = Security.Authenticated {
+  def monitorAbnormalReport(dateStr: String, outputTypeStr: String) = Security.Authenticated {
     implicit request =>
       val userInfo = Security.getUserinfo(request).get
       val group = Group.getGroup(userInfo.groupID).get
       val date = DateTime.parse(dateStr)
       val reportOpt = AbnormalReport.getReportFromDb(date)
+      val report =
+        if (reportOpt.isEmpty) {
+          AbnormalReport.newReport(date)
+          AbnormalReport(date, Seq.empty[AbnormalEntry])
+        } else
+          reportOpt.get
+
+      import scala.collection.mutable.Map
+      val explainMap = Map.empty[Monitor.Value, Map[MonitorType.Value, String]]
+      for(ex <- report.report){
+        val mtMap = explainMap.getOrElseUpdate(ex.monitor, Map.empty[MonitorType.Value, String])
+        mtMap.put(ex.monitorType, ex.explain)
+      }
+        
       val latestReport = AbnormalReport(date, AbnormalReport.generate(date))
+      val reportWithExplain = latestReport.report.map{
+        ex=>
+          val mtMap = explainMap.getOrElse(ex.monitor, Map.empty[MonitorType.Value, String])
+          val explain = mtMap.getOrElse(ex.monitorType, "")
+          AbnormalEntry(ex.monitor, ex.monitorType, ex.invalidHours, explain)
+      }
       val outputType = OutputType.withName(outputTypeStr)
-      
+
       val title = "測站異常狀況反應表"
-      val output = views.html.monitorAbnormalReport(date, latestReport.report)
-      
+      val output = views.html.monitorAbnormalReport(date, reportWithExplain)
+
       outputType match {
-          case OutputType.html =>
-            Ok(output)
-          case OutputType.pdf =>
-            Ok.sendFile(creatPdfWithReportHeader(title, output),
-              fileName = _ =>
-                play.utils.UriEncoding.encodePathSegment(title + date.toString("YYYYMMdd") + ".pdf", "UTF-8"))
-        }
+        case OutputType.html =>
+          Ok(output)
+        case OutputType.pdf =>
+          Ok.sendFile(creatPdfWithReportHeader(title, output),
+            fileName = _ =>
+              play.utils.UriEncoding.encodePathSegment(title + date.toString("YYYYMMdd") + ".pdf", "UTF-8"))
+      }
+  }
+  
+  def saveMonitorAbnormalReport(dateStr:String) = Security.Authenticated(BodyParsers.parse.json) {
+      implicit request =>
+      import AbnormalReport._   
+      val date = DateTime.parse(dateStr)
+      val abEntriesResult = request.body.validate[Seq[AbnormalEntry]]
+
+      abEntriesResult.fold(
+        error => {
+          Logger.error(JsError.toFlatJson(error).toString())
+          BadRequest(Json.obj("ok" -> false, "msg" -> JsError.toFlatJson(error)))
+        },
+        entries => {
+          AbnormalReport.updateReport(date, entries)
+          Ok(Json.obj("ok" -> true, "nEntries" -> entries.length))
+        });    
   }
 }
 
