@@ -466,7 +466,7 @@ object Record {
   }
   
   def getDailyReport(monitor: Monitor.Value, start: DateTime, includeTypes: List[MonitorType.Value] = MonitorType.monitorReportList,
-                     monitorStatusFilter: MonitorStatusFilter.Value = MonitorStatusFilter.Normal) = {
+                     monitorStatusFilter: MonitorStatusFilter.Value = MonitorStatusFilter.Normal_Over) = {
     DB localTx { implicit session =>
       val originalHourRecordList = getHourRecords(monitor, start, start + 1.day)
       val reportList =

@@ -270,7 +270,7 @@ object Report extends Controller {
   }
 
   def getMonthlyReport(monitor: Monitor.Value, startTime: DateTime, includeTypes: List[MonitorType.Value] = MonitorType.monitorReportList,
-                       filter: MonitorStatusFilter.Value = MonitorStatusFilter.Normal) = {
+                       filter: MonitorStatusFilter.Value = MonitorStatusFilter.Normal_Over) = {
     val endTime = startTime + Period.months(1)
     val days = getDays(startTime, endTime)
     val dailyReports =
