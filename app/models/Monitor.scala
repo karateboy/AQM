@@ -10,7 +10,29 @@ import play.api.libs.functional.syntax._
 
 
 case class Monitor(id:String, name:String, lat:Double, lng:Double, url:String, autoAudit:AutoAudit, 
-    monitorTypes: Seq[MonitorType.Value], monitorTypeStds:Seq[MonitorTypeStandard])
+    monitorTypes: Seq[MonitorType.Value], monitorTypeStds:Seq[MonitorTypeStandard]){
+  private val stdMap = Map(monitorTypeStds.map { r=>r.id->r.std_internal } :_*)
+  def getStdInternal(mt:MonitorType.Value) = {
+    val monitorStd = stdMap.get(mt)
+    if(monitorStd.isDefined)
+      monitorStd
+    else
+      MonitorType.map(mt).std_internal
+  }
+
+  def getNewStd(mt: MonitorType.Value, v: Float) = {
+    if (stdMap.get(mt).isEmpty)
+      MonitorTypeStandard(mt, v) :: monitorTypeStds.toList
+    else {
+      monitorTypeStds.map { s =>
+        if (s.id != mt)
+          s
+        else
+          MonitorTypeStandard(s.id, v)
+      }
+    }
+  }
+}
 case class MonitorTypeStandard(id:MonitorType.Value, std_internal:Float)
 object Monitor extends Enumeration{
   implicit val mReads: Reads[Monitor.Value] = EnumUtils.enumReads(Monitor)
@@ -26,9 +48,9 @@ object Monitor extends Enumeration{
         """.map { r => 
           val autoAuditJson = r.stringOpt(9).getOrElse(Json.toJson(AutoAudit.default).toString())
           val autoAudit = Json.parse(autoAuditJson).validate[AutoAudit].get
-          val monitorTypesJson = r.stringOpt(10).getOrElse(Json.toJson(Seq[MonitorType.Value]()).toString())
+          val monitorTypesJson = r.stringOpt(10).getOrElse(Json.toJson(Seq.empty[MonitorType.Value]).toString())
           val monitorTypes = Json.parse(monitorTypesJson).validate[Seq[MonitorType.Value]].get
-          val monitorTypeStdJson = r.stringOpt(11).getOrElse(Json.toJson(Seq[MonitorTypeStandard]()).toString())
+          val monitorTypeStdJson = r.stringOpt(11).getOrElse(Json.toJson(Seq.empty[MonitorTypeStandard]).toString())
           val monitorTypeStd = Json.parse(monitorTypeStdJson).validate[Seq[MonitorTypeStandard]].get
           
           Monitor(r.string(1), r.string(2), r.string(6).toDouble, r.string(7).toDouble, r.string("imageUrl"), 
@@ -69,6 +91,17 @@ object Monitor extends Enumeration{
     sql"""
         Update Monitor
         Set autoAudit=${Json.toJson(m.autoAudit).toString}, monitorTypes=${Json.toJson(m.monitorTypes).toString}
+        Where DP_NO=${m.id}  
+        """.update.apply
+    
+    val newMap = map + (Monitor.withName(m.id)->m)
+    map = newMap
+  }
+  
+  def updateStdInternal(m:Monitor)(implicit session: DBSession = AutoSession) = {
+    sql"""
+        Update Monitor
+        Set monitorTypeStd=${Json.toJson(m.monitorTypeStds).toString}
         Where DP_NO=${m.id}  
         """.update.apply
     
@@ -157,10 +190,7 @@ object MonitorType extends Enumeration{
         else {
           import java.lang.Float
           val v = Float.parseFloat(newValue)
-          if (v == 0)
-            None
-          else
-            Some(v)
+          Some(v)
         }
 
       val col = SQLSyntax.createUnsafely(s"${colname}")

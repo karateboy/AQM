@@ -69,6 +69,40 @@ object Application extends Controller {
         })
   }
 
+  def getInternalStd(monitorStr: String, mtStr: String) = Security.Authenticated {
+    implicit request =>
+      val m = Monitor.withName(monitorStr)
+      val mt = MonitorType.withName(mtStr)
+      val std = Monitor.map(m).getStdInternal(mt)
+
+      Ok(Json.obj(
+        if (std.isDefined)
+          "std" -> std.get
+        else
+          "std" -> "-"))
+  }
+
+  def setInternalStd(monitorStr: String, monitorTypeStr: String, stdStr: String) = Security.Authenticated(BodyParsers.parse.json) {
+    implicit request =>
+      import java.lang.Float
+      val m = Monitor.withName(monitorStr)
+      val monitorType = MonitorType.withName(monitorTypeStr)
+      val oldCase = Monitor.map(m)
+
+      val newStd =
+        if (stdStr == "-") {
+          oldCase.monitorTypeStds.filter { _.id != monitorType }
+        } else {
+          val stdValue = Float.parseFloat(stdStr)
+          oldCase.getNewStd(monitorType, stdValue)
+        }
+
+      val newCase = Monitor(oldCase.id, oldCase.name, oldCase.lat, oldCase.lng, oldCase.url, oldCase.autoAudit, oldCase.monitorTypes, newStd)
+      Monitor.updateStdInternal(newCase)
+
+      Ok(Json.obj("ok" -> true))
+  }
+  
   def setMonitorImgUrl(monitorStr: String) = Security.Authenticated(BodyParsers.parse.json) {
     implicit request =>
       val monitor = Monitor.withName(monitorStr)

@@ -87,7 +87,7 @@
 						<button class="btn btn-primary" type="submit">確認</button>								
 					</div>																											
 				</div>
-				</form>
+			</form>
 		</div>
 		<div id="imgUrlTab" class="tab-pane">
 			<form id="imgUrlForm" class="form-horizontal">
@@ -348,7 +348,57 @@ function() {
 			event.preventDefault();
 		});
 
+	$("#stdInternalForm :input[name='monitorType']").change(
+			function() {
+				//var me = $(this)
+				var me = $("#stdInternalForm :input[name='monitorType']:checked");
+				var url = "/InternalStd/" + activeMonitor + "/" + me.prop("id");
+				console.log(url);
+				$.ajax({
+					url : url,
+					data : "",
+					contentType : "application/json; charset=utf-8",
+					method : "GET",
+					dataType : "json",
+					success : function(result) {
+						$("#stdInternal").val(result.std);
+					},
+					error : function(xhr, status, errorThrown) {
+						console.log("失敗:"+ errorThrown);
+					},
+
+					complete : function(xhr, status) {
+					}});
+						
+			});
+
+	$("#stdInternalForm :input[name='monitorType']").change();
+	
 	$("#stdInternalForm").submit(function(event) {
+		activeMonitor = $(
+				'#monitorTypesForm :input[name="monitor"]')
+				.val();
+
+		var mt = $("#monitorTypesForm :input[name='monitorType']:checked").prop("id");
+		var std = $("#stdInternal").val();
+		
+		var url = "/InternalStd/" + activeMonitor + "/" + mt + "/" + std;
+		console.log(url);
+		$.ajax({
+			url : url,
+			data : JSON.stringify(std),
+			contentType : "application/json; charset=utf-8",
+			method : "POST",
+			dataType : "json",
+			success : function(result) {
+				alert("成功");
+			},
+			error : function(xhr, status, errorThrown) {
+				alert("失敗:"+ errorThrown);
+			},
+
+			complete : function(xhr, status) {
+			}});
 		event.preventDefault();
 	});
 

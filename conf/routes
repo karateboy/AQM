@@ -97,6 +97,8 @@ GET		/Monitor					controllers.Application.monitor(monitor = "A001")
 GET		/Monitor/:monitor			controllers.Application.monitor(monitor)
 GET		/MonitorInfo/:monitor	controllers.Application.getMonitorInfo(monitor)
 POST	/MonitorTypes/:monitor	controllers.Application.setMonitorTypes(monitor)
+GET		/InternalStd/:monitor/:mt	controllers.Application.getInternalStd(monitor, mt)
+POST	/InternalStd/:monitor/:mt/:std	controllers.Application.setInternalStd(monitor, mt, std)
 POST	/MonitorImgUrl/:monitor	controllers.Application.setMonitorImgUrl(monitor)
 GET		/MonitorTypeConfig			controllers.Application.monitorTypeConfig
 POST	/SaveMonitorTypeConfig		controllers.Application.saveMonitorTypeConfig
