@@ -212,7 +212,7 @@ object MonitorType extends Enumeration{
   }
   
   val epaReportList ={
-    val name=List("C212", "A222", "A293", "A224", "A225", "A214", "A226", "A296")
+    val name=List("C212", "C211", "A222", "A293", "A224", "A225", "A214", "A226", "A296")
     name.map { MonitorType.withName }
   }
   
