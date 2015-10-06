@@ -209,7 +209,7 @@ object ExcelUtility {
       val titleCell = titleRow.getCell(0)
       titleCell.setCellValue("監測站:" + Monitor.map(monitor).name)
       sheet.getRow(1).getCell(16).setCellValue("查詢日期:" + DateTime.now.toString("YYYY/MM/dd"))
-      titleRow.getCell(16).setCellValue("資料日期:" + reportDate.toString("YYYY年MM月"))
+      titleRow.getCell(16).setCellValue("資料日期:" + reportDate.toString("YYYY年MM月"))      
 
       val abnormalColor =
         {
@@ -245,9 +245,14 @@ object ExcelUtility {
       } {
         val stat = mtRecord.stat
         sheet.getRow(36).getCell(col).setCellValue(stat.avg)
-        sheet.getRow(37).getCell(col).setCellValue(stat.max)
-        sheet.getRow(38).getCell(col).setCellValue(stat.min)
-        evaluator.evaluateFormulaCell(sheet.getRow(39).getCell(col))
+        if(stat.count >=1){
+          sheet.getRow(37).getCell(col).setCellValue(stat.max)
+          sheet.getRow(38).getCell(col).setCellValue(stat.min)
+         }else{
+          sheet.getRow(37).getCell(col).setCellValue("-")
+          sheet.getRow(38).getCell(col).setCellValue("-")
+        }
+        evaluator.evaluateFormulaCell(sheet.getRow(39).getCell(col))  
       }
     }
 
@@ -258,7 +263,8 @@ object ExcelUtility {
       } {
         sheet.getRow(1).getCell(0).setCellValue("監測站:" + Monitor.map(monitor).name)
         sheet.getRow(1).getCell(25).setCellValue("查詢日期:" + DateTime.now.toString("YYYY/MM/dd"))
-        sheet.getRow(1).getCell(25).setCellValue("資料日期:" + reportDate.toString("YYYY年MM月"))
+        sheet.getRow(2).getCell(25).setCellValue("資料日期:" + reportDate.toString("YYYY年MM月"))
+        sheet.getRow(43).getCell(0).setCellValue("資料日期:" + reportDate.toString("YYYY年MM月"))
       }
 
       for {
@@ -314,12 +320,12 @@ object ExcelUtility {
         row <- 4 to (4 + nDay - 1)
         stat = report.hourStatArray(col - 1)
       } {
-        if (stat.count != 0) {
-          sheet.getRow(35).getCell(col).setCellValue(stat.avg)
+        if (stat.count != 0) {          
+          evaluator.evaluateFormulaCell(sheet.getRow(35).getCell(col))
           sheet.getRow(36).getCell(col).setCellValue(stat.count)
-          sheet.getRow(37).getCell(col).setCellValue(stat.max)
-          sheet.getRow(38).getCell(col).setCellValue(stat.min)
-          sheet.getRow(39).getCell(col).setCellValue(stat.avg * stat.count)
+          evaluator.evaluateFormulaCell(sheet.getRow(37).getCell(col))
+          evaluator.evaluateFormulaCell(sheet.getRow(38).getCell(col))
+          evaluator.evaluateFormulaCell(sheet.getRow(39).getCell(col))
         } else {
           sheet.getRow(35).getCell(col).setCellValue("-")
           sheet.getRow(36).getCell(col).setCellValue(stat.count)
@@ -334,6 +340,11 @@ object ExcelUtility {
         sheet = wb.getSheetAt(sheetIndex)
       } {
         evaluator.evaluateFormulaCell(sheet.getRow(35).getCell(25))
+        evaluator.evaluateFormulaCell(sheet.getRow(36).getCell(25))
+        evaluator.evaluateFormulaCell(sheet.getRow(37).getCell(25))
+        evaluator.evaluateFormulaCell(sheet.getRow(38).getCell(25))
+        evaluator.evaluateFormulaCell(sheet.getRow(39).getCell(25))
+        
         evaluator.evaluateFormulaCell(sheet.getRow(36).getCell(26))
         evaluator.evaluateFormulaCell(sheet.getRow(37).getCell(27))
         evaluator.evaluateFormulaCell(sheet.getRow(38).getCell(28))
@@ -344,7 +355,7 @@ object ExcelUtility {
       for {
         sheetIndex <- 2 to 19 - 1
         sheet = wb.getSheetAt(sheetIndex)
-        col <- 1 to (1 + nDay - 1)
+        col <- 0 to (1 + nDay)
       } {
         evaluator.evaluateFormulaCell(sheet.getRow(45).getCell(col))
         evaluator.evaluateFormulaCell(sheet.getRow(46).getCell(col))
