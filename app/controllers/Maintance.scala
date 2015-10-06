@@ -14,6 +14,7 @@ import play.api.Play.current
 import PdfUtility._
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
+import Ticket._
 
 /**
  * @author user
@@ -51,7 +52,7 @@ object Maintance extends Controller {
                 date <- ticketParam.executeDate
               } yield {
                 Ticket(0, DateTime.now, true, ticketParam.ticketType, submiterId,
-                  ticketParam.owner, m, None, ticketParam.reason, DateTime.parse(date), Ticket.defaultFormData, Ticket.defaultRepairFormData)
+                  ticketParam.owner, m, None, ticketParam.reason, DateTime.parse(date), Json.toJson(Ticket.defaultFormData).toString)
               }
             } else {
               for {
@@ -60,10 +61,9 @@ object Maintance extends Controller {
                 date <- ticketParam.executeDate
               } yield {
                 Ticket(0, DateTime.now, true, ticketParam.ticketType, submiterId,
-                  ticketParam.owner, m, Some(mt), ticketParam.reason, DateTime.parse(date), Ticket.defaultFormData, Ticket.defaultRepairFormData)
+                  ticketParam.owner, m, Some(mt), ticketParam.reason, DateTime.parse(date), Json.toJson(Ticket.defaultRepairFormData).toString)
               }
             }
-          Logger.debug("# of ticket=" + tickets.length)
           for (t <- tickets)
             Ticket.newTicket(t)
 
@@ -156,14 +156,14 @@ object Maintance extends Controller {
               mt,
               param.reason,
               executeDate,
-              if (t.ticketType != param.ticketType)
-                Ticket.defaultFormData
-              else
-                t.form,
-              if (t.ticketType != param.ticketType)
-                Ticket.defaultRepairFormData
-              else
-                t.repairForm)
+              if (t.ticketType == param.ticketType){
+                t.formJson
+              }else{
+                 if(param.ticketType == TicketType.repair)
+                   Json.toJson(defaultRepairFormData).toString
+                 else
+                   Json.toJson(Ticket.defaultFormData).toString
+              })
 
             Ticket.updateTicket(newT)
             Ok(Json.obj("ok" -> true))
@@ -182,10 +182,6 @@ object Maintance extends Controller {
           BadRequest(Json.obj("ok" -> false, "msg" -> JsError.toFlatJson(error)))
         },
         form => {
-          Logger.debug("bool #=>" + form.boolValues.length)
-          Logger.debug("str #=>" + form.strValues.length)
-          Logger.debug("str #=>" + form.comments.length)
-
           Ticket.updateTicketFormData(ID, form)
           Ok(Json.obj("ok" -> true))
         })
@@ -202,7 +198,6 @@ object Maintance extends Controller {
           BadRequest(Json.obj("ok" -> false, "msg" -> JsError.toFlatJson(error)))
         },
         form => {
-          Logger.debug(form.toString())
           Ticket.updateRepairFormData(ID, form)
           Ok(Json.obj("ok" -> true))
         })
@@ -215,27 +210,27 @@ object Maintance extends Controller {
       val t = ticketOpt.get
       t.ticketType match {
         case TicketType.maintance_week =>
-          Ok(views.html.weekMaintanceForm(ID, t.form))
+          Ok(views.html.weekMaintanceForm(ID, t.getForm))
         case TicketType.maintance_biweek =>
-          Ok(views.html.biweekForm(ID, t.form))
+          Ok(views.html.biweekForm(ID, t.getForm))
         case TicketType.maintance_month =>
-          Ok(views.html.monthForm(ID, t.form))
+          Ok(views.html.monthForm(ID, t.getForm))
         case TicketType.maintance_quarter =>
-          Ok(views.html.quarterForm(ID, t.form))
+          Ok(views.html.quarterForm(ID, t.getForm))
         case TicketType.maintance_half_year =>
-          Ok(views.html.halfYearForm(ID, t.form))
+          Ok(views.html.halfYearForm(ID, t.getForm))
         case TicketType.maintance_year =>
-          Ok(views.html.yearForm(ID, t.form))
+          Ok(views.html.yearForm(ID, t.getForm))
         case TicketType.repair =>
           val equipList = Equipment.map(t.monitor)
           val partIdNameMap = Part.getIdNameMap()
           val partEquipMap = Part.getEquipPartMap()
-          if (t.repairForm.equipmentId.length() != 0) {
-            val equipment = Equipment.getEquipment(t.repairForm.equipmentId).get
+          if (t.getRepairForm.equipmentId.length() != 0) {
+            val equipment = Equipment.getEquipment(t.getRepairForm.equipmentId).get
             val partList = partEquipMap.getOrElse(equipment.name, List.empty[Part])
-            Ok(views.html.repairForm(ID, t.repairForm, equipList, partIdNameMap, partList))
+            Ok(views.html.repairForm(ID, t.getRepairForm, equipList, partIdNameMap, partList))
           } else {
-            Ok(views.html.repairForm(ID, t.repairForm, equipList, partIdNameMap, List.empty[Part]))
+            Ok(views.html.repairForm(ID, t.getRepairForm, equipList, partIdNameMap, List.empty[Part]))
           }
       }
     }

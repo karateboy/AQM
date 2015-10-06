@@ -127,8 +127,31 @@ object TicketType extends Enumeration {
 }
 
 case class Ticket(id: Int, submit_date: DateTime, active: Boolean, ticketType: TicketType.Value, submiter_id: Int, owner_id: Int, monitor: Monitor.Value,
-                  monitorType: Option[MonitorType.Value], reason: String, executeDate: DateTime, 
-                  form: FormData, repairForm: RepairFormData)
+                  monitorType: Option[MonitorType.Value], reason: String, executeDate: DateTime, formJson:String){
+  
+  implicit val formDataRead = Json.reads[FormData]
+  implicit val formDataWrite = Json.writes[FormData]
+  implicit val partDataRead = Json.reads[PartFormData]
+  implicit val partDataWrite = Json.writes[PartFormData]
+  implicit val repairDataRead = Json.reads[RepairFormData]
+  implicit val repairDataWrite = Json.writes[RepairFormData]
+  
+  def getRepairForm = {
+    val result = Json.parse(formJson).validate[RepairFormData]
+    result.fold(
+      error =>
+        Ticket.defaultRepairFormData,
+      success => success)      
+  }
+  
+  def getForm = {
+    val result = Json.parse(formJson).validate[FormData]
+    result.fold(
+      error =>
+        Ticket.defaultFormData,
+      success => success)    
+  }
+}
 /**
  * @author user
  */
@@ -145,7 +168,11 @@ object Ticket {
     DB localTx { implicit session =>
       val submit_tt: java.sql.Timestamp = ticket.submit_date
       val execute_date: java.sql.Date = ticket.executeDate
-
+      val formJson = if(ticket.ticketType == TicketType.repair)
+        Json.toJson(defaultRepairFormData).toString
+      else
+        Json.toJson(defaultFormData).toString
+      
       sql"""
         Insert into Ticket(
         [submit_date]
@@ -159,7 +186,8 @@ object Ticket {
         ,[execute_date]
         ,[form])
         values(${submit_tt}, ${ticket.active}, ${ticket.ticketType.id}, ${ticket.submiter_id}, ${ticket.owner_id}, ${ticket.monitor.toString},
-          ${ticket.monitorType.map { _.toString }}, ${ticket.reason}, ${execute_date}, ${Json.toJson(defaultFormData).toString})
+          ${ticket.monitorType.map { _.toString }}, ${ticket.reason}, ${execute_date}, 
+          ${formJson})
         """.update.apply
     }
   }
@@ -167,32 +195,20 @@ object Ticket {
   def ticketMapper =
     { r: WrappedResultSet =>
       val ticketType = TicketType.withId(r.int(4))
-      if (ticketType != TicketType.repair) {
-        Ticket(r.int(1), r.timestamp(2), r.boolean(3), ticketType,
-          r.int(5), r.int(6), Monitor.withName(r.string(7)),
-          if (r.stringOpt(8).isEmpty)
-            None
+      Ticket(r.int(1), r.timestamp(2), r.boolean(3), ticketType,
+        r.int(5), r.int(6), Monitor.withName(r.string(7)),
+        if (r.stringOpt(8).isEmpty)
+          None
+        else
+          Some(MonitorType.withName(r.string(8))),
+        r.string(9), r.date(10),
+        if (r.stringOpt(11).isEmpty) {
+          if (ticketType == TicketType.repair)
+            Json.toJson(defaultRepairFormData).toString
           else
-            Some(MonitorType.withName(r.string(8))),
-          r.string(9), r.date(10),
-          if (r.stringOpt(11).isEmpty)
-            defaultFormData
-          else
-            Json.parse(r.string(11)).validate[FormData].get, Ticket.defaultRepairFormData)
-      } else {
-        Ticket(r.int(1), r.timestamp(2), r.boolean(3), ticketType,
-          r.int(5), r.int(6), Monitor.withName(r.string(7)),
-          if (r.stringOpt(8).isEmpty)
-            None
-          else
-            Some(MonitorType.withName(r.string(8))),
-          r.string(9), r.date(10),
-          defaultFormData,
-          if (r.stringOpt(11).isEmpty)
-            Ticket.defaultRepairFormData
-          else
-            Json.parse(r.string(11)).validate[RepairFormData].get)
-      }
+            Json.toJson(Ticket.defaultFormData).toString
+        } else
+          r.stringOpt(11).get)
     }
       
   def queryTickets(start: DateTime, end: DateTime)(implicit session: DBSession = AutoSession) = {
@@ -241,23 +257,13 @@ object Ticket {
 
   def updateTicket(ticket: Ticket)(implicit session: DBSession = AutoSession) = {
     DB localTx { implicit session =>
-      if (ticket.ticketType != TicketType.repair)
         sql"""
         Update Ticket
         Set [ticketType]=${ticket.ticketType.id}, [owner_id]=${ticket.owner_id},
           [monitor]=${ticket.monitor.toString}, [monitorType]=${ticket.monitorType.map { _.toString }},
-          [reason]=${ticket.reason}, [execute_date]=${ticket.executeDate.toDate}, [form] = ${Json.toJson(ticket.form).toString}
+          [reason]=${ticket.reason}, [execute_date]=${ticket.executeDate.toDate}, [form] = ${ticket.formJson}
         Where ID = ${ticket.id}
         """.update.apply
-      else
-        sql"""
-        Update Ticket
-        Set [ticketType]=${ticket.ticketType.id}, [owner_id]=${ticket.owner_id},
-          [monitor]=${ticket.monitor.toString}, [monitorType]=${ticket.monitorType.map { _.toString }},
-          [reason]=${ticket.reason}, [execute_date]=${ticket.executeDate.toDate}, [form] = ${Json.toJson(ticket.repairForm).toString}
-        Where ID = ${ticket.id}
-        """.update.apply
-
     }
   }
 

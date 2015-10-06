@@ -396,7 +396,7 @@ object Record {
   }
   
   def getPeriodReport(monitor: Monitor.Value, start: DateTime, period:Period, includeTypes: List[MonitorType.Value] = MonitorType.monitorReportList,
-                     monitorStatusFilter: MonitorStatusFilter.Value = MonitorStatusFilter.Normal) = {
+                     monitorStatusFilter: MonitorStatusFilter.Value = MonitorStatusFilter.ValidData) = {
     DB localTx { implicit session =>
       
       val isHourRecord = (start+period >= start + 1.hour)
@@ -466,7 +466,7 @@ object Record {
   }
   
   def getDailyReport(monitor: Monitor.Value, start: DateTime, includeTypes: List[MonitorType.Value] = MonitorType.monitorReportList,
-                     monitorStatusFilter: MonitorStatusFilter.Value = MonitorStatusFilter.Normal_Over) = {
+                     monitorStatusFilter: MonitorStatusFilter.Value = MonitorStatusFilter.ValidData) = {
     DB localTx { implicit session =>
       val originalHourRecordList = getHourRecords(monitor, start, start + 1.day)
       val reportList =

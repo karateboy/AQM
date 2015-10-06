@@ -64,7 +64,7 @@ object Realtime extends Controller {
 
       val current = getLatestRecordTime(TableType.Hour).get
       val reportUnit = ReportUnit.Hour
-      val monitorStatusFilter = MonitorStatusFilter.Normal_Over
+      val monitorStatusFilter = MonitorStatusFilter.ValidData
       val start = current.toDateTime - 1.day
       val end = current.toDateTime + 1.hour
 
@@ -83,7 +83,7 @@ object Realtime extends Controller {
 
       val current = getLatestRecordTime(TableType.Min).get
       val reportUnit = ReportUnit.Min
-      val monitorStatusFilter = MonitorStatusFilter.Normal_Over
+      val monitorStatusFilter = MonitorStatusFilter.ValidData
       val start = current.toDateTime - 4.hour
       val end = current.toDateTime + 1.minute
 

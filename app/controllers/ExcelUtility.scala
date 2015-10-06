@@ -874,7 +874,7 @@ object ExcelUtility {
     val evaluator = wb.getCreationHelper().createFormulaEvaluator()
     val format = wb.createDataFormat();
 
-    val form = ticket.form
+    val form = ticket.getForm
     
     val sheet = wb.getSheetAt(0)
     val monitorName = Monitor.map(ticket.monitor).name
@@ -991,7 +991,7 @@ object ExcelUtility {
     val evaluator = wb.getCreationHelper().createFormulaEvaluator()
     val format = wb.createDataFormat();
 
-    val form = ticket.form
+    val form = ticket.getForm
     
     val sheet = wb.getSheetAt(0)
     val monitorName = Monitor.map(ticket.monitor).name
@@ -1033,7 +1033,7 @@ object ExcelUtility {
     val evaluator = wb.getCreationHelper().createFormulaEvaluator()
     val format = wb.createDataFormat();
 
-    val form = ticket.form
+    val form = ticket.getForm
     
     val sheet = wb.getSheetAt(0)
     val monitorName = Monitor.map(ticket.monitor).name
@@ -1096,7 +1096,7 @@ object ExcelUtility {
     val evaluator = wb.getCreationHelper().createFormulaEvaluator()
     val format = wb.createDataFormat();
 
-    val form = ticket.form
+    val form = ticket.getForm
     
     val sheet = wb.getSheetAt(0)
     val monitorName = Monitor.map(ticket.monitor).name
@@ -1155,7 +1155,7 @@ object ExcelUtility {
     val evaluator = wb.getCreationHelper().createFormulaEvaluator()
     val format = wb.createDataFormat();
 
-    val form = ticket.form
+    val form = ticket.getForm
     
     val sheet = wb.getSheetAt(0)
     val monitorName = Monitor.map(ticket.monitor).name
@@ -1211,7 +1211,7 @@ object ExcelUtility {
     val evaluator = wb.getCreationHelper().createFormulaEvaluator()
     val format = wb.createDataFormat();
 
-    val form = ticket.form
+    val form = ticket.getForm
     
     val sheet = wb.getSheetAt(0)
     val monitorName = Monitor.map(ticket.monitor).name
@@ -1264,7 +1264,7 @@ object ExcelUtility {
     val evaluator = wb.getCreationHelper().createFormulaEvaluator()
     val format = wb.createDataFormat();
 
-    val form = ticket.repairForm
+    val form = ticket.getRepairForm
     
     val sheet = wb.getSheetAt(0)
     val monitorName = Monitor.map(ticket.monitor).name

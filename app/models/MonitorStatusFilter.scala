@@ -14,6 +14,7 @@ object MonitorStatusFilter extends Enumeration {
   val InvalidData = Value("invalid")
   val OverInternal = Value("over_internal")
   val DataLost = Value("data_lost")
+  val ValidData = Value("valid")
 
   val map = Map(
     All -> "全部",
@@ -25,7 +26,8 @@ object MonitorStatusFilter extends Enumeration {
     Maintance -> "維修",
     InvalidData -> "無效數據",
     OverInternal -> "校正偏移(超過內控值)",
-    DataLost -> "遺失數據")
+    DataLost -> "遺失數據",
+    ValidData -> "有效數據")
 
   val statusMap = Map(
     All -> MonitorStatus.NORMAL_STAT,
@@ -37,7 +39,8 @@ object MonitorStatusFilter extends Enumeration {
     Maintance -> MonitorStatus.MAINTANCE_STAT,
     InvalidData -> MonitorStatus.INVALID_DATA,
     OverInternal -> MonitorStatus.CALBRATION_DIVERSION_STAT,
-    DataLost -> MonitorStatus.DATA_LOSS_STAT)
+    DataLost -> MonitorStatus.DATA_LOSS_STAT,
+    ValidData -> MonitorStatus.NORMAL_STAT)
 
   def isMatched(msf: MonitorStatusFilter.Value, stat: String) = {
     msf match {
@@ -70,6 +73,9 @@ object MonitorStatusFilter extends Enumeration {
         
       case MonitorStatusFilter.DataLost =>
         MonitorStatus.isDataLost(stat)
+        
+      case MonitorStatusFilter.ValidData =>
+        MonitorStatus.isValid(stat)
     }
   }
 }
