@@ -98,7 +98,7 @@ object Realtime extends Controller {
   case class AxisLine(color: String, width: Int, value: Float, label: Option[AxisLineLabel])
   case class AxisTitle(text: Option[String])
   case class YAxis(labels: Option[String], title: AxisTitle, plotLines: Option[Seq[AxisLine]], opposite:Boolean=false)
-  case class seqData(name: String, data: Seq[Float], yAxis:Int=0, chartType:Option[String]=None)
+  case class seqData(name: String, data: Seq[Seq[Float]], yAxis:Int=0, chartType:Option[String]=None)
   case class HighchartData(chart: Map[String, String],
                            title: Map[String, String],
                            xAxis: XAxis,
@@ -113,7 +113,7 @@ object Realtime extends Controller {
   implicit val yaWrite = Json.writes[YAxis]
   implicit val seqDataWrite:Writes[seqData] = (
     (__ \ "name").write[String] and
-    (__ \ "data").write[Seq[Float]] and
+    (__ \ "data").write[Seq[Seq[Float]]] and
     (__ \ "yAxis").write[Int] and
     (__ \ "type").write[Option[String]]
   )(unlift(seqData.unapply))
@@ -142,14 +142,14 @@ object Realtime extends Controller {
         seqData(Monitor.map(m).name, Seq({
           val vOpt = realtimeValueMap.get(m)
           if (vOpt.isEmpty || vOpt.get._1.isEmpty || vOpt.get._2.isEmpty)
-            0f
+            Seq(0f)
           else {
             val value = vOpt.get._1.get
             val status = vOpt.get._2.get
             if (MonitorStatus.isNormalStat(status))
-              value
+              Seq(value)
             else
-              0f
+              Seq(0f)
           }
 
         }))

@@ -101,14 +101,22 @@ object Realtime {
       Map(final_list: _*)
     }
   }
-    
+
+  def statusFilter(msf: MonitorStatusFilter.Value)(data: (Option[Float], Option[String])): Boolean = {
+    if (data._2.isEmpty)
+      return false
+
+    val stat = data._2.get
+    MonitorStatusFilter.isMatched(msf, stat)
+  }
+
   def getMonitorTypeAvg(monitor: Monitor.Value, monitorType: MonitorType.Value, start: DateTime, end: DateTime)(implicit session: DBSession = AutoSession) = {
+
     val records = getHourRecords(monitor, start, end)
     val typeValues = records.map { hr => monitorTypeProject2(monitorType)(hr) }
-    //val validValues = typeValues.filter(v => (!v._2.isEmpty) && (Record.isValidStat(v._2.get))).map(_._1.get)
     val duration = new Duration(start, end)
     val nHour = duration.getStandardHours
-    val validValues = typeValues.filter(v => (!v._2.isEmpty)).map(_._1.get)
+    val validValues = typeValues.filter(statusFilter(MonitorStatusFilter.ValidData)).map(_._1.get)
     val total = validValues.length
     if (total == 0 || total != nHour)
       None
@@ -118,9 +126,10 @@ object Realtime {
     }
   }
 
+
   def getMonitorTypeAvg(records: List[HourRecord], monitorType: MonitorType.Value) = {
     val typeValues = records.map { hr => monitorTypeProject2(monitorType)(hr) }
-    val validValues = typeValues.filter(v => (!v._2.isEmpty)).map(_._1.get)
+    val validValues = typeValues.filter(statusFilter(MonitorStatusFilter.ValidData)).map(_._1.get)
     val total = validValues.length
     if (total == 0)
       None
@@ -131,7 +140,7 @@ object Realtime {
 
   def getMonitorTypeMax(records: List[HourRecord], monitorType: MonitorType.Value) = {
     val typeValues = records.map { hr => monitorTypeProject2(monitorType)(hr) }
-    val validValues = typeValues.filter(v => (!v._2.isEmpty)).map(_._1.get)
+    val validValues = typeValues.filter(statusFilter(MonitorStatusFilter.ValidData)).map(_._1.get)
     val total = validValues.length
     if (total == 0)
       None

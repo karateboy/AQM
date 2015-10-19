@@ -21,7 +21,7 @@
 	@for(a <- report){
 		<tr>
 			<td>@Monitor.map(a.monitor).name</td>
-			<td>@a.time.toString("YYYY/MM/dd")</td>
+			<td>@a.time.toString("YYYY/MM/dd HH:mm")</td>
 			<td>@models.Alarm.map(a.mItem)</td>
 			<td>@MonitorStatus.map(a.code).desp</td>
 		</tr>

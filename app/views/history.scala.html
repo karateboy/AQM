@@ -118,12 +118,12 @@ $( document ).ready(function() {
 	}
 	
 	$('#reportStart').datetimepicker({
-		format: 'YYYY-MM-D',
+		format: 'YYYY-M-D HH:mm',
 		defaultDate: moment().subtract(1, 'days'),
     	locale: "zh-TW"
 	});
 	$('#reportEnd').datetimepicker({
-		format: 'YYYY-MM-D',
+		format: 'YYYY-M-D HH:mm',
 		defaultDate: moment().subtract(12, 'hours'),
     	locale: "zh-TW"
 	});
@@ -196,7 +196,7 @@ $( document ).ready(function() {
 	
 	$('#Hour').parent().click(function(){
 		enableMT();
-		enableHour(false);
+		enableHour(true);
 		enableEpa(true);
 	});
 	

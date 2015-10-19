@@ -70,10 +70,13 @@
 @if(editable){
 <label>註記代碼</label>	
 <select id="manualStatus">
+	<option value='@NORMAL_STAT'>@MonitorStatus.map(NORMAL_STAT).desp</option>
+	<option value='@UNAVOIDABLE_STAT'>@MonitorStatus.map(UNAVOIDABLE_STAT).desp</option>
+	<option value='@INVALID_DATA'>@MonitorStatus.map(INVALID_DATA).desp</option>
 	@for(ms<-MonitorStatus.manualMonitorStatusList){
 		<option value='@ms'>@MonitorStatus.map(ms).desp</option>
 	}
-	<option value='010'>正常</option>
+		
 </select>
 <button type="button" class="btn btn-primary" id="manualAuditApply">註記</button>
 	

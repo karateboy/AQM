@@ -373,26 +373,12 @@ object Record {
       current :: getDays(current + 1.days, endTime)
   }
 
-
-  def windAvg(sum_sin:Double, sum_cos:Double)={
-    if(Math.abs(sum_cos) <= 0.000001){
-      if(sum_sin == 0){
-        0
-      }else if(sum_sin >0)
-        90
-      else
-        270
-    }else{
-      val degree = Math.toDegrees(Math.atan(sum_sin / sum_cos)).toFloat
-      if(sum_sin >0 && sum_cos >0)
-        degree
-      else if(sum_sin >0 && sum_cos <0)
-        degree + 180
-      else if(sum_sin <0 && sum_cos >0)
-        degree + 360
-      else
-        degree + 180
-    }
+  def windAvg(sum_sin: Double, sum_cos: Double) = {
+    val degree = Math.toDegrees(Math.atan2(sum_sin, sum_cos)).toFloat
+    if(degree >= 0)
+      degree 
+    else
+      degree + 360
   }
   
   def getPeriodReport(monitor: Monitor.Value, start: DateTime, period:Period, includeTypes: List[MonitorType.Value] = MonitorType.monitorReportList,

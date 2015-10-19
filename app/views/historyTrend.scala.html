@@ -152,12 +152,12 @@ $( document ).ready(function() {
 	});
 	
 	$('#reportStart').datetimepicker({
-		format: 'YYYY-MM-D',
+		format: 'YYYY-M-D HH:mm',
 		defaultDate: moment().subtract(1, 'days'),
     	locale: "zh-TW"
 	});
 	$('#reportEnd').datetimepicker({
-		format: 'YYYY-MM-D',
+		format: 'YYYY-M-D HH:mm',
 		defaultDate: moment().subtract(1, 'hours'),
     	locale: "zh-TW"
 	});
@@ -171,13 +171,12 @@ $( document ).ready(function() {
 
     $("input[name='reportUnit']").change(function(){
 		var me = $(this)
-		if(me.attr('id') == 'ten_min' || me.attr('id') == 'min'){
+		if(me.attr('id') == 'ten_min' || me.attr('id') == 'min' || me.attr('id') == 'hour'){
 			$('#reportStart').data("DateTimePicker").format("YYYY-M-D HH:mm");
 			$('#reportEnd').data("DateTimePicker").format("YYYY-M-D HH:mm");
 			$('#reportStart').data("DateTimePicker").daysOfWeekDisabled([]);
 			$('#reportEnd').data("DateTimePicker").daysOfWeekDisabled([]);						
-		}else if(me.attr('id') == 'hour' || me.attr('id') == 'eight_hour'
-			|| me.attr('id') == 'day'){
+		}else if(me.attr('id') == 'eight_hour' || me.attr('id') == 'day'){
 			$('#reportStart').data("DateTimePicker").format("YYYY-M-D");
 			$('#reportEnd').data("DateTimePicker").format("YYYY-M-D");
 			$('#reportStart').data("DateTimePicker").daysOfWeekDisabled([]);

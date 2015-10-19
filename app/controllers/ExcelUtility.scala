@@ -873,7 +873,7 @@ object ExcelUtility {
       } {
         val cell = thisRow.createCell(col)
         cell.setCellStyle(styles(col - 1))
-        cell.setCellValue(series.data(rowNo - 1))
+        cell.setCellValue(series.data(rowNo - 1)(1))
 
       }
     }
