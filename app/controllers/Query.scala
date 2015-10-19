@@ -569,32 +569,34 @@ object Query extends Controller {
       val start = DateTime.parse(startStr)
       val end = DateTime.parse(endStr) + 1.day
 
-      assert(mtCase.std_law.isDefined)
-
-      import models.Record._
-      import scala.collection.mutable.ListBuffer
-      val result = ListBuffer[OverLawStdEntry]()
-      for {
-        m <- monitors
-        records = Record.getHourRecords(m, start, end)
-        typeRecords = records.map { r => (Record.timeProjection(r), Record.monitorTypeProject2(monitorType)(r)) }
-        overLawRecords = typeRecords.filter {
-          r => (r._2._1.isDefined && r._2._1.get > mtCase.std_law.get)
+      if (mtCase.std_law.isEmpty)
+        BadRequest("法規值未定義!")
+      else {
+        import models.Record._
+        import scala.collection.mutable.ListBuffer
+        val result = ListBuffer[OverLawStdEntry]()
+        for {
+          m <- monitors
+          records = Record.getHourRecords(m, start, end)
+          typeRecords = records.map { r => (Record.timeProjection(r), Record.monitorTypeProject2(monitorType)(r)) }
+          overLawRecords = typeRecords.filter {
+            r => (r._2._1.isDefined && r._2._1.get > mtCase.std_law.get)
+          }
+          overList = overLawRecords.map { r => OverLawStdEntry(m, r._1, r._2._1.get) }
+        } {
+          result ++= overList
         }
-        overList = overLawRecords.map { r => OverLawStdEntry(m, r._1, r._2._1.get) }
-      } {
-        result ++= overList
-      }
 
-      val output = views.html.overLawStdReport(monitorType, start, end - 1.day, result)
-      val title = "超過法規報表"
-      outputType match {
-        case OutputType.html =>
-          Ok(output)
-        case OutputType.pdf =>
-          Ok.sendFile(creatPdfWithReportHeader(title, output),
-            fileName = _ =>
-              play.utils.UriEncoding.encodePathSegment(title + start.toString("YYMMdd") + "_" + end.toString("MMdd") + ".pdf", "UTF-8"))
+        val output = views.html.overLawStdReport(monitorType, start, end - 1.day, result)
+        val title = "超過法規報表"
+        outputType match {
+          case OutputType.html =>
+            Ok(output)
+          case OutputType.pdf =>
+            Ok.sendFile(creatPdfWithReportHeader(title, output),
+              fileName = _ =>
+                play.utils.UriEncoding.encodePathSegment(title + start.toString("YYMMdd") + "_" + end.toString("MMdd") + ".pdf", "UTF-8"))
+        }
       }
   }
 

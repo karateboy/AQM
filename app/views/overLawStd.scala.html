@@ -154,7 +154,10 @@ $( document ).ready(function() {
 				$("#downloadPDF").prop("href", "/PDF" + url);
 			},
 			error: function(xhr, status, errorThrown){
-				console.log("錯誤訊息:" + status + "-" + errorThrown);
+				console.log(xhr);
+				console.log(status);
+				console.log(errorThrown);
+				alert(xhr.responseText);
 			},
 
 			complete: function(xhr, status){
