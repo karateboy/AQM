@@ -18,7 +18,7 @@ object PeriodReport extends Enumeration {
   val DailyReport = Value("daily")
   val MonthlyReport = Value("monthly")
   val YearlyReport = Value("yearly")
-  def map = Map(DailyReport->"日報", MonthlyReport->"月報", YearlyReport->"年報")
+  def map = Map(DailyReport -> "日報", MonthlyReport -> "月報", YearlyReport -> "年報")
 }
 
 object ReportType extends Enumeration {
@@ -71,7 +71,7 @@ object Report extends Controller {
     else
       current :: getMonths(current + 1.month, endTime)
   }
-  
+
   def getQuarters(current: DateTime, endTime: DateTime): List[DateTime] = {
     assert(endTime.getDayOfMonth == 1)
 
@@ -112,11 +112,11 @@ object Report extends Controller {
         min = if (count != 0) validData.min else Float.MaxValue
         overCount = 0
       } yield {
-        val avg = if (MonitorType.windDirList.contains(mt)) {         
+        val avg = if (MonitorType.windDirList.contains(mt)) {
           val sum_sin = validData.map(v => Math.sin(Math.toRadians(v))).sum
           val sum_cos = validData.map(v => Math.cos(Math.toRadians(v))).sum
           windAvg(sum_sin, sum_cos)
-         } else {
+        } else {
           val sum = validData.sum
           if (count != 0) sum / count else 0
         }
@@ -308,7 +308,7 @@ object Report extends Controller {
                       filter: MonitorStatusFilter.Value = MonitorStatusFilter.All) = {
     val endTime = startTime + period
     val report = Record.getPeriodReport(monitor, startTime, period, includeTypes, filter)
-    
+
     val typeReport =
       for {
         t <- report.typeList.zipWithIndex
@@ -317,7 +317,7 @@ object Report extends Controller {
         typeStat = report.typeList(pos).stat
       } yield {
         MonitorTypeReport(monitorType, List(typeStat), typeStat)
-      }      
+      }
     IntervalReport(typeReport)
   }
 
@@ -331,16 +331,16 @@ object Report extends Controller {
 
   def getPeriods(start: DateTime, endTime: DateTime, d: Period): List[DateTime] = {
     import scala.collection.mutable.ListBuffer
-    
+
     val buf = ListBuffer[DateTime]()
     var current = start
-    while(current < endTime){
+    while (current < endTime) {
       buf.append(current)
       current += d
     }
-    
+
     buf.toList
-   }
+  }
 
   def getPeriodReportMap(monitor: Monitor.Value, start: DateTime, end: DateTime, filter: MonitorStatusFilter.Value, period: Period) = {
     val adjustStart = DateTime.parse(start.toString("YYYY-MM-dd"))
@@ -588,7 +588,7 @@ object Report extends Controller {
             case PeriodReport.DailyReport =>
               val psiList = getDailyPsiReport(monitor, startDate)
               ("PSI日報表", ExcelUtility.psiDailyReport(monitor, startDate, psiList))
-            
+
             case PeriodReport.MonthlyReport =>
               val adjustStartDate = DateTime.parse(startDate.toString("YYYY-MM-1"))
               val monthlyPsiList = getMonitorMonthlyPSI(monitor, adjustStartDate)
@@ -655,13 +655,12 @@ object Report extends Controller {
               val statMap = getStatMonitorEffectiveRate(rateList)
               (Monitor.map(monitor).name + "有效率年報", ExcelUtility.createSingleSiteEffectiveReport(monitor, adjustedStart, rateList, statMap))
 
-              
             case EffectiveReportType.multipleSites =>
               val monitorType = MonitorType.withName(param)
               val rateList = getMonitorTypeYearlyEffectiveRate(monitorType, adjustedStart)
               val statMap = getStatYearlyMonthlyEffectiveRate(rateList)
 
-              (MonitorType.map(monitorType).desp + "有效率年報", ExcelUtility.createMultipleSiteEffectiveReport(monitorType, adjustedStart, rateList, statMap))              
+              (MonitorType.map(monitorType).desp + "有效率年報", ExcelUtility.createMultipleSiteEffectiveReport(monitorType, adjustedStart, rateList, statMap))
           }
 
         Ok.sendFile(excelFile, fileName = _ =>
@@ -694,7 +693,7 @@ object Report extends Controller {
         }
       }
   }
-  
+
   def epaCompare() = Security.Authenticated {
     implicit request =>
       val userInfo = Security.getUserinfo(request).get
@@ -721,7 +720,7 @@ object Report extends Controller {
 
       if (outputType == OutputType.excel) {
         val excelFile = ExcelUtility.epaCompareReport(monitor, epaMonitor, reportDate, myMap, epaMap, hours)
-        
+
         Ok.sendFile(excelFile, fileName = _ =>
           play.utils.UriEncoding.encodePathSegment("測站比較表" + reportDate.toString("YYMMdd") + ".xlsx", "UTF-8"),
           onClose = () => { Files.deleteIfExists(excelFile.toPath()) })
@@ -736,9 +735,9 @@ object Report extends Controller {
               fileName = _ =>
                 play.utils.UriEncoding.encodePathSegment(title + reportDate.toString("YYYY-MM-dd") + ".pdf", "UTF-8"))
         }
-      }      
+      }
   }
-  
+
   def calibration() = Security.Authenticated {
     implicit request =>
       val userInfo = Security.getUserinfo(request).get
@@ -746,16 +745,16 @@ object Report extends Controller {
       Ok(views.html.calibrationReportForm(group.privilege))
   }
 
-  object CalibrationReportType extends Enumeration{
-      val Daily = Value("daily")
-      val Summary = Value("summary")
-      val Monthly = Value("monthly") 
-      val map = Map(Daily->"日報", Summary->"彙總表", Monthly->"月報")
+  object CalibrationReportType extends Enumeration {
+    val Daily = Value("daily")
+    val Summary = Value("summary")
+    val Monthly = Value("monthly")
+    val map = Map(Daily -> "日報", Summary -> "彙總表", Monthly -> "月報")
   }
 
-  def calibrationReport(monitorStr: String, monitorTypeStr:String, reportTypeStr: String, reportDateStr: String, outputTypeStr: String) = Security.Authenticated {
+  def calibrationReport(monitorStr: String, monitorTypeStr: String, reportTypeStr: String, reportDateStr: String, outputTypeStr: String) = Security.Authenticated {
     implicit request =>
-      val monitors = monitorStr.split(":").map{Monitor.withName}.toList
+      val monitors = monitorStr.split(":").map { Monitor.withName }.toList
       val monitorType = MonitorType.withName(monitorTypeStr)
       val reportType = CalibrationReportType.withName(reportTypeStr)
       val reportDate = DateTime.parse(reportDateStr)
@@ -763,24 +762,24 @@ object Report extends Controller {
 
       if (outputType == OutputType.excel) {
         val (title, excelFile) =
-        reportType match {
+          reportType match {
             case CalibrationReportType.Daily =>
               val title = "校正日報"
-              val reports= monitors.flatMap { m => Calibration.calibrationQueryReport(m, reportDate, reportDate + 1.day)}              
+              val reports = monitors.flatMap { m => Calibration.calibrationQueryReport(m, reportDate, reportDate + 1.day) }
               (title, ExcelUtility.calibrationDailyReport(title, reportDate, reports))
-            case CalibrationReportType.Summary=>
+            case CalibrationReportType.Summary =>
               val title = "校正彙總表"
-              val reports= monitors.flatMap { m => Calibration.calibrationSummary(m, reportDate, reportDate + 1.day)}
+              val reports = monitors.flatMap { m => Calibration.calibrationSummary(m, reportDate, reportDate + 1.day) }
               (title, ExcelUtility.calibrationDailyReport(title, reportDate, reports))
-            case CalibrationReportType.Monthly=>
+            case CalibrationReportType.Monthly =>
               val title = "月報"
               val adjustedDate = DateTime.parse(reportDate.toString("YYYY-MM-01"))
-              
-              val reportMap= Calibration.calibrationMonthly(monitors(0), monitorType, adjustedDate)
+
+              val reportMap = Calibration.calibrationMonthly(monitors(0), monitorType, adjustedDate)
               val days = getDays(adjustedDate, adjustedDate + 1.month)
               val nDay = days.length
 
-              (title, ExcelUtility.calibrationMonthlyReport("測站:"+Monitor.map(monitors(0)).name, reportDate, reportMap, nDay))              
+              (title, ExcelUtility.calibrationMonthlyReport("測站:" + Monitor.map(monitors(0)).name, reportDate, reportMap, nDay))
           }
         Ok.sendFile(excelFile, fileName = _ =>
           play.utils.UriEncoding.encodePathSegment(title + reportDate.toString("YYMMdd") + ".xlsx", "UTF-8"),
@@ -790,19 +789,19 @@ object Report extends Controller {
           reportType match {
             case CalibrationReportType.Daily =>
               val title = "校正日報"
-              val reports= monitors.flatMap { m => Calibration.calibrationQueryReport(m, reportDate, reportDate + 1.day)}
+              val reports = monitors.flatMap { m => Calibration.calibrationQueryReport(m, reportDate, reportDate + 1.day) }
               val report = views.html.calibrationQueryResult(reports, title, reportDate, reportDate)
               (title, report)
-            case CalibrationReportType.Summary=>
+            case CalibrationReportType.Summary =>
               val title = "校正彙總表"
-              val reports= monitors.flatMap { m => Calibration.calibrationSummary(m, reportDate, reportDate + 1.day)} 
+              val reports = monitors.flatMap { m => Calibration.calibrationSummary(m, reportDate, reportDate + 1.day) }
               val report = views.html.calibrationQueryResult(reports, title, reportDate, reportDate)
               (title, report)
-            case CalibrationReportType.Monthly=>
+            case CalibrationReportType.Monthly =>
               val title = "月報"
               val adjustedDate = DateTime.parse(reportDate.toString("YYYY-MM-01"))
-              
-              val reportMap= Calibration.calibrationMonthly(monitors(0), monitorType, adjustedDate)
+
+              val reportMap = Calibration.calibrationMonthly(monitors(0), monitorType, adjustedDate)
               val reports = reportMap.values.toList.sortBy { item => item.startTime }
               val report = views.html.calibrationQueryResult(reports, title, adjustedDate, adjustedDate)
               (title, report)
@@ -820,7 +819,7 @@ object Report extends Controller {
       }
 
   }
-  
+
   def monitorAbnormal() = Security.Authenticated {
     implicit request =>
       val userInfo = Security.getUserinfo(request).get
@@ -843,14 +842,14 @@ object Report extends Controller {
 
       import scala.collection.mutable.Map
       val explainMap = Map.empty[Monitor.Value, Map[MonitorType.Value, String]]
-      for(ex <- report.report){
+      for (ex <- report.report) {
         val mtMap = explainMap.getOrElseUpdate(ex.monitor, Map.empty[MonitorType.Value, String])
         mtMap.put(ex.monitorType, ex.explain)
       }
-        
+
       val latestReport = AbnormalReport(date, AbnormalReport.generate(date))
-      val reportWithExplain = latestReport.report.map{
-        ex=>
+      val reportWithExplain = latestReport.report.map {
+        ex =>
           val mtMap = explainMap.getOrElse(ex.monitor, Map.empty[MonitorType.Value, String])
           val explain = mtMap.getOrElse(ex.monitorType, "")
           AbnormalEntry(ex.monitor, ex.monitorType, ex.invalidHours, explain)
@@ -867,12 +866,19 @@ object Report extends Controller {
           Ok.sendFile(creatPdfWithReportHeader(title, output),
             fileName = _ =>
               play.utils.UriEncoding.encodePathSegment(title + date.toString("YYYYMMdd") + ".pdf", "UTF-8"))
+
+        case OutputType.excel =>
+          val excelFile = ExcelUtility.monitorAbnormalReport(date, reportWithExplain)
+          Ok.sendFile(excelFile, fileName = _ =>
+            play.utils.UriEncoding.encodePathSegment(title + date.toString("YYMMdd") + ".xlsx", "UTF-8"),
+            onClose = () => { Files.deleteIfExists(excelFile.toPath()) })
+
       }
   }
-  
-  def saveMonitorAbnormalReport(dateStr:String) = Security.Authenticated(BodyParsers.parse.json) {
-      implicit request =>
-      import AbnormalReport._   
+
+  def saveMonitorAbnormalReport(dateStr: String) = Security.Authenticated(BodyParsers.parse.json) {
+    implicit request =>
+      import AbnormalReport._
       val date = DateTime.parse(dateStr)
       val abEntriesResult = request.body.validate[Seq[AbnormalEntry]]
 
@@ -884,8 +890,74 @@ object Report extends Controller {
         entries => {
           AbnormalReport.updateReport(date, entries)
           Ok(Json.obj("ok" -> true, "nEntries" -> entries.length))
-        });    
+        });
   }
+
+  def monitorAggregate = Security.Authenticated {
+    implicit request =>
+      val userInfo = Security.getUserinfo(request).get
+      val group = Group.getGroup(userInfo.groupID).get
+      Ok(views.html.monitorAbnormal(group.privilege, "/MonitorAggregateReport/"))
+  }
+
+  def monitorAggregateReport(dateStr: String, outputTypeStr: String) = Security.Authenticated {
+    implicit request =>
+      val userInfo = Security.getUserinfo(request).get
+      val group = Group.getGroup(userInfo.groupID).get
+      val date = DateTime.parse(dateStr)
+      val reportOpt = AggregateReport.getReportFromDb(date)
+      val report =
+        if (reportOpt.isEmpty) {
+          AggregateReport.newReport(date)
+          AggregateReport(date, Seq.empty[MonitorSummary])
+        } else
+          reportOpt.get
+
+      val explainMap = Map(report.report.map { r => (r.monitor -> r.explain) }: _*)
+      val latestReport = AggregateReport(date, AggregateReport.generate(date))
+      val reportWithExplain = latestReport.report.map {
+        summary =>
+          val explain = explainMap.getOrElse(summary.monitor, "")
+          MonitorSummary(summary.monitor, summary.desc, explain)
+      }
+
+      val outputType = OutputType.withName(outputTypeStr)
+
+      val title = "測站每日監測彙總表"
+      val output = views.html.monitorAggregateReport(date, reportWithExplain)
+
+      outputType match {
+        case OutputType.html =>
+          Ok(output)
+        case OutputType.pdf =>
+          Ok.sendFile(creatPdfWithReportHeader(title, output),
+            fileName = _ =>
+              play.utils.UriEncoding.encodePathSegment(title + date.toString("YYYYMMdd") + ".pdf", "UTF-8"))
+        case OutputType.excel =>
+          val excelFile = ExcelUtility.monitorAggregateReport(date, reportWithExplain)
+          Ok.sendFile(excelFile, fileName = _ =>
+            play.utils.UriEncoding.encodePathSegment(title + date.toString("YYMMdd") + ".xlsx", "UTF-8"),
+            onClose = () => { Files.deleteIfExists(excelFile.toPath()) })
+      }
+  }
+
+  def saveMonitorAggregateReport(dateStr: String) = Security.Authenticated(BodyParsers.parse.json) {
+    implicit request =>
+      import AggregateReport._
+      val date = DateTime.parse(dateStr)
+      val mSummaryResult = request.body.validate[Seq[MonitorSummary]]
+
+      mSummaryResult.fold(
+        error => {
+          Logger.error(JsError.toFlatJson(error).toString())
+          BadRequest(Json.obj("ok" -> false, "msg" -> JsError.toFlatJson(error)))
+        },
+        entries => {
+          AggregateReport.updateReport(date, entries)
+          Ok(Json.obj("ok" -> true, "nEntries" -> entries.length))
+        });
+  }
+
 }
 
 

@@ -1,0 +1,152 @@
+@* monitorJournalReport Template File *@
+@(report: MonitorJournal, invalidHour: List[(MonitorType.Value, List[MonitorInvalidHour])], userList:List[User])
+<h3>測站工作日誌:@report.date.toString("YYYY-MM-d")</h3>
+<form class="form-horizontal">
+	<div class="form-group">
+		<label class="col-lg-2 control-label">維護人員</label>
+		<div class="col-lg-10" align="left">
+			<select id="operator">
+		    	@for(u<-userList){
+		    		<option  name='user' value="@u.id"
+		    		@if(u.id == report.operator_id){
+		    			selected
+		    		}
+		    		>
+		    			@u.name (@u.email)
+		    		</option>
+	        	}        		
+			</select>
+		</div>
+	</div>
+	<div class="form-group">
+		<label class="col-lg-2 control-label">進出時間</label>	
+	    <div class="col-lg-5" align="left">
+	    	<div class="input-daterange input-group" id="datepicker">
+            	<span class="input-group-addon"><i class="fa fa-calendar"></i></span>
+            	<input type="text" class="input-sm form-control" name="start" id="enter_time" value="@report.enter_time.toString"/>
+                <span class="input-group-addon">至</span>
+                <input type="text" class="input-sm form-control" name="end" id="out_time" value="@report.out_time.toString"/>                        
+            </div>
+	    </div>												
+	</div>
+	<div class="form-group">
+		<label class="col-lg-2 control-label">例行性維護保養工作內容</label>	
+		<div class="col-lg-8"  align="left">
+			<textarea class="form-control" rows="5" id="routine_desc">@report.routine_desc</textarea>
+		</div>								
+	</div>
+	<div class="form-group">
+		<label class="col-lg-2 control-label">異常檢修排除工作內容</label>
+		<div class="col-lg-8"  align="left">
+			<textarea class="form-control" rows="5" id="abnormal_desc">@report.abnormal_desc</textarea>
+		</div>						
+	</div>
+	<div class="form-group">
+		<label class="col-lg-2 control-label">環境變遷及事件紀錄</label>
+		<div class="col-lg-8"  align="left">		
+			<textarea class="form-control" rows="5" id="event_desc">@report.event_desc</textarea>
+		</div>								
+	</div>
+	<div class="form-group">
+		<div class="col-lg-2 col-lg-offset-2">
+			<button type="button" class="btn btn-block btn-primary" id="save">儲存</button>
+		</div>
+	</div>
+	
+</form>
+
+<table class="table table-striped" id="abnormalTab">
+<thead>
+	<tr>
+		<th>測項</th>
+		<th>異常小時</th>
+		<th>註記狀態</th>
+	</tr>
+</thead>
+<tbody>
+@for(mt<-invalidHour){
+	@for(mih <- mt._2){		
+		<tr>
+			<td class="col-lg-1">@MonitorType.map(mt._1).desp</td>
+			<td class="col-lg-3">@mih.invalidHour</td>
+			<td class="col-lg-3">@mih.status</td>
+		</tr>
+	}
+}
+</tbody>
+</table>
+<script>
+	var report_date = '@report.date.toString("YYYY-MM-d")';
+	var report_monitor = '@report.monitor';
+	var local_url = '@routes.Assets.at("localization/zh_tw.json")';
+</script>
+<script>
+$(document).ready(function() {
+	$('#enter_time').datetimepicker({
+		format: 'HH:mm',
+    	locale: "zh-TW"
+	});
+	$('#out_time').datetimepicker({
+		format: 'HH:mm',
+    	locale: "zh-TW"
+	});
+	
+	var routine_desc, abnormal_desc, event_desc, operator_id, enter_time, out_time;
+	function validate(){
+		var user = $("#operator option:selected");
+		console.log(user);
+		if(user.length==0){
+		    alert("請選擇維護人員");
+		    return false;
+	    }
+	    
+	    operator_id = user[0].value;
+	    routine_desc = $("#routine_desc").val();	    
+	    abnormal_desc = $("#abnormal_desc").val();
+	    event_desc = $("#event_desc").val();
+	    enter_time = $("#enter_time").val();
+	    out_time = $("#out_time").val();
+
+	    return true;
+	}
+	
+	$("#save").click(function(){
+	    if(!validate())
+		    return;
+		
+		var report = {
+			date:report_date,
+			monitor:report_monitor,
+			operator_id:parseInt(operator_id),
+			routine_desc:routine_desc,
+			abnormal_desc:abnormal_desc,
+			event_desc:event_desc,
+			enter_time:enter_time,
+			out_time:out_time
+		};
+
+		console.log(report);
+		
+		$.ajax({
+			url: "/SaveMonitorJournalReport/"+report_monitor+"/"+report_date,
+			data: JSON.stringify(report),
+			contentType: "application/json; charset=utf-8",
+			method:"POST",			
+			dataType: "json",
+			success: function(result){
+				if(result.ok){
+					alert("成功");
+				}else{
+					alert("失敗:"+result.msg);
+				}
+			},
+			error: function(xhr, status, errorThrown){
+				alert("失敗:" + status + "-" + errorThrown);
+			},
+
+			complete: function(xhr, status){
+			}					
+		});		
+	});
+});
+</script>

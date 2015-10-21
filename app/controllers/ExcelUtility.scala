@@ -1335,4 +1335,121 @@ object ExcelUtility {
     finishExcel(reportFilePath, pkg, wb)
   }
 
+  def monitorAbnormalReport(date:DateTime, report:Seq[AbnormalEntry])={
+    val (reportFilePath, pkg, wb) = prepareTemplate("abnormalReport.xlsx")
+    val evaluator = wb.getCreationHelper().createFormulaEvaluator()
+
+    val sheet = wb.getSheetAt(0)
+    sheet.getRow(1).getCell(4).setCellValue("印表日期:" + DateTime.now.toString("YYYY年MM月dd日"))
+    sheet.getRow(2).getCell(4).setCellValue("資料日期:" + date.toString("YYYY年MM月dd日"))
+    
+    val style = wb.createCellStyle();
+    val format = wb.createDataFormat();
+        // Create a new font and alter it.
+    val font = wb.createFont();
+    font.setFontHeightInPoints(10);
+    font.setFontName("標楷體");
+
+    style.setFont(font)
+
+    for(r <- report.reverse){
+      sheet.shiftRows(4, sheet.getLastRowNum, 1)
+      val row = sheet.createRow(4)
+      def fillCell(i:Int, v:String)={
+        row.createCell(i).setCellStyle(style)
+        row.getCell(i).setCellValue(v)
+      }
+
+      fillCell(0, Monitor.map(r.monitor).name)            
+      fillCell(1, MonitorType.map(r.monitorType).desp)
+      fillCell(2, date.toString("MM/dd"))
+      fillCell(3, r.invalidHours)
+      fillCell(4, r.explain)
+    }
+    
+    finishExcel(reportFilePath, pkg, wb)
+  }
+  
+  def monitorAggregateReport(date:DateTime, report:Seq[MonitorSummary])={
+    val (reportFilePath, pkg, wb) = prepareTemplate("aggregateReport.xlsx")
+    val evaluator = wb.getCreationHelper().createFormulaEvaluator()
+
+    val sheet = wb.getSheetAt(0)
+    sheet.getRow(1).getCell(3).setCellValue("印表日期:" + DateTime.now.toString("YYYY年MM月dd日"))
+    sheet.getRow(2).getCell(3).setCellValue("資料日期:" + date.toString("YYYY年MM月dd日"))
+    
+    val style = wb.createCellStyle();
+    val format = wb.createDataFormat();
+        // Create a new font and alter it.
+    val font = wb.createFont();
+    font.setFontHeightInPoints(10);
+    font.setFontName("標楷體");
+
+    style.setFont(font)
+
+    for(m <- report.zipWithIndex){
+      val r = m._1
+      val idx = m._2
+      
+      def fillCell(i:Int, v:String)={
+        val row = sheet.getRow(idx + 4)
+        row.getCell(i).setCellStyle(style)
+        row.getCell(i).setCellValue(v)        
+      }
+
+      fillCell(0, Monitor.map(r.monitor).name)
+      fillCell(1, r.desc)
+      fillCell(2, r.explain)
+    }
+    
+    finishExcel(reportFilePath, pkg, wb)
+  }
+  
+  def monitorJournalReport(report:MonitorJournal, invalidHourList:List[(MonitorType.Value, List[MonitorInvalidHour])], userList:List[User])={
+    val (reportFilePath, pkg, wb) = prepareTemplate("monitorJournal.xlsx")
+    val evaluator = wb.getCreationHelper().createFormulaEvaluator()
+
+    val sheet = wb.getSheetAt(0)
+    sheet.getRow(1).getCell(0).setCellValue("測站名稱:" + Monitor.map(report.monitor).name)
+    sheet.getRow(1).getCell(6).setCellValue("印表日期:" + DateTime.now.toString("YYYY年MM月dd日"))
+    sheet.getRow(2).getCell(0).setCellValue("到站日期:" + report.date.toString("YYYY年MM月dd日"))
+    if(report.operator_id.isDefined){
+      val operatorOpt = userList.find { u => u.id == report.operator_id }
+      if(operatorOpt.isDefined){
+        val operator = operatorOpt.get
+        sheet.getRow(3).getCell(1).setCellValue(operator.name)  
+      }        
+    }
+    
+    sheet.getRow(3).getCell(6).setCellValue(report.enter_time.toString())
+    sheet.getRow(3).getCell(7).setCellValue(report.out_time.toString())
+    sheet.getRow(5).getCell(0).setCellValue(report.routine_desc)
+    sheet.getRow(11).getCell(0).setCellValue(report.abnormal_desc)
+    sheet.getRow(17).getCell(0).setCellValue(report.event_desc)
+    
+    val style = wb.createCellStyle();
+    val font = wb.createFont();
+    font.setFontHeightInPoints(12);
+    font.setFontName("標楷體");
+
+    style.setFont(font)
+
+    var startRow = 24
+    for{mt<-invalidHourList
+      ih<-mt._2
+      }{
+      val row = sheet.createRow(startRow)
+      def fillCell(i:Int, v:String)={
+        row.createCell(i).setCellStyle(style)
+        row.getCell(i).setCellValue(v)        
+      }
+      fillCell(0, MonitorType.map(mt._1).desp)
+      fillCell(1, report.date.toString("MM/dd"))
+      fillCell(2, ih.invalidHour)
+      fillCell(3, ih.status)
+      
+      startRow +=1
+    }
+    finishExcel(reportFilePath, pkg, wb)
+  }
 }

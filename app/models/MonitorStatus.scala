@@ -81,7 +81,7 @@ object MonitorStatus {
   val BELOW_STAT = "012"
 
   def isNormalStat(s: String) = {
-    val VALID_STATS = List(NORMAL_STAT, OVER_STAT, BELOW_STAT).map(getTagInfo)
+    val VALID_STATS = List(NORMAL_STAT, OVER_STAT, BELOW_STAT, CALBRATION_DIVERSION_STAT).map(getTagInfo)
     VALID_STATS.contains(getTagInfo(s))
   }
 

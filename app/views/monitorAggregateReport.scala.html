@@ -1,0 +1,68 @@
+@* abnormalReport Template File *@
+@import com.github.nscala_time.time.Imports._
+@(date: DateTime, entires:Seq[MonitorSummary])
+
+<table class="table table-striped" id="abnormalTab">
+<thead>
+	<tr>
+		<th>測站</th>
+		<th>測站狀況</th>
+		<th>處理情形</th>
+	</tr>
+</thead>
+<tbody>
+@for(e<-entires){
+	<tr>
+		<td class="col-lg-1">@Monitor.map(e.monitor).name</td>
+		<td class="col-lg-3">@e.desc</td>
+		<td class="col-lg-7"><input type="text" style="width:100%" id="@e.monitor" value="@e.explain"></td>
+	</tr>
+}
+</tbody>
+</table>
+	<div class="col-lg-2 col-lg-offset-1">
+		<button type="button" class="btn btn-block btn-primary" id="save">儲存</button>
+	</div>							
+<script>
+	var report_date = '@date.toString("YYYY-MM-d")';
+	var local_url = '@routes.Assets.at("localization/zh_tw.json")';
+</script>
+<script>
+$(document).ready(function() {
+	$("#save").click(function(){
+		var $inputs = $("#abnormalTab :input");
+		var entries = [];
+		for(var i=0;i<$inputs.length;i++){
+			var input = $inputs.eq(i);
+			var id = input.prop("id");
+			var entry = {
+				monitor:id, 
+				desc:"", 
+				explain:input.val()
+			};
+			entries.push(entry);
+		}
+
+		$.ajax({
+			url: "/SaveMonitorAggregateReport/"+report_date,
+			data: JSON.stringify(entries),
+			contentType: "application/json; charset=utf-8",
+			method:"POST",			
+			dataType: "json",
+			success: function(result){
+				if(result.ok){
+					alert("成功");
+				}else{
+					alert("失敗:"+result.msg);
+				}
+			},
+			error: function(xhr, status, errorThrown){
+				alert("失敗:" + status + "-" + errorThrown);
+			},
+
+			complete: function(xhr, status){
+			}					
+		});		
+	});
+});
+</script>

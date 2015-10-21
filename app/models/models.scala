@@ -22,8 +22,16 @@ object ModelHelper {
     new DateTime(d)
   }
   
+  implicit def getDateTime(t: java.sql.Time) = {
+    new DateTime(t)
+  }
+  
   implicit def getSqlDate(d:DateTime) = {
     new java.sql.Date(d.getMillis)  
+  }
+  
+  implicit def getSqlTime(d:DateTime) = {
+    new java.sql.Time(d.getMillis)
   }
   
   def main(args: Array[String]) {

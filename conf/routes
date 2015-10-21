@@ -50,7 +50,15 @@ GET		/Excel/EffectiveAnnualReport/:reportType/:start/:param	controllers.Report.e
 GET		/MonitorAbnormal		controllers.Report.monitorAbnormal
 GET		/MonitorAbnormalReport/:date		controllers.Report.monitorAbnormalReport(date, outputTypeStr="html")
 GET		/PDF/MonitorAbnormalReport/:date		controllers.Report.monitorAbnormalReport(date, outputTypeStr="pdf")
+GET		/Excel/MonitorAbnormalReport/:date		controllers.Report.monitorAbnormalReport(date, outputTypeStr="excel")
 POST	/SaveAbnormalReport/:date	controllers.Report.saveMonitorAbnormalReport(date)
+
+GET		/MonitorAggregate						controllers.Report.monitorAggregate
+GET		/MonitorAggregateReport/:date			controllers.Report.monitorAggregateReport(date, outputTypeStr="html")
+GET		/PDF/MonitorAggregateReport/:date		controllers.Report.monitorAggregateReport(date, outputTypeStr="pdf")
+GET		/Excel/MonitorAggregateReport/:date		controllers.Report.monitorAggregateReport(date, outputTypeStr="excel")
+POST	/SaveMonitorAggregateReport/:date		controllers.Report.saveMonitorAggregateReport(date)
+
 
 GET		/HistoryQuery			controllers.Query.history
 GET		/HistoryQueryReport/:edit/:monitor/:epaMonitor/:monitorType/:recordType/:start/:end	controllers.Query.historyReport(edit:Boolean, monitor, epaMonitor, monitorType, recordType, start, end, outputType="html")
@@ -160,9 +168,17 @@ GET		/DownloadForm/:ID	controllers.Maintance.downloadForm(ID:Int)
 GET		/Form/:ID	controllers.Maintance.getForm(ID:Int)
 GET		/EquipmentHistory	controllers.Maintance.equipmentHistory
 GET		/EquipmentHistoryReport/:monitors/:start/:end controllers.Maintance.equipmentHistoryReport(monitors, start, end)
+
 GET		/MonitorJournal		controllers.Maintance.monitorJournal
+GET		/MonitorJournalReport/:monitor/:date		controllers.Maintance.monitorJournalReport(monitor, date, outputTypeStr="html")
+GET		/PDF/MonitorJournalReport/:monitor/:date	controllers.Maintance.monitorJournalReport(monitor, date, outputTypeStr="pdf")
+GET		/Excel/MonitorJournalReport/:monitor/:date		controllers.Maintance.monitorJournalReport(monitor, date, outputTypeStr="excel")
+POST	/SaveMonitorJournalReport/:monitor/:date 	controllers.Maintance.saveMonitorJournalReport(monitor, date)
+
 GET		/EquipmentManagement	controllers.Maintance.equipmentManagement
 GET		/PartManagement		controllers.Maintance.partManagement
 POST	/Part				controllers.Maintance.updatePart
 PUT		/Part				controllers.Maintance.newPart 
 DELETE  /Part/:id			controllers.Maintance.deletePart(id)
+
+GET		/TestAlarmMail		controllers.Maintance.testAlarmMail

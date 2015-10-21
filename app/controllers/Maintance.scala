@@ -3,6 +3,7 @@ package controllers
 import play.api._
 import play.api.mvc._
 import play.api.Logger
+import play.api.libs.mailer._
 import models._
 import models.Realtime._
 import com.github.nscala_time.time.Imports._
@@ -15,6 +16,7 @@ import PdfUtility._
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
 import Ticket._
+import java.nio.file.Files
 
 /**
  * @author user
@@ -319,7 +321,69 @@ object Maintance extends Controller {
   }
 
   def monitorJournal = Security.Authenticated {
-    Ok("")
+    implicit request =>
+      val userInfo = Security.getUserinfo(request).get
+      val group = Group.getGroup(userInfo.groupID).get
+
+      Ok(views.html.monitorJournal(group.privilege))
+  }
+  
+  def monitorJournalReport(monitorStr:String, dateStr:String, outputTypeStr: String) = Security.Authenticated {
+    implicit request =>
+      import java.sql.Time
+      val monitor = Monitor.withName(monitorStr)
+      val date = DateTime.parse(dateStr)
+
+      val reportOpt = MonitorJournal.getReportFromDb(monitor, date)
+      val report =
+        if (reportOpt.isEmpty) {
+          MonitorJournal.newReport(monitor, date)
+          val enter_time:java.sql.Time = DateTime.parse("9:00", DateTimeFormat.forPattern("HH:mm"))
+          val out_time:java.sql.Time = DateTime.parse("17:00", DateTimeFormat.forPattern("HH:mm"))
+
+          MonitorJournal(date, monitor, "", "", "", None, enter_time, out_time)
+        } else
+          reportOpt.get
+
+      val invalidHourList = MonitorJournal.getInvalidHourList(monitor, date)
+      
+      val outputType = OutputType.withName(outputTypeStr)
+
+      val title = "測站工作日誌"
+      val output = views.html.monitorJournalReport(report, invalidHourList, User.getAdminUsers())
+
+      outputType match {
+        case OutputType.html =>
+          Ok(output)
+        case OutputType.pdf =>
+          Ok.sendFile(creatPdfWithReportHeader(title, output),
+            fileName = _ =>
+              play.utils.UriEncoding.encodePathSegment(title + date.toString("YYYYMMdd") + ".pdf", "UTF-8"))
+        case OutputType.excel =>
+          val excelFile = ExcelUtility.monitorJournalReport(report, invalidHourList, User.getAdminUsers())
+          Ok.sendFile(excelFile, fileName = _ =>
+            play.utils.UriEncoding.encodePathSegment(title + date.toString("YYMMdd") + ".xlsx", "UTF-8"),
+            onClose = () => { Files.deleteIfExists(excelFile.toPath()) })
+      }
+  }
+  
+  def saveMonitorJournalReport(monitorStr:String, dateStr:String) = Security.Authenticated(BodyParsers.parse.json) {
+    import MonitorJournal._
+    implicit request =>
+      val monitor = Monitor.withName(monitorStr)
+      val date = DateTime.parse(dateStr)
+
+      val reportJsonResult = request.body.validate[MonitorJournalJson]
+
+      reportJsonResult.fold(
+        error => {
+          Logger.error(JsError.toFlatJson(error).toString())
+          BadRequest(Json.obj("ok" -> false, "msg" -> JsError.toFlatJson(error)))
+        },
+        report => {
+          MonitorJournal.updateReport(report)
+          Ok(Json.obj("ok" -> true))
+        });
   }
 
   def equipmentManagement = Security.Authenticated {
@@ -387,4 +451,19 @@ object Maintance extends Controller {
     Ok(Json.obj("ok" -> true))
   }
 
+  def testAlarmMail = Security.Authenticated {
+    val email = Email(
+      "Simple email",
+      "Mister FROM <karateboy.huang@gmail.com>",
+      Seq("Miss TO <karateboy.tw@gmail.com>"),
+      // adds attachment
+      attachments = Seq(),
+      // sends text, HTML or both...
+      bodyText = Some("A text message"),
+      bodyHtml = Some("<html><body><p>An <b>html</b> message</p></body></html>")
+    )
+    
+    MailerPlugin.send(email)
+    Ok("Send")
+  }
 }
