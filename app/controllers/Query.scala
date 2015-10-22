@@ -186,9 +186,16 @@ object Query extends Controller {
       MonitorStatusFilter.isMatched(monitorStatusFilter, stat)
     }
 
-    var timeSet = Set[DateTime]()
+    var timeSet = Set.empty[DateTime]
     val pairs =
       if (reportUnit == ReportUnit.Min || reportUnit == ReportUnit.Hour) {
+        
+          if(reportUnit == ReportUnit.Min)
+            timeSet ++=Report.getPeriods(start, end, 1.minute)
+          else
+            timeSet ++=Report.getPeriods(DateTime.parse(start.toString("YYYY-MM-dd HH"), DateTimeFormat.forPattern("YYYY-MM-dd HH")), 
+                DateTime.parse(end.toString("YYYY-MM-dd HH"), DateTimeFormat.forPattern("YYYY-MM-dd HH")), 1.hour)
+            
         val ps =
           for {
             m <- monitors
@@ -255,6 +262,7 @@ object Query extends Controller {
 
     val recordMap = Map(pairs: _*)
     val timeSeq = timeSet.toList.sorted.zipWithIndex
+
     import Realtime._
 
     val windMtv = MonitorType.withName("C212")
@@ -264,36 +272,34 @@ object Query extends Controller {
         for {
           m <- monitors
           mt <- monitorTypes
-          timeData = timeSeq.flatMap { t =>
+          timeData = timeSeq.map { t =>
             val time = t._1
             val x = t._2
             if (recordMap(m)(mt).contains(time))
-              Some((x, recordMap(m)(mt)(time)))
+              Some(recordMap(m)(mt)(time)._1.get)
             else
               None
-          }
-          data = timeData.map(t => Seq(t._1.toFloat, t._2._1.get))
+          }          
         } yield {
           if (mt != windMtv)
-            seqData(Monitor.map(m).name + "_" + MonitorType.map(mt).desp, data)
+            seqData(Monitor.map(m).name + "_" + MonitorType.map(mt).desp, timeData)
           else
-            seqData(Monitor.map(m).name + "_" + MonitorType.map(mt).desp, data, 1, Some("scatter"))
+            seqData(Monitor.map(m).name + "_" + MonitorType.map(mt).desp, timeData, 1, Some("scatter"))
         }
       } else {
         for {
           m <- monitors
           mt <- monitorTypes
-          timeData = timeSeq.flatMap { t =>
+          timeData = timeSeq.map { t =>
             val time = t._1
             val x = t._2
             if (recordMap(m)(mt).contains(time))
-              Some((x, recordMap(m)(mt)(time)))
+              Some(recordMap(m)(mt)(time)._1.get)
             else
               None
-          }
-          data = timeData.map(t => Seq(t._1.toFloat, t._2._1.get))
+          }          
         } yield {
-          seqData(Monitor.map(m).name + "_" + MonitorType.map(mt).desp, data)
+          seqData(Monitor.map(m).name + "_" + MonitorType.map(mt).desp, timeData)
         }
       }
 
@@ -317,23 +323,22 @@ object Query extends Controller {
       for {
         m <- epaMonitors
         mt <- monitorTypes
-        timeData = timeSeq.flatMap { t =>
+        timeData = timeSeq.map { t =>
           val time = t._1
           val x = t._2
           if (epaRecordMap(m)(mt).contains(time))
-            Some((x, epaRecordMap(m)(mt)(time)))
+            Some(epaRecordMap(m)(mt)(time))
           else
             None
         }
-        data = timeData.map(t => Seq(t._1.toFloat, t._2))
       } yield {
         if (monitorTypes.length > 1 && monitorTypes.contains(windMtv)) {
           if (mt != windMtv)
-            seqData(EpaMonitor.map(m).name + "_" + MonitorType.map(mt).desp, data)
+            seqData(EpaMonitor.map(m).name + "_" + MonitorType.map(mt).desp, timeData)
           else
-            seqData(EpaMonitor.map(m).name + "_" + MonitorType.map(mt).desp, data, 1, Some("scatter"))
+            seqData(EpaMonitor.map(m).name + "_" + MonitorType.map(mt).desp, timeData, 1, Some("scatter"))
         } else {
-          seqData(EpaMonitor.map(m).name + "_" + MonitorType.map(mt).desp, data)
+          seqData(EpaMonitor.map(m).name + "_" + MonitorType.map(mt).desp, timeData)
         }
       }
     }
@@ -514,17 +519,16 @@ object Query extends Controller {
 
       val series = for {
         m <- monitors
-        timeData = timeSeq.flatMap { t =>
+        timeData = timeSeq.map { t =>
           val time = t._1
           val x = t._2
           if (monitorPsiMap(m).contains(time))
-            Some((x, monitorPsiMap(m)(time)))
+            Some(monitorPsiMap(m)(time))
           else
             None
         }
-        data = timeData.map(t => Seq(t._1.toFloat, t._2))
       } yield {
-        seqData(Monitor.map(m).name, data)
+        seqData(Monitor.map(m).name, timeData)
       }
 
       val timeStrSeq =
@@ -734,7 +738,7 @@ object Query extends Controller {
       } yield {
         val data =
           for (dir <- 0 to nWay - 1)
-            yield Seq(dir.toFloat, windMap(dir)(level))
+            yield Some(windMap(dir)(level))
 
         seqData(speedLevel(level), data)
       }
@@ -786,8 +790,8 @@ object Query extends Controller {
         val timeStrSeq = thisYearRecord.map(_._1.toDateTime.toString("MM-dd hh:00"))
         val (t1, v1) = thisYearRecord.unzip
         val (t2, v2) = lastYearRecord.unzip
-        val v1WithIndex = v1.zipWithIndex.map(i => Seq(i._1, i._2.toFloat))
-        val v2WithIndex = v2.zipWithIndex.map(i => Seq(i._1, i._2.toFloat))
+        val v1WithIndex = v1.zipWithIndex.map(i => Some(i._2.toFloat))
+        val v2WithIndex = v2.zipWithIndex.map(i => Some(i._2.toFloat))
 
         import Realtime._
 

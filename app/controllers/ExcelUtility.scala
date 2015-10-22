@@ -874,9 +874,9 @@ object ExcelUtility {
         val cell = thisRow.createCell(col)
         cell.setCellStyle(styles(col - 1))
 
-        val pOpt = series.data.find { d => d(0) == rowNo-1 }
+        val pOpt = series.data(rowNo-1)
         if(pOpt.isDefined){
-          cell.setCellValue(pOpt.get(1))
+          cell.setCellValue(pOpt.get)
         }
           
       }
