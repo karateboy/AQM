@@ -9,14 +9,17 @@ import play.api.libs.functional.syntax._
 import play.api.libs.json.Json
 import Privilege._
 
-case class User(id: Option[Int], email: String, password: String, name: String, phone: String, isAdmin: Boolean, groupID: Int)
+case class User(id: Option[Int], email: String, password: String, name: String, 
+    phone: String, isAdmin: Boolean, groupID: Int, alarmConfig:Option[AlarmConfig])
 
 object User {
   def newUser(user: User)(implicit session: DBSession = AutoSession) = {
     DB localTx { implicit session =>
+      val alarmConfig = Json.toJson(AlarmConfig.defaultConfig).toString
       sql"""
-        Insert into Users(email, name, password, phone, isAdmin, groupID)
-        Values(${user.email}, ${user.name}, ${user.password}, ${user.phone}, ${user.isAdmin}, ${user.groupID})
+        Insert into Users(email, name, password, phone, isAdmin, groupID, alarmConfig)
+        Values(${user.email}, ${user.name}, ${user.password}, ${user.phone}, 
+          ${user.isAdmin}, ${user.groupID}, ${alarmConfig})
         """.update.apply
     }
   }
@@ -33,9 +36,16 @@ object User {
   def updateUser(user: User)(implicit session: DBSession = AutoSession) = {
     assert(user.id.isDefined)
     DB localTx { implicit session =>
+      val alarmConfig = 
+        if(user.alarmConfig.isEmpty)
+          None
+        else
+          Some(Json.toJson(user.alarmConfig).toString)
+
       sql"""
         Update Users
-        Set email=${user.email}, name=${user.name}, password=${user.password}, phone=${user.phone}, isAdmin=${user.isAdmin}, groupID=${user.groupID}
+        Set email=${user.email}, name=${user.name}, password=${user.password}, phone=${user.phone}, isAdmin=${user.isAdmin}, 
+          groupID=${user.groupID}, alarmConfig=${alarmConfig}
         Where id=${user.id.get}  
         """.update.apply
     }
@@ -47,9 +57,14 @@ object User {
       From Users
       Where id=${id}
       """.map { r =>
+      val alarmConfig = if (r.stringOpt("alarmConfig").isEmpty)
+        AlarmConfig.defaultConfig
+      else
+        Json.parse(r.string("alarmConfig")).validate[AlarmConfig].get
+
       User(Some(r.int("ID")), r.string("Email"),
         r.string("Password"), r.string("Name"), r.string("Phone"), r.boolean("isAdmin"),
-        r.int("GroupID"))
+        r.int("GroupID"), Some(alarmConfig))
     }.single.apply()
   }
 
@@ -59,9 +74,14 @@ object User {
       From Users
       Where email=${email}
       """.map { r =>
+      val alarmConfig = if (r.stringOpt("alarmConfig").isEmpty)
+        AlarmConfig.defaultConfig
+      else
+        Json.parse(r.string("alarmConfig")).validate[AlarmConfig].get
+  
       User(Some(r.int("ID")), r.string("Email"),
         r.string("Password"), r.string("Name"), r.string("Phone"), r.boolean("isAdmin"),
-        r.int("GroupID"))
+        r.int("GroupID"), Some(alarmConfig))
     }.single.apply()
   }
 
@@ -70,9 +90,14 @@ object User {
       Select *
       From Users
       """.map { r =>
+      val alarmConfig = if (r.stringOpt("alarmConfig").isEmpty)
+        AlarmConfig.defaultConfig
+      else
+        Json.parse(r.string("alarmConfig")).validate[AlarmConfig].get
+  
       User(Some(r.int("ID")), r.string("Email"),
         r.string("Password"), r.string("Name"), r.string("Phone"), r.boolean("isAdmin"),
-        r.int("GroupID"))
+        r.int("GroupID"), Some(alarmConfig))
     }.list.apply()
   }
 
@@ -82,9 +107,14 @@ object User {
       From Users
       Where isAdmin = 1
       """.map { r =>
+      val alarmConfig = if (r.stringOpt("alarmConfig").isEmpty)
+        AlarmConfig.defaultConfig
+      else
+        Json.parse(r.string("alarmConfig")).validate[AlarmConfig].get
+  
       User(Some(r.int("ID")), r.string("Email"),
         r.string("Password"), r.string("Name"), r.string("Phone"), r.boolean("isAdmin"),
-        r.int("GroupID"))
+        r.int("GroupID"), Some(alarmConfig))
     }.list.apply()
   }
   

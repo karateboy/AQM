@@ -159,6 +159,47 @@
                     </select>
                 </div>
             </div>
+            <div class="form-group"><label class="col-lg-2 control-label">警報通知</label>
+                <div class="col-lg-10">
+                	@if(user.alarmConfig.isDefined && user.alarmConfig.get.enable){
+                		<input id='alarmConfigEnable' type="checkbox" class="form-control" checked>	
+                	}else{
+                		<input id='alarmConfigEnable' type="checkbox" class="form-control">
+                	}
+                </div>
+            </div>
+            <div class="form-group">
+	        	<label class="col-lg-2 control-label">關注測站</label>
+	            <div class="col-lg-10">
+	            	<div id="alarmConfigMonitor" class="btn-group" data-toggle="buttons">	            					            				
+	            	@for(m<-Monitor.mvList){
+	            		@if(user.alarmConfig.get.monitorFilter.contains(m)){
+	            			<label class="btn btn-outline btn-primary dim active">
+							<input type="checkbox" name="monitor" id="@m" checked>@Monitor.getDisplayName(m)</label>
+	            		}else{
+	            			<label class="btn btn-outline btn-primary dim">
+							<input type="checkbox" name="monitor" id="@m">@Monitor.getDisplayName(m)</label>
+	            		}	            						
+	            	}
+	            	</div>
+	            </div>	            			            		
+	        </div>
+	        <div class="form-group">
+	        	<label class="col-lg-2 control-label">警報項目篩選</label>
+	            <div class="col-lg-10">
+	            <div id="alarmConfigStatus" class="btn-group" data-toggle="buttons">	            					            				
+	            	@for(a<-MonitorStatus.alarmNotificationList){
+	            		@if(user.alarmConfig.get.statusFilter.contains(a)){
+	            			<label class="btn btn-outline btn-primary dim active">
+	            			<input type="checkbox" name="monitorStatus" id="@a" checked>@MonitorStatus.map(a).desp</label>
+	            		}else{
+            				<label class="btn btn-outline btn-primary dim">
+            				<input type="checkbox" name="monitorStatus" id="@a">@MonitorStatus.map(a).desp</label>
+            			}								
+            		}
+	            </div>
+	            </div>	            			            		
+	        </div>
             <div class="form-group">
                 <div class="col-lg-offset-2 col-lg-10">
                     <button class="btn btn-primary" type="submit">更新</button>
@@ -242,7 +283,35 @@ $( document ).ready(function(){
 		$('#updateUser :input[name="name"]').val(user.name);
 		$('#updateUser :input[name="phone"]').val(user.phone);
 		$("#updateUser :input[name='admin']").prop("checked", user.isAdmin);
-		$("#updateUser :input[name='groupID']").val(user.groupID);					
+		$("#updateUser :input[name='groupID']").val(user.groupID);
+		$("#alarmConfigEnable").prop("checked", user.alarmConfig.enable);
+
+		var $MonitorLabels = $('#alarmConfigMonitor').children();
+		for (var i = 0; i < $MonitorLabels.length; i++) {
+			var $label = $MonitorLabels.eq(i);
+			var $checkbox = $label.children();
+			if (user.alarmConfig.monitorFilter.indexOf($checkbox.prop('id')) == -1) {
+				$checkbox.prop('checked', false);
+				$label.removeClass('active');
+			} else {
+				$checkbox.prop('checked', true);
+				$label.addClass('active');
+			}
+		}
+		
+		var $StatusLabels = $('#alarmConfigStatus').children();
+		for (var i = 0; i < $StatusLabels.length; i++) {
+			var $label = $StatusLabels.eq(i);
+			var $checkbox = $label.children();
+			if (user.alarmConfig.statusFilter.indexOf($checkbox.prop('id')) == -1) {
+				$checkbox.prop('checked', false);
+				$label.removeClass('active');
+			} else {
+				$checkbox.prop('checked', true);
+				$label.addClass('active');
+			}
+		}
+									
 	});
 		
 	$('#newUser').submit(function(event) {
@@ -283,7 +352,26 @@ $( document ).ready(function(){
 	    values['isAdmin'] = $("#updateUser :input[name='admin']").prop("checked");
 	    values['groupID'] = parseInt(values['groupID']); 
 	    values['id']= parseInt(values['id']);
-	    console.log(JSON.stringify(values));
+
+	    var alarmConfigEnable = $("#alarmConfigEnable").prop("checked");
+		var $monitors = $("#alarmConfigMonitor :input[name='monitor']:checked");
+		var monitorFilter = [];
+		for (var i = 0; i < $monitors.length; i++) {
+			monitorFilter.push($monitors[i].id);
+		}
+
+		var $statuss = $("#alarmConfigStatus :input[name='monitorStatus']:checked");
+		var statusFilter = [];
+		for (var i = 0; i < $statuss.length; i++) {
+			statusFilter.push($statuss[i].id);
+		}
+		
+		values['alarmConfig'] = {
+			enable: alarmConfigEnable,
+			monitorFilter: monitorFilter,
+			statusFilter: statusFilter
+		}
+	    
 	    $.ajax({
 			url: "/User/"+values['id'],
 			data: JSON.stringify(values),

@@ -209,7 +209,9 @@ object MonitorStatus {
   private var _map:Map[String, MonitorStatus] = refreshMap
   val msvList = msList.map {r=>getTagStr(r)}
   val manualMonitorStatusList = {msvList.filter { _map(_).statusType == StatusType.Manual }}
-  val alarmList = msvList.filter { _ != getTagInfo(NORMAL_STAT).toString }
+  val alarmList = msvList.filter { tag => !isNormalStat(tag) }
+  val alarmNotificationList = List(CALBRATION_FAILED, "033", "034", "036", "037", "039", 
+        "050", "051", "052", "053", "054", "055", "056")
   def map(key: String) = {
     _map.getOrElse(key, {
       val tagInfo = getTagInfo(key)
