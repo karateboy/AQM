@@ -337,7 +337,10 @@ object Application extends Controller {
 
   def deleteUser(id: Int) = Security.Authenticated {
     implicit request =>
-      Logger.info("deleteUser")
+      val userInfoOpt = Security.getUserinfo(request)
+      val userInfo = userInfoOpt.get
+      
+      Ticket.transferTickets(id, userInfo.id)
       User.deleteUser(id)
       Ok(Json.obj("ok" -> true))
   }

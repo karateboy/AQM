@@ -342,11 +342,13 @@ object Query extends Controller {
 
     val series = local_series ++ epa_series
 
+    /*
     val title = {
       val mNames = monitors.map { Monitor.map(_).name }
       val mtNames = monitorTypes.map { MonitorType.map(_).desp }
       mNames.mkString + mtNames.mkString + "趨勢圖"
-    }
+    }*/
+    val title = "趨勢圖"
 
     val timeStrSeq = timeSeq.map { tWithIndex =>
       val t = tWithIndex._1
@@ -396,9 +398,9 @@ object Query extends Controller {
               val mtCase = MonitorType.map(monitorTypes.filter { !MonitorType.windDirList.contains(_) }(0))
 
               Seq(YAxis(None, AxisTitle(Some(s"${mtCase.desp} (${mtCase.unit})")), getAxisLines(mtCase)),
-                YAxis(None, AxisTitle(Some(s"${windMtCase.desp} (${windMtCase.unit})")), None, true))
+                YAxis(None, AxisTitle(Some(s"${windMtCase.desp} (${windMtCase.unit})")), None, true, Some(0), Some(360)))
             } else {
-              Seq(YAxis(None, AxisTitle(None), None), YAxis(None, AxisTitle(Some(s"${windMtCase.desp} (${windMtCase.unit})")), None, true))
+              Seq(YAxis(None, AxisTitle(None), None), YAxis(None, AxisTitle(Some(s"${windMtCase.desp} (${windMtCase.unit})")), None, true, Some(0), Some(360)))
             }
           } else {
             Seq(YAxis(None, AxisTitle(None), None))
@@ -445,7 +447,9 @@ object Query extends Controller {
       val chart = trendHelper(monitors, epaMonitors, monitorTypes, reportUnit, monitorStatusFilter, start, end)
 
       if (outputType == OutputType.excel) {
-        val excelFile = ExcelUtility.exportChartData(chart, monitorTypes)
+        val mts = monitors.flatMap {_=> monitorTypes.toList }
+        val epaMts = epaMonitors.flatMap {_=> monitorTypes.toList }
+        val excelFile = ExcelUtility.exportChartData(chart, mts++epaMts)
         Ok.sendFile(excelFile, fileName = _ =>
           play.utils.UriEncoding.encodePathSegment(chart.title("text") + ".xlsx", "UTF-8"),
           onClose = () => { Files.deleteIfExists(excelFile.toPath()) })

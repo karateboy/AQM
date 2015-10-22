@@ -20,6 +20,7 @@ object Alarm {
         Select *
         From ${tab}
         Where DP_NO in ${mStr} and M_DateTime>=${startT} and M_DateTime<${end}
+        ORDER BY M_DateTime ASC
         """.map {
         rs =>
           Alarm(Monitor.withName(rs.string(1)), rs.string(2), rs.timestamp(3), rs.float(4),
@@ -32,6 +33,7 @@ object Alarm {
         Select *
         From ${tab}
         Where DP_NO in ${mStr} and M_DateTime>=${startT} and M_DateTime<${end} and CODE2 in ${sfilter}
+        ORDER BY M_DateTime ASC
         """.map {
         rs =>
           Alarm(Monitor.withName(rs.string(1)), rs.string(2), rs.timestamp(3), rs.float(4),

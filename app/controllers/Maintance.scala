@@ -250,6 +250,8 @@ object Maintance extends Controller {
         val adminUsers = User.getAdminUsers()
         val usrMap = Map(adminUsers.map { u => (u.id.get -> u) }: _*)
 
+        Logger.debug("everything is okay...")
+        Logger.debug("#="+tickets.length)
         Ok(views.html.closeTickets(tickets, usrMap))
       }
   }

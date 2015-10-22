@@ -19,10 +19,11 @@ object Realtime extends Controller {
       val outputType = OutputType.withName(outputTypeStr)
 
       val current = getLatestRecordTime(TableType.Min).get
-      val rt_status = getRealtimeMinStatus(current, group.privilege)
+      val sub_current = current.toDateTime - 60.second
+      val rt_status = getRealtimeMinStatus(sub_current, group.privilege)
       val currentHr = getLatestRecordTime(TableType.Hour).get
       val rt_psi = getRealtimePSI(currentHr)
-      val output = views.html.realtimeStatus(current, rt_status, MonitorType.psiList, rt_psi, group.privilege)
+      val output = views.html.realtimeStatus(sub_current, rt_status, MonitorType.psiList, rt_psi, group.privilege)
       val title = "即時資訊"
       outputType match {
         case OutputType.html =>
@@ -97,7 +98,7 @@ object Realtime extends Controller {
   case class AxisLineLabel(align: String, text: String)
   case class AxisLine(color: String, width: Int, value: Float, label: Option[AxisLineLabel])
   case class AxisTitle(text: Option[String])
-  case class YAxis(labels: Option[String], title: AxisTitle, plotLines: Option[Seq[AxisLine]], opposite:Boolean=false)
+  case class YAxis(labels: Option[String], title: AxisTitle, plotLines: Option[Seq[AxisLine]], opposite:Boolean=false, floor:Option[Int]=None, ceiling:Option[Int]=None)
   case class seqData(name: String, data: Seq[Seq[Float]], yAxis:Int=0, chartType:Option[String]=None)
   case class HighchartData(chart: Map[String, String],
                            title: Map[String, String],

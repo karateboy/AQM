@@ -267,6 +267,16 @@ object Ticket {
     }
   }
 
+  def transferTickets(old_id:Int, new_id:Int) = {
+    DB localTx { implicit session =>
+        sql"""
+        Update Ticket
+        Set [submiter_id]=${new_id}, [owner_id] = ${new_id}
+        Where submiter_id = ${old_id} or owner_id = ${old_id}
+        """.update.apply
+    }
+  }
+  
   def closeTicket(id: List[Int])(implicit session: DBSession = AutoSession) = {
     DB localTx { implicit session =>
       sql"""
