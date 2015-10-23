@@ -100,6 +100,13 @@
 									<input type="radio" name="chartType" id="scatter">點圖</label>			
 	            			</div>            		
 	                    </div>
+	                    <div class="form-group">
+	                    	<label class="col-lg-1 control-label">Y軸範圍</label>
+	                    	<div class="col-lg-11">
+	                    		<label>Ymin:<input id="YMin"/></label>	                    			                    		
+	                    		<label>Ymax:<input id="YMax"/></label>	                    		
+	                    	</div>	                    	
+	                    </div>
 	                    
 	                    <div class="form-group">
 	            			<label class="col-lg-1 control-label">查詢區間</label>	
@@ -297,7 +304,6 @@ $( document ).ready(function() {
 			}	
 		}
 		
-		console.log(monitorTypes);
 		var monitorTypeParam='';
 		for (var i = 0; i < monitorTypes.length; i++) {
 			if(monitorTypeParam=='')
@@ -336,6 +342,15 @@ $( document ).ready(function() {
 					enabled:false,
 					href:'http://www.wecc.com.tw/'
 				};
+				var yMin = $("#YMin").val();
+				if(yMin.length != 0)
+					result.yAxis[0].floor = parseInt(yMin);
+
+				var yMax = $("#YMax").val();
+				if(yMax.length != 0)
+					result.yAxis[0].ceiling = parseInt(yMax);
+				
+				
 				$("#downloadExcel").prop("href", "/Excel/HistoryTrend/" + base_url);
 				$('#reportDiv').highcharts(result);
 			},
