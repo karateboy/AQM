@@ -94,6 +94,18 @@ object Report extends Controller {
       dailyReports.map { _.typeList(i).dataList(j) }
     }
 
+    import java.sql.Timestamp
+    def validFilter(t:(Timestamp, Option[Float], Option[String]))={
+      if(t._2.isEmpty)
+        false
+      else{
+        t._3 match {
+            case Some(stat) => MonitorStatus.isNormalStat(stat)
+            case _          => false
+          }
+      }
+    }
+    
     val monthHourStats =
       for {
         (mt, mt_i) <- MonitorType.monitorReportList.zipWithIndex
@@ -113,9 +125,10 @@ object Report extends Controller {
         overCount = 0
       } yield {
         val avg = if (MonitorType.windDirList.contains(mt)) {
-          val sum_sin = validData.map(v => Math.sin(Math.toRadians(v))).sum
-          val sum_cos = validData.map(v => Math.cos(Math.toRadians(v))).sum
-          windAvg(sum_sin, sum_cos)
+          val (windSpeed_mt, windSpeed_mti) = MonitorType.monitorReportList.zipWithIndex.find(t => t._1 == MonitorType.C212).get
+          val windSeed = getHourRecord(windSpeed_mti, hour)
+          val windDir = hourRecord
+          windAvg(windSeed, windDir)
         } else {
           val sum = validData.sum
           if (count != 0) sum / count else 0
@@ -136,6 +149,7 @@ object Report extends Controller {
   }
 
   case class MonthHourReport(hourStatArray: Array[Stat], dailyReports: Array[DailyReport], StatStat: Stat)
+  
   def monthlyHourReport(monitorStr: String, monitorTypeStr: String, startDateStr: String, outputTypeStr: String) = Security.Authenticated { implicit request =>
     val monitor = Monitor.withName(monitorStr)
     val monitorType = MonitorType.withName(monitorTypeStr)
@@ -157,43 +171,51 @@ object Report extends Controller {
         onClose = () => { Files.deleteIfExists(excelFile.toPath()) })
     } else {
       val dailyReports =
+          for { day <- days } yield {
+            Record.getDailyReport(monitor, day, List(monitorType))
+          }
+      val windSpeedDailyReports =
         for { day <- days } yield {
-          Record.getDailyReport(monitor, day, List(monitorType))
+          Record.getDailyReport(monitor, day, List(MonitorType.C211))
+        }
+    
+      def getMonthHourStats(mt: MonitorType.Value) = {
+        def getHourRecord(i: Int) = {
+          dailyReports.map { _.typeList(0).dataList(i) }
         }
 
-      def getHourRecord(i: Int) = {
-        dailyReports.map { _.typeList(0).dataList(i) }
+        val monthHourStats =
+          for {
+            hour <- 0 to 23
+            hourRecord = getHourRecord(hour)
+            validData = hourRecord.filter { hr =>
+              hr._3 match {
+                case Some(stat) => MonitorStatus.isNormalStat(stat)
+                case _          => false
+              }
+            }.map(r => r._2.get)
+
+            count = validData.length
+            total = nDay
+            max = if (count != 0) validData.max else Float.MinValue
+            min = if (count != 0) validData.min else Float.MaxValue
+            overCount = 0
+          } yield {
+            val avg = if (MonitorType.windDirList.contains(mt)) {
+              val windDir = hourRecord
+              val windSpeed = windSpeedDailyReports.map { _.typeList(0).dataList(hour) }
+              windAvg(windSpeed, windDir)
+            } else {
+              val sum = validData.sum
+              if (count != 0) sum / count else 0
+            }
+
+            Stat(avg, min, max, count, total, overCount)
+          }
+          monthHourStats
       }
 
-      val monthHourStats =
-        for {
-          hour <- 0 to 23
-          hourRecord = getHourRecord(hour)
-          validData = hourRecord.filter { hr =>
-            hr._3 match {
-              case Some(stat) => MonitorStatus.isNormalStat(stat)
-              case _          => false
-            }
-          }.map(r => r._2.get)
-
-          count = validData.length
-          total = nDay
-          max = if (count != 0) validData.max else Float.MinValue
-          min = if (count != 0) validData.min else Float.MaxValue
-          overCount = 0
-        } yield {
-          val avg = if (MonitorType.windDirList.contains(monitorType)) {
-            val sum_sin = validData.map(v => Math.sin(Math.toRadians(v))).sum
-            val sum_cos = validData.map(v => Math.cos(Math.toRadians(v))).sum
-            windAvg(sum_sin, sum_cos)
-          } else {
-            val sum = validData.sum
-            if (count != 0) sum / count else 0
-          }
-
-          Stat(avg, min, max, count, total, overCount)
-        }
-
+      val monthHourStats = getMonthHourStats(monitorType)
       val stats = monthHourStats.filter(t => t.count != 0)
       val count = stats.map(_.count).sum
       val max = if (count != 0) stats.map { _.max }.max else Float.MinValue
@@ -231,44 +253,7 @@ object Report extends Controller {
   case class IntervalReport(typeArray: Array[MonitorTypeReport])
 
   case class MonthlyReport(typeArray: Array[MonitorTypeReport])
-
-  def getWeeklyReport(monitor: Monitor.Value, startTime: DateTime, includeTypes: List[MonitorType.Value] = MonitorType.monitorReportList,
-                      filter: MonitorStatusFilter.Value = MonitorStatusFilter.All) = {
-    val endTime = startTime + 1.weeks
-    val days = getDays(startTime, endTime)
-    val dailyReports =
-      for { day <- days } yield {
-        Record.getDailyReport(monitor, day, includeTypes, filter)
-      }
-
-    def getTypeStat(i: Int) = {
-      dailyReports.map { _.typeList(i).stat }
-    }
-    val typeReport =
-      for {
-        t <- dailyReports(0).typeList
-        monitorType = t.monitorType
-        pos = dailyReports(0).typeList.indexWhere { x => x.monitorType == monitorType }
-        typeStat = getTypeStat(pos)
-        validData = typeStat.filter { _.count != 0 }
-        count = validData.length
-        total = dailyReports.length
-        max = if (count != 0) validData.map(_.min).min else Float.MinValue
-        min = if (count != 0) validData.map(_.max).max else Float.MaxValue
-        overCount = validData.map(_.overCount).sum
-      } yield {
-        val avg = if (MonitorType.windDirList.contains(monitorType)) {
-          val sum_sin = validData.map(v => Math.sin(Math.toRadians(v.avg))).sum
-          val sum_cos = validData.map(v => Math.cos(Math.toRadians(v.avg))).sum
-          windAvg(sum_sin, sum_cos)
-        } else {
-          if (count != 0) validData.map { _.avg }.sum / count else 0
-        }
-        MonitorTypeReport(monitorType, typeStat, Stat(avg, min, max, count, total, overCount))
-      }
-    IntervalReport(typeReport.toArray)
-  }
-
+  
   def getMonthlyReport(monitor: Monitor.Value, startTime: DateTime, includeTypes: List[MonitorType.Value] = MonitorType.monitorReportList,
                        filter: MonitorStatusFilter.Value = MonitorStatusFilter.ValidData) = {
     val endTime = startTime + Period.months(1)
@@ -293,9 +278,13 @@ object Report extends Controller {
         overCount = validData.map(_.overCount).sum
       } yield {
         val avg = if (MonitorType.windDirList.contains(monitorType)) {
-          val sum_sin = validData.map(v => Math.sin(Math.toRadians(v.avg))).sum
-          val sum_cos = validData.map(v => Math.cos(Math.toRadians(v.avg))).sum
-          windAvg(sum_sin, sum_cos)
+          val windDir = validData
+          val (windSpeedMt, windSpeedPos) = includeTypes.zipWithIndex.find( t=>t._1 == MonitorType.C211).get
+          val windSpeed = getTypeStat(windSpeedPos).filter { _.count != 0 } 
+          val wind = windSpeed.zip(windDir)
+          val wind_sin = wind.map(v => v._1.avg * Math.sin(Math.toRadians(v._2.avg))).sum
+          val wind_cos = wind.map(v => v._1.avg * Math.cos(Math.toRadians(v._2.avg))).sum
+          windAvg(wind_sin, wind_cos)
         } else {
           if (count != 0) validData.map { _.avg }.sum / count else 0
         }
@@ -500,9 +489,13 @@ object Report extends Controller {
             overCount = validData.map(_.overCount).sum
           } yield {
             val avg = if (MonitorType.windDirList.contains(monitorType)) {
-              val sum_sin = validData.map(v => Math.sin(Math.toRadians(v.avg))).sum
-              val sum_cos = validData.map(v => Math.cos(Math.toRadians(v.avg))).sum
-              windAvg(sum_sin, sum_cos)
+              val (windSpeedMt, windSpeed_pos) = MonitorType.monitorReportList.zipWithIndex.find(t => t._1 == MonitorType.C211).get
+              val windSpeed = getTypeStat(windSpeed_pos)
+              val windDir = typeStat
+              val wind = windSpeed.zip(windDir).filter(t=>t._1.count !=0 && t._2.count != 0)
+              val wind_sin = wind.map(v => v._1.avg * Math.sin(Math.toRadians(v._2.avg))).sum
+              val wind_cos = wind.map(v => v._1.avg * Math.cos(Math.toRadians(v._2.avg))).sum
+              windAvg(wind_sin, wind_cos)
             } else {
               if (count != 0) validData.map { _.avg }.sum / count else 0
             }

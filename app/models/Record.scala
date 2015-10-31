@@ -381,6 +381,29 @@ object Record {
       degree + 360
   }
   
+  type RecordT = (Timestamp, Option[Float], Option[String])
+  def windAvg(windSpeed: List[RecordT], windDir:List[RecordT]):Float = {
+    def validFilter(t:RecordT) = {
+      if (t._2.isEmpty)
+        false
+      else {
+        t._3 match {
+          case Some(stat) => MonitorStatus.isNormalStat(stat)
+          case _          => false
+        }
+      }
+    }
+
+    if(windSpeed.length != windDir.length)
+      Logger.error(s"windSpeed #=${windSpeed.length} windDir #=${windDir.length}")
+    
+    val windRecord = windSpeed.zip(windDir)
+    val validWind = windRecord.filter(t=>validFilter(t._1)&&validFilter(t._2)).map(r=>(r._1._2.get, r._2._2.get))
+    val wind_sin = validWind.map(v => v._1 * Math.sin(Math.toRadians(v._2))).sum
+    val wind_cos = validWind.map(v => v._1 * Math.cos(Math.toRadians(v._2))).sum
+    windAvg(wind_sin, wind_cos)
+  }
+  
   def getPeriodReport(monitor: Monitor.Value, start: DateTime, period:Period, includeTypes: List[MonitorType.Value] = MonitorType.monitorReportList,
                      monitorStatusFilter: MonitorStatusFilter.Value = MonitorStatusFilter.ValidData) = {
     DB localTx { implicit session =>
@@ -399,7 +422,7 @@ object Record {
           originalPeriodRecordList
 
       def statusFilter(data: (DateTime, (Option[Float], Option[String]))): Boolean = {
-        if (data._2._2.isEmpty)
+        if (data._2._1.isEmpty || data._2._2.isEmpty)
           return false
 
         val stat = data._2._2.get
@@ -426,7 +449,7 @@ object Record {
           }
 
           validValues = projections.filter(validStat).map(t => t._2.getOrElse {
-            Logger.error("Unexpected Null value!")
+            Logger.error("#1 Unexpected Null value! " + t._1.toString())
             0f
           })
           count = validValues.length
@@ -435,9 +458,10 @@ object Record {
           min = if (count != 0) validValues.min else Float.MaxValue
         } yield {
           val avg = if (MonitorType.windDirList.contains(mt)) {
-            val sum_sin = validValues.map(v => Math.sin(Math.toRadians(v))).sum
-            val sum_cos = validValues.map(v => Math.cos(Math.toRadians(v))).sum
-            windAvg(sum_sin, sum_cos)
+            val windDir = projections
+            val wsT = monitorTypeProject2(MonitorType.C211)
+            val windSpeed = reportList.map(rs => (rs.date, wsT(rs)._1, wsT(rs)._2))            
+            windAvg(windSpeed, windDir)
           } else {
             val sum = validValues.sum
             if (count != 0) sum / count else 0
@@ -474,7 +498,7 @@ object Record {
         }
 
       def statusFilter(data: (DateTime, (Option[Float], Option[String]))): Boolean = {
-        if (data._2._2.isEmpty)
+        if (data._2._1.isEmpty || data._2._2.isEmpty)
           return false
 
         val stat = data._2._2.get
@@ -501,7 +525,7 @@ object Record {
           }
 
           validValues = projections.filter(validStat).map(t => t._2.getOrElse {
-            Logger.error("Unexpected Null value!")
+            Logger.error("#2 Unexpected Null value!")
             0f
           })
           count = validValues.length
@@ -510,9 +534,10 @@ object Record {
           min = if (count != 0) validValues.min else Float.MaxValue
         } yield {
           val avg = if (MonitorType.windDirList.contains(mt)) {
-            val sum_sin = validValues.map(v => Math.sin(Math.toRadians(v))).sum
-            val sum_cos = validValues.map(v => Math.cos(Math.toRadians(v))).sum
-            windAvg(sum_sin, sum_cos)
+            val windDir = projections
+            val windSpeedT = monitorTypeProject2(MonitorType.C211)
+            val windSpeed = reportList.map(rs => (rs.date, windSpeedT(rs)._1, windSpeedT(rs)._2))
+             windAvg(windSpeed, windDir)
           } else {
             val sum = validValues.sum
             if (count != 0) sum / count else 0
