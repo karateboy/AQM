@@ -263,14 +263,20 @@ $( document ).ready(function() {
 			return false;
 		}
 
-		if(reportUnit == "min" || reportUnit == "ten_min"){
-			var start = new Date(reportStart);
-			var end = new Date(reportEnd);
-			var diff = end.getTime()-start.getTime();
-			if(diff > 1 * 24*60*60*1000){
-				alert("分鐘查詢區間必須小於1天");
+		var start = new Date(reportStart);
+		var end = new Date(reportEnd);
+		var diff = end.getTime()-start.getTime();
+		var workload = monitors.length * monitorTypes.length * diff;
+		if(reportUnit == "ten_min"){
+			if(workload >30 * 24 * 60 * 60 * 1000){
+				alert("請降低測站/測項數目/查詢區間");
 				return false;
 			}
+		}else if(reportUnit == "min" || reportUnit == "ten_min"){			
+			if(workload > 31 * 24*60*60*1000){
+				alert("分鐘查詢區間必須小於一個月");
+				return false;
+			}			
 		}
 
 		chartType = $("input[name='chartType']:checked").attr('id');
@@ -332,6 +338,7 @@ $( document ).ready(function() {
 		            height: chartHeight,
 		            alignTicks: false
 				};
+				
 				result.colors=[
 				'#7CB5EC','#434348','#90ED7D','#F7A35C','#8085E9','#F15C80',
 				'#E4D354','#2B908F','#FB9FA8','#91E8E1','#7CB5EC','#80C535','#969696'];
@@ -350,6 +357,13 @@ $( document ).ready(function() {
 				if(yMax.length != 0)
 					result.yAxis[0].ceiling = parseInt(yMax);
 				
+				if(chartType == 'spline' || chartType == 'areaspline'){
+					for(var i=0;i<result.series.length;i++){
+						result.series[i].marker = {
+							enabled:false
+						};
+					}
+				}
 				
 				$("#downloadExcel").prop("href", "/Excel/HistoryTrend/" + base_url);
 				$('#reportDiv').highcharts(result);

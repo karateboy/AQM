@@ -403,7 +403,13 @@ object Query extends Controller {
               val mtCase = MonitorType.map(monitorTypes.filter { !MonitorType.windDirList.contains(_) }(0))
 
               Seq(YAxis(None, AxisTitle(Some(s"${mtCase.desp} (${mtCase.unit})")), getAxisLines(mtCase)),
-                YAxis(None, AxisTitle(Some(s"${windMtCase.desp} (${windMtCase.unit})")), None, true, Some(0), Some(360)))
+                YAxis(None, AxisTitle(Some(s"${windMtCase.desp} (${windMtCase.unit})")), None, 
+                    opposite=true, 
+                    floor=Some(0), 
+                    ceiling=Some(360), 
+                    tickInterval=Some(45), 
+                    gridLineWidth=Some(1),
+                    gridLineColor=Some("#00D800")))
             } else {
               Seq(YAxis(None, AxisTitle(None), None), YAxis(None, AxisTitle(Some(s"${windMtCase.desp} (${windMtCase.unit})")), None, true, Some(0), Some(360)))
             }

@@ -54,7 +54,12 @@
 							<td>N/A</td>
 						}												
 					}else{						
-						<td style="@MonitorType.getStyleStr(mt, rt_status(m)(mt))">@MonitorType.format(mt, (rt_status(m)(mt)._1))</td>
+						<td style="@MonitorType.getStyleStr(mt, rt_status(m)(mt))" 
+							@if(MonitorType.map(mt).std_internal.isDefined){
+								data-trigger="click" data-toggle="tooltip" data-placement="auto" 								
+								title="內控:@MonitorType.map(mt).std_internal"
+							}
+						>@MonitorType.format(mt, (rt_status(m)(mt)._1))</td>
 					}
 			}
 			
@@ -184,6 +189,8 @@
 </div>
 <script>
 $( document ).ready(function() {
+	$('[data-toggle="tooltip"]').tooltip();
+	
 	$('#reportTable').dataTable( {
 		responsive: true,
 		"dom": 'T&lt'+'clear'+'&gtlfrtip',

@@ -98,7 +98,10 @@ object Realtime extends Controller {
   case class AxisLineLabel(align: String, text: String)
   case class AxisLine(color: String, width: Int, value: Float, label: Option[AxisLineLabel])
   case class AxisTitle(text: Option[String])
-  case class YAxis(labels: Option[String], title: AxisTitle, plotLines: Option[Seq[AxisLine]], opposite:Boolean=false, floor:Option[Int]=None, ceiling:Option[Int]=None)
+  case class YAxis(labels: Option[String], title: AxisTitle, plotLines: Option[Seq[AxisLine]], opposite:Boolean=false, 
+      floor:Option[Int]=None, ceiling:Option[Int]=None, tickInterval:Option[Int]=None, 
+      gridLineWidth:Option[Int]=None, gridLineColor:Option[String]=None)
+      
   case class seqData(name: String, data: Seq[Option[Float]], yAxis:Int=0, chartType:Option[String]=None)
   case class HighchartData(chart: Map[String, String],
                            title: Map[String, String],

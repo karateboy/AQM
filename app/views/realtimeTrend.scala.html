@@ -184,6 +184,13 @@ $( document ).ready(function() {
 					enabled:false,
 					href:'http://www.wecc.com.tw/'
 				};
+				if(chartType == 'spline' || chartType == 'areaspline'){
+					for(var i=0;i<result.series.length;i++){
+						result.series[i].marker = {
+							enabled:false
+						};
+					}
+				}
 				$('#reportDiv').highcharts(result);
 			},
 			error : function(xhr, status, errorThrown) {
