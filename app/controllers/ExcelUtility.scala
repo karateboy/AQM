@@ -115,8 +115,8 @@ object ExcelUtility {
       }
 
     titleCell.setCellValue("監測站:" + Monitor.map(monitor).name)
-    sheet.getRow(1).getCell(16).setCellValue("查詢日期:" + DateTime.now.toString("YYYY/MM/dd"))
-    titleRow.getCell(16).setCellValue("資料日期:" + reportDate.toString("YYYY/MM/dd"))
+    sheet.getRow(1).getCell(17).setCellValue("查詢日期:" + DateTime.now.toString("YYYY/MM/dd"))
+    titleRow.getCell(17).setCellValue("資料日期:" + reportDate.toString("YYYY/MM/dd"))
 
     for {
       col <- 1 to data.typeList.length
@@ -176,8 +176,8 @@ object ExcelUtility {
       val titleRow = sheet.getRow(2)
       val titleCell = titleRow.getCell(0)
       titleCell.setCellValue("監測站:" + Monitor.map(monitor).name)
-      sheet.getRow(1).getCell(16).setCellValue("查詢日期:" + DateTime.now.toString("YYYY/MM/dd"))
-      titleRow.getCell(16).setCellValue("資料日期:" + reportDate.toString("YYYY年MM月"))
+      sheet.getRow(1).getCell(17).setCellValue("查詢日期:" + DateTime.now.toString("YYYY/MM/dd"))
+      titleRow.getCell(17).setCellValue("資料日期:" + reportDate.toString("YYYY年MM月"))
 
       for {
         col <- 1 to data.typeArray.length
@@ -208,13 +208,13 @@ object ExcelUtility {
       val titleRow = sheet.getRow(2)
       val titleCell = titleRow.getCell(0)
       titleCell.setCellValue("監測站:" + Monitor.map(monitor).name)
-      sheet.getRow(1).getCell(16).setCellValue("查詢日期:" + DateTime.now.toString("YYYY/MM/dd"))
-      titleRow.getCell(16).setCellValue("資料日期:" + reportDate.toString("YYYY年MM月"))      
+      sheet.getRow(1).getCell(17).setCellValue("查詢日期:" + DateTime.now.toString("YYYY/MM/dd"))
+      titleRow.getCell(17).setCellValue("資料日期:" + reportDate.toString("YYYY年MM月"))      
 
       val abnormalColor =
         {
           val seqColors =
-            for (col <- 13 to 13)
+            for (col <- 16 to 16)
               yield titleRow.getCell(col).getCellStyle.getFillForegroundXSSFColor
           seqColors.toArray
         }
@@ -257,8 +257,9 @@ object ExcelUtility {
     }
 
     def fillMonthlyHourSheet(report: MonthHourReport) = {
+      val reportTypeLen = report.dailyReports(0).typeList.length
       for {
-        sheetIndex <- 2 to 19 - 1
+        sheetIndex <- 2 to reportTypeLen + 1
         sheet = wb.getSheetAt(sheetIndex)
       } {
         sheet.getRow(1).getCell(0).setCellValue("監測站:" + Monitor.map(monitor).name)
@@ -268,7 +269,7 @@ object ExcelUtility {
       }
 
       for {
-        sheetIndex <- 2 to 19 - 1
+        sheetIndex <- 2 to reportTypeLen + 1
         sheet = wb.getSheetAt(sheetIndex)
         mt = report.dailyReports(0).typeList(sheetIndex - 2).monitorType
         normalStyle = createStyle(mt)
@@ -291,7 +292,7 @@ object ExcelUtility {
 
       //Day Stat
       for {
-        sheetIndex <- 2 to 19 - 1
+        sheetIndex <- 2 to reportTypeLen + 1
         sheet = wb.getSheetAt(sheetIndex)
         row <- 4 to (4 + nDay - 1)
         dayRecord = report.dailyReports(row - 4)
@@ -314,7 +315,7 @@ object ExcelUtility {
 
       //Day Stat
       for {
-        sheetIndex <- 2 to 19 - 1
+        sheetIndex <- 2 to reportTypeLen + 1
         sheet = wb.getSheetAt(sheetIndex)
         col <- 1 to 24
         row <- 4 to (4 + nDay - 1)
@@ -336,7 +337,7 @@ object ExcelUtility {
       }
 
       for {
-        sheetIndex <- 2 to 19 - 1
+        sheetIndex <- 2 to reportTypeLen + 1
         sheet = wb.getSheetAt(sheetIndex)
       } {
         evaluator.evaluateFormulaCell(sheet.getRow(35).getCell(25))
@@ -353,7 +354,7 @@ object ExcelUtility {
 
       //Re-evaluate
       for {
-        sheetIndex <- 2 to 19 - 1
+        sheetIndex <- 2 to reportTypeLen + 1
         sheet = wb.getSheetAt(sheetIndex)
         col <- 0 to (1 + nDay)
       } {
@@ -364,7 +365,7 @@ object ExcelUtility {
     }
 
     def fillGraphHourSheet(report: MonthHourReport) = {
-      val sheet = wb.getSheetAt(19)
+      val sheet = wb.getSheetAt(20)
       var row_start = 1
       for {
         dayReport <- report.dailyReports
@@ -406,19 +407,19 @@ object ExcelUtility {
     implicit val (reportFilePath, pkg, wb) = prepareTemplate("yearly_report.xlsx")
     val sheet = wb.getSheetAt(0)
     sheet.getRow(2).getCell(0).setCellValue("監測站:" + Monitor.map(monitor).name)
-    sheet.getRow(1).getCell(16).setCellValue("查詢日期:" + DateTime.now.toString("YYYY/MM/dd"))
-    sheet.getRow(2).getCell(16).setCellValue("資料日期:" + reportDate.toString("YYYY年"))
+    sheet.getRow(1).getCell(17).setCellValue("查詢日期:" + DateTime.now.toString("YYYY/MM/dd"))
+    sheet.getRow(2).getCell(17).setCellValue("資料日期:" + reportDate.toString("YYYY年"))
 
     val abnormalColor =
         {
           val seqColors =
-            for (col <- 10 to 10)
+            for (col <- 16 to 16)
               yield sheet.getRow(2).getCell(col).getCellStyle.getFillForegroundXSSFColor
           seqColors.toArray
         }
 
     for {
-      col <- 1 to 17
+      col <- 1 to report.typeArray.length
       mt = report.typeArray(col - 1).monitorType
         normalStyle = createStyle(mt)
         abnormalStyles = createColorStyle(abnormalColor, mt)
@@ -738,41 +739,71 @@ object ExcelUtility {
 
     val internalStyle = wb.getSheetAt(0).getRow(2).getCell(9).getCellStyle
     val lawStyle = wb.getSheetAt(0).getRow(2).getCell(10).getCellStyle
-
+    
+    val styles = 
+      for(row <- 0 to 1)
+        yield{
+        for(col <- 0 to 2)
+          yield wb.getSheetAt(1).getRow(row).getCell(col).getCellStyle
+      }
+          
+    var styleIdx = 0
+    var currentMonitor:Option[Monitor.Value] = None
+    def adjustStyleIdx(m:Monitor.Value)={
+      if(currentMonitor != Some(m)){
+        currentMonitor = Some(m)
+        styleIdx +=1
+        styleIdx %=2
+      }
+    }
+     
+    def fillCell(cell:XSSFCell, v:String, idx:Int){
+       cell.setCellValue(v)
+       cell.setCellStyle(styles(styleIdx)(idx))
+    }
+    
+    def fillCellF(cell:XSSFCell, v:Float, idx:Int){
+       cell.setCellValue(v)
+       cell.setCellStyle(styles(styleIdx)(idx))
+    }
+    
     for {
       row <- 4 to (4 + report.length - 1)
       item = report(row - 4)
       mt = item.monitorType
     } {
-      sheet.getRow(row).getCell(0).setCellValue(Monitor.map(item.monitor).name)
-      sheet.getRow(row).getCell(1).setCellValue(item.startTime.toString("HH:mm"))
-      sheet.getRow(row).getCell(2).setCellValue(MonitorType.map(item.monitorType).desp)
+      adjustStyleIdx(item.monitor)
+      fillCell(sheet.getRow(row).getCell(0), Monitor.map(item.monitor).name, 0)
+      fillCell(sheet.getRow(row).getCell(1), item.startTime.toString("HH:mm"), 0)
+      fillCell(sheet.getRow(row).getCell(2), MonitorType.map(item.monitorType).desp, 0)
       if (item.z_val > MonitorType.map(item.monitorType).zd_law.get) {
-        sheet.getRow(row).getCell(3).setCellStyle(lawStyle)
+        fillCellF(sheet.getRow(row).getCell(3), item.z_val, 2)
       } else if (item.z_val > MonitorType.map(item.monitorType).zd_internal.get) {
-        sheet.getRow(row).getCell(3).setCellStyle(internalStyle)
-      }
-      sheet.getRow(row).getCell(3).setCellValue(item.z_val)
-      sheet.getRow(row).getCell(4).setCellValue(MonitorType.map(item.monitorType).zd_internal.get)
-      sheet.getRow(row).getCell(5).setCellValue(MonitorType.map(item.monitorType).zd_law.get)
-      sheet.getRow(row).getCell(6).setCellValue(item.sd_val)
-      sheet.getRow(row).getCell(7).setCellValue(item.s_sval)
+        fillCellF(sheet.getRow(row).getCell(3), item.z_val, 1)
+      }else
+        fillCellF(sheet.getRow(row).getCell(3), item.z_val, 0)
+        
+      fillCellF(sheet.getRow(row).getCell(4), MonitorType.map(item.monitorType).zd_internal.get, 0)
+      fillCellF(sheet.getRow(row).getCell(5), MonitorType.map(item.monitorType).zd_law.get, 0)
+      fillCellF(sheet.getRow(row).getCell(6), item.sd_val, 0)
+      fillCellF(sheet.getRow(row).getCell(7), item.s_sval, 0)
       if (item.sd_pnt > MonitorType.map(item.monitorType).sd_law.get) {
-        sheet.getRow(row).getCell(8).setCellStyle(lawStyle)
+        fillCellF(sheet.getRow(row).getCell(8), item.sd_pnt, 2)
       } else if (item.sd_pnt > MonitorType.map(item.monitorType).sd_internal.get) {
-        sheet.getRow(row).getCell(8).setCellStyle(lawStyle)
-      }
-      sheet.getRow(row).getCell(8).setCellValue(item.sd_pnt)
-      sheet.getRow(row).getCell(9).setCellValue(MonitorType.map(item.monitorType).sd_internal.get)
-      sheet.getRow(row).getCell(10).setCellValue(MonitorType.map(item.monitorType).sd_law.get)
-      if (item.z_val > MonitorType.map(item.monitorType).zd_law.get || item.sd_pnt > MonitorType.map(item.monitorType).sd_law.get) {
-        sheet.getRow(row).getCell(11).setCellStyle(lawStyle)
-        sheet.getRow(row).getCell(11).setCellValue("失敗")
+        fillCellF(sheet.getRow(row).getCell(8), item.sd_pnt, 1)
+      } else
+        fillCellF(sheet.getRow(row).getCell(8), item.sd_pnt, 0)
+        
+      
+      fillCellF(sheet.getRow(row).getCell(9), MonitorType.map(item.monitorType).sd_internal.get, 0)
+      fillCellF(sheet.getRow(row).getCell(10), MonitorType.map(item.monitorType).sd_law.get, 0)
+      if (item.z_val > MonitorType.map(item.monitorType).zd_law.get || item.sd_pnt > MonitorType.map(item.monitorType).sd_law.get) {        
+        fillCell(sheet.getRow(row).getCell(11), "失敗", 2)
       } else {
         if (item.z_val > MonitorType.map(item.monitorType).zd_internal.get || item.sd_pnt > MonitorType.map(item.monitorType).sd_internal.get) {
-          sheet.getRow(row).getCell(11).setCellStyle(internalStyle)
-        }
-        sheet.getRow(row).getCell(11).setCellValue("成功")
+          fillCell(sheet.getRow(row).getCell(11), "成功", 1)
+        }else
+          fillCell(sheet.getRow(row).getCell(11), "成功", 0)
       }
     }
     finishExcel(reportFilePath, pkg, wb)
