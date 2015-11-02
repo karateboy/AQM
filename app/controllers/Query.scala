@@ -392,7 +392,11 @@ object Query extends Controller {
         case ReportUnit.TenMin =>
           XAxis(Some(timeStrSeq), gridLineWidth=Some(1), tickInterval=Some(6))
         case ReportUnit.Hour =>
-          XAxis(Some(timeStrSeq), gridLineWidth=Some(1), tickInterval=Some(24))
+          val duration = new Duration(start, end)
+          if(duration.getStandardDays > 2)
+            XAxis(Some(timeStrSeq), gridLineWidth=Some(1), tickInterval=Some(24))
+          else
+            XAxis(Some(timeStrSeq))
         case ReportUnit.EightHour =>
           XAxis(Some(timeStrSeq), gridLineWidth=Some(1), tickInterval=Some(3))
         case ReportUnit.Day =>
