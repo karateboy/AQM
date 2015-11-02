@@ -97,7 +97,7 @@ object Realtime extends Controller {
   case class XAxis(categories: Option[Seq[String]], gridLineWidth: Option[Int]=None, tickInterval:Option[Int]=None)
   case class AxisLineLabel(align: String, text: String)
   case class AxisLine(color: String, width: Int, value: Float, label: Option[AxisLineLabel])
-  case class AxisTitle(text: Option[String])
+  case class AxisTitle(text: Option[Option[String]])
   case class YAxis(labels: Option[String], title: AxisTitle, plotLines: Option[Seq[AxisLine]], opposite:Boolean=false, 
       floor:Option[Int]=None, ceiling:Option[Int]=None, tickInterval:Option[Int]=None, 
       gridLineWidth:Option[Int]=None, gridLineColor:Option[String]=None)
@@ -171,7 +171,7 @@ object Realtime extends Controller {
         Map("type" -> "column"),
         Map("text" -> title),
         XAxis(Some(Seq(latestRecordTime.toString("yyyy-MM-dd HH:mm")))),
-        Seq(YAxis(None, AxisTitle(Some(mtCase.unit)), axisLines)),
+        Seq(YAxis(None, AxisTitle(Some(None)), axisLines)),
         series)
 
       Ok(Json.toJson(c))

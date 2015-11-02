@@ -3652,7 +3652,7 @@ code {
 }
 .ibox {
   clear: both;
-  margin-bottom: 25px;
+  margin-bottom: 7px;
   margin-top: 0;
   padding: 0;
 }
@@ -3680,14 +3680,14 @@ code {
   border-style: solid solid none;
   border-width: 3px 0 0;
   color: inherit;
-  margin-bottom: 0;
-  padding: 14px 15px 7px;
-  min-height: 48px;
+  margin: auto;
+  padding: 7px 7px 7px;
+  min-height: 24px;
 }
 .ibox-content {
   background-color: #ffffff;
   color: inherit;
-  padding: 15px 20px 20px 20px;
+  padding: 7px 7px 7px 7px;
   border-color: #e7eaec;
   border-image: none;
   border-style: solid solid none;
@@ -3740,7 +3740,7 @@ table.table-mail tr td {
 .ibox-title h5 {
   display: inline-block;
   font-size: 14px;
-  margin: 0 0 7px;
+  margin: auto;
   padding: 0;
   text-overflow: ellipsis;
   float: left;

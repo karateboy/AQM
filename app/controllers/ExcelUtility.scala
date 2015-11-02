@@ -307,6 +307,10 @@ object ExcelUtility {
       }
     }
 
+      // Fill Graph title
+      val graph_list = List(MonitorType.C211, MonitorType.A222, MonitorType.A224, MonitorType.A293, 
+          MonitorType.A225, MonitorType.A215, MonitorType.A296, MonitorType.A213)
+
     def fillMonthlySheet(sheet: XSSFSheet) = {
       val titleRow = sheet.getRow(2)
       val titleCell = titleRow.getCell(0)
@@ -366,6 +370,19 @@ object ExcelUtility {
         if (!Monitor.map(monitor).monitorTypes.contains(mt)) {
           sheet.setColumnHidden(col, true)
         }
+      }
+      
+      for {
+        mt <- graph_list.zipWithIndex
+        row = sheet.getRow(43)
+      } {
+        val mtCase = MonitorType.map(mt._1)
+        val title = if (mtCase.std_law.isDefined)
+          s"${Monitor.map(monitor).name}${mtCase.desp}小時趨勢圖 (法規:${mtCase.std_law.get}${mtCase.unit})"
+        else
+          s"${Monitor.map(monitor).name}${mtCase.desp}小時趨勢圖 "
+
+        row.getCell(mt._2).setCellValue(title)
       }
     }
 
@@ -475,10 +492,14 @@ object ExcelUtility {
         evaluator.evaluateFormulaCell(sheet.getRow(46).getCell(col))
         evaluator.evaluateFormulaCell(sheet.getRow(47).getCell(col))
       }
+      
+      //Fill graph title
+      
     }
 
     def fillGraphHourSheet(report: MonthHourReport, idx:Int) = {
       val sheet = wb.getSheetAt(idx)
+      val graph_idx = graph_list.zipWithIndex
       var row_start = 1
       for {
         dayReport <- report.dailyReports
@@ -500,6 +521,15 @@ object ExcelUtility {
               sheet.createRow(row_start + idx).createCell(0).setCellValue(data._1.toDateTime().toString("YYYY-MM-dd HH:mm"))
             else
               sheet.getRow(row_start + idx).createCell(0).setCellValue(data._1.toDateTime().toString("YYYY-MM-dd HH:mm"))
+          }
+          
+          val idxOpt = graph_idx.find(p=>p._1 == dayReport.typeList(mt_i).monitorType)
+          if(idxOpt.isDefined){
+            val graph_idx = idxOpt.get
+            val mtCase = MonitorType.map(graph_idx._1)
+            if(mtCase.std_internal.isDefined){
+              sheet.getRow(row_start + idx).createCell(22 + graph_idx._2).setCellValue(mtCase.std_internal.get)  
+            }            
           }
         }
         row_start += dayReport.typeList(0).dataList.length

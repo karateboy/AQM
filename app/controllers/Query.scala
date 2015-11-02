@@ -418,7 +418,7 @@ object Query extends Controller {
           Map("type" -> "line"),
           Map("text" -> title),
           xAxis,
-          Seq(YAxis(None, AxisTitle(Some(s"${mtCase.desp} (${mtCase.unit})")), getAxisLines(mtCase))),
+          Seq(YAxis(None, AxisTitle(Some(Some(s"${mtCase.desp} (${mtCase.unit})"))), getAxisLines(mtCase))),
           series)
       } else {
         val yAxis =
@@ -427,8 +427,8 @@ object Query extends Controller {
             if (monitorTypes.length == 2) {
               val mtCase = MonitorType.map(monitorTypes.filter { !MonitorType.windDirList.contains(_) }(0))
 
-              Seq(YAxis(None, AxisTitle(Some(s"${mtCase.desp} (${mtCase.unit})")), getAxisLines(mtCase)),
-                YAxis(None, AxisTitle(Some(s"${windMtCase.desp} (${windMtCase.unit})")), None, 
+              Seq(YAxis(None, AxisTitle(Some(Some(s"${mtCase.desp} (${mtCase.unit})"))), getAxisLines(mtCase)),
+                YAxis(None, AxisTitle(Some(Some(s"${windMtCase.desp} (${windMtCase.unit})"))), None, 
                     opposite=true, 
                     floor=Some(0), 
                     ceiling=Some(360), 
@@ -436,7 +436,7 @@ object Query extends Controller {
                     gridLineWidth=Some(1),
                     gridLineColor=Some("#00D800")))
             } else {
-              Seq(YAxis(None, AxisTitle(None), None), YAxis(None, AxisTitle(Some(s"${windMtCase.desp} (${windMtCase.unit})")), None, true, Some(0), Some(360)))
+              Seq(YAxis(None, AxisTitle(None), None), YAxis(None, AxisTitle(Some(Some(s"${windMtCase.desp} (${windMtCase.unit})"))), None, true, Some(0), Some(360)))
             }
           } else {
             Seq(YAxis(None, AxisTitle(None), None))
@@ -572,7 +572,7 @@ object Query extends Controller {
         scala.collection.immutable.Map("type" -> "column"),
         scala.collection.immutable.Map("text" -> title),
         XAxis(Some(timeStrSeq)),
-        Seq(YAxis(None, AxisTitle(Some("")), None)),
+        Seq(YAxis(None, AxisTitle(Some(Some(""))), None)),
         series)
 
       if (outputType == OutputType.excel) {
@@ -781,7 +781,7 @@ object Query extends Controller {
         scala.collection.immutable.Map("polar" -> "true", "type" -> "column"),
         scala.collection.immutable.Map("text" -> title),
         XAxis(Some(dirStrSeq)),
-        Seq(YAxis(None, AxisTitle(Some("")), None)),
+        Seq(YAxis(None, AxisTitle(Some(Some(""))), None)),
         series)
 
       if (outputType == OutputType.excel) {
@@ -834,7 +834,7 @@ object Query extends Controller {
           scala.collection.immutable.Map("type" -> "line"),
           scala.collection.immutable.Map("text" -> title),
           XAxis(Some(timeStrSeq)),
-          Seq(YAxis(None, AxisTitle(Some("")), None)),
+          Seq(YAxis(None, AxisTitle(Some(Some(""))), None)),
           series)
 
         Results.Ok(Json.toJson(c))
@@ -946,7 +946,7 @@ object Query extends Controller {
           ("zoomType" -> "xy")),
         Map("text" -> title),
         XAxis(Some(timeStrSeq)),
-        YAxis(None, AxisTitle(Some("")), None),
+        YAxis(None, AxisTitle(Some(Some(""))), None),
         series)
 
       Results.Ok(Json.toJson(c))

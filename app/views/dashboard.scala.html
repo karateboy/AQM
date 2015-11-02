@@ -1,7 +1,7 @@
 @* dashboard Template File *@
 @(privilege: Privilege)
 <div class="row">
-	<div class="col-lg-3">
+	<div class="col-lg-2">
 		<div class="ibox float-e-margins">
                <div class="ibox-title">
                	<h5>TSP 即時資料</h5>
@@ -19,7 +19,7 @@
            	</div>
            </div>
        </div>
-	<div class="col-lg-3">
+	<div class="col-lg-2">
 		<div class="ibox float-e-margins">
                <div class="ibox-title">
                	<h5>PM10 即時資料</h5>
@@ -37,7 +37,7 @@
            	</div>
            </div>
 	</div>
-	<div class="col-lg-3">
+	<div class="col-lg-2">
 		<div class="ibox float-e-margins">
                <div class="ibox-title">
                	<h5>二氧化硫 即時資料</h5>
@@ -55,7 +55,7 @@
            	</div>
            </div>		
 	</div>
-	<div class="col-lg-3">
+	<div class="col-lg-2">
 		<div class="ibox float-e-margins">
                <div class="ibox-title">
                	<h5>二氧化氮 即時資料</h5>
@@ -73,7 +73,7 @@
            	</div>
            </div>
 	</div>
-	<div class="col-lg-3">
+	<div class="col-lg-2">
 		<div class="ibox float-e-margins">
                <div class="ibox-title">
                	<h5>臭氧 即時資料</h5>
@@ -91,10 +91,10 @@
            	</div>
            </div>
 	</div>
-	<div class="col-lg-3">
+	<div class="col-lg-2">
 		<div class="ibox float-e-margins">
                <div class="ibox-title">
-               	<h5>一氧化氮 即時資料</h5>
+               	<h5>一氧化碳 即時資料</h5>
                        <div class="ibox-tools">
                            <a class="collapse-link">
                                <i class="fa fa-chevron-up"></i>
@@ -105,11 +105,11 @@
                        </div>
                    </div>
                <div class="ibox-content">
-				<div id="no_realtimChart"></div>                       
+				<div id="co_realtimChart"></div>                       
            	</div>
            </div>
 	</div>
-	<div class="col-lg-3">
+	<div class="col-lg-2">
 		<div class="ibox float-e-margins">
                <div class="ibox-title">
                	<h5>甲烷 即時資料</h5>
@@ -127,7 +127,7 @@
            	</div>
            </div>
 	</div>
-	<div class="col-lg-3">
+	<div class="col-lg-2">
 		<div class="ibox float-e-margins">
                <div class="ibox-title">
                	<h5>非甲烷 即時資料</h5>
@@ -465,7 +465,8 @@ var statusMarkerArray = [];
 		                enabled: false
 		            }
 		        };
-		        
+				result.chart.height = 150;
+				
 				$(id).highcharts(result);
 			},
 			error : function(xhr, status, errorThrown) {
@@ -484,7 +485,7 @@ var statusMarkerArray = [];
 		getRealtimChart('#so2_realtimChart', "A222");
 		getRealtimChart('#no2_realtimChart', "A293");
 		getRealtimChart('#o3_realtimChart', "A225");
-		getRealtimChart('#no_realtimChart', "A283");
+		getRealtimChart('#co_realtimChart', "A224");
 		getRealtimChart('#ch4_realtimChart', "A286");
 		getRealtimChart('#non_ch4_realtimChart', "A296");
 	}
