@@ -357,7 +357,7 @@ $( document ).ready(function() {
 				if(yMax.length != 0)
 					result.yAxis[0].ceiling = parseInt(yMax);
 				
-				if(chartType == 'spline' || chartType == 'areaspline'){
+				if(chartType == 'spline'){
 					for(var i=0;i<result.series.length;i++){
 						result.series[i].marker = {
 							enabled:false

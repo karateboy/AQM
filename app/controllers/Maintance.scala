@@ -468,4 +468,8 @@ object Maintance extends Controller {
     MailerPlugin.send(email)
     Ok("Send")
   }
+  
+  def dutySchedule = Security.Authenticated {
+    Ok(views.html.dutySchedule(""))
+  }
 }

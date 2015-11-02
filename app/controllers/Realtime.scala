@@ -94,7 +94,7 @@ object Realtime extends Controller {
       Results.Ok(Json.toJson(chart))
   }
 
-  case class XAxis(categories: Option[Seq[String]])
+  case class XAxis(categories: Option[Seq[String]], gridLineWidth: Option[Int]=None, tickInterval:Option[Int]=None)
   case class AxisLineLabel(align: String, text: String)
   case class AxisLine(color: String, width: Int, value: Float, label: Option[AxisLineLabel])
   case class AxisTitle(text: Option[String])

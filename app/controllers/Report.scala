@@ -516,12 +516,12 @@ object Report extends Controller {
               val adjustStartDate = DateTime.parse(startTime.toString("YYYY-MM-1"))
               val monthlyReport = getMonthlyReport(monitor, adjustStartDate)
               val nDays = monthlyReport.typeArray(0).dataList.length
-              ("月報", views.html.monthlyReport(monitorCase.name, startTime, monthlyReport, nDays))
+              ("月報", views.html.monthlyReport(monitor, startTime, monthlyReport, nDays))
 
             case PeriodReport.YearlyReport =>
               val adjustStartDate = DateTime.parse(startTime.toString("YYYY-1-1"))
               val yearlyReport = getYearlyReport(adjustStartDate)
-              ("年報", views.html.yearlyReport(monitorCase.name, startTime, yearlyReport))
+              ("年報", views.html.yearlyReport(monitor, startTime, yearlyReport))
           }
 
         outputType match {
@@ -538,9 +538,11 @@ object Report extends Controller {
         val (title, excelFile) =
           reportType match {
             case PeriodReport.DailyReport =>
-              val dailyReport = Record.getDailyReport(monitor, startTime)
-              ("日報" + startTime.toString("YYYYMMdd"), ExcelUtility.createDailyReport(monitor, startTime, dailyReport))
+              //val dailyReport = Record.getDailyReport(monitor, startTime)
+              //("日報" + startTime.toString("YYYYMMdd"), ExcelUtility.createDailyReport(monitor, startTime, dailyReport))
 
+              ("日報" + startTime.toString("YYYYMMdd"), ExcelUtility.createAllDailyReport(startTime))  
+              
             case PeriodReport.MonthlyReport =>
               val adjustStartDate = DateTime.parse(startTime.toString("YYYY-MM-1"))
               val monthlyReport = getMonthlyReport(monitor, adjustStartDate)
@@ -551,11 +553,11 @@ object Report extends Controller {
               val adjustStartDate = DateTime.parse(startTime.toString("YYYY-1-1"))
               val yearlyReport = getYearlyReport(adjustStartDate)
 
-              ("年報" + startTime.toString("YYYY"), ExcelUtility.createYearlyReport(monitor, adjustStartDate, yearlyReport))
+              (Monitor.map(monitor).name + "年報" + startTime.toString("YYYY"), ExcelUtility.createYearlyReport(monitor, adjustStartDate, yearlyReport))
           }
 
         Ok.sendFile(excelFile, fileName = _ =>
-          play.utils.UriEncoding.encodePathSegment(Monitor.map(monitor).name + title + ".xlsx", "UTF-8"),
+          play.utils.UriEncoding.encodePathSegment(title + ".xlsx", "UTF-8"),
           onClose = () => { Files.deleteIfExists(excelFile.toPath()) })
       }
   }
@@ -768,11 +770,17 @@ object Report extends Controller {
               val title = "月報"
               val adjustedDate = DateTime.parse(reportDate.toString("YYYY-MM-01"))
 
-              val reportMap = Calibration.calibrationMonthly(monitors(0), monitorType, adjustedDate)
+              val reportMap = {
+                val pairs =
+                  for(mt <- MonitorType.calibrationList)
+                    yield mt -> Calibration.calibrationMonthly(monitors(0), mt, adjustedDate)
+                Map(pairs:_*)
+              }
               val days = getDays(adjustedDate, adjustedDate + 1.month)
               val nDay = days.length
 
-              (title, ExcelUtility.calibrationMonthlyReport("測站:" + Monitor.map(monitors(0)).name, reportDate, reportMap, nDay))
+              //(title, ExcelUtility.calibrationMonthlyReport(monitors(0), monitorType, reportDate, reportMap, nDay))
+              (title, ExcelUtility.calibrationMonthlyAllReport(monitors(0), reportDate, reportMap, nDay))
           }
         Ok.sendFile(excelFile, fileName = _ =>
           play.utils.UriEncoding.encodePathSegment(title + reportDate.toString("YYMMdd") + ".xlsx", "UTF-8"),
@@ -781,19 +789,19 @@ object Report extends Controller {
         val (title, output) =
           reportType match {
             case CalibrationReportType.Daily =>
-              val title = "校正日報"
+              val title = "校正日報:" + reportDate.toString("YYYY年MM月dd日")
               val reports = monitors.flatMap { m => Calibration.calibrationQueryReport(m, reportDate, reportDate + 1.day) }
               val report = views.html.calibrationQueryResult(reports, title, reportDate, reportDate)
               (title, report)
             case CalibrationReportType.Summary =>
-              val title = "校正彙總表"
+              val title = "校正彙總表:" + reportDate.toString("YYYY年MM月dd日")
               val reports = monitors.flatMap { m => Calibration.calibrationSummary(m, reportDate, reportDate + 1.day) }
               val report = views.html.calibrationQueryResult(reports, title, reportDate, reportDate)
               (title, report)
             case CalibrationReportType.Monthly =>
-              val title = "月報"
+              
               val adjustedDate = DateTime.parse(reportDate.toString("YYYY-MM-01"))
-
+              val title = "月報:" + adjustedDate.toString("YYYY年MM月")
               val reportMap = Calibration.calibrationMonthly(monitors(0), monitorType, adjustedDate)
               val reports = reportMap.values.toList.sortBy { item => item.startTime }
               val report = views.html.calibrationQueryResult(reports, title, adjustedDate, adjustedDate)

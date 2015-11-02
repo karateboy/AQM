@@ -231,9 +231,17 @@ object MonitorType extends Enumeration{
   val psiList = List(MonitorType.withName("A214"),MonitorType.withName("A222"), MonitorType.withName("A224"), MonitorType.withName("A225"), MonitorType.withName("A293") )
   val windDirList = List(MonitorType.withName("C212"), MonitorType.withName("C912"))
   val monitorReportList = {
-    val name=List("A222", "A223", "A293", "A283", "A224", "A225", "A226", "A286", "A296", "A213", "A214", "A215",
+    val name=List("A222", "A223", "A293", "A283", "A224", "A225", "A226", "A286", "A296", "A229", "A221",
+        "A213", "A214", "A215",        
         "C211", "C212", "C214", "C215", "C216", "C213")
     name.map { MonitorType.withName }
+  }
+  
+  val calibrationList = {
+    val name=List("A222", "A223", "A293", "A283", "A224", "A225", "A226", "A286", "A296", "A229", "A221",
+        "A213", "A214", "A215",        
+        "A288", "A289")
+    name.map { MonitorType.withName }    
   }
   
   val epaList = {

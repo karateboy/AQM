@@ -98,18 +98,20 @@ $( document ).ready(function() {
 	        });
 	});
 	
-	$('#reportDate').datepicker({
-		format: 'yyyy-mm-dd',
-	    todayBtn: "linked",
-	    language: "zh-TW"
+	$('#reportDate').datetimepicker({
+		format: 'YYYY-M-D',
+		defaultDate: moment().subtract(1, 'days'),
+    	locale: "zh-TW"
 	});
-
+	
 	$("input[name='reportType']").change(function(){
 		var $me = $(this);
 		var $mt = $('#monitorTypes');
 		if($me.attr('id') == 'monthly'){
+			$('#reportDate').data("DateTimePicker").format("YYYY-M");
 			$mt.css('display','block');
 		}else{
+			$('#reportDate').data("DateTimePicker").format("YYYY-M-D");
 			$mt.css('display','none');
 		}
 	});
@@ -159,7 +161,6 @@ $( document ).ready(function() {
 		}
 		
 		$("#reportPanel").css('display','block');
-		$("#reportParam").collapse();
 		$("#reportPanel").collapse('show');
 
 		$('#reportDiv').html('');

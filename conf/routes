@@ -182,3 +182,4 @@ PUT		/Part				controllers.Maintance.newPart
 DELETE  /Part/:id			controllers.Maintance.deletePart(id)
 
 GET		/TestAlarmMail		controllers.Maintance.testAlarmMail
+GET		/DutySchedule		controllers.Maintance.dutySchedule

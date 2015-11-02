@@ -385,6 +385,27 @@ object Query extends Controller {
           AxisLine("#FF0000", 2, mtCase.std_law.get, Some(AxisLineLabel("right", "法規值")))))
     }
 
+    val xAxis = {
+       reportUnit match {
+        case ReportUnit.Min =>
+          XAxis(Some(timeStrSeq), gridLineWidth=Some(1), tickInterval=Some(60))
+        case ReportUnit.TenMin =>
+          XAxis(Some(timeStrSeq), gridLineWidth=Some(1), tickInterval=Some(6))
+        case ReportUnit.Hour =>
+          XAxis(Some(timeStrSeq), gridLineWidth=Some(1), tickInterval=Some(24))
+        case ReportUnit.EightHour =>
+          XAxis(Some(timeStrSeq), gridLineWidth=Some(1), tickInterval=Some(3))
+        case ReportUnit.Day =>
+          XAxis(Some(timeStrSeq))
+        case ReportUnit.Week =>
+          XAxis(Some(timeStrSeq))
+        case ReportUnit.Month =>
+          XAxis(Some(timeStrSeq))
+        case ReportUnit.Quarter =>
+          XAxis(Some(timeStrSeq))
+       }              
+    }
+    
     val chart =
       if (monitorTypes.length == 1) {
         val mtCase = MonitorType.map(monitorTypes(0))
@@ -392,7 +413,7 @@ object Query extends Controller {
         HighchartData(
           Map("type" -> "line"),
           Map("text" -> title),
-          XAxis(Some(timeStrSeq)),
+          xAxis,
           Seq(YAxis(None, AxisTitle(Some(s"${mtCase.desp} (${mtCase.unit})")), getAxisLines(mtCase))),
           series)
       } else {
@@ -420,7 +441,7 @@ object Query extends Controller {
         HighchartData(
           Map("type" -> "line"),
           Map("text" -> title),
-          XAxis(Some(timeStrSeq)),
+          xAxis,
           yAxis,
           series)
       }
@@ -594,7 +615,9 @@ object Query extends Controller {
           records = Record.getHourRecords(m, start, end)
           typeRecords = records.map { r => (Record.timeProjection(r), Record.monitorTypeProject2(monitorType)(r)) }
           overLawRecords = typeRecords.filter {
-            r => (r._2._1.isDefined && r._2._1.get > mtCase.std_law.get)
+            r => (r._2._1.isDefined && r._2._2.isDefined && 
+                MonitorStatus.isNormalStat(r._2._2.get) &&
+                r._2._1.get >= mtCase.std_law.get)
           }
           overList = overLawRecords.map { r => OverLawStdEntry(m, r._1, r._2._1.get) }
         } {

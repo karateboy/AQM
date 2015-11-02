@@ -1,9 +1,9 @@
 @* yearlyReport Template File *@
 @import com.github.nscala_time.time.Imports._
 @import Report._
-@(monitor: String, reportDate:DateTime, report:IntervalReport)
+@(monitor: Monitor.Value, reportDate:DateTime, report:IntervalReport)
 <h3>監測年報表</h3>
-<h4>監測站:@monitor</h4>
+<h4>監測站:@Monitor.map(monitor).name</h4>
 <h4>日期:@reportDate.toString("yyyy年")</h4>
 <div class="col-lg-offset-10 col-lg-2">
 <table class="table">
@@ -19,7 +19,7 @@
 	<thead>
 		<tr>
 			<th>月</th>
-			@for(t<-report.typeArray){
+			@for(t<-report.typeArray if Monitor.map(monitor).monitorTypes.contains(t.monitorType)){
 				<td>@MonitorType.map(t.monitorType).desp</td>
 			}
 		</tr>
@@ -27,7 +27,7 @@
 	<tfoot>
 		<tr>
 			<td>平均</td>
-			@for(t<-report.typeArray){
+			@for(t<-report.typeArray if Monitor.map(monitor).monitorTypes.contains(t.monitorType)){
 				@if(t.stat.count==0){
 					<td>-</td>
 				}else{
@@ -37,7 +37,7 @@
 		</tr>
 		<tr>
 			<td>最大</td>
-			@for(t<-report.typeArray){
+			@for(t<-report.typeArray if Monitor.map(monitor).monitorTypes.contains(t.monitorType)){
 				@if(t.stat.count==0){
 					<td>-</td>
 				}else{
@@ -47,7 +47,7 @@
 		</tr>
 		<tr>
 			<td>最小</td>
-			@for(t<-report.typeArray){
+			@for(t<-report.typeArray if Monitor.map(monitor).monitorTypes.contains(t.monitorType)){
 				@if(t.stat.count==0){
 					<td>-</td>
 				}else{
@@ -57,7 +57,7 @@
 		</tr>
 		<tr>
 			<td>有效率(%)</td>
-			@for(t<-report.typeArray){
+			@for(t<-report.typeArray if Monitor.map(monitor).monitorTypes.contains(t.monitorType)){
 				<td>@("%.0f".format(t.stat.count.toFloat/t.stat.total*100))</td>
 			}
 		</tr>
@@ -66,7 +66,7 @@
 		@for(i<-0 to 11){
 			<tr>
 			<th>@(i+1)</th>
-			@for(t<-report.typeArray){
+			@for(t<-report.typeArray if Monitor.map(monitor).monitorTypes.contains(t.monitorType)){
 				@if(t.dataList(i).count != 0){
 					@if(t.dataList(i).effectPercent >= 0.75){
 						<td>@MonitorType.format(t.monitorType, Some(t.dataList(i).avg))</td>

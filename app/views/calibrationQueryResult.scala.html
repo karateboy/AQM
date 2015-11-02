@@ -3,13 +3,7 @@
 @import com.github.nscala_time.time.Imports._
 @import MonitorType._
 @(report:Seq[CalibrationItem], title:String="", start:DateTime, end:DateTime)
-<h3>@title - 
-@if(start == end){
-	@start.toString("YYYY-MM-dd")
-}else{
-	@start.toString("YYYY-MM-dd")~@end.toString("YYYY-MM-dd")</h3>	
-}
-</h3>	
+<h3>@title</h3>	
 
 <p>顏色說明</p>
 <span style="color:blue">超過內控值</span>

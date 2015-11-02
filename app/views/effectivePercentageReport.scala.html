@@ -7,7 +7,8 @@
 <h3>有效率報表</h3>
 <h4>開始日期:@start.toString("yyyy年MM月dd日")</h4>
 <h4>結束日期:@end.toString("yyyy年MM月dd日")</h4>
-<h4 style="color:blue">有效率低於75%</h4>
+<h4 style="color:blue">有效率低於90%</h4>
+<h4 style="color:red">有效率低於75%</h4>
 </b>
 <table id="reportTable" class="table" cellspacing="0" width="100%">
 	<thead>
@@ -23,11 +24,15 @@
 			<tr>
 			<th>@Monitor.map(r.monitor).name</th>
 			@for(mt<-MonitorType.myMtvList(privilege)){
-				@if(r.rateMap(mt)*100 < 75){
-					<td style="color:blue">@("%.1f".format(r.rateMap(mt)*100))</td>	
-				}else{
-					<td>@("%.1f".format(r.rateMap(mt)*100))</td>
-				}
+				<td 
+					@if(r.rateMap(mt)*100 < 75){
+						style="color:red"
+					}else{ 					
+						@if(r.rateMap(mt)*100 < 90){
+							style="color:blue"
+						}
+					}
+					>@("%.1f".format(r.rateMap(mt)*100))</td>
 					
 			}
 			</tr>
