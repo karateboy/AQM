@@ -335,8 +335,8 @@ $( document ).ready(function() {
 					zoomType: 'x',
 		            panning: true,
 		            panKey: 'shift',
-		            height: chartHeight,
-		            alignTicks: false
+		            alignTicks: false,
+		            height: chartHeight
 				};
 				
 				result.colors=[
@@ -349,6 +349,8 @@ $( document ).ready(function() {
 					enabled:false,
 					href:'http://www.wecc.com.tw/'
 				};
+				//result.xAxis.type = "datetime";
+				
 				var yMin = $("#YMin").val();
 				if(yMin.length != 0)
 					result.yAxis[0].floor = parseInt(yMin);
@@ -356,15 +358,7 @@ $( document ).ready(function() {
 				var yMax = $("#YMax").val();
 				if(yMax.length != 0)
 					result.yAxis[0].ceiling = parseInt(yMax);
-				
-				if(chartType == 'spline'){
-					for(var i=0;i<result.series.length;i++){
-						result.series[i].marker = {
-							enabled:false
-						};
-					}
-				}
-				
+								
 				$("#downloadExcel").prop("href", "/Excel/HistoryTrend/" + base_url);
 				$('#reportDiv').highcharts(result);
 			},

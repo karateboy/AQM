@@ -172,6 +172,7 @@ $( document ).ready(function() {
 					zoomType: 'x',
 		            panning: true,
 		            panKey: 'shift',
+		            alignTicks: false,
 		            height: chartHeight
 				};
 				result.colors=[
@@ -184,13 +185,8 @@ $( document ).ready(function() {
 					enabled:false,
 					href:'http://www.wecc.com.tw/'
 				};
-				if(chartType == 'spline'){
-					for(var i=0;i<result.series.length;i++){
-						result.series[i].marker = {
-							enabled:false
-						};
-					}
-				}
+				result.xAxis.type = "datetime";
+				
 				$('#reportDiv').highcharts(result);
 			},
 			error : function(xhr, status, errorThrown) {

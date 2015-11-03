@@ -185,7 +185,7 @@ object Query extends Controller {
 
       MonitorStatusFilter.isMatched(monitorStatusFilter, stat)
     }
-
+    
     var timeSet = Set.empty[DateTime]
     val pairs =
       if (reportUnit == ReportUnit.Min || reportUnit == ReportUnit.Hour) {
@@ -410,36 +410,49 @@ object Query extends Controller {
        }              
     }
     
+    val windMtCase = MonitorType.map(MonitorType.withName("C212"))
+    val windYaxis =  YAxis(None, AxisTitle(Some(Some(s"${windMtCase.desp} (${windMtCase.unit})"))), None, 
+                    opposite=true, 
+                    floor=Some(0), 
+                    ceiling=Some(360),
+                    min=Some(0),
+                    max=Some(360),
+                    tickInterval=Some(45), 
+                    gridLineWidth=Some(1),
+                    gridLineColor=Some("#00D800"))
+                    
     val chart =
       if (monitorTypes.length == 1) {
         val mtCase = MonitorType.map(monitorTypes(0))
-
+        Logger.debug("#0")
+        
         HighchartData(
           Map("type" -> "line"),
           Map("text" -> title),
           xAxis,
-          Seq(YAxis(None, AxisTitle(Some(Some(s"${mtCase.desp} (${mtCase.unit})"))), getAxisLines(mtCase))),
+          if(!monitorTypes.contains(windMtv))
+            Seq(YAxis(None, AxisTitle(Some(Some(s"${mtCase.desp} (${mtCase.unit})"))), getAxisLines(mtCase)))
+          else
+            Seq(windYaxis),
           series)
       } else {
         val yAxis =
-          if (monitorTypes.length > 1 && monitorTypes.contains(windMtv)) {
-            val windMtCase = MonitorType.map(MonitorType.withName("C212"))
+          if (monitorTypes.contains(windMtv)) {
             if (monitorTypes.length == 2) {
               val mtCase = MonitorType.map(monitorTypes.filter { !MonitorType.windDirList.contains(_) }(0))
-
-              Seq(YAxis(None, AxisTitle(Some(Some(s"${mtCase.desp} (${mtCase.unit})"))), getAxisLines(mtCase)),
-                YAxis(None, AxisTitle(Some(Some(s"${windMtCase.desp} (${windMtCase.unit})"))), None, 
-                    opposite=true, 
-                    floor=Some(0), 
-                    ceiling=Some(360), 
-                    tickInterval=Some(45), 
-                    gridLineWidth=Some(1),
-                    gridLineColor=Some("#00D800")))
+              Logger.debug("#1")
+              Seq(YAxis(None, 
+                  AxisTitle(Some(Some(s"${mtCase.desp} (${mtCase.unit})"))), 
+                  getAxisLines(mtCase),
+                  gridLineWidth=Some(0)),
+                  windYaxis)
             } else {
-              Seq(YAxis(None, AxisTitle(None), None), YAxis(None, AxisTitle(Some(Some(s"${windMtCase.desp} (${windMtCase.unit})"))), None, true, Some(0), Some(360)))
+              Logger.debug("#2")
+              Seq(YAxis(None, AxisTitle(Some(None)), None, gridLineWidth=Some(0)), 
+                  windYaxis)
             }
           } else {
-            Seq(YAxis(None, AxisTitle(None), None))
+              Seq(YAxis(None, AxisTitle(Some(None)), None))
           }
 
         HighchartData(
