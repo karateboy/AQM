@@ -185,8 +185,15 @@ $( document ).ready(function() {
 					enabled:false,
 					href:'http://www.wecc.com.tw/'
 				};
-				result.xAxis.type = "datetime";
+				result.xAxis.type = "category";
 				
+				result.plotOptions= {
+					scatter:{
+						tooltip:{
+							pointFormat:'<b>{point.y}</b> 度'
+						}
+					}
+				};
 				$('#reportDiv').highcharts(result);
 			},
 			error : function(xhr, status, errorThrown) {

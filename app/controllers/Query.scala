@@ -424,7 +424,6 @@ object Query extends Controller {
     val chart =
       if (monitorTypes.length == 1) {
         val mtCase = MonitorType.map(monitorTypes(0))
-        Logger.debug("#0")
         
         HighchartData(
           Map("type" -> "line"),
@@ -440,14 +439,12 @@ object Query extends Controller {
           if (monitorTypes.contains(windMtv)) {
             if (monitorTypes.length == 2) {
               val mtCase = MonitorType.map(monitorTypes.filter { !MonitorType.windDirList.contains(_) }(0))
-              Logger.debug("#1")
               Seq(YAxis(None, 
                   AxisTitle(Some(Some(s"${mtCase.desp} (${mtCase.unit})"))), 
                   getAxisLines(mtCase),
                   gridLineWidth=Some(0)),
                   windYaxis)
-            } else {
-              Logger.debug("#2")
+            } else {              
               Seq(YAxis(None, AxisTitle(Some(None)), None, gridLineWidth=Some(0)), 
                   windYaxis)
             }
