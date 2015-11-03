@@ -99,16 +99,20 @@ object MonitorStatus {
   }
   
   val CALBRATION_STAT = "020"
+  val CALBRATION_SPAN_STAT = "021"
+  val CALBRATION_BACK_STAT = "026"
   val CALBRATION_DIVERSION_STAT = "022"
+  
   val CALBRATION_FAILED = "030"
   
   def isCalbration(s: String) = {
-    val CALBRATION_STATS = List(CALBRATION_STAT, CALBRATION_DIVERSION_STAT).map(getTagInfo)
+    val CALBRATION_STATS = List(CALBRATION_STAT, CALBRATION_SPAN_STAT, CALBRATION_BACK_STAT).map(getTagInfo)
     CALBRATION_STATS.contains(getTagInfo(s))
   }
 
   def isCalbrating(s: String)={
-    getTagInfo(CALBRATION_STAT) == getTagInfo(s)
+   val CALBRATION_STATS = List(CALBRATION_STAT, CALBRATION_SPAN_STAT, CALBRATION_BACK_STAT).map(getTagInfo)
+    CALBRATION_STATS.contains(getTagInfo(s))
   }
   
   def isOverInternal(s:String)={
