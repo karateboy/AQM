@@ -698,48 +698,27 @@ object Record {
     val lastYearStart = start - 1.year
     val lastYearEnd = end - 1.year
 
-    def checkHourRecord(checkTime: DateTime, endTime: DateTime, checkList: List[HourRecord]): List[HourRecord] = {
-      if (checkTime >= endTime)
-        Nil
-      else {
-        if (checkList.isEmpty || checkTime != checkList.head.date.toDateTime())
-          emptyRecord(monitor.toString(), checkTime) :: checkHourRecord(checkTime + 1.hour, endTime, checkList)
-        else
-          checkList.head :: checkHourRecord(checkTime + 1.hour, endTime, checkList.tail)
-      }
-    }
+    val records = getHourRecords(monitor, start, end)
 
-    val records = checkHourRecord(start, end, getHourRecords(monitor, start, end))
-
-    val typeRecords = records.map {
-      r => (timeProjection(r), monitorTypeProject2(monitorType)(r)._1.getOrElse(0f))
+    def f(r:HourRecord)={
+      (timeProjection(r), monitorTypeProject2(monitorType)(r))
     }
-
-    val lastYearRecords = checkHourRecord(start, end, getHourRecords(monitor, lastYearStart, lastYearEnd))
-    val typeLastYearRecords = lastYearRecords.map {
-      r => (timeProjection(r), monitorTypeProject2(monitorType)(r)._1.getOrElse(0f))
-    }
+    
+    val typeRecords = records.map(f).filter(t => t._2._1.isDefined && t._2._2.isDefined && MonitorStatus.isNormal(t._2._2.get))
+    
+    val lastYearRaw = getHourRecords(monitor, lastYearStart, lastYearEnd)
+    
+    val typeLastYearRecords = lastYearRaw.map(f).filter(t => t._2._1.isDefined && t._2._2.isDefined && MonitorStatus.isNormal(t._2._2.get))
 
     (typeRecords, typeLastYearRecords)
   }
 
   def getRegressionData(monitor: Monitor.Value, monitorType: MonitorType.Value, start: DateTime, end: DateTime) = {
 
-    def checkHourRecord(checkTime: DateTime, endTime: DateTime, checkList: List[HourRecord]): List[HourRecord] = {
-      if (checkTime >= endTime)
-        Nil
-      else {
-        if (checkList.isEmpty || checkTime != checkList.head.date.toDateTime())
-          emptyRecord(monitor.toString(), checkTime) :: checkHourRecord(checkTime + 1.hour, endTime, checkList)
-        else
-          checkList.head :: checkHourRecord(checkTime + 1.hour, endTime, checkList.tail)
-      }
-    }
-
-    val records = checkHourRecord(start, end, getHourRecords(monitor, start, end))
+    val records = getHourRecords(monitor, start, end)
 
     val typeRecords = records.map {
-      r => (timeProjection(r), monitorTypeProject2(monitorType)(r)._1.getOrElse(0f))
+      r => (timeProjection(r), monitorTypeProject2(monitorType)(r))
     }
 
     typeRecords

@@ -39,7 +39,7 @@ object Query extends Controller {
       Ok(views.html.history("/AuditedQueryReport/", group.privilege, true))
   }
 
-  def auditedReport(monitorStr: String, monitorTypeStr: String, recordTypeStr: String, startStr: String, endStr: String, outputTypeStr: String) = Security.Authenticated {
+  def auditedReport(monitorStr: String, epaMonitor:String, monitorTypeStr: String, recordTypeStr: String, startStr: String, endStr: String, outputTypeStr: String) = Security.Authenticated {
     implicit request =>
 
       import scala.collection.JavaConverters._
@@ -48,15 +48,9 @@ object Query extends Controller {
       val monitorType = MonitorType.withName(monitorTypeStr)
       val tabType = TableType.withName(recordTypeStr)
       val start =
-        if (tabType == TableType.Hour)
-          DateTime.parse(startStr, DateTimeFormat.forPattern("YYYY-M-dd"))
-        else
           DateTime.parse(startStr, DateTimeFormat.forPattern("YYYY-MM-dd HH:mm"))
 
       val end =
-        if (tabType == TableType.Hour)
-          DateTime.parse(endStr, DateTimeFormat.forPattern("YYYY-MM-dd"))
-        else
           DateTime.parse(endStr, DateTimeFormat.forPattern("YYYY-MM-dd HH:mm"))
       val outputType = OutputType.withName(outputTypeStr)
 
@@ -276,9 +270,9 @@ object Query extends Controller {
             val time = t._1
             val x = t._2
             if (recordMap(m)(mt).contains(time))
-              Some(recordMap(m)(mt)(time)._1.get)
+              Seq(Some(time.getMillis.toDouble), Some(recordMap(m)(mt)(time)._1.get.toDouble))
             else
-              None
+              Seq(Some(time.getMillis.toDouble), None)
           }          
         } yield {
           if (mt != windMtv)
@@ -294,9 +288,9 @@ object Query extends Controller {
             val time = t._1
             val x = t._2
             if (recordMap(m)(mt).contains(time))
-              Some(recordMap(m)(mt)(time)._1.get)
+              Seq(Some(time.getMillis.toDouble), Some(recordMap(m)(mt)(time)._1.get.toDouble))
             else
-              None
+              Seq(Some(time.getMillis.toDouble), None)
           }          
         } yield {
           seqData(Monitor.map(m).name + "_" + MonitorType.map(mt).desp, timeData)
@@ -327,9 +321,9 @@ object Query extends Controller {
           val time = t._1
           val x = t._2
           if (epaRecordMap(m)(mt).contains(time))
-            Some(epaRecordMap(m)(mt)(time))
+            Seq(Some(time.getMillis.toDouble), Some(epaRecordMap(m)(mt)(time).toDouble))
           else
-            None
+            Seq(Some(time.getMillis.toDouble), None)
         }
       } yield {
         if (monitorTypes.length > 1 && monitorTypes.contains(windMtv)) {
@@ -388,25 +382,25 @@ object Query extends Controller {
     val xAxis = {
        reportUnit match {
         case ReportUnit.Min =>
-          XAxis(Some(timeStrSeq), gridLineWidth=Some(1), tickInterval=Some(60))
+          XAxis(None, gridLineWidth=Some(1), None)
         case ReportUnit.TenMin =>
-          XAxis(Some(timeStrSeq), gridLineWidth=Some(1), tickInterval=Some(6))
+          XAxis(None, gridLineWidth=Some(1), None)
         case ReportUnit.Hour =>
           val duration = new Duration(start, end)
           if(duration.getStandardDays > 2)
-            XAxis(Some(timeStrSeq), gridLineWidth=Some(1), tickInterval=Some(24))
+            XAxis(None, gridLineWidth=Some(1), None)
           else
-            XAxis(Some(timeStrSeq))
+            XAxis(None)
         case ReportUnit.EightHour =>
-          XAxis(Some(timeStrSeq), gridLineWidth=Some(1), tickInterval=Some(3))
+          XAxis(None, gridLineWidth=Some(1), None)
         case ReportUnit.Day =>
-          XAxis(Some(timeStrSeq))
+          XAxis(None)
         case ReportUnit.Week =>
-          XAxis(Some(timeStrSeq))
+          XAxis(None)
         case ReportUnit.Month =>
-          XAxis(Some(timeStrSeq))
+          XAxis(None)
         case ReportUnit.Quarter =>
-          XAxis(Some(timeStrSeq))
+          XAxis(None)
        }              
     }
     
@@ -564,9 +558,9 @@ object Query extends Controller {
           val time = t._1
           val x = t._2
           if (monitorPsiMap(m).contains(time))
-            Some(monitorPsiMap(m)(time))
+            Seq(Some(time.getMillis.toDouble), Some(monitorPsiMap(m)(time).toDouble))
           else
-            None
+            Seq(Some(time.getMillis.toDouble), None)
         }
       } yield {
         seqData(Monitor.map(m).name, timeData)
@@ -581,12 +575,12 @@ object Query extends Controller {
       val chart = HighchartData(
         scala.collection.immutable.Map("type" -> "column"),
         scala.collection.immutable.Map("text" -> title),
-        XAxis(Some(timeStrSeq)),
+        XAxis(None),
         Seq(YAxis(None, AxisTitle(Some(Some(""))), None)),
         series)
 
       if (outputType == OutputType.excel) {
-        val excelFile = ExcelUtility.exportChartData(chart, Array(2))
+        val excelFile = ExcelUtility.exportChartData(chart, Array(0, monitors.length + 1))
         Results.Ok.sendFile(excelFile, fileName = _ =>
           play.utils.UriEncoding.encodePathSegment(chart.title("text") + ".xlsx", "UTF-8"),
           onClose = () => { Files.deleteIfExists(excelFile.toPath()) })
@@ -781,7 +775,7 @@ object Query extends Controller {
       } yield {
         val data =
           for (dir <- 0 to nWay - 1)
-            yield Some(windMap(dir)(level))
+            yield Seq(Some(dir.toDouble), Some(windMap(dir)(level).toDouble))
 
         seqData(speedLevel(level), data)
       }
@@ -829,21 +823,17 @@ object Query extends Controller {
         val (thisYearRecord, lastYearRecord) = Record.getLastYearCompareList(monitor, monitorType, start, end)
 
         val title = s"${Monitor.map(monitor).name} ${MonitorType.map(monitorType).desp}同期比較圖"
-
-        val timeStrSeq = thisYearRecord.map(_._1.toDateTime.toString("MM-dd hh:00"))
-        val (t1, v1) = thisYearRecord.unzip
-        val (t2, v2) = lastYearRecord.unzip
-        val v1WithIndex = v1.zipWithIndex.map(i => Some(i._2.toFloat))
-        val v2WithIndex = v2.zipWithIndex.map(i => Some(i._2.toFloat))
-
+        val thisYearData = thisYearRecord.map(i => Seq(Some(i._1.getMillis.toDouble), i._2._1.map { _.toDouble}))
+        val lastYearData = lastYearRecord.map(i => Seq(Some((new DateTime(i._1) + 1.year).getMillis.toDouble), i._2._1.map { _.toDouble}))
+        
         import Realtime._
 
-        val series = Seq(seqData(start.getYear.toString(), v1WithIndex), seqData((start - 1.year).getYear.toString(), v2WithIndex))
+        val series = Seq(seqData(start.getYear.toString(), thisYearData), seqData((start - 1.year).getYear.toString(), lastYearData))
 
         val c = HighchartData(
           scala.collection.immutable.Map("type" -> "line"),
           scala.collection.immutable.Map("text" -> title),
-          XAxis(Some(timeStrSeq)),
+          XAxis(None),
           Seq(YAxis(None, AxisTitle(Some(Some(""))), None)),
           series)
 
@@ -920,7 +910,7 @@ object Query extends Controller {
 
   import Realtime._
 
-  case class seqData2(name: String, data: Seq[Seq[Float]])
+  case class seqData2(name: String, data: Seq[Seq[Option[Double]]])
   case class RegressionChartData(chart: Map[String, String],
                                  title: Map[String, String],
                                  xAxis: XAxis,
@@ -943,19 +933,15 @@ object Query extends Controller {
 
       val title = s"${Monitor.map(monitor).name} ${MonitorType.map(monitorType).desp}趨勢分析"
 
-      val timeStrSeq = thisYearRecord.map(_._1.toDateTime.toString("MM-dd hh:00"))
-      val (t1, v1) = thisYearRecord.unzip
+      val data = thisYearRecord.map(t=>Seq(Some(t._1.getTime.toDouble), t._2._1.map { _.toDouble}))
 
-      val v2 = v1.zipWithIndex
-      val v3 = v2.map { v => Seq(v._2, v._1) }
-
-      val series = Seq(seqData2(start.getYear.toString(), v3))
+      val series = Seq(seqData2(start.getYear.toString(), data))
 
       val c = RegressionChartData(
         Map(("type" -> "scatter"),
           ("zoomType" -> "xy")),
         Map("text" -> title),
-        XAxis(Some(timeStrSeq)),
+        XAxis(None),
         YAxis(None, AxisTitle(Some(Some(""))), None),
         series)
 

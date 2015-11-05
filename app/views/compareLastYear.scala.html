@@ -79,7 +79,7 @@
         	</div>
         	<div class="panel panel-success" style="display:none" id="reportPanel">
             	<div class="panel-body panel-collapse" id="monitorReport">
-					<div id="reportDiv" align="center" style="overflow-x:auto">
+					<div id="reportDiv" align="center">
 					            		
             		</div>
             	</div>
@@ -132,8 +132,7 @@ $( document ).ready(function() {
 		if(!validate())
 			return;
 			
-		$("#reportPanel").css('display','block');
-		$("#reportParam").collapse();
+		$("#reportPanel").css('display','block');		
 		$("#reportPanel").collapse('show');
 
 		$('#reportDiv').html('');
@@ -163,6 +162,13 @@ $( document ).ready(function() {
 					enabled:false,
 					href:'http://www.wecc.com.tw/'
 				};
+				result.xAxis.type = "datetime";
+				result.xAxis.dateTimeLabelFormats = {
+	                day: '%b%e日',
+	                week: '%b%e日',
+	            	month: '%y年%b',
+	            };
+				
 				$('#reportDiv').highcharts(result);
 			},
 			error : function(xhr, status, errorThrown) {

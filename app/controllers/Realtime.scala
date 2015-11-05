@@ -102,7 +102,7 @@ object Realtime extends Controller {
       floor:Option[Int]=None, ceiling:Option[Int]=None, min:Option[Int]=None, max:Option[Int]=None, tickInterval:Option[Int]=None, 
       gridLineWidth:Option[Int]=None, gridLineColor:Option[String]=None)
       
-  case class seqData(name: String, data: Seq[Option[Float]], yAxis:Int=0, chartType:Option[String]=None)
+  case class seqData(name: String, data: Seq[Seq[Option[Double]]], yAxis:Int=0, chartType:Option[String]=None)
   case class HighchartData(chart: Map[String, String],
                            title: Map[String, String],
                            xAxis: XAxis,
@@ -115,9 +115,11 @@ object Realtime extends Controller {
   implicit val axisLineWrite = Json.writes[AxisLine]
   implicit val axisTitleWrite = Json.writes[AxisTitle]
   implicit val yaWrite = Json.writes[YAxis]
+  type lof = (Long, Option[Float])
+          
   implicit val seqDataWrite:Writes[seqData] = (
     (__ \ "name").write[String] and
-    (__ \ "data").write[Seq[Option[Float]]] and
+    (__ \ "data").write[Seq[Seq[Option[Double]]]] and
     (__ \ "yAxis").write[Int] and
     (__ \ "type").write[Option[String]]
   )(unlift(seqData.unapply))
@@ -146,14 +148,14 @@ object Realtime extends Controller {
         seqData(Monitor.map(m).name, Seq({
           val vOpt = realtimeValueMap.get(m)
           if (vOpt.isEmpty || vOpt.get._1.isEmpty || vOpt.get._2.isEmpty)
-            None
+            Seq(Some(latestRecordTime.getMillis), None)
           else {
             val value = vOpt.get._1.get
             val status = vOpt.get._2.get
             if (MonitorStatus.isNormalStat(status))
-              Some(value)
+              Seq(Some(latestRecordTime.getMillis), Some(value))
             else
-              None
+              Seq(Some(latestRecordTime.getMillis), None)
           }
 
         }))
@@ -170,7 +172,7 @@ object Realtime extends Controller {
       val c = HighchartData(
         Map("type" -> "column"),
         Map("text" -> title),
-        XAxis(Some(Seq(latestRecordTime.toString("yyyy-MM-dd HH:mm")))),
+        XAxis(None),
         Seq(YAxis(None, AxisTitle(Some(None)), axisLines)),
         series)
 

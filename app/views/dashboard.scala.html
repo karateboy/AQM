@@ -462,6 +462,11 @@ var statusMarkerArray = [];
 		                enabled: false
 		            }
 		        };
+				result.xAxis.type = "datetime";
+				result.xAxis.dateTimeLabelFormats = {
+						millisecond: '%b%e日 %H:%M',
+		            };
+					
 				result.chart.height = 150;
 				
 				$(id).highcharts(result);

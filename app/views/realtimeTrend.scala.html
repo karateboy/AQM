@@ -157,7 +157,10 @@ $( document ).ready(function() {
 		}	
 
 		var url = url_header + monitorParam + "/" + monitorTypeParam;
-		
+		function pointFormatter(){
+			var d = new Date(this.x);
+			return d.toLocaleString() + ": " + Math.round(this.y) + "度";
+		}
 		$.ajax({
 			url : url,
 			data : "",
@@ -185,15 +188,21 @@ $( document ).ready(function() {
 					enabled:false,
 					href:'http://www.wecc.com.tw/'
 				};
-				result.xAxis.type = "category";
-				
+				result.xAxis.type = "datetime";
+				result.xAxis.dateTimeLabelFormats = {
+	                day: '%b%e日',
+	                week: '%b%e日',
+	            	month: '%y年%b',
+	            };
+	            
 				result.plotOptions= {
 					scatter:{
 						tooltip:{
-							pointFormat:'<b>{point.y}</b> 度'
+							pointFormatter: pointFormatter
 						}
 					}
 				};
+				
 				$('#reportDiv').highcharts(result);
 			},
 			error : function(xhr, status, errorThrown) {

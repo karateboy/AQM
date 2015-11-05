@@ -145,8 +145,8 @@ GET		/AuditConfig/:monitor	controllers.Application.getMonitorAuditConfig(monitor
 POST	/AuditConfig/:monitor	controllers.Application.setMonitorAuditConfig(monitor)
 
 GET		/AuditedQuery		controllers.Query.auditedQuery
-GET		/AuditedQueryReport/:monitor/:monitorType/:recordType/:start/:end	controllers.Query.auditedReport(monitor, monitorType, recordType, start, end, outputType="html")
-GET		/PDF/AuditedQueryReport/:monitor/:monitorType/:recordType/:start/:end	controllers.Query.auditedReport(monitor, monitorType, recordType, start, end, outputType="pdf")
+GET		/AuditedQueryReport/:monitor/:epaMonitor/:monitorType/:recordType/:start/:end	controllers.Query.auditedReport(monitor, epaMonitor, monitorType, recordType, start, end, outputType="html")
+GET		/PDF/AuditedQueryReport/:monitor/:epaMonitor/:monitorType/:recordType/:start/:end	controllers.Query.auditedReport(monitor, epaMonitor, monitorType, recordType, start, end, outputType="pdf")
 
 GET		/Instrument			controllers.Application.instrument
 GET		/InstrumentReport/:monitor/:instrument/:start/:end controllers.Application.instrumentReport(monitor, instrument, start, end, outputTypeStr="html")

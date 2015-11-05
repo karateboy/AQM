@@ -1127,26 +1127,56 @@ object ExcelUtility {
       style
     }
 
-    val timeList = chart.xAxis.categories.get
-    for (row <- timeList.zipWithIndex) {
-      val rowNo = row._2 + 1
-      val thisRow = sheet.createRow(rowNo)
-      thisRow.createCell(0).setCellValue(row._1)
+    // Categories data
+    if (chart.xAxis.categories.isDefined) {
+      val timeList = chart.xAxis.categories.get
+      for (row <- timeList.zipWithIndex) {
+        val rowNo = row._2 + 1
+        val thisRow = sheet.createRow(rowNo)
+        thisRow.createCell(0).setCellValue(row._1)
 
-      for {
-        col <- 1 to chart.series.length
-        series = chart.series(col - 1)
-      } {
-        val cell = thisRow.createCell(col)
-        cell.setCellStyle(styles(col - 1))
+        for {
+          col <- 1 to chart.series.length
+          series = chart.series(col - 1)
+        } {
+          val cell = thisRow.createCell(col)
+          cell.setCellStyle(styles(col - 1))
 
-        val pOpt = series.data(rowNo-1)
-        if(pOpt.isDefined){
-          cell.setCellValue(pOpt.get)
+          val pair = series.data(rowNo - 1)
+          if (pair.length == 2 && pair(1).isDefined) {
+            cell.setCellValue(pair(1).get)
+          }
+          //val pOpt = series.data(rowNo-1)
+          //if(pOpt.isDefined){
+          //  cell.setCellValue(pOpt.get)
+          //}
+
         }
-          
+      }
+    } else {
+      val rowMax = chart.series.map(s => s.data.length).max
+      for (row <- 1 to rowMax) {
+        val thisRow = sheet.createRow(row)
+        val timeCell = thisRow.createCell(0)
+        for {
+          col <- 1 to chart.series.length
+          series = chart.series(col - 1)
+        } {
+          val cell = thisRow.createCell(col)
+          cell.setCellStyle(styles(col - 1))
+
+          val pair = series.data(row - 1)
+          if (col == 1) {
+            val dt = new DateTime(pair(0).get.toLong)
+            timeCell.setCellValue(dt.toString("YYYY/MM/dd HH:mm"))
+          }
+          if (pair(1).isDefined) {
+            cell.setCellValue(pair(1).get)
+          }
+        }
       }
     }
+
     finishExcel(reportFilePath, pkg, wb)
   }
   

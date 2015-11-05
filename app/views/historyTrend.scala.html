@@ -274,7 +274,7 @@ $( document ).ready(function() {
 			}
 		}else if(reportUnit == "min" || reportUnit == "ten_min"){			
 			if(workload > 31 * 24*60*60*1000){
-				alert("分鐘查詢區間必須小於一個月");
+				alert("請降低測站/測項數目/查詢區間");
 				return false;
 			}			
 		}
@@ -320,6 +320,10 @@ $( document ).ready(function() {
 
 		var base_url = 	monitorParam + "/" + epaMonitorParam + "/" + monitorTypeParam + "/" + reportUnit +"/"+ monitorStatusFilter + "/"+reportStart + "/" + reportEnd;
 		var url = "/JSON/HistoryTrend/" + base_url; 
+		function pointFormatter(){
+			var d = new Date(this.x);
+			return d.toLocaleString() + ": " + Math.round(this.y) + "度";
+		}
 		
 		$.ajax({
 			url : url,
@@ -349,24 +353,31 @@ $( document ).ready(function() {
 					enabled:false,
 					href:'http://www.wecc.com.tw/'
 				};
-				result.xAxis.type = "category";
+				result.xAxis.type = "datetime";
+				result.xAxis.dateTimeLabelFormats = {
+	                day: '%b%e日',
+	                week: '%b%e日',
+	            	month: '%y年%b',
+	            };
+				
 				result.plotOptions= {
 						scatter:{
 							tooltip:{
-								pointFormat:'<b>{point.y}</b> 度'
+								pointFormatter: pointFormatter
 							}
 						}
 					};
+
 									
 				
 				var yMin = $("#YMin").val();
-				if(yMin.length != 0)
-					result.yAxis[0].floor = parseInt(yMin);
-
+				if(yMin.length != 0){
+					result.yAxis[0].floor = result.yAxis[0].min =parseInt(yMin);
+				}
 				var yMax = $("#YMax").val();
-				if(yMax.length != 0)
-					result.yAxis[0].ceiling = parseInt(yMax);
-								
+				if(yMax.length != 0){
+					result.yAxis[0].ceiling = result.yAxis[0].max = parseInt(yMax);
+				}				
 				$("#downloadExcel").prop("href", "/Excel/HistoryTrend/" + base_url);
 				$('#reportDiv').highcharts(result);
 			},
