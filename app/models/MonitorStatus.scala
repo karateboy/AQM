@@ -8,7 +8,7 @@ object StatusType extends Enumeration{
   val Internal = Value("0")
   val Auto     = Value("A")
   val Manual   = Value("M")
-  def map= Map(Internal->"系統", Auto->"自動校正", Manual->"使用者自訂")
+  def map= Map(Internal->"系統", Auto->"自動註記", Manual->"人工註記")
 }
 
 case class MonitorStatus(statusType:StatusType.Value, id:String, desp:String, outage:Boolean, valid:Boolean)
@@ -213,7 +213,8 @@ object MonitorStatus {
   private var _map:Map[String, MonitorStatus] = refreshMap
   val msvList = msList.map {r=>getTagStr(r)}
   val manualMonitorStatusList = {msvList.filter { _map(_).statusType == StatusType.Manual }}
-  val alarmList = msvList.filter { tag => !isNormalStat(tag) }
+  val alarmList = List("030", "031", "032", "033", "034", "035", "036", "037", "038", "039", 
+      "050", "051", "052", "053", "054", "055", "056")
   val alarmNotificationList = List(CALBRATION_FAILED, "033", "034", "036", "037", "039", 
         "050", "051", "052", "053", "054", "055", "056")
   def map(key: String) = {

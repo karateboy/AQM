@@ -111,9 +111,9 @@ object Report extends Controller {
         (mt, mt_i) <- MonitorType.monitorReportList.zipWithIndex
         hour <- 0 to 23
         hourRecord = getHourRecord(mt_i, hour)
-        validData = hourRecord.filter { hr =>
+        validData = hourRecord.filter { hr =>          
           hr._3 match {
-            case Some(stat) => MonitorStatus.isNormalStat(stat)
+            case Some(stat) => hr._2.isDefined && MonitorStatus.isNormalStat(stat)
             case _          => false
           }
         }.map(r => r._2.get)

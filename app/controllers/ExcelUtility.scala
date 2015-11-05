@@ -309,7 +309,7 @@ object ExcelUtility {
 
       // Fill Graph title
       val graph_list = List(MonitorType.C211, MonitorType.A222, MonitorType.A224, MonitorType.A293, 
-          MonitorType.A225, MonitorType.A215, MonitorType.A296, MonitorType.A213)
+          MonitorType.A225, MonitorType.A214, MonitorType.A296, MonitorType.A213)
 
     def fillMonthlySheet(sheet: XSSFSheet) = {
       val titleRow = sheet.getRow(2)
@@ -388,6 +388,17 @@ object ExcelUtility {
 
     def fillMonthlyHourSheet(report: MonthHourReport) = {
       val reportTypeLen = report.dailyReports(0).typeList.length
+
+      for {
+        sheetIndex <- 2 to reportTypeLen + 1
+        sheet = wb.getSheetAt(sheetIndex)
+        mt = report.dailyReports(0).typeList(sheetIndex - 2).monitorType
+      }{
+        if(!Monitor.map(monitor).monitorTypes.contains(mt)){
+          wb.setSheetHidden(sheetIndex, true)
+        }
+      }
+      
       for {
         sheetIndex <- 2 to reportTypeLen + 1
         sheet = wb.getSheetAt(sheetIndex)
@@ -822,14 +833,20 @@ object ExcelUtility {
           seqColors.toArray
         }
 
+    var row = 5
     for {
       mt <- MonitorType.epaReportList.zipWithIndex
       normalStyle = createStyle(mt._1)
       abnormalStyles = createColorStyle(abnormalColor, mt._1)
-      row = mt._2 * 2 + 5
+      //row = mt._2 * 2 + 5
     } {
       sheet.getRow(row).getCell(1).setCellValue(Monitor.map(monitor).name)
       sheet.getRow(row + 1).getCell(1).setCellValue(EpaMonitor.map(epaMonitor).name)
+      if(mt._1 == MonitorType.C212){
+        sheet.getRow(row+2).getCell(1).setCellValue(Monitor.map(monitor).name)
+        sheet.getRow(row+3).getCell(1).setCellValue(EpaMonitor.map(epaMonitor).name)       
+      }
+      
       for {
         hr <- hours.zipWithIndex
         col = hr._2 + 2
@@ -839,9 +856,12 @@ object ExcelUtility {
         if (vOpt.isDefined) {
           val p = vOpt.get
           if(mt._1 == MonitorType.C212){
-            cell.setCellValue(covertDegToDir(p._1.get))
+            val cellDir = sheet.getRow(row+2).getCell(col)
+            cell.setCellValue(p._1.get)
+            cellDir.setCellValue(covertDegToDir(p._1.get))
           }else
             cell.setCellValue(p._1.get)
+            
           val status = p._2.get
           val cellStyle = getStyle(status, normalStyle, abnormalStyles)
           cell.setCellStyle(cellStyle)
@@ -872,7 +892,9 @@ object ExcelUtility {
         } else {
           val epaRecord = vOpt.get
           if(mt._1 == MonitorType.C212){
-            cell.setCellValue(covertDegToDir(epaRecord.value))
+            val cellDir = sheet.getRow(row+3).getCell(col)
+            cell.setCellValue(epaRecord.value)
+            cellDir.setCellValue(covertDegToDir(epaRecord.value))
           }else
             cell.setCellValue(epaRecord.value)
             
@@ -890,6 +912,11 @@ object ExcelUtility {
         sheet.getRow(row + 1).getCell(27).setCellValue("-")
         sheet.getRow(row + 1).getCell(28).setCellValue("-")
       }
+      
+      if(mt._1 == MonitorType.C212)
+        row +=4
+      else
+        row +=2
     }
     finishExcel(reportFilePath, pkg, wb)
   }
