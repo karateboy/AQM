@@ -373,11 +373,9 @@ function() {
 	$("#stdInternalForm :input[name='monitorType']").change();
 	
 	$("#stdInternalForm").submit(function(event) {
-		activeMonitor = $(
-				'#monitorTypesForm :input[name="monitor"]')
-				.val();
+		activeMonitor = $('#monitorTypesForm :input[name="monitor"]').val();
 
-		var mt = $("#monitorTypesForm :input[name='monitorType']:checked").prop("id");
+		var mt = $("#stdInternalForm :input[name='monitorType']:checked").prop("id");
 		var std = $("#stdInternal").val();
 		
 		var url = "/InternalStd/" + activeMonitor + "/" + mt + "/" + std;
