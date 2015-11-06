@@ -2,10 +2,10 @@
 @import controllers.Report._
 @import com.github.nscala_time.time.Imports._
 @import MonitorStatus._
-@(monitor:String, mt:MonitorType.Value, reportDate:DateTime, report: MonthHourReport, nDays:Int)
+@(monitor:Monitor.Value, mt:MonitorType.Value, reportDate:DateTime, report: MonthHourReport, nDays:Int)
 
 <h3>監測月分時報表</h3>
-<h4>監測站:@monitor</h4>
+<h4>監測站:@Monitor.map(monitor).name</h4>
 <h4>日期:@reportDate.toString("yyyy年MM月")</h4>
 
 <div class="col-lg-offset-6 col-lg-6">
@@ -97,7 +97,7 @@
 			<tr>
 			<th>@("%02d".format(d+1))</th>
 			@for(hour<-0 to 23){
-				<td style="@MonitorType.getStyleStr(mt, (report.dailyReports(d).typeList(0).dataList(hour)._2, report.dailyReports(d).typeList(0).dataList(hour)._3))">
+				<td style="@MonitorType.getStyleStr(monitor, mt, (report.dailyReports(d).typeList(0).dataList(hour)._2, report.dailyReports(d).typeList(0).dataList(hour)._3))">
 					@MonitorType.format(mt, report.dailyReports(d).typeList(0).dataList(hour)._2)</span>
 				</td>
 			}

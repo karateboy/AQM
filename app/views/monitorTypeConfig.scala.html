@@ -41,10 +41,10 @@
             					<th>@map(mt).id</th>
             					<td col="desp">@map(mt).desp</td>
             					<td col="unit">@map(mt).unit</td>
-            					@if(map(mt).std_internal.isEmpty){
+            					@if(map(mt).std_internal_default.isEmpty){
             						<td col="std_internal">-</td>
             					}else{
-            						<td col="std_internal">@map(mt).std_internal</td>
+            						<td col="std_internal">@map(mt).std_internal_default</td>
             					}
             					
             					@if(map(mt).std_law.isEmpty){

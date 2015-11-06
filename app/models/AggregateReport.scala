@@ -69,9 +69,9 @@ object AggregateReport {
 
         val descs =
           for {
-            t <- dailyReport.typeList if MonitorType.map(t.monitorType).std_internal.isDefined
+            t <- dailyReport.typeList if Monitor.map(m).getStdInternal(t.monitorType).isDefined
             mCase = MonitorType.map(t.monitorType)
-            mtInternal = mCase.std_internal.get
+            mtInternal = Monitor.map(m).getStdInternal(t.monitorType).get
             hrOpt = t.dataList.find(r => r._2.isDefined && r._3.isDefined && MonitorStatus.isNormalStat(r._3.get)
               && r._2.get > mtInternal) if hrOpt.isDefined
             hr = hrOpt.get
@@ -80,17 +80,17 @@ object AggregateReport {
             val calendar = Calendar.getInstance();
             calendar.setTime(hr._1);
             val hours = calendar.get(Calendar.HOUR_OF_DAY);
-            val header = s"${mCase.desp}於${hours}時超過內控"
+            val header = s"${mCase.desp}於${hours}時超過內控(${mtInternal})"
             val overLaw =
               if (mCase.std_law.isDefined) {
                 if (t.monitorType == MonitorType.A214 || t.monitorType == MonitorType.A213) {
                   if (t.stat.avg > mCase.std_law.get)
-                    s",日均值超過法規值(${mCase.std_law}${mCase.unit})"
+                    s",日均值超過法規值(${mCase.std_law.get}${mCase.unit})"
                   else
                     ",日均值未超過法規值"
                 } else {
                   if (hr._2.get >= mCase.std_law.get)
-                    s",超過法規值(${mCase.std_law}${mCase.unit})"
+                    s",超過法規值(${mCase.std_law.get}${mCase.unit})"
                   else
                     ",未超過法規值"
                 }

@@ -537,9 +537,9 @@ object ExcelUtility {
           val idxOpt = graph_idx.find(p=>p._1 == dayReport.typeList(mt_i).monitorType)
           if(idxOpt.isDefined){
             val graph_idx = idxOpt.get
-            val mtCase = MonitorType.map(graph_idx._1)
-            if(mtCase.std_internal.isDefined){
-              sheet.getRow(row_start + idx).createCell(22 + graph_idx._2).setCellValue(mtCase.std_internal.get)  
+            val std_internal = Monitor.map(monitor).getStdInternal(graph_idx._1)
+            if(std_internal.isDefined){
+              sheet.getRow(row_start + idx).createCell(22 + graph_idx._2).setCellValue(std_internal.get)  
             }            
           }
         }

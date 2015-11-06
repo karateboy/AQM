@@ -17,7 +17,7 @@ case class Monitor(id:String, name:String, lat:Double, lng:Double, url:String, a
     if(monitorStd.isDefined)
       monitorStd
     else
-      MonitorType.map(mt).std_internal
+      MonitorType.map(mt).std_internal_default
   }
 
   def getNewStd(mt: MonitorType.Value, v: Float) = {
@@ -123,7 +123,7 @@ object Monitor extends Enumeration{
 }
 
 case class MonitorType(id:String, desp:String, unit:String, 
-    std_internal:Option[Float], std_law:Option[Float], std_hour:Option[Float],
+    std_internal_default:Option[Float], std_law:Option[Float], std_hour:Option[Float],
     std_day:Option[Float], std_year:Option[Float], 
     zd_internal:Option[Float], zd_law:Option[Float],
     sd_internal:Option[Float], sd_law:Option[Float],
@@ -142,7 +142,7 @@ object MonitorType extends Enumeration{
       """.map { r =>  MonitorType(id = r.string(1), 
           desp = r.string(2),
           unit = r.string(3),
-          std_internal = r.floatOpt(5),
+          std_internal_default = r.floatOpt(5),
           std_law = r.floatOpt(6), 
           std_hour = r.floatOpt(7),
           std_day = r.floatOpt(8), 
@@ -211,7 +211,7 @@ object MonitorType extends Enumeration{
           MonitorType(id = r.string(1),
             desp = r.string(2),
             unit = r.string(3),
-            std_internal = r.floatOpt(5),
+            std_internal_default = r.floatOpt(5),
             std_law = r.floatOpt(6),
             std_hour = r.floatOpt(7),
             std_day = r.floatOpt(8),
@@ -284,7 +284,7 @@ object MonitorType extends Enumeration{
   val C215 = MonitorType.withName("C215")
   val C216 = MonitorType.withName("C216")
 
-  def getStyleStr(mt: MonitorType.Value, v: (Option[Float], Option[String])) = {
+  def getStyleStr(m:Monitor.Value, mt: MonitorType.Value, v: (Option[Float], Option[String])) = {
     val mtCase = map(mt)
     if (v._1.isEmpty || v._2.isEmpty)
       s"Color:Black;background-color:White"
@@ -292,8 +292,9 @@ object MonitorType extends Enumeration{
       val value = v._1.get
       val status = v._2.get
       
+      val internal_std = Monitor.map(m).getStdInternal(mt)
       val overInternal =
-        if (mtCase.std_internal.isDefined && (value > mtCase.std_internal.get))
+        if (internal_std.isDefined && (value > internal_std.get))
           true
         else
           false

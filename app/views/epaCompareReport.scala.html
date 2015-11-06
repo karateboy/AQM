@@ -47,7 +47,7 @@
 					@if(myMap(mt)._1.get(h).isEmpty){
 						<td>-</td>
 					}else{
-						<td style="@MonitorType.getStyleStr(mt, myMap(mt)._1(h))">@MonitorType.format(mt, myMap(mt)._1(h)._1)</td>
+						<td style="@MonitorType.getStyleStr(monitor, mt, myMap(mt)._1(h))">@MonitorType.format(mt, myMap(mt)._1(h)._1)</td>
 					}
 				}
 				@if(myMap(mt)._2.count ==0){

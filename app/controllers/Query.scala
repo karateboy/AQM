@@ -371,12 +371,29 @@ object Query extends Controller {
       }
     }
 
-    def getAxisLines(mtCase: MonitorType) = {
-      if (mtCase.std_internal.isEmpty || mtCase.std_law.isEmpty)
-        None
+    def getAxisLines(mt: MonitorType.Value) = {
+      val mtCase = MonitorType.map(mt)
+      val std_law_line =
+        if(mtCase.std_law.isEmpty)
+          None
+        else
+          Some(AxisLine("#FF0000", 2, mtCase.std_law.get, Some(AxisLineLabel("right", "法規值"))))
+      
+      val std_internal_line =
+      {
+          val std_internals = monitors.map { Monitor.map(_).getStdInternal(mt)}
+          val min_std_internal = std_internals.min
+          if(min_std_internal.isDefined)
+            Some(AxisLine("#0000FF", 2, mtCase.std_internal_default.get, Some(AxisLineLabel("left", "內控值"))))
+          else
+            None
+      }
+      
+      val lines = Seq(std_law_line, std_internal_line).filter { _.isDefined }.map { _.get }
+      if(lines.length > 0)
+        Some(lines)
       else
-        Some(Seq(AxisLine("#0000FF", 2, mtCase.std_internal.get, Some(AxisLineLabel("left", "內控值"))),
-          AxisLine("#FF0000", 2, mtCase.std_law.get, Some(AxisLineLabel("right", "法規值")))))
+        None
     }
 
     val xAxis = {
@@ -417,6 +434,7 @@ object Query extends Controller {
                     
     val chart =
       if (monitorTypes.length == 1) {
+        val mt = monitorTypes(0)
         val mtCase = MonitorType.map(monitorTypes(0))
         
         HighchartData(
@@ -424,7 +442,7 @@ object Query extends Controller {
           Map("text" -> title),
           xAxis,
           if(!monitorTypes.contains(windMtv))
-            Seq(YAxis(None, AxisTitle(Some(Some(s"${mtCase.desp} (${mtCase.unit})"))), getAxisLines(mtCase)))
+            Seq(YAxis(None, AxisTitle(Some(Some(s"${mtCase.desp} (${mtCase.unit})"))), getAxisLines(mt)))
           else
             Seq(windYaxis),
           series)
@@ -432,10 +450,11 @@ object Query extends Controller {
         val yAxis =
           if (monitorTypes.contains(windMtv)) {
             if (monitorTypes.length == 2) {
+              val mt = monitorTypes.filter { !MonitorType.windDirList.contains(_) }(0)
               val mtCase = MonitorType.map(monitorTypes.filter { !MonitorType.windDirList.contains(_) }(0))
               Seq(YAxis(None, 
                   AxisTitle(Some(Some(s"${mtCase.desp} (${mtCase.unit})"))), 
-                  getAxisLines(mtCase),
+                  getAxisLines(mt),
                   gridLineWidth=Some(0)),
                   windYaxis)
             } else {              

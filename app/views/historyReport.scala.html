@@ -49,7 +49,7 @@
 				@if(recordMap(m).get(t).isEmpty||recordMap(m)(t)._1.isEmpty||recordMap(m)(t)._2.isEmpty){
 					<td>-</td>
 				}else{
-					<td style="@MonitorType.getStyleStr(monitorType, recordMap(m)(t))">@MonitorType.format(monitorType, recordMap(m)(t)._1)
+					<td style="@MonitorType.getStyleStr(m, monitorType, recordMap(m)(t))">@MonitorType.format(monitorType, recordMap(m)(t)._1)
 						@if(editable){
 							<input type="checkbox" id="@m:@monitorType:@t.getMillis">
 						}

@@ -54,9 +54,9 @@
 							<td>N/A</td>
 						}												
 					}else{						
-						<td style="@MonitorType.getStyleStr(mt, rt_status(m)(mt))" 
-							@if(MonitorType.map(mt).std_internal.isDefined){																
-								title="內控值:@MonitorType.map(mt).std_internal @MonitorType.map(mt).unit"
+						<td style="@MonitorType.getStyleStr(m, mt, rt_status(m)(mt))" 
+							@if(Monitor.map(m).getStdInternal(mt).isDefined){																
+								title="內控值:@Monitor.map(m).getStdInternal(mt).get @MonitorType.map(mt).unit"
 							}
 						>@MonitorType.format(mt, (rt_status(m)(mt)._1))</td>
 					}

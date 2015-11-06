@@ -74,7 +74,7 @@
 			<tr>
 			<th>@("%02d:00".format(i))</th>
 			@for(t<-report.typeList if Monitor.map(monitor).monitorTypes.contains(t.monitorType)){
-				<td style="@MonitorType.getStyleStr(t.monitorType, (t.dataList(i)._2, t.dataList(i)._3))">
+				<td style="@MonitorType.getStyleStr(monitor, t.monitorType, (t.dataList(i)._2, t.dataList(i)._3))">
 					@MonitorType.format(t.monitorType, t.dataList(i)._2)	
 				</td>
 			}
