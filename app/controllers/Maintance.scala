@@ -454,22 +454,48 @@ object Maintance extends Controller {
   }
 
   def testAlarmMail = Security.Authenticated {
+    implicit request =>      
+    val userInfoOpt = Security.getUserinfo(request)
+    val userInfo = userInfoOpt.get
+    val user = User.getUserById(userInfo.id).get
+    
     val email = Email(
-      "Simple email",
-      "Mister FROM <karateboy.huang@gmail.com>",
-      Seq("Miss TO <karateboy.tw@gmail.com>"),
+      "測試警告信",
+      s"麥寮AQMS <aqm6812646@gmail.com>",
+      Seq(s"${user.name} <${user.email}>"),
       // adds attachment
       attachments = Seq(),
       // sends text, HTML or both...
-      bodyText = Some("A text message"),
-      bodyHtml = Some("<html><body><p>An <b>html</b> message</p></body></html>")
+      bodyText = Some("測試信"),
+      bodyHtml = Some("<html><body><p>測試信</p></body></html>")
     )
     
-    MailerPlugin.send(email)
-    Ok("Send")
+    try{
+      MailerPlugin.send(email)
+      EventLog.create(EventLog(DateTime.now, EventLog.evtTypeInformAlarm, "送測試信!"))
+      Ok(s"已經送信到${user.email}")
+    }catch{
+      case ex:Exception 
+        =>
+          EventLog.create(EventLog(DateTime.now, EventLog.evtTypeInformAlarm, "送測試信失敗!"))
+          Ok(s"無法送信到${user.email} ${ex.getMessage}")
+    }
+    
+    
   }
   
   def dutySchedule = Security.Authenticated {
     Ok(views.html.dutySchedule(""))
+  }
+  
+  def eventLog = Security.Authenticated {    
+    Ok(views.html.eventLog())
+  }
+  
+  def eventLogReport(startStr:String, endStr:String)= Security.Authenticated { 
+    val start = DateTime.parse(startStr)
+    val end = DateTime.parse(endStr) + 1.day
+    val logs = EventLog.getList(start, end)
+    Ok(views.html.eventLogReport(logs))
   }
 }

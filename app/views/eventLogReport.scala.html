@@ -1,0 +1,34 @@
+@* eventLogReport Template File *@
+@(logs: List[EventLog])
+
+<table id="evtTable" class="table table-striped table-hover">
+<thead>
+	<tr>
+		<th>時間</th>
+		<th>事件類別</th>
+		<th>事件描述</th>
+	</tr>
+</thead>
+<tbody>
+	@for(log<-logs){
+		<tr>
+			<td>@log.evtTime.toString("YYYY/M/d hh:mm")</td>
+			<td>@EventLog.evtTypeToStr(log.evtType)</td>
+			<td>@log.evtDesc</td>
+		</tr>	
+	}
+</tbody>
+</table>
+<script>
+	var translate_url = '@routes.Assets.at("localization/zh_tw.json")';
+</script>
+<script>
+$('#evtTable').dataTable( {					
+	language: {
+		url: translate_url,							
+	},
+	"paging":   false,
+	"searching": false
+} );
+
+</script>

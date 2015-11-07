@@ -1,6 +1,5 @@
 @* calibration Template File *@
 @import com.github.nscala_time.time.Imports._
-@(privilege: Privilege)
 <div class="row">
    	<div class="col-lg-12">
         	<div class="panel panel-primary" id="paramPanel">
@@ -28,12 +27,8 @@
             	</div>
         	</div>
         	<div class="panel panel-success" style="display:none" id="reportPanel">
-            	<div class="panel-body panel-collapse" id="monitorReport">
-            	    <div align="right">
-            			<label class="btn btn-outline" data-toggle="tooltip" data-placement="bottom" title="PDF"><a href="#" id="downloadPDF"><i class="fa fa-file-pdf-o fa-2x pdf" ></i></a></label>            			            			
-                	</div>
-            	
-					<div id="reportDiv" align="center" style="overflow-x:auto">
+            	<div class="panel-body panel-collapse" id="monitorReport">            	
+					<div id="reportDiv" align="center">
             		</div>
             	</div>
         	</div>
@@ -73,7 +68,7 @@ $( document ).ready(function() {
 		$('#reportDiv').html('');
 		$("body").css("cursor", "progress");
 			
-		var url = "/EffectivePercentage/" + reportStart + "/" + reportEnd;
+		var url = "/EventLogReport/" + reportStart + "/" + reportEnd;
 		console.log(url);
 		$.ajax({
 			url: url,
@@ -83,7 +78,6 @@ $( document ).ready(function() {
 			dataType: "html",
 			success: function(result){
 				$('#reportDiv').html(result);
-				$("#downloadPDF").prop("href", "/PDF" + url);
 				$("#reportPanel").collapse('show');
 			},
 			error: function(xhr, status, errorThrown){
