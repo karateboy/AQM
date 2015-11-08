@@ -8,12 +8,17 @@ object StartCheck
 
 class AlarmMaster extends Actor{
   var checkStartTime = DateTime.now
+  var checking = false
   def receive = {
     case StartCheck=>
-      val worker = context.actorOf(Props[AlarmWorker], name = "alarmWorker")
-      worker ! Start(checkStartTime)
+      if(!checking){
+        val worker = context.actorOf(Props[AlarmWorker], name = "alarmWorker")
+        worker ! Start(checkStartTime)
+        checking = true
+      }      
     case Finish(endTime)=>
       checkStartTime = endTime
+      checking = false
       context.stop(sender)
   }
 }

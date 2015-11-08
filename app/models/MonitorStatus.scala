@@ -24,6 +24,7 @@ object MonitorStatus {
       sql"""
         SELECT [statusNo],[statusName],[isOutage],[isValid]
         FROM [AQMSDB].[dbo].[Infor_Status]
+        Order by [statusNo] Asc
       """.map { r =>  
         val tagInfo = getTagInfo(r.string(1)) 
         MonitorStatus(tagInfo.statusType, tagInfo.id, r.string(2).trim(), r.boolean(3), r.boolean(4)    
@@ -213,10 +214,11 @@ object MonitorStatus {
   private var _map:Map[String, MonitorStatus] = refreshMap
   val msvList = msList.map {r=>getTagStr(r)}
   val manualMonitorStatusList = {msvList.filter { _map(_).statusType == StatusType.Manual }}
-  val alarmList = List("030", "031", "032", "033", "034", "035", "036", "037", "038", "039", 
-      "050", "051", "052", "053", "054", "055", "056")
-  val alarmNotificationList = List(CALBRATION_FAILED, "033", "034", "036", "037", "039", 
-        "050", "051", "052", "053", "054", "055", "056")
+  val alarmList = List("011","030", "033", "034", "035",  
+      "043",
+      "050", "051", "052", "053", "054", "055", "056", "057", "058", "059",
+      "099")
+
   def map(key: String) = {
     _map.getOrElse(key, {
       val tagInfo = getTagInfo(key)

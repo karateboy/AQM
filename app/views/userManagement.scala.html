@@ -188,7 +188,7 @@
 	        	<label class="col-lg-2 control-label">警報項目篩選</label>
 	            <div class="col-lg-10">
 	            <div id="alarmConfigStatus" class="btn-group" data-toggle="buttons">	            					            				
-	            	@for(a<-MonitorStatus.alarmNotificationList){
+	            	@for(a<-MonitorStatus.alarmList){
 	            		@if(user.alarmConfig.get.statusFilter.contains(a)){
 	            			<label class="btn btn-outline btn-primary dim active">
 	            			<input type="checkbox" name="monitorStatus" id="@a" checked>@MonitorStatus.map(a).desp</label>

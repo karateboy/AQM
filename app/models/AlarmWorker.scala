@@ -16,7 +16,7 @@ class AlarmWorker extends Actor{
   }
   
   def checkAlarm(startTime: DateTime)={
-    val alarms = Alarm.getAlarm(Monitor.mvList, Some(MonitorStatus.alarmNotificationList), startTime, DateTime.now)
+    val alarms = Alarm.getAlarm(Monitor.mvList, Some(MonitorStatus.alarmList), startTime, DateTime.now)
     if(alarms.length == 0)
       startTime
     else{

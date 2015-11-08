@@ -51,7 +51,7 @@ object Alarm {
     DB readOnly { implicit session =>
       sql"""
         SELECT *
-        FROM [AQMSDB].[dbo].[code1]
+        FROM [AQMSDB].[dbo].[alarmCode]
       """.map { r => AlarmItem(r.string(1), r.string(2))
       }.list.apply
     }
