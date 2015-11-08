@@ -28,7 +28,14 @@ class AlarmWorker extends Actor{
             val matchedAlarms = alarms.filter { alarm => alarmConfig.monitorFilter.contains(alarm.monitor) && 
               alarmConfig.statusFilter.contains(alarm.code) }
             for(ar <- matchedAlarms){
-              sendAlarmEmail(user, ar)
+              try{
+                sendAlarmEmail(user, ar)
+                EventLog.create(EventLog(DateTime.now, EventLog.evtTypeInformAlarm, 
+                    s"送信警告信給${user} ${Monitor.map(ar.monitor).name}-${Alarm.map(ar.mItem)}-${MonitorStatus.map(ar.code).desp}"))
+              }catch{
+                case e:Exception=>
+                  EventLog.create(EventLog(DateTime.now, EventLog.evtTypeInformAlarm, s"無法送信警告信給${user}:${e.getLocalizedMessage}"))
+              }
             }
           }
         }

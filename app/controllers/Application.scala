@@ -450,6 +450,8 @@ object Application extends Controller {
   case class ManualAuditList(list: Seq[ManualAudit])
   def manualAuditApply(recordTypeStr:String) = Security.Authenticated(BodyParsers.parse.json) {
     implicit request =>
+      val userInfo = Security.getUserinfo(request).get
+      val user = User.getUserById(userInfo.id).get
       val tabType = TableType.withName(recordTypeStr)
       implicit val manualAuditReads = Json.reads[ManualAudit]
       implicit val manualAuditListReads = Json.reads[ManualAuditList]
@@ -460,7 +462,9 @@ object Application extends Controller {
           BadRequest(Json.obj("ok" -> false, "msg" -> JsError.toFlatJson(error)))
         },
         manualAuditList => {
-          for (ma <- manualAuditList.list) {
+          for (ma <- manualAuditList.list.reverse) {
+            EventLog.create(EventLog(DateTime.now, EventLog.evtTypeManualAudit, 
+                s"${user.name} 進行人工註記 :${new DateTime(ma.time).toString("YYYY/MM/d HH:mm")}:${Monitor.map(ma.monitor).name}:${MonitorType.map(ma.monitorType).desp}-${MonitorStatus.map(ma.status).desp}"))
             Record.updateRecordStatus(tabType, ma.monitor, ma.monitorType, ma.time, ma.status)
           }
 
