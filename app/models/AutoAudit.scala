@@ -22,6 +22,7 @@ case class MinMaxCfg(
 
 case class MinMaxRule (
   enabled:Boolean,
+  count:Int,
   monitorTypes:Seq[MinMaxCfg]    
 )extends Rule(0)
 
@@ -31,7 +32,7 @@ object MinMaxRule{
   implicit val minMaxRuleWrite = Json.writes[MinMaxRule]
   implicit val minMaxRuleRead = Json.reads[MinMaxRule]
 
-  val default = MinMaxRule(false, Seq())
+  val default = MinMaxRule(false, 1, Seq())
 }
 
 case class CompareRule(
@@ -88,12 +89,27 @@ object PersistenceRule{
   val default = PersistenceRule(false, 3)
 }
 
+case class MonoCfg(
+    id:MonitorType.Value,
+    abs:Float
+)
+case class MonoRule(enabled:Boolean, count:Int, monitorTypes:Seq[MonoCfg])
+object MonoRule{
+  implicit val monoCfgRead = Json.reads[MonoCfg]
+  implicit val monoCfgWrite = Json.writes[MonoCfg]
+  implicit val monoRuleRead = Json.reads[MonoRule]
+  implicit val monoRuleWrite = Json.writes[MonoRule]
+  
+  val default = MonoRule(false, 3, Seq.empty[MonoCfg])
+  
+}
 case class AutoAudit(
     minMaxRule:MinMaxRule,
     compareRule:CompareRule,
     differenceRule:DifferenceRule,
     spikeRule:SpikeRule,
-    persistenceRule:PersistenceRule
+    persistenceRule:PersistenceRule,
+    monoRule:MonoRule
 )
 
 /**
@@ -108,5 +124,6 @@ object AutoAudit {
       CompareRule.default, 
       DifferenceRule.default,
       SpikeRule.default,
-      PersistenceRule.default) 
+      PersistenceRule.default,
+      MonoRule.default) 
 }

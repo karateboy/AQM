@@ -42,6 +42,28 @@ object Alarm {
     }
   }
 
+  def insertAlarm(ar: Alarm) = {
+    val tab = getTabName(ar.time.getYear)
+    DB localTx { implicit session =>
+      sql"""
+      INSERT INTO ${tab}
+           ([DP_NO]
+           ,[M_ITEM]
+           ,[M_DateTime]
+           ,[M_VAL]
+           ,[CODE2]
+           ,[CHK])
+     VALUES
+           (${ar.monitor.toString}
+           ,${ar.mItem}
+           ,${ar.time}
+           ,${ar.mVal}
+           ,${ar.code}
+           ,NULL)
+      """.update.apply
+    }
+  }
+  
   def getTabName(year: Int) = {
     SQLSyntax.createUnsafely(s"[AQMSDB].[dbo].[P1234567_Alm_${year}]")
   }

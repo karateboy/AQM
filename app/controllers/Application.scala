@@ -118,9 +118,32 @@ object Application extends Controller {
           Ok(Json.obj("ok" -> true))
         })
   }
+  val systemConfigPath = Play.application.path + "/conf/system.properties"
   def monitorTypeConfig = Security.Authenticated {
     implicit request =>
-      Ok(views.html.monitorTypeConfig())
+      import java.util.Properties
+      import java.io.FileInputStream
+      val prop = new Properties()
+      val autoAuditNormal = {
+        prop.load(new FileInputStream(systemConfigPath))
+        prop.getProperty("AutoAuditNormal", "false").toBoolean
+      }
+      Ok(views.html.monitorTypeConfig(autoAuditNormal))
+  }
+
+  def setAutoAuditNormal(booleanStr: String) = Security.Authenticated {
+    try {
+      val value = booleanStr.toBoolean
+      import java.util.Properties
+      import java.io.FileOutputStream
+      val prop = new Properties()
+      prop.setProperty("AutoAuditNormal", booleanStr)
+      prop.store(new FileOutputStream(systemConfigPath), null);
+      Ok(Json.obj("ok" -> true))
+    } catch {
+      case ex: Exception =>
+        Ok(Json.obj("ok" -> false))
+    }
   }
 
   case class EditData(id: String, data: String)

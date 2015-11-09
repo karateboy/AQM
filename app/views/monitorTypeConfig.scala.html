@@ -1,5 +1,6 @@
 @* monitorTypeConfig Template File *@
 @import MonitorType._
+@(autoAuditNormal:Boolean)
 <div class="row">
     <div class="col-lg-12">
     	<div class="panel panel-primary">
@@ -12,6 +13,26 @@
 						<div class="form-group">
 							<label class="col-lg-1 control-label">百分比:</label>
 							<input class="col-lg-1" id="effectiveRatio" value="75" readonly>%																				
+						</div>						
+				</form>        		
+        	</div>
+    	</div>
+    	<div class="panel panel-primary">
+    		<div class="panel-heading panel-title"" >
+        		<a data-toggle="collapse" data-parent="#accordion">自動註記是否視為正常數據</a>	
+        	</div>
+        	<div class="panel-body panel-collapse">
+        		<form id="autoAuditNormalForm" class="form-horizontal">
+						<br/>
+						<div class="form-group">
+							<label class="col-lg-1 control-label">視為正常數據:</label>
+							<div class="col-lg-1">
+                				<input id="autoAuditNormal" name='autoAuditNormal' type="checkbox" class="form-control" readonly
+                					@if(autoAuditNormal){
+                						checked
+                					}
+                				>
+                			</div>																										
 						</div>						
 				</form>        		
         	</div>
@@ -117,5 +138,31 @@ var dataTableL10N = '@routes.Assets.at("localization/zh_tw.json")';
 	$("#effectiveRatioForm").submit(function(evt){
 		alert("成功");
 		event.preventDefault();
+	});
+	$("#autoAuditNormal").change(function(evt){
+		var $ctrl = $(this);
+		var v = $ctrl.prop("checked");		
+		var url = "/AutoAuditNormal/" + v;
+		console.log(url);
+		$.ajax({
+			url: url,
+			data: JSON.stringify(v),
+			contentType: "application/json; charset=utf-8",
+			method:"POST",			
+			dataType: "json",
+			success: function(result){
+				if(result.ok){
+					alert("成功");
+				}else{
+					alert("失敗:"+result.msg);
+				}
+			},
+			error: function(xhr, status, errorThrown){
+				alert("失敗:" + status + "-" + errorThrown);
+			},
+
+			complete: function(xhr, status){
+			}					
+		});
 	});
 </script>

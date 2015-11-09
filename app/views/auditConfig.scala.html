@@ -44,19 +44,28 @@
 	<li>
 		<a data-toggle="tab" href="#persistenceRule"> <span class="glyphicons glyphicons-hotspot">持續性稽核</span></a>
 	</li>
+	<li>
+		<a data-toggle="tab" href="#monoRule"> <span class="glyphicons glyphicons-hotspot">一致性稽核</span></a>
+	</li>
 </ul>
 <div class="tab-content ibox-content">
 <div id="minMaxRule" class="tab-pane active" align="left">
 	<br/>
 	<h3>說明:</h3>
 	<p>汙染物濃度超過最大或最小值, 系統自動註記</p>
-	<form id="minMaxForm" class="form-horizontal">
+	<form id="minMaxForm" class="form-horizontal">	
 		<div class="form-group">
-        	<div class="col-lg-10">
-            	<div class="checkbox i-checks"><label> <input type="checkbox" name="enabled"><i></i>啟用</label></div>
+			<label class="col-lg-1 control-label">啟用</label>
+        	<div class="col-lg-1">        		
+            	<input type="checkbox" name="enabled" class="form-control">
             </div>
         </div>
         <div id='minMaxParameter'>
+        	<label class="col-lg-1 control-label">連續小時數</label>
+            <div class="col-lg-10">
+            	<input name='count' type="number" class="form-control" value='1' disabled>
+            </div>
+        
         <table class="table">
         	<thead>
         		<tr>
@@ -86,18 +95,21 @@
 <div id="compareRule" class="tab-pane" align="left">
 	<br/>
 	<h3>說明:</h3>
-	<p>由同一測站不同汙染物的從屬關係,進行合理性判斷. 例如正常情況:THC > CH4, NOx > NO2</p>
+	<p>由同一測站不同汙染物的從屬關係,進行合理性判斷.</p>
 	<form id="compareForm" class="form-horizontal">
-		<div class="form-group">
-        	<div class="col-lg-10">
-            	<div class="checkbox i-checks"><label> <input type="checkbox" name="enabled"><i></i>啟用</label></div>
+        <div class="form-group">
+			<label class="col-lg-1 control-label">啟用</label>
+        	<div class="col-lg-1">        		
+            	<input type="checkbox" name="enabled" class="form-control">
             </div>
         </div>
+                    	
         <h3>測項比較規則:</h3>
-        <ul>
-        	<li>THC > CH4</li>
-        	<li>NOx > NO2</li>
-        </ul>
+ 		<ul>
+			<li>THC > CH4 且  THC>NMHC </li>
+			<li>NOx >= NO2 且NOx >= NO</li>
+			<li>相對溼度<=100%</li>
+		</ul>
 		<div class="form-group">
         	<div class="col-lg-offset-2 col-lg-10">
             	<button class="btn btn-primary" type="submit">確認</button>
@@ -110,30 +122,33 @@
 	<h3>說明:</h3>
 	<p>(測值-平均值)>?倍標準差</p>
 	<form id="differenceForm" class="form-horizontal">
-		<div class="form-group">
-        	<div class="col-lg-10">
-            	<div class="checkbox i-checks"><label> <input type="checkbox" name="enabled"><i></i>啟用</label></div>
+        <div class="form-group">
+			<label class="col-lg-1 control-label">啟用</label>
+        	<div class="col-lg-1">        		
+            	<input type="checkbox" name="enabled" class="form-control">
             </div>
         </div>
-	    <div id='differenceParameter' class="form-group">
-        	<label class="col-lg-2 control-label">超過標準差倍數</label>
+	    <div id='differenceParameter'>
+        	<label class="col-lg-1 control-label">超過標準差倍數</label>
             <div class="col-lg-10">
             	<input name='multiplier' type="number" class="form-control" value='3' disabled>
             </div>
-            <table class="table">
-        	<thead>
-        		<tr>
-        			<th>測項</th>
-        		</tr>
-        	</thead>
-        	<tbody>
-        		@for(mt<-MonitorType.mtvList){
+            <div>
+            	<table class="table">
+        		<thead>
         			<tr>
-        				<th><input type="checkbox" name="monitorType" id='@mt' disabled>@MonitorType.map(mt).desp</th>
+        				<th>測項</th>
         			</tr>
-        		}
-        	</tbody>
-        	</table>
+        		</thead>
+        		<tbody>
+        			@for(mt<-MonitorType.mtvList){
+        				<tr>
+        					<th><input type="checkbox" name="monitorType" id='@mt' disabled>@MonitorType.map(mt).desp</th>
+        				</tr>
+        			}
+        		</tbody>
+        		</table>
+        	</div>
         </div>
 	
 		<div class="form-group">
@@ -148,9 +163,10 @@
 	<h3>說明:</h3>
 	<p>該測值超過前後平均的絕對值範圍</p>
 	<form id="spikeForm" class="form-horizontal">
-		<div class="form-group">
-        	<div class="col-lg-10">
-            	<div class="checkbox i-checks"><label> <input type="checkbox" name="enabled"><i></i>啟用</label></div>
+        <div class="form-group">
+			<label class="col-lg-1 control-label">啟用</label>
+        	<div class="col-lg-1">        		
+            	<input type="checkbox" name="enabled" class="form-control">
             </div>
         </div>
 		<div id='spikeParameter'>
@@ -184,16 +200,60 @@
 	<h3>說明:</h3>
 	<p>連續多筆值相等, 視為連續性數值</p>
 	<form id="persistenceForm" class="form-horizontal">
-		<div class="form-group">
-        	<div class="col-lg-10">
-            	<div class="checkbox i-checks"><label> <input type="checkbox" name="enabled"><i></i>啟用</label></div>
+        <div class="form-group">
+			<label class="col-lg-1 control-label">啟用</label>
+        	<div class="col-lg-1">        		
+            	<input type="checkbox" name="enabled" class="form-control">
             </div>
         </div>
 		<div id='persistenceParameter' class="form-group">
-        	<label class="col-lg-2 control-label">連續相同筆數</label>
+        	<label class="col-lg-1 control-label">連續筆數</label>
             <div class="col-lg-10">
             	<input name='same' type="number" class="form-control" value='3' disabled>
             </div>
+        </div>
+	
+		<div class="form-group">
+        	<div class="col-lg-offset-2 col-lg-10">
+            	<button class="btn btn-primary" type="submit">確認</button>
+            </div>
+        </div>
+	</form>
+</div>
+<div id="monoRule" class="tab-pane" align="left">
+	<br/>
+	<h3>說明:</h3>
+	<p>連續數小時之最高值與最低值之差小於系統設定值, 該測項小時值註記為異常</p>
+	<form id="monoForm" class="form-horizontal">
+        <div class="form-group">
+			<label class="col-lg-1 control-label">啟用</label>
+        	<div class="col-lg-1">        		
+            	<input type="checkbox" name="enabled" class="form-control">
+            </div>
+        </div>
+		<div id='monoParameter'>
+		 	<div class="form-group">
+        		<label class="col-lg-1 control-label">連續小時數</label>
+            	<div class="col-lg-10">
+            		<input name='count' type="number" class="form-control" value='3' disabled>
+            	</div>
+            </div>
+            <table class="table">
+        		<thead>
+        		<tr>
+        			<th>測項</th>
+        			<th>最高最低值差</th>
+        		</tr>
+        		</thead>
+        		<tbody>
+        		@for(mt<-MonitorType.mtvList){
+        			<tr>
+        				<th><input type="checkbox" name="monitorType" id='@mt' disabled>@MonitorType.map(mt).desp</th>
+        				<td><input name="absValue" id='@mt' value='10' disabled></td>
+        			</tr>
+        		}
+        		</tbody>
+        	</table>            
         </div>
 	
 		<div class="form-group">
@@ -211,7 +271,9 @@
 <script>
 var std_internal={};
 @for(mt<-MonitorType.mtvList){
-	std_internal['@mt']=@MonitorType.map(mt).std_internal_default;
+	@if(MonitorType.map(mt).std_internal_default.isDefined){
+		std_internal['@mt']=@MonitorType.map(mt).std_internal_default;
+	}
 }
 </script>
 <script>
@@ -225,6 +287,7 @@ $( document ).ready(function(){
 		updateDifferenceForm();
 		updateSpikeForm();
 		updatePersistenceForm();
+		updateMonoForm();
 	}
 	
 	function refreshAuditConfig(monitor){
@@ -261,6 +324,10 @@ $( document ).ready(function(){
 		var config = auditConfig.minMaxRule;
 		var $enabled = $('#minMaxForm :input[name="enabled"]');
 		$enabled.prop('checked', config.enabled);
+		var $count = $('#minMaxForm :input[name="count"]');
+		$count.val(config.count);
+		$count.prop('disabled', !config.enabled);
+		
 		var $inputs = $('#minMaxParameter :input');
 		function findMinMaxCfg(array, id){
 			for(var i=0;i<array.length;i++){
@@ -297,8 +364,7 @@ $( document ).ready(function(){
 	$('#minMaxForm :input[name="enabled"]').click(function(){
 		var $me=$(this);
 		var $inputs = $('#minMaxParameter :input');
-		var disabled = !$me.prop('checked');
-		console.log($inputs); 
+		var disabled = !$me.prop('checked'); 
 		for(var i=0;i<$inputs.length;i++){
 			var $check = $inputs.eq(i);
 			$check.prop("disabled", disabled);
@@ -329,8 +395,10 @@ $( document ).ready(function(){
 	$('#minMaxForm').submit(function(){
 		var param={};
 		var $enabled = $('#minMaxForm :input[name="enabled"]')
+		var $count = $('#minMaxForm :input[name="count"]');
 		var $inputs = $('#minMaxParameter :input');
 		param.enabled = $enabled.prop("checked");
+		param.count = parseInt($count.val());
 		param.monitorTypes=[];
 		for(var i=0;i<$inputs.length;i++){
 			var $check = $inputs.eq(i);
@@ -508,6 +576,74 @@ $( document ).ready(function(){
 		param.same = parseInt($same.val()); 
 		
 		auditConfig.persistenceRule = param;
+		postAuditCfg();
+		event.preventDefault();
+	});
+
+	function updateMonoForm(){
+		var config = auditConfig.monoRule;
+		var $enabled = $('#monoForm :input[name="enabled"]');
+		$enabled.prop('checked', config.enabled);
+		var $count = $('#monoForm :input[name="count"]');
+		$count.val(config.count);
+		$count.prop('disabled', !config.enabled);
+		
+		var $inputs = $('#monoParameter :input');
+		function findSpikeCfg(array, id){
+			for(var i=0;i<array.length;i++){
+				if(array[i].id == id)
+					return array[i]
+			}
+
+			return null;				
+		}
+		
+		for(var i=0;i<$inputs.length;i++){
+			var $input = $inputs.eq(i);
+			$input.prop('disabled', !config.enabled);
+			if($input.prop('type') == 'checkbox'){
+				var id = $input.prop('id');
+				var spike = findSpikeCfg(config.monitorTypes, id);
+				if(spike != null){
+					$input.prop('checked', true);
+					var $abs = $input.parent().next().children();
+					$abs.val(spike.abs);
+				}else{
+					$input.prop('checked', false);
+					var $abs = $input.parent().next().children();
+					$abs.val(10);
+				}				
+			}
+		}	
+	}
+	$('#monoForm :input[name="enabled"]').click(function(){
+		var $me=$(this);
+		var $inputs = $('#monoParameter :input');
+		var disabled = !$me.prop('checked'); 
+		for(var i=0;i<$inputs.length;i++){
+			var $check = $inputs.eq(i);
+			$check.prop("disabled", disabled);
+		}
+	});
+	$('#monoForm').submit(function(){
+		var param={};
+		var $enabled = $('#monoForm :input[name="enabled"]')
+		var $inputs = $('#monoParameter :input[name="monitorType"]');
+		var $count = $('#monoForm :input[name="count"]');
+		param.enabled = $enabled.prop("checked");
+		param.count = parseInt($count.val());
+		param.monitorTypes=[];
+		for(var i=0;i<$inputs.length;i++){
+			var $check = $inputs.eq(i);
+			if($check.prop("checked")){				
+				var mt={};
+				mt.id = $check.prop('id');
+				var $abs = $check.parent().next().children();				
+				mt.abs = parseFloat($abs.val());
+				param.monitorTypes.push(mt);
+			}
+		}
+		auditConfig.monoRule = param;
 		postAuditCfg();
 		event.preventDefault();
 	});

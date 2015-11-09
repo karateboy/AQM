@@ -152,6 +152,7 @@ GET		/Instrument			controllers.Application.instrument
 GET		/InstrumentReport/:monitor/:instrument/:start/:end controllers.Application.instrumentReport(monitor, instrument, start, end, outputTypeStr="html")
 GET		/PDF/InstrumentReport/:monitor/:instrument/:start/:end controllers.Application.instrumentReport(monitor, instrument, start, end, outputTypeStr="pdf")
 
+POST	/AutoAuditNormal/:boolStr	controllers.Application.setAutoAuditNormal(boolStr)
 GET		/MyTicket			controllers.Maintance.myTicket
 GET		/NewTicket			controllers.Maintance.newTicket
 POST	/NewTicket/:id		controllers.Maintance.newTicketAction(id)

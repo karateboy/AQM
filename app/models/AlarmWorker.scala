@@ -30,7 +30,7 @@ class AlarmWorker extends Actor{
           }
         }
         if (matchedUser.length != 0){
-          val userName = matchedUser.map { _.name}.mkString
+          val userName = matchedUser.map { _.name}.mkString(",")
           try {
             sendAlarmEmail(matchedUser, ar)            
             EventLog.create(EventLog(DateTime.now, EventLog.evtTypeInformAlarm,
