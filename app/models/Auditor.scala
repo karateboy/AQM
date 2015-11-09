@@ -180,19 +180,6 @@ class AuditStat(hr: HourRecord) {
 }
 
 object Auditor {
-  def getUnauditedRecords(monitor: Monitor.Value, startTime: DateTime, endTime: DateTime)(implicit session: DBSession = AutoSession) = {
-    val start: Timestamp = startTime
-    val end: Timestamp = endTime
-    val monitorName = monitor.toString()
-    val tab_name = Record.getTabName(TableType.Hour, startTime.getYear)
-    sql"""
-        Select * 
-        From ${tab_name}
-        Where DP_NO=${monitorName} and M_DateTime >= ${start} and M_DateTime < ${end} and CHK is Null
-        ORDER BY M_DateTime ASC
-      """.map { Record.mapper }.list().apply()
-  }
-
   def auditHourData(monitor: Monitor.Value, auditConfig: AutoAudit, start: DateTime, end: DateTime)(implicit session: DBSession = AutoSession) = {
     val prestart = auditConfig.persistenceRule.same.hours
     //val records = getUnauditedRecords(monitor, start - prestart, end + 1.hour).toArray
@@ -230,7 +217,6 @@ object Auditor {
     } {
       var invalid = false      
       if (auditConfig.minMaxRule.enabled) {
-        Logger.debug("minMax checking")
         for (cfg <- auditConfig.minMaxRule.monitorTypes) {
           val mt = cfg.id
           val mtRecord = Record.monitorTypeProject2(mt)(record)
@@ -274,7 +260,6 @@ object Auditor {
       }
 
       if (auditConfig.differenceRule.enabled) {
-        Logger.debug("differenceRule checking")
         for {
           mt <- auditConfig.differenceRule.monitorTypes
           mr_record = Record.monitorTypeProject2(mt)(record) if (isOk(mr_record))
@@ -289,7 +274,6 @@ object Auditor {
       }
 
       if (auditConfig.persistenceRule.enabled) {
-        Logger.debug("persistenceRule checking")
         if (idx > auditConfig.persistenceRule.same) {
           for (mt <- MonitorType.mtvAllList) {
             val mt_rec = Record.monitorTypeProject2(mt)(record)
@@ -320,7 +304,6 @@ object Auditor {
       }
 
       if (auditConfig.spikeRule.enabled) {
-        Logger.debug("spikeRule checking")
         for (mtcfg <- auditConfig.spikeRule.monitorTypes) {
           val mt_rec = Record.monitorTypeProject2(mtcfg.id)(record)
           if (isOk(mt_rec)) {
@@ -348,7 +331,6 @@ object Auditor {
       else
         targetStat.chk = Some("OK")
        
-      Logger.debug("chk="+targetStat.chk.toString())
       targetStat.updateDB
     }
   }

@@ -21,37 +21,39 @@ class AlarmWorker extends Actor{
       startTime
     else{
       val adminUserList = User.getAdminUsers()
-      for(user <- adminUserList){
-        if(user.alarmConfig.isDefined){
-          val alarmConfig = user.alarmConfig.get
-          if(alarmConfig.enable){
-            val matchedAlarms = alarms.filter { alarm => alarmConfig.monitorFilter.contains(alarm.monitor) && 
-              alarmConfig.statusFilter.contains(alarm.code) }
-            for(ar <- matchedAlarms){
-              try{
-                sendAlarmEmail(user, ar)
-                EventLog.create(EventLog(DateTime.now, EventLog.evtTypeInformAlarm, 
-                    s"送信警告信給${user.name} ${Monitor.map(ar.monitor).name}-${Alarm.map(ar.mItem)}-${MonitorStatus.map(ar.code).desp}"))
-              }catch{
-                case e:Exception=>
-                  EventLog.create(EventLog(DateTime.now, EventLog.evtTypeInformAlarm, s"無法送信警告信給${user.name}:${e.getLocalizedMessage}"))
-              }
-            }
+      for (ar <- alarms) {
+        val matchedUser = adminUserList.filter { user =>
+          user.alarmConfig.isDefined && {
+            val alarmConfig = user.alarmConfig.get
+            alarmConfig.enable && alarmConfig.monitorFilter.contains(ar.monitor) &&
+              alarmConfig.statusFilter.contains(ar.code)
+          }
+        }
+        if (matchedUser.length != 0){
+          val userName = matchedUser.map { _.name}.mkString
+          try {
+            sendAlarmEmail(matchedUser, ar)            
+            EventLog.create(EventLog(DateTime.now, EventLog.evtTypeInformAlarm,
+              s"送信警告信給${userName} ${Monitor.map(ar.monitor).name}-${Alarm.map(ar.mItem)}-${MonitorStatus.map(ar.code).desp}"))
+          } catch {
+            case ex: Exception =>
+              Console.print(ex.toString)
+              EventLog.create(EventLog(DateTime.now, EventLog.evtTypeInformAlarm, s"無法送信警告信給${userName}:${ex.getCause}"))
           }
         }
       }
+
       val latestTime = alarms.last.time
       latestTime + 1.second
     }
   }
   
   import play.api.libs.mailer._
-  def sendAlarmEmail(user:User, alarm: Alarm)={
-    Logger.debug(s"send alarm to: ${user.name} - ${alarm.time.toString}:${Alarm.map(alarm.mItem)}:${MonitorStatus.map(alarm.code).desp}")
+  def sendAlarmEmail(users:List[User], alarm: Alarm)={
     val email = Email(
       s"警報: ${Monitor.map(alarm.monitor).name}-${Alarm.map(alarm.mItem)}(${MonitorStatus.map(alarm.code).desp})",
       "警報服務 <karateboy.huang@gmail.com>",
-      Seq(user.email),
+      users.map { _.email },
       // adds attachment
       attachments = Seq(),
       // sends text, HTML or both...

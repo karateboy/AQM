@@ -475,9 +475,9 @@ object Maintance extends Controller {
     }catch{
       case ex:Exception 
         =>
-          Console.print(ex.toString())
+          Console.print(ex.getCause)
           EventLog.create(EventLog(DateTime.now, EventLog.evtTypeInformAlarm, "送測試信失敗!"))
-          Ok(s"無法送信到${user.email} ${ex.getMessage}")
+          Ok(s"無法送信到${user.email}: ${ex.getCause}")
     }
     
     
