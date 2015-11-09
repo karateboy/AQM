@@ -36,9 +36,9 @@
 			<tr>
 				<td>@Monitor.map(item.monitor).name</td>
 				<td>@MonitorType.map(item.monitorType).desp</td>
-				<td>@item.startTime.toString("yyyy-MM-dd hh:mm")</td>				
+				<td>@item.startTime.toString("YYYY-MM-dd HH:mm")</td>				
 				@if(item.endTime.getDayOfYear != item.startTime.getDayOfYear){
-					<td>@item.endTime.toString("yyyy-MM-dd hh:mm")</td>
+					<td>@item.endTime.toString("YYYY-MM-dd HH:mm")</td>
 				}else{
 					<td>@item.endTime.toString("hh:mm")</td>
 				}

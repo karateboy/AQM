@@ -464,7 +464,7 @@ object Application extends Controller {
         manualAuditList => {
           for (ma <- manualAuditList.list.reverse) {
             EventLog.create(EventLog(DateTime.now, EventLog.evtTypeManualAudit, 
-                s"${user.name} 進行人工註記 :${new DateTime(ma.time).toString("YYYY/MM/d HH:mm")}:${Monitor.map(ma.monitor).name}:${MonitorType.map(ma.monitorType).desp}-${MonitorStatus.map(ma.status).desp}"))
+                s"${user.name} 進行人工註記 :${new DateTime(ma.time).toString("YYYY/MM/dd HH:mm")}:${Monitor.map(ma.monitor).name}:${MonitorType.map(ma.monitorType).desp}-${MonitorStatus.map(ma.status).desp}"))
             Record.updateRecordStatus(tabType, ma.monitor, ma.monitorType, ma.time, ma.status)
           }
 

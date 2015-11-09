@@ -25,7 +25,7 @@
 <tbody>
 	@for(rs<-rsList){
 		<tr>
-			<td>@rs.time.toString("YYYY-MM-dd hh:mm")</td>
+			<td>@rs.time.toString("YYYY-MM-dd HH:mm")</td>
 			<td>@("%.0f".format(rs.range))</td>
 			<td>@("%.1f".format(rs.stabil))</td>
 			<td>@("%.1f".format(rs.o3_meas))</td>

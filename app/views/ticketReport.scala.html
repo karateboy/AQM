@@ -26,7 +26,7 @@
 		<td><input type="checkbox" value="@t.id"></td>		
 	}	
 		<td><a href="#" onClick="loadPage('/Ticket/'+'@t.id','維修保養','案件細節')">@t.id</a></td>
-		<td>@t.submit_date.toString("YYYY-MM-d hh:mm")</td>
+		<td>@t.submit_date.toString("YYYY-MM-d HH:mm")</td>
 		<td>@userMap(t.submiter_id).name</td>
 		<td>@TicketType.map(t.ticketType)</td>
 		<td>@Monitor.map(t.monitor).name</td>

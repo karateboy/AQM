@@ -31,10 +31,10 @@ class AlarmWorker extends Actor{
               try{
                 sendAlarmEmail(user, ar)
                 EventLog.create(EventLog(DateTime.now, EventLog.evtTypeInformAlarm, 
-                    s"送信警告信給${user} ${Monitor.map(ar.monitor).name}-${Alarm.map(ar.mItem)}-${MonitorStatus.map(ar.code).desp}"))
+                    s"送信警告信給${user.name} ${Monitor.map(ar.monitor).name}-${Alarm.map(ar.mItem)}-${MonitorStatus.map(ar.code).desp}"))
               }catch{
                 case e:Exception=>
-                  EventLog.create(EventLog(DateTime.now, EventLog.evtTypeInformAlarm, s"無法送信警告信給${user}:${e.getLocalizedMessage}"))
+                  EventLog.create(EventLog(DateTime.now, EventLog.evtTypeInformAlarm, s"無法送信警告信給${user.name}:${e.getLocalizedMessage}"))
               }
             }
           }
