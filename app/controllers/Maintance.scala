@@ -250,8 +250,6 @@ object Maintance extends Controller {
         val adminUsers = User.getAdminUsers()
         val usrMap = Map(adminUsers.map { u => (u.id.get -> u) }: _*)
 
-        Logger.debug("everything is okay...")
-        Logger.debug("#="+tickets.length)
         Ok(views.html.closeTickets(tickets, usrMap))
       }
   }
@@ -314,7 +312,7 @@ object Maintance extends Controller {
       val start = DateTime.parse(startStr)
       val end = DateTime.parse(endStr) + 1.day
 
-      val tickets = Ticket.queryRepairTickets(start, end)
+      val tickets = Ticket.queryTickets(start, end)
       val filterTicket = tickets.filter { t => monitors.contains(t.monitor) }
       val adminUsers = User.getAdminUsers()
       val usrMap = Map(adminUsers.map { u => (u.id.get -> u) }: _*)
@@ -477,6 +475,7 @@ object Maintance extends Controller {
     }catch{
       case ex:Exception 
         =>
+          Console.print(ex.toString())
           EventLog.create(EventLog(DateTime.now, EventLog.evtTypeInformAlarm, "送測試信失敗!"))
           Ok(s"無法送信到${user.email} ${ex.getMessage}")
     }

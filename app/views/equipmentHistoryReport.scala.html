@@ -19,9 +19,15 @@
 		}else{
 			<td>@MonitorType.map(t.monitorType.get).desp</td>
 		}
-		<td>@t.getRepairForm.start</td>
-		<td>@t.getRepairForm.end</td>
-		<td>@t.getRepairForm.explain<br/>@t.getRepairForm.result</td>
+		@if(t.ticketType == TicketType.repair){
+			<td>@t.getRepairForm.start</td>
+			<td>@t.getRepairForm.end</td>
+			<td>@t.getRepairForm.explain<br/>@t.getRepairForm.result</td>
+		}else{
+			<td>@t.getForm.start</td>
+			<td>@t.getForm.end</td>
+			<td>@t.getForm.comments</td>		
+		}
 		<td><a href="/DownloadForm/@t.id"><i class="fa fa-file-excel-o fa-2x"></i></td>
 	</tr>
 }
