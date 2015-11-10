@@ -181,10 +181,13 @@ class AuditStat(hr: HourRecord) {
 
 object Auditor {
   def auditHourData(monitor: Monitor.Value, auditConfig: AutoAudit, start: DateTime, end: DateTime)(implicit session: DBSession = AutoSession) = {
-    val prestart = auditConfig.persistenceRule.same.hours
+    val prestart = 
+      List(auditConfig.minMaxRule.count, auditConfig.persistenceRule.same, auditConfig.monoRule.count).max
+      
+    
     //val records = getUnauditedRecords(monitor, start - prestart, end + 1.hour).toArray
     def clearAuditData()={
-      val records = getHourRecords(monitor, start - prestart, end + 1.hour).toArray
+      val records = getHourRecords(monitor, start - prestart.hour, end + 1.hour).toArray
       val auditStatList = records.map { new AuditStat(_) }
       auditStatList.foreach { _.clear}
     }
@@ -210,24 +213,32 @@ object Auditor {
     val avgStdMap = Map(mtAvgStdPairs: _*)
 
     for {
-      hr <- records.zipWithIndex if (hr._2 >= auditConfig.persistenceRule.same && hr._2 < records.length - 1)
+      hr <- records.zipWithIndex if (hr._2 >= prestart && hr._2 < records.length - 1)
       record = hr._1
       idx = hr._2
       targetStat = new AuditStat(record)
     } {
-      var invalid = false      
+      var invalid = false
       if (auditConfig.minMaxRule.enabled) {
         for (cfg <- auditConfig.minMaxRule.monitorTypes) {
           val mt = cfg.id
-          val mtRecord = Record.monitorTypeProject2(mt)(record)
-          //Only check for normal record
-          if (isOk(mtRecord)) {
-              val mt_value = mtRecord._1.get
-                            
-              if (mt_value > cfg.max || mt_value <= cfg.min) {
-                invalid = true
-                targetStat.setAuditStat(mt, auditConfig.minMaxRule.mask)
-              }
+          val marks =
+            for (i <- idx - auditConfig.minMaxRule.count + 1 to idx) yield {
+              val mtRecord = Record.monitorTypeProject2(mt)(records(i))
+
+              if (isOk(mtRecord)) {
+                val mt_value = mtRecord._1.get
+
+                if (mt_value > cfg.max || mt_value <= cfg.min)
+                  true
+                else
+                  false
+              } else
+                false
+            }
+          if(marks.count { p => p} == auditConfig.minMaxRule.count){
+            invalid = true
+            targetStat.setAuditStat(mt, auditConfig.minMaxRule.mask)
           }
         }
       }

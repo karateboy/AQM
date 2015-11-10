@@ -93,7 +93,9 @@ case class MonoCfg(
     id:MonitorType.Value,
     abs:Float
 )
-case class MonoRule(enabled:Boolean, count:Int, monitorTypes:Seq[MonoCfg])
+
+case class MonoRule(enabled:Boolean, count:Int, 
+    monitorTypes:Seq[MonoCfg])extends Rule(5)
 object MonoRule{
   implicit val monoCfgRead = Json.reads[MonoCfg]
   implicit val monoCfgWrite = Json.writes[MonoCfg]

@@ -35,7 +35,10 @@ class DataAlarmChecker extends Actor{
             }
           }
       }
+      //Auto audit
+      Auditor.auditHourData(m, mCase.autoAudit, startTime - 1.hour, startTime)
     }
+    
     DataCheckFinish
   }
 }

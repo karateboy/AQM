@@ -68,6 +68,9 @@ object MonitorStatus {
       if((mask & AutoAudit.default.persistenceRule.mask) != 0){
         buf.append("|持續性")
       }
+      if((mask & AutoAudit.default.monoRule.mask) != 0){
+        buf.append("|一致性")
+      }
       buf.delete(0, 1)
       buf.toString
     }else {
