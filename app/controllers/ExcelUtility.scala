@@ -979,7 +979,7 @@ object ExcelUtility {
         
       fillCellF(sheet.getRow(row).getCell(4), MonitorType.map(item.monitorType).zd_internal.get, 0)
       fillCellF(sheet.getRow(row).getCell(5), MonitorType.map(item.monitorType).zd_law.get, 0)
-      fillCellF(sheet.getRow(row).getCell(6), item.sd_val, 0)
+      fillCellF(sheet.getRow(row).getCell(6), item.s_std, 0)
       fillCellF(sheet.getRow(row).getCell(7), item.s_sval, 0)
       if (item.sd_pnt > MonitorType.map(item.monitorType).sd_law.get) {
         fillCellF(sheet.getRow(row).getCell(8), item.sd_pnt, 2)
@@ -1097,7 +1097,7 @@ object ExcelUtility {
         sheet.getRow(row).getCell(3).setCellValue(item.z_val)
         sheet.getRow(row).getCell(4).setCellValue(MonitorType.map(item.monitorType).zd_internal.get)
         sheet.getRow(row).getCell(5).setCellValue(MonitorType.map(item.monitorType).zd_law.get)
-        sheet.getRow(row).getCell(6).setCellValue(item.sd_val)
+        sheet.getRow(row).getCell(6).setCellValue(item.s_std)
         sheet.getRow(row).getCell(7).setCellValue(item.s_sval)
         if (item.sd_pnt > MonitorType.map(item.monitorType).sd_law.get) {
           sheet.getRow(row).getCell(8).setCellStyle(lawStyle)

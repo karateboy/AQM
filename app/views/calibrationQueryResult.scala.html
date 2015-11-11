@@ -54,7 +54,7 @@
 				<td>@MonitorType.map(item.monitorType).zd_internal</td>
 				<td>@MonitorType.map(item.monitorType).zd_law</td>
 				<td>@MonitorType.format(item.monitorType, Some(item.s_sval))</td>
-				<td>@MonitorType.format(item.monitorType, Some(item.sd_val))</td>
+				<td>@MonitorType.format(item.monitorType, Some(item.s_std))</td>
 				@if(item.sd_pnt > MonitorType.map(item.monitorType).sd_law.get){
 					<td style="color:red">@MonitorType.format(item.monitorType, Some(item.sd_pnt))</td>
 				}else {
