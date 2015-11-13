@@ -3,11 +3,19 @@
 @(privilege: Privilege)
 <div class="row">
    	<div class="col-lg-12">
-        	<div class="panel panel-primary" id="paramPanel">
-            	<div class="panel-heading panel-title" >
-            		<a data-toggle="collapse" data-parent="#accordion" href="#reportParam">查詢參數</a>	
-                </div>
+        	<div class="panel panel-primary" id="paramPanel">            	
+            	<ul class="nav nav-tabs">
+					<li class="active">
+						<a data-toggle="tab" href="#parameterDiv"> <span class="glyphicons glyphicons-hotspot"></span>查詢參數</a>
+					</li>
+					<li>
+						<a data-toggle="tab" href="#thresholdDiv"> <span class="glyphicons glyphicons-hotspot"></span>儀器內控參數</a>
+					</li>
+				</ul>	
+
             	<div class="panel-body panel-collapse in" id="reportParam">
+            		<div class="tab-content">
+					<div id="parameterDiv" class="tab-pane active">
             		<form class="form-horizontal">
             			<div class="form-group">
 	            			<label class="col-lg-1 control-label">測站</label>
@@ -60,6 +68,11 @@
 							</div>							
 						</div>
             		</form>
+            		</div>
+            		<div id="thresholdDiv" class="tab-pane" align="center">
+            			@instrument_threshold()
+            		</div>
+            		</div>
             	</div>
         	</div>
         	<div class="panel panel-success" style="display:none" id="reportPanel">
@@ -73,6 +86,10 @@
         	</div>
 	</div>
 </div>
+<script>
+	var localization_url = '@routes.Assets.at("localization/zh_tw.json")';
+	var dom_url = '@routes.Assets.at("js/plugins/dataTables/swf/copy_csv_xls_pdf.swf")';
+</script>
 <script>
 $(document).ready(function (){
 	$('#datepicker').datepicker({
@@ -116,8 +133,6 @@ $(document).ready(function (){
 			return;
 			
 		$("#reportPanel").css('display','block');
-		$("#reportParam").collapse();
-
 		$('#reportDiv').html('');
 		$("body").css("cursor", "progress");
 
@@ -138,10 +153,10 @@ $(document).ready(function (){
 					responsive: true,
 					"dom": 'T<"clear">lfrtip',
 					language: {
-						url: '@routes.Assets.at("localization/zh_tw.json")',							
+						url: localization_url,							
 					},
 					"tableTools": {
-        				"sSwfPath": "@routes.Assets.at("js/plugins/dataTables/swf/copy_csv_xls_pdf.swf")",
+        				"sSwfPath": dom_url,
         				"aButtons": ["copy", "print", "csv"]
         			},
 					"paging":   false,

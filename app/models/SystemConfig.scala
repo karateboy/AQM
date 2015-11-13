@@ -11,8 +11,8 @@ import models._
 
 import EnumUtils._
 
-object SystemConfig extends Enumeration {
-  val AutoAuditAsNormal = Value
+object SystemConfig{
+  val AutoAuditAsNormal = "AutoAuditAsNormal"
 
   var map = {
     val configPair =
@@ -22,23 +22,23 @@ object SystemConfig extends Enumeration {
           sql"""
         Select * 
         From SystemConfig
-        """.map { r => (SystemConfig.withName(r.string(1)) -> r.string(2)) }.list.apply
+        """.map { r => (r.string(1) -> r.string(2)) }.list.apply
       }
     Map(configPair: _*)
   }
 
-  def getConfig(key:SystemConfig.Value, default:String)={
+  def getConfig(key:String, defaultValue:String)={
     val opt = map.get(key)
     if(opt.isDefined)
       opt.get
     else{
-      Logger.error(s"${key.toString} is not in SystemConfig")
-      default
+      newConfig(key, defaultValue)
+      defaultValue
     }      
   }
   
   
-  def setConfig(key:SystemConfig.Value, value:String)={
+  def setConfig(key:String, value:String)={
     map = (map - key) + (key->value)
     DB localTx {
       implicit session =>
@@ -48,5 +48,16 @@ object SystemConfig extends Enumeration {
           WHERE configKey = ${key.toString}
           """.update.apply
     }
+  }
+  
+  def newConfig(key:String, value:String)={
+    DB localTx{
+      implicit session =>
+        sql"""
+          INSERT INTO SystemConfig([configKey],[value])
+          VALUES (${key}, ${value})
+          """.update.apply
+    }
+    map += (key->value)
   }
 }

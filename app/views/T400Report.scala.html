@@ -1,11 +1,13 @@
 @* h37Report Template File *@
 @import com.github.nscala_time.time.Imports._
+@import InstrumentThreshold._
 @(monitor:Monitor.Value, start:DateTime, end:DateTime, rsList: List[T400Record])
 <H3>測站:@Monitor.map(monitor).name</H3>
 <H5>儀器:T400</H5>
 <H5>開始:@start.toString("YYYY-MM-dd")</H5>
 <H5>結束:@end.toString("YYYY-MM-dd")</H5>
-<table id="t400Report" class="table">
+<span style="color:red">超過內控值</span>
+<table id="reportTable" class="table">
 <thead>
 	<tr>		
 		<th>時間</th>
@@ -26,33 +28,22 @@
 	@for(rs<-rsList){
 		<tr>
 			<td>@rs.time.toString("YYYY-MM-dd HH:mm")</td>
-			<td>@("%.0f".format(rs.range))</td>
-			<td>@("%.1f".format(rs.stabil))</td>
-			<td>@("%.1f".format(rs.o3_meas))</td>
-			<td>@("%.0f".format(rs.o3_ref))</td>
-			<td>@("%.1f".format(rs.pres))</td>			
-			<td>@("%.0f".format(rs.samp_fl))</td>
-			<td>@("%.1f".format(rs.sample_temp))</td>
-			<td>@("%.0f".format(rs.photo_lamp))</td>			
-           	<td>@("%.1f".format(rs.box_temp))</td>           	
-           	<td>@("%.3f".format(rs.slope))</td>
-           	<td>@("%.1f".format(rs.offset))</td>
+			<td style="@getStyle(T400_RANGE, rs.range)">@("%.0f".format(rs.range))</td>
+			<td style="@getStyle(T400_STABIL, rs.stabil)">@("%.1f".format(rs.stabil))</td>
+			<td style="@getStyle(T400_O3_MEAS, rs.o3_meas)">@("%.1f".format(rs.o3_meas))</td>
+			<td style="@getStyle(T400_O3_REF, rs.o3_ref)">@("%.0f".format(rs.o3_ref))</td>
+			<td style="@getStyle(T400_PRES, rs.pres)">@("%.1f".format(rs.pres))</td>			
+			<td style="@getStyle(T400_SAMP_FL, rs.samp_fl)">@("%.0f".format(rs.samp_fl))</td>
+			<td style="@getStyle(T400_SAMPLE_TEMP, rs.sample_temp)">@("%.1f".format(rs.sample_temp))</td>
+			<td style="@getStyle(T400_PHOTO_LAMP, rs.photo_lamp)">@("%.0f".format(rs.photo_lamp))</td>			
+           	<td style="@getStyle(T400_BOX_TEMP, rs.box_temp)">@("%.1f".format(rs.box_temp))</td>           	
+           	<td style="@getStyle(T400_SLOPE, rs.slope)">@("%.3f".format(rs.slope))</td>
+           	<td style="@getStyle(T400_OFFSET, rs.offset)">@("%.1f".format(rs.offset))</td>
 		</tr>
 	}
 </tbody>
 </table>
 <script>
 $(document ).ready(function() {
-	$('#t400Report').dataTable( {
-		responsive: true,
-		"dom": 'T&lt'+'clear'+'&gtlfrtip',
-		language: {
-			url: '@routes.Assets.at("localization/zh_tw.json")',							
-		},
-		"tableTools": {
-        	"sSwfPath": "@routes.Assets.at("js/plugins/dataTables/swf/copy_csv_xls_pdf.swf")"
-        },
-		"paging":   true
-	} );
 });
 </script>

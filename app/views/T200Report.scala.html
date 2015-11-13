@@ -1,11 +1,13 @@
 @* h37Report Template File *@
 @import com.github.nscala_time.time.Imports._
+@import InstrumentThreshold._
 @(monitor:Monitor.Value, start:DateTime, end:DateTime, rsList: List[T200Record])
 <H3>測站:@Monitor.map(monitor).name</H3>
 <H5>儀器:T200</H5>
 <H5>開始:@start.toString("YYYY-MM-dd")</H5>
 <H5>結束:@end.toString("YYYY-MM-dd")</H5>
-<table id="t200Report" class="table">
+<span style="color:red">超過內控值</span>
+<table id="reportTable" class="table">
 <thead>
 	<tr>		
 		<th>時間</th>
@@ -35,42 +37,31 @@
 	@for(rs<-rsList){
 		<tr>
 			<td>@rs.time.toString("YYYY-MM-dd HH:mm")</td>
-			<td>@("%.1f".format(rs.no))</td>
-			<td>@("%.1f".format(rs.nox))</td>
-			<td>@("%.0f".format(rs.range))</td>
-			<td>@("%.0f".format(rs.nox_stb))</td>
-			<td>@("%.0f".format(rs.samp_flw))</td>
-			<td>@("%.0f".format(rs.ozone_fl))</td>			
-			<td>@("%.1f".format(rs.pmt))</td>			
-			<td>@("%.1f".format(rs.norm_pmt))</td>
-			<td>@("%.0f".format(rs.azero))</td>			
-            <td>@("%.0f".format(rs.hvps))</td>
-            <td>@("%.0f".format(rs.rcell_temp))</td>
-            <td>@("%.1f".format(rs.box_temp))</td>
-            <td>@("%.1f".format(rs.pmt_temp))</td>
-            <td>@("%.1f".format(rs.moly_temp))</td>
-            <td>@("%.1f".format(rs.rcel))</td>
-            <td>@("%.1f".format(rs.samp))</td>
-            <td>@("%.3f".format(rs.nox_slope))</td>
-            <td>@("%.1f".format(rs.nox_offs))</td>
-            <td>@("%.3f".format(rs.no_slope))</td>
-            <td>@("%.1f".format(rs.no_offs))</td>            
+			<td style="@getStyle(T200_NO, rs.no)">@("%.1f".format(rs.no))</td>
+			<td style="@getStyle(T200_NOX, rs.nox)">@("%.1f".format(rs.nox))</td>
+			<td style="@getStyle(T200_RANGE, rs.range)">@("%.0f".format(rs.range))</td>
+			<td style="@getStyle(T200_NOX_STB, rs.nox_stb)">@("%.0f".format(rs.nox_stb))</td>
+			<td style="@getStyle(T200_SAMP_FLW, rs.samp_flw)">@("%.0f".format(rs.samp_flw))</td>
+			<td style="@getStyle(T200_OZONE_FL, rs.ozone_fl)">@("%.0f".format(rs.ozone_fl))</td>			
+			<td style="@getStyle(T200_PMT, rs.pmt)">@("%.1f".format(rs.pmt))</td>			
+			<td style="@getStyle(T200_NORM_PMT, rs.norm_pmt)">@("%.1f".format(rs.norm_pmt))</td>
+			<td style="@getStyle(T200_AZERO, rs.azero)">@("%.0f".format(rs.azero))</td>			
+            <td style="@getStyle(T200_HVPS, rs.hvps)">@("%.0f".format(rs.hvps))</td>
+            <td style="@getStyle(T200_RCELL_TEMP, rs.rcell_temp)">@("%.0f".format(rs.rcell_temp))</td>
+            <td style="@getStyle(T200_BOX_TEMP, rs.box_temp)">@("%.1f".format(rs.box_temp))</td>
+            <td style="@getStyle(T200_PMT_TEMP, rs.pmt_temp)">@("%.1f".format(rs.pmt_temp))</td>
+            <td style="@getStyle(T200_MOLY_TEMP, rs.moly_temp)">@("%.1f".format(rs.moly_temp))</td>
+            <td style="@getStyle(T200_RCEL, rs.rcel)">@("%.1f".format(rs.rcel))</td>
+            <td style="@getStyle(T200_SAMP, rs.samp)">@("%.1f".format(rs.samp))</td>
+            <td style="@getStyle(T200_NOX_SLOPE, rs.nox_slope)">@("%.3f".format(rs.nox_slope))</td>
+            <td style="@getStyle(T200_NOX_OFFS, rs.nox_offs)">@("%.1f".format(rs.nox_offs))</td>
+            <td style="@getStyle(T200_NO_SLOPE, rs.no_slope)">@("%.3f".format(rs.no_slope))</td>
+            <td style="@getStyle(T200_NO_OFFS, rs.no_offs)">@("%.1f".format(rs.no_offs))</td>            
 		</tr>
 	}
 </tbody>
 </table>
 <script>
 $(document ).ready(function() {
-	$('#t200Report').dataTable( {
-		responsive: true,
-		"dom": 'T&lt'+'clear'+'&gtlfrtip',
-		language: {
-			url: '@routes.Assets.at("localization/zh_tw.json")',							
-		},
-		"tableTools": {
-        	"sSwfPath": "@routes.Assets.at("js/plugins/dataTables/swf/copy_csv_xls_pdf.swf")"
-        },
-		"paging":   true
-	} );
 });
 </script>

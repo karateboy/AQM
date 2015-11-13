@@ -1,11 +1,13 @@
 @* h37Report Template File *@
 @import com.github.nscala_time.time.Imports._
+@import InstrumentThreshold._
 @(monitor:Monitor.Value, start:DateTime, end:DateTime, rsList: List[H370Record])
 <H3>測站:@Monitor.map(monitor).name</H3>
 <H5>儀器:H370</H5>
 <H5>開始:@start.toString("YYYY-MM-dd")</H5>
 <H5>結束:@end.toString("YYYY-MM-dd")</H5>
-<table id="h370Report" class="table">
+<span style="color:red">超過內控值</span>
+<table id="reportTable" class="table">
 <thead>
 	<tr>		
 		<th>時間</th>
@@ -27,34 +29,23 @@
 	@for(rs<-rsList){
 		<tr>
 			<td>@rs.time.toString("YYYY-MM-dd HH:mm")</td>
-			<td>@rs.thc_signal</td>
-			<td>@rs.ch4_signal</td>
-			<td>@rs.zero_compression</td>
-			<td>@rs.purifierTemp</td>
-			<td>@rs.NMHCCOutTemp</td>
-			<td>@rs.v5</td>
-			<td>@rs.v24</td>
-			<td>@rs.sampleFlow</td>
-			<td>@rs.overFlow</td>
-			<td>@rs.pumpPress</td>
-			<td>@rs.purifierPress</td>
-			<td>@rs.atmosPress</td>
+			<td style="@getStyle(H370_THC_Signal, rs.thc_signal)">@rs.thc_signal</td>
+			<td style="@getStyle(H370_CH4_Signal, rs.ch4_signal)">@rs.ch4_signal</td>
+			<td style="@getStyle(H370_Zero_Compension, rs.zero_compression)">@rs.zero_compression</td>
+			<td style="@getStyle(H370_PurifierTemp, rs.purifierTemp)">@rs.purifierTemp</td>
+			<td style="@getStyle(H370_NMHCOutTemp, rs.NMHCCOutTemp)">@rs.NMHCCOutTemp</td>
+			<td style="@getStyle(H370_5V, rs.v5)">@rs.v5</td>
+			<td style="@getStyle(H370_24V, rs.v24)">@rs.v24</td>
+			<td style="@getStyle(H370_SampleFlow, rs.sampleFlow)">@rs.sampleFlow</td>
+			<td style="@getStyle(H370_OverFlow, rs.overFlow)">@rs.overFlow</td>
+			<td style="@getStyle(H370_PumpPress, rs.pumpPress)">@rs.pumpPress</td>
+			<td style="@getStyle(H370_PurifierPress, rs.purifierPress)">@rs.purifierPress</td>
+			<td style="@getStyle(H370_AtmosPress, rs.ch4_signal)">@rs.purifierPress</td>
 		</tr>
 	}
 </tbody>
 </table>
 <script>
 $(document ).ready(function() {
-	$('#h370Report').dataTable( {
-		responsive: true,
-		"dom": 'T&lt'+'clear'+'&gtlfrtip',
-		language: {
-			url: '@routes.Assets.at("localization/zh_tw.json")',							
-		},
-		"tableTools": {
-        	"sSwfPath": "@routes.Assets.at("js/plugins/dataTables/swf/copy_csv_xls_pdf.swf")"
-        },
-		"paging":   true
-	} );
 });
 </script>

@@ -1,11 +1,13 @@
 @* h37Report Template File *@
 @import com.github.nscala_time.time.Imports._
+@import InstrumentThreshold._
 @(monitor:Monitor.Value, start:DateTime, end:DateTime, rsList: List[T100Record])
 <H3>測站:@Monitor.map(monitor).name</H3>
 <H5>儀器:T100</H5>
 <H5>開始:@start.toString("YYYY-MM-dd")</H5>
 <H5>結束:@end.toString("YYYY-MM-dd")</H5>
-<table id="t100Report" class="table">
+<span style="color:red">超過內控值</span>
+<table id="reportTable" class="table">
 <thead>
 	<tr>		
 		<th>時間</th>
@@ -35,42 +37,31 @@
 	@for(rs<-rsList){
 		<tr>
 			<td>@rs.time.toString("YYYY-MM-dd HH:mm")</td>
-			<td>@("%.0f".format(rs.range))</td>
-			<td>@("%.3f".format(rs.stabil))</td>
-			<td>@("%.3f".format(rs.stabil2))</td>
-			<td>@("%.1f".format(rs.press))</td>
-			<td>@("%.0f".format(rs.samp_fl))</td>
-			<td>@("%.1f".format(rs.pmt))</td>
-			<td>@("%.1f".format(rs.norm_pmt))</td>
-			<td>@("%.1f".format(rs.uv_lamp))</td>
-			<td>@("%.3f".format(rs.uv_stb))</td>
-			<td>@("%.1f".format(rs.lamp_ratio))</td>
-			<td>@("%.3f".format(rs.str_lgt))</td>
-			<td>@("%.1f".format(rs.drk_pmt))</td>
-			<td>@("%.1f".format(rs.drk_lmp))</td>
-			<td>@("%.3f".format(rs.slope))</td>
-            <td>@("%.1f".format(rs.offset))</td>
-            <td>@("%.0f".format(rs.hvps))</td>
-            <td>@("%.0f".format(rs.rcell_temp))</td>
-            <td>@("%.1f".format(rs.box_temp))</td>
-            <td>@("%.1f".format(rs.pmt_temp))</td>
-            <td>@("%.1f".format(rs.test))</td>
+			<td style="@getStyle(T100_RANGE, rs.range)">@("%.0f".format(rs.range))</td>
+			<td style="@getStyle(T100_STABIL, rs.stabil)">@("%.3f".format(rs.stabil))</td>
+			<td style="@getStyle(T100_STABIL2, rs.stabil2)">@("%.3f".format(rs.stabil2))</td>
+			<td style="@getStyle(T100_PRES, rs.press)">@("%.1f".format(rs.press))</td>
+			<td style="@getStyle(T100_SAMP_FL, rs.samp_fl)">@("%.0f".format(rs.samp_fl))</td>
+			<td style="@getStyle(T100_PMT, rs.pmt)">@("%.1f".format(rs.pmt))</td>
+			<td style="@getStyle(T100_NORM_PMT, rs.norm_pmt)">@("%.1f".format(rs.norm_pmt))</td>
+			<td style="@getStyle(T100_UV_LAMP, rs.uv_lamp)">@("%.1f".format(rs.uv_lamp))</td>
+			<td style="@getStyle(T100_UV_STB, rs.uv_stb)">@("%.3f".format(rs.uv_stb))</td>
+			<td style="@getStyle(T100_LAMP_RATIO, rs.lamp_ratio)">@("%.1f".format(rs.lamp_ratio))</td>
+			<td style="@getStyle(T100_STR_LGT, rs.str_lgt)">@("%.3f".format(rs.str_lgt))</td>
+			<td style="@getStyle(T100_DRK_PMT, rs.drk_pmt)">@("%.1f".format(rs.drk_pmt))</td>
+			<td style="@getStyle(T100_DRK_LMP, rs.drk_lmp)">@("%.1f".format(rs.drk_lmp))</td>			
+			<td style="@getStyle(T100_SLOPE, rs.slope)">@("%.3f".format(rs.slope))</td>
+            <td style="@getStyle(T100_OFFSET, rs.offset)">@("%.1f".format(rs.offset))</td>
+            <td style="@getStyle(T100_HVPS, rs.hvps)">@("%.0f".format(rs.hvps))</td>
+            <td style="@getStyle(T100_RCELL_TEMP, rs.rcell_temp)">@("%.0f".format(rs.rcell_temp))</td>            
+            <td style="@getStyle(T100_BOX_TEMP, rs.box_temp)">@("%.1f".format(rs.box_temp))</td>
+            <td style="@getStyle(T100_PMT_TEMP, rs.pmt_temp)">@("%.1f".format(rs.pmt_temp))</td>
+            <td style="@getStyle(T100_TEST, rs.test)">@("%.1f".format(rs.test))</td>
 		</tr>
 	}
 </tbody>
 </table>
 <script>
 $(document ).ready(function() {
-	$('#t100Report').dataTable( {
-		responsive: true,
-		"dom": 'T&lt'+'clear'+'&gtlfrtip',
-		language: {
-			url: '@routes.Assets.at("localization/zh_tw.json")',							
-		},
-		"tableTools": {
-        	"sSwfPath": "@routes.Assets.at("js/plugins/dataTables/swf/copy_csv_xls_pdf.swf")"
-        },
-		"paging":   true
-	} );
 });
 </script>

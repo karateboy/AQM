@@ -110,6 +110,7 @@ POST	/InternalStd/:monitor/:mt/:std	controllers.Application.setInternalStd(monit
 POST	/MonitorImgUrl/:monitor	controllers.Application.setMonitorImgUrl(monitor)
 GET		/MonitorTypeConfig			controllers.Application.monitorTypeConfig
 POST	/SaveMonitorTypeConfig		controllers.Application.saveMonitorTypeConfig
+POST	/SetInstrumentThreshold		controllers.Application.setInstrumentThreshold
 GET		/MonitorStatusConfig		controllers.Application.monitorStatusConfig
 POST	/SaveMonitorStatusConfig		controllers.Application.saveMonitorStatusConfig
 GET 	/RecordValidation			controllers.Application.recordValidation

@@ -1,0 +1,70 @@
+@* instrument_threshold Template File *@
+
+<table id="instrumentThresholdTab" class="table table-striped" cellspacing="0" width="100%">
+<thead>
+	<tr>
+    	<th>名稱</th>
+        <th>上限</th>
+        <th>下現</th>
+    </tr>
+</thead>
+<tbody>
+	@for(thres <- InstrumentThreshold.values.toList.sorted){
+		<tr id="@thres">
+			<th>@thres</th>			
+			@if(InstrumentThreshold.getMax(thres).isDefined){
+				<td col="Max">@InstrumentThreshold.getMax(thres).get</td>
+				}else{
+				<td col="Max">-</td>
+				}				
+			
+			@if(InstrumentThreshold.getMin(thres).isDefined){
+				<td col="Min">@InstrumentThreshold.getMin(thres).get</td>
+				}else{
+				<td col="Min">-</td>
+				}			
+		</tr>
+	}
+</tbody>
+</table> 
+<script>
+var dataTableL10N = '@routes.Assets.at("localization/zh_tw.json")';
+</script>         		
+<script>
+$(document).ready(function() {
+    /* Init DataTables */
+    
+    var oTable = $('#instrumentThresholdTab').dataTable({
+    	language: {
+			url: dataTableL10N,							
+		},
+    	searching: false,
+    	ordering:  false,
+		paging: false
+    });
+	
+    /* Apply the jEditable handlers to the table */
+    oTable.$('td').editable( '/SetInstrumentThreshold', {
+    	indicator : '儲存中...',
+        tooltip   : '點擊該項目加以編輯...',
+        cancel    : '取消',
+        submit    : '確認',            
+        name : 'data', 
+        callback: function( sValue, y ) {
+            console.log("callback");
+            console.log(sValue);
+            console.log(y);
+        },           
+        submitdata: function ( value, settings ) {
+            var $me = $(this);
+            return {                    
+                id: $me.parent().attr("id") + "_" + $me.attr("col")
+            };
+        },
+
+        "width": "90%",
+        "height": "100%"
+    } );
+});
+
+</script>

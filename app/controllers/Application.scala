@@ -157,6 +157,34 @@ object Application extends Controller {
       }
   }
 
+  def setInstrumentThreshold() = Security.Authenticated {
+    implicit request =>      
+      try {
+        val mtForm = Form(
+          mapping(
+            "id" -> text,
+            "data" -> text)(EditData.apply)(EditData.unapply))
+
+        val threshold = mtForm.bindFromRequest.get
+
+        val v =
+          if(threshold.data.length() == 0 || threshold.data == "-")
+            None
+          else
+            Some(threshold.data.toFloat)
+
+        InstrumentThreshold.setValue(threshold.id, v)
+        
+        Ok(threshold.data)
+      } catch {
+        case e: Exception =>
+          Logger.error(e.toString)
+          BadRequest(e.toString)
+        case e: Throwable =>
+          Logger.error(e.toString)
+          BadRequest(e.toString)
+      }
+  }
   def newEquipment = Security.Authenticated(BodyParsers.parse.json) {
     implicit request =>
       val newEquipmentResult = request.body.validate[Equipment]
