@@ -42,10 +42,10 @@
 				}else{
 					<td>@item.endTime.toString("hh:mm")</td>
 				}
-				@if(item.z_val > MonitorType.map(item.monitorType).zd_law.get){
+				@if(MonitorType.map(item.monitorType).zd_law.isDefined && item.z_val > MonitorType.map(item.monitorType).zd_law.get){
 					<td style="color:red">@MonitorType.format(item.monitorType, Some(item.z_val))</td>
 				}else {
-					@if(item.z_val > MonitorType.map(item.monitorType).zd_internal.get){
+					@if(MonitorType.map(item.monitorType).zd_internal.isDefined && item.z_val > MonitorType.map(item.monitorType).zd_internal.get){
 						<td style="color:blue">@MonitorType.format(item.monitorType, Some(item.z_val))</td>
 					}else{
 						<td>@MonitorType.format(item.monitorType, Some(item.z_val))</td>	
