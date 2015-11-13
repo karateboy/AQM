@@ -182,7 +182,7 @@ class AuditStat(hr: HourRecord) {
 object Auditor {
   def auditHourData(monitor: Monitor.Value, auditConfig: AutoAudit, start: DateTime, end: DateTime)(implicit session: DBSession = AutoSession) = {
     val prestart = 
-      List(auditConfig.minMaxRule.count, auditConfig.persistenceRule.same, auditConfig.monoRule.count).max
+      List(auditConfig.persistenceRule.same, auditConfig.monoRule.count).max
       
     
     //val records = getUnauditedRecords(monitor, start - prestart, end + 1.hour).toArray
@@ -223,7 +223,7 @@ object Auditor {
         for (cfg <- auditConfig.minMaxRule.monitorTypes) {
           val mt = cfg.id
           val marks =
-            for (i <- idx - auditConfig.minMaxRule.count + 1 to idx) yield {
+            for (i <- idx to idx) yield {
               val mtRecord = Record.monitorTypeProject2(mt)(records(i))
 
               if (isOk(mtRecord)) {
@@ -236,7 +236,7 @@ object Auditor {
               } else
                 false
             }
-          if(marks.count { p => p} == auditConfig.minMaxRule.count){
+          if(marks.count { p => p} == 1){
             invalid = true
             targetStat.setAuditStat(mt, auditConfig.minMaxRule.mask)
           }

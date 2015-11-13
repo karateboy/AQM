@@ -22,7 +22,6 @@ case class MinMaxCfg(
 
 case class MinMaxRule (
   enabled:Boolean,
-  count:Int,
   monitorTypes:Seq[MinMaxCfg]    
 )extends Rule(0)
 
@@ -32,7 +31,7 @@ object MinMaxRule{
   implicit val minMaxRuleWrite = Json.writes[MinMaxRule]
   implicit val minMaxRuleRead = Json.reads[MinMaxRule]
 
-  val default = MinMaxRule(false, 1, Seq())
+  val default = MinMaxRule(false, Seq())
 }
 
 case class CompareRule(
@@ -105,13 +104,53 @@ object MonoRule{
   val default = MonoRule(false, 3, Seq.empty[MonoCfg])
   
 }
+
+case class TwoHourRule(enabled:Boolean, monitorTypes:Seq[MonoCfg])
+object TwoHourRule{
+  import MonoRule._
+  implicit val read = Json.reads[TwoHourRule]
+  implicit val write = Json.writes[TwoHourRule]
+  val default = TwoHourRule(false, Seq.empty[MonoCfg])
+}
+
+case class ThreeHourCfg(
+    id:MonitorType.Value,
+    abs:Float,
+    percent:Float
+)
+case class ThreeHourRule(enabled:Boolean, monitorTypes:Seq[ThreeHourCfg])
+object ThreeHourRule{
+  implicit val thcfgRead = Json.reads[ThreeHourCfg]
+  implicit val thcfgWrite = Json.writes[ThreeHourCfg]
+  implicit val reads = Json.reads[ThreeHourRule]
+  implicit val writes = Json.writes[ThreeHourRule]
+  
+  val default = ThreeHourRule(false, Seq.empty[ThreeHourCfg])
+}
+
+case class FourHourCfg(
+    id:MonitorType.Value,
+    abs:Float)
+
+case class FourHourRule(enabled:Boolean, monitorTypes:Seq[FourHourCfg])
+object FourHourRule{
+  implicit val thcfgRead = Json.reads[FourHourCfg]
+  implicit val thcfgWrite = Json.writes[FourHourCfg]
+  implicit val reads = Json.reads[FourHourRule]
+  implicit val writes = Json.writes[FourHourRule]
+  
+  val default = FourHourRule(false, Seq.empty[FourHourCfg])
+}
 case class AutoAudit(
     minMaxRule:MinMaxRule,
     compareRule:CompareRule,
     differenceRule:DifferenceRule,
     spikeRule:SpikeRule,
     persistenceRule:PersistenceRule,
-    monoRule:MonoRule
+    monoRule:MonoRule,
+    twoHourRule:TwoHourRule,
+    threeHourRule:ThreeHourRule,
+    fourHourRule:FourHourRule
 )
 
 /**
@@ -127,5 +166,8 @@ object AutoAudit {
       DifferenceRule.default,
       SpikeRule.default,
       PersistenceRule.default,
-      MonoRule.default) 
+      MonoRule.default,
+      TwoHourRule.default,
+      ThreeHourRule.default,
+      FourHourRule.default) 
 }

@@ -1,5 +1,30 @@
 @* auditConfig Template File *@
 @(privilege:Privilege)
+<script>
+var activeMonitor = $('#monitor').val();
+var auditConfig={};
+function postAuditCfg(){
+	$.ajax({
+		url : "/AuditConfig/" + activeMonitor,
+		data : JSON.stringify(auditConfig),
+		contentType : "application/json; charset=utf-8",
+		type : "POST",
+		dataType : "json",
+		success : function(result) {
+			if(result.ok)
+				alert('成功');
+			else
+				alert('失敗'+result.msg);
+		},
+		error : function(xhr, status, errorThrown) {
+			console.log("錯誤訊息:" + status + "-" + errorThrown);
+		},
+		complete : function(xhr, status) {
+		}
+	});		
+}
+
+</script>
 <div class="row">
     <div class="col-lg-12">
         <div class="panel panel-primary" id="paramPanel">
@@ -36,7 +61,7 @@
 		<a data-toggle="tab" href="#compareRule"> <span class="glyphicons glyphicons-hotspot">合理性稽核</span></a>
 	</li>
 	<li>
-		<a data-toggle="tab" href="#differceRule"> <span class="glyphicons glyphicons-hotspot">單調性稽核</span></a>
+		<a data-toggle="tab" href="#differenceRule"> <span class="glyphicons glyphicons-hotspot">單調性稽核</span></a>
 	</li>
 	<li>
 		<a data-toggle="tab" href="#spikeRule"> <span class="glyphicons glyphicons-hotspot">突波高值稽核</span></a>
@@ -47,222 +72,26 @@
 	<li>
 		<a data-toggle="tab" href="#monoRule"> <span class="glyphicons glyphicons-hotspot">一致性稽核</span></a>
 	</li>
+	<li>
+		<a data-toggle="tab" href="#twoHourRule"> <span class="glyphicons glyphicons-hotspot">小時值變換驗證</span></a>
+	</li>
+	<li>
+		<a data-toggle="tab" href="#threeHourRule"> <span class="glyphicons glyphicons-hotspot">三小時變化值驗證</span></a>
+	</li>
+	<li>
+		<a data-toggle="tab" href="#fourHourRule"> <span class="glyphicons glyphicons-hotspot">四小時變化值驗證</span></a>
+	</li>
 </ul>
 <div class="tab-content ibox-content">
-<div id="minMaxRule" class="tab-pane active" align="left">
-	<br/>
-	<h3>說明:</h3>
-	<p>汙染物濃度超過最大或最小值, 系統自動註記</p>
-	<form id="minMaxForm" class="form-horizontal">	
-		<div class="form-group">
-			<label class="col-lg-1 control-label">啟用</label>
-        	<div class="col-lg-1">        		
-            	<input type="checkbox" name="enabled" class="form-control">
-            </div>
-        </div>
-        <div id='minMaxParameter'>
-        	<label class="col-lg-1 control-label">連續小時數</label>
-            <div class="col-lg-10">
-            	<input name='count' type="number" class="form-control" value='1' disabled>
-            </div>
-        
-        <table class="table">
-        	<thead>
-        		<tr>
-        			<th>測項</th>
-        			<th>最大值</th>
-        			<th>最小值</th>
-        		</tr>
-        	</thead>
-        	<tbody>
-        		@for(mt<-MonitorType.mtvList){
-        			<tr>
-        				<th><input type="checkbox" name="monitorType" id='@mt' disabled>@MonitorType.map(mt).desp</th>
-        				<td><input name="maxValue" id='@mt' value='@MonitorType.map(mt).std_internal_default' disabled></td>
-        				<td><input name="minValue" id='@mt' value='0' disabled></td>
-        			</tr>
-        		}
-        	</tbody>
-        </table>
-        </div>
-		<div class="form-group">
-        	<div class="col-lg-offset-2 col-lg-10">
-            	<button class="btn btn-primary" type="submit">確認</button>
-            </div>
-        </div>
-	</form>    
-</div>
-<div id="compareRule" class="tab-pane" align="left">
-	<br/>
-	<h3>說明:</h3>
-	<p>由同一測站不同汙染物的從屬關係,進行合理性判斷.</p>
-	<form id="compareForm" class="form-horizontal">
-        <div class="form-group">
-			<label class="col-lg-1 control-label">啟用</label>
-        	<div class="col-lg-1">        		
-            	<input type="checkbox" name="enabled" class="form-control">
-            </div>
-        </div>
-                    	
-        <h3>測項比較規則:</h3>
- 		<ul>
-			<li>THC > CH4 且  THC>NMHC </li>
-			<li>NOx >= NO2 且NOx >= NO</li>
-			<li>相對溼度<=100%</li>
-		</ul>
-		<div class="form-group">
-        	<div class="col-lg-offset-2 col-lg-10">
-            	<button class="btn btn-primary" type="submit">確認</button>
-            </div>
-        </div>
-	</form>
-</div>
-<div id="differceRule" class="tab-pane" align="left">
-	<br/>
-	<h3>說明:</h3>
-	<p>(測值-平均值)>?倍標準差</p>
-	<form id="differenceForm" class="form-horizontal">
-        <div class="form-group">
-			<label class="col-lg-1 control-label">啟用</label>
-        	<div class="col-lg-1">        		
-            	<input type="checkbox" name="enabled" class="form-control">
-            </div>
-        </div>
-	    <div id='differenceParameter'>
-        	<label class="col-lg-1 control-label">超過標準差倍數</label>
-            <div class="col-lg-10">
-            	<input name='multiplier' type="number" class="form-control" value='3' disabled>
-            </div>
-            <div>
-            	<table class="table">
-        		<thead>
-        			<tr>
-        				<th>測項</th>
-        			</tr>
-        		</thead>
-        		<tbody>
-        			@for(mt<-MonitorType.mtvList){
-        				<tr>
-        					<th><input type="checkbox" name="monitorType" id='@mt' disabled>@MonitorType.map(mt).desp</th>
-        				</tr>
-        			}
-        		</tbody>
-        		</table>
-        	</div>
-        </div>
-	
-		<div class="form-group">
-        	<div class="col-lg-offset-2 col-lg-10">
-            	<button class="btn btn-primary" type="submit">確認</button>
-            </div>
-        </div>
-	</form>
-</div>
-<div id="spikeRule" class="tab-pane" align="left">
-	<br/>
-	<h3>說明:</h3>
-	<p>該測值超過前後平均的絕對值範圍</p>
-	<form id="spikeForm" class="form-horizontal">
-        <div class="form-group">
-			<label class="col-lg-1 control-label">啟用</label>
-        	<div class="col-lg-1">        		
-            	<input type="checkbox" name="enabled" class="form-control">
-            </div>
-        </div>
-		<div id='spikeParameter'>
-        <table class="table">
-        	<thead>
-        		<tr>
-        			<th>測項</th>
-        			<th>絕對值</th>
-        		</tr>
-        	</thead>
-        	<tbody>
-        		@for(mt<-MonitorType.mtvList){
-        			<tr>
-        				<th><input type="checkbox" name="monitorType" id='@mt' disabled>@MonitorType.map(mt).desp</th>
-        				<td><input name="absValue" id='@mt' value='10' disabled></td>
-        			</tr>
-        		}
-        	</tbody>
-        </table>
-        </div>
-		
-		<div class="form-group">
-        	<div class="col-lg-offset-2 col-lg-10">
-            	<button class="btn btn-primary" type="submit">確認</button>
-            </div>
-        </div>
-	</form>
-</div>
-<div id="persistenceRule" class="tab-pane" align="left">
-	<br/>
-	<h3>說明:</h3>
-	<p>連續多筆值相等, 視為連續性數值</p>
-	<form id="persistenceForm" class="form-horizontal">
-        <div class="form-group">
-			<label class="col-lg-1 control-label">啟用</label>
-        	<div class="col-lg-1">        		
-            	<input type="checkbox" name="enabled" class="form-control">
-            </div>
-        </div>
-		<div id='persistenceParameter' class="form-group">
-        	<label class="col-lg-1 control-label">連續筆數</label>
-            <div class="col-lg-10">
-            	<input name='same' type="number" class="form-control" value='3' disabled>
-            </div>
-        </div>
-	
-		<div class="form-group">
-        	<div class="col-lg-offset-2 col-lg-10">
-            	<button class="btn btn-primary" type="submit">確認</button>
-            </div>
-        </div>
-	</form>
-</div>
-<div id="monoRule" class="tab-pane" align="left">
-	<br/>
-	<h3>說明:</h3>
-	<p>連續數小時之最高值與最低值之差小於系統設定值, 該測項小時值註記為異常</p>
-	<form id="monoForm" class="form-horizontal">
-        <div class="form-group">
-			<label class="col-lg-1 control-label">啟用</label>
-        	<div class="col-lg-1">        		
-            	<input type="checkbox" name="enabled" class="form-control">
-            </div>
-        </div>
-		<div id='monoParameter'>
-		 	<div class="form-group">
-        		<label class="col-lg-1 control-label">連續小時數</label>
-            	<div class="col-lg-10">
-            		<input name='count' type="number" class="form-control" value='3' disabled>
-            	</div>
-            </div>
-            <table class="table">
-        		<thead>
-        		<tr>
-        			<th>測項</th>
-        			<th>最高最低值差</th>
-        		</tr>
-        		</thead>
-        		<tbody>
-        		@for(mt<-MonitorType.mtvList){
-        			<tr>
-        				<th><input type="checkbox" name="monitorType" id='@mt' disabled>@MonitorType.map(mt).desp</th>
-        				<td><input name="absValue" id='@mt' value='10' disabled></td>
-        			</tr>
-        		}
-        		</tbody>
-        	</table>            
-        </div>
-	
-		<div class="form-group">
-        	<div class="col-lg-offset-2 col-lg-10">
-            	<button class="btn btn-primary" type="submit">確認</button>
-            </div>
-        </div>
-	</form>
-</div>	
+@maxMinRule()
+@compareRule()
+@differenceRule()
+@spikeRule()
+@persistenceRule()
+@monoRule()
+@twoHourRule()
+@threeHourRule()
+@fourHourRule()
 </div>
 </div>
 </div>
@@ -278,9 +107,6 @@ var std_internal={};
 </script>
 <script>
 $( document ).ready(function(){
-	var activeMonitor = $('#monitor').val();
-	var auditConfig={};
-
 	function updateUI(){
 		updateMinMaxForm();
 		updateCompareForm();
@@ -288,6 +114,9 @@ $( document ).ready(function(){
 		updateSpikeForm();
 		updatePersistenceForm();
 		updateMonoForm();
+		updatetwoHourForm();
+		updatethreeHourForm();
+		updatefourHourForm();
 	}
 	
 	function refreshAuditConfig(monitor){
@@ -310,8 +139,6 @@ $( document ).ready(function(){
 		});	
 	}
 	
-	refreshAuditConfig(activeMonitor);
-	
 	$("input[name='monitor']").change(function(){
 		var me = $(this)		
 		refreshAuditConfig(me.attr('id'));		
@@ -319,334 +146,6 @@ $( document ).ready(function(){
 		$('#monitor').val(activeMonitor);	
 	});
 
-	
-	function updateMinMaxForm(){
-		var config = auditConfig.minMaxRule;
-		var $enabled = $('#minMaxForm :input[name="enabled"]');
-		$enabled.prop('checked', config.enabled);
-		var $count = $('#minMaxForm :input[name="count"]');
-		$count.val(config.count);
-		$count.prop('disabled', !config.enabled);
-		
-		var $inputs = $('#minMaxParameter :input');
-		function findMinMaxCfg(array, id){
-			for(var i=0;i<array.length;i++){
-				if(array[i].id == id)
-					return array[i]
-			}
-
-			return null;				
-		}
-		
-		for(var i=0;i<$inputs.length;i++){
-			var $input = $inputs.eq(i);
-			$input.prop('disabled', !config.enabled);
-			if($input.prop('type') == 'checkbox'){
-				var id = $input.prop('id');
-				var mt = findMinMaxCfg(config.monitorTypes, id);
-				if(mt != null){
-					$input.prop('checked', true);
-					var $max = $input.parent().next().children();
-					$max.val(mt.max);
-					var $min = $max.parent().next().children();
-					$min.val(mt.min);
-				}else{
-					$input.prop('checked', false);
-					var $max = $input.parent().next().children();
-					$max.val(std_internal[id]);
-					var $min = $max.parent().next().children();
-					$min.val(0);
-				}				
-			}
-		}
-	}
-	
-	$('#minMaxForm :input[name="enabled"]').click(function(){
-		var $me=$(this);
-		var $inputs = $('#minMaxParameter :input');
-		var disabled = !$me.prop('checked'); 
-		for(var i=0;i<$inputs.length;i++){
-			var $check = $inputs.eq(i);
-			$check.prop("disabled", disabled);
-		}
-	});
-
-	function postAuditCfg(){
-		$.ajax({
-			url : "/AuditConfig/" + activeMonitor,
-			data : JSON.stringify(auditConfig),
-			contentType : "application/json; charset=utf-8",
-			type : "POST",
-			dataType : "json",
-			success : function(result) {
-				if(result.ok)
-					alert('成功');
-				else
-					alert('失敗'+result.msg);
-			},
-			error : function(xhr, status, errorThrown) {
-				console.log("錯誤訊息:" + status + "-" + errorThrown);
-			},
-			complete : function(xhr, status) {
-			}
-		});		
-	}
-	
-	$('#minMaxForm').submit(function(){
-		var param={};
-		var $enabled = $('#minMaxForm :input[name="enabled"]')
-		var $count = $('#minMaxForm :input[name="count"]');
-		var $inputs = $('#minMaxParameter :input');
-		param.enabled = $enabled.prop("checked");
-		param.count = parseInt($count.val());
-		param.monitorTypes=[];
-		for(var i=0;i<$inputs.length;i++){
-			var $check = $inputs.eq(i);
-			if($check.prop("checked")){				
-				var mt={};
-				mt.id = $check.prop('id');
-				var $max = $check.parent().next().children();				
-				mt.max = parseFloat($max.val());
-				var $min = $max.parent().next().children();
-				mt.min = parseFloat($min.val());
-				param.monitorTypes.push(mt);
-			}
-		}
-		auditConfig.minMaxRule = param;
-		postAuditCfg();
-		event.preventDefault();
-	});
-
-	function updateCompareForm(){
-		var config = auditConfig.compareRule;
-		var $enabled = $('#compareForm :input[name="enabled"]')
-		$enabled.prop('checked', config.enabled);
-	}
-	
-	$('#compareForm :input[name="enabled"]').click(function(){
-		var $me=$(this);
-	});
-	
-	$('#compareForm').submit(function(){
-		var param={};
-		var $enabled = $('#compareForm :input[name="enabled"]')
-		param.enabled = $enabled.prop("checked");
-		auditConfig.compareRule = param;
-		postAuditCfg();
-		event.preventDefault();
-	});
-
-	function updateDifferenceForm(){
-		var config = auditConfig.differenceRule;
-		var $enabled = $('#differenceForm :input[name="enabled"]');
-		$enabled.prop('checked', config.enabled);
-		var $multiplier = $('#differenceForm :input[name="multiplier"]')
-		$multiplier.val(config.multiplier);
-		$multiplier.prop("disabled", !config.enabled);
-		var $inputs = $('#differenceForm :input[name="monitorType"]');
-		for(var i=0;i<$inputs.length;i++){
-			var $check = $inputs.eq(i);
-			if(config.monitorTypes.indexOf($check.prop('id')) != -1)
-				$check.prop('checked', true);
-			else
-				$check.prop('checked', false);
-			
-			$check.prop("disabled", !config.enabled);
-		}			
-	}
-	
-	$('#differenceForm :input[name="enabled"]').click(function(){
-		var $me=$(this);
-		var $inputs = $('#differenceParameter :input');
-		var disabled = !$me.prop('checked'); 
-		for(var i=0;i<$inputs.length;i++){
-			var $check = $inputs.eq(i);
-			$check.prop("disabled", disabled);
-		}
-	});
-	
-	$('#differenceForm').submit(function(){
-		var param={};
-		var $enabled = $('#differenceForm :input[name="enabled"]')
-		var $multiplier = $('#differenceForm :input[name="multiplier"]')
-		
-		var $inputs = $('#differenceForm :input[name="monitorType"]');
-		param.enabled = $enabled.prop("checked");
-		param.multiplier = parseFloat($multiplier.val());
-		
-		param.monitorTypes=[];
-		for(var i=0;i<$inputs.length;i++){
-			var $check = $inputs.eq(i);
-			if($check.prop("checked")){				
-				param.monitorTypes.push($check.prop('id'));
-			}
-		}
-
-		auditConfig.differenceRule = param;
-		postAuditCfg();
-		event.preventDefault();
-	});
-
-	function updateSpikeForm(){
-		var config = auditConfig.spikeRule;
-		var $enabled = $('#spikeForm :input[name="enabled"]');
-		$enabled.prop('checked', config.enabled);
-		var $inputs = $('#spikeParameter :input');
-		function findSpikeCfg(array, id){
-			for(var i=0;i<array.length;i++){
-				if(array[i].id == id)
-					return array[i]
-			}
-
-			return null;				
-		}
-		
-		for(var i=0;i<$inputs.length;i++){
-			var $input = $inputs.eq(i);
-			$input.prop('disabled', !config.enabled);
-			if($input.prop('type') == 'checkbox'){
-				var id = $input.prop('id');
-				var spike = findSpikeCfg(config.monitorTypes, id);
-				if(spike != null){
-					$input.prop('checked', true);
-					var $abs = $input.parent().next().children();
-					$abs.val(spike.abs);
-				}else{
-					$input.prop('checked', false);
-					var $abs = $input.parent().next().children();
-					$abs.val(10);
-				}				
-			}
-		}	
-	}
-	
-	$('#spikeForm :input[name="enabled"]').click(function(){
-		var $me=$(this);
-		var $inputs = $('#spikeParameter :input');
-		var disabled = !$me.prop('checked'); 
-		for(var i=0;i<$inputs.length;i++){
-			var $check = $inputs.eq(i);
-			$check.prop("disabled", disabled);
-		}
-	});
-	$('#spikeForm').submit(function(){
-		var param={};
-		var $enabled = $('#spikeForm :input[name="enabled"]')
-		var $inputs = $('#spikeParameter :input[name="monitorType"]');
-		param.enabled = $enabled.prop("checked");
-		param.monitorTypes=[];
-		for(var i=0;i<$inputs.length;i++){
-			var $check = $inputs.eq(i);
-			if($check.prop("checked")){				
-				var mt={};
-				mt.id = $check.prop('id');
-				var $abs = $check.parent().next().children();				
-				mt.abs = parseFloat($abs.val());
-				param.monitorTypes.push(mt);
-			}
-		}
-		auditConfig.spikeRule = param;
-		postAuditCfg();
-		event.preventDefault();
-	});
-
-	function updatePersistenceForm(){
-		var config = auditConfig.persistenceRule;
-		var $enabled = $('#persistenceForm :input[name="enabled"]');
-		$enabled.prop('checked', config.enabled);
-		var $same = $('#persistenceForm :input[name="same"]');
-		$same.val(config.same);
-		$same.prop('disabled', !config.enabled);
-	}
-	
-	$('#persistenceForm :input[name="enabled"]').click(function(){
-		var $me=$(this);
-		var $inputs = $('#persistenceParameter :input');
-		var disabled = !$me.prop('checked'); 
-		for(var i=0;i<$inputs.length;i++){
-			var $check = $inputs.eq(i);
-			$check.prop("disabled", disabled);
-		}
-	});
-	$('#persistenceForm').submit(function(){
-		var param={};
-		var $enabled = $('#persistenceForm :input[name="enabled"]');
-		var $same = $('#persistenceForm :input[name="same"]');
-		param.enabled = $enabled.prop("checked");
-		param.same = parseInt($same.val()); 
-		
-		auditConfig.persistenceRule = param;
-		postAuditCfg();
-		event.preventDefault();
-	});
-
-	function updateMonoForm(){
-		var config = auditConfig.monoRule;
-		var $enabled = $('#monoForm :input[name="enabled"]');
-		$enabled.prop('checked', config.enabled);
-		var $count = $('#monoForm :input[name="count"]');
-		$count.val(config.count);
-		$count.prop('disabled', !config.enabled);
-		
-		var $inputs = $('#monoParameter :input');
-		function findSpikeCfg(array, id){
-			for(var i=0;i<array.length;i++){
-				if(array[i].id == id)
-					return array[i]
-			}
-
-			return null;				
-		}
-		
-		for(var i=0;i<$inputs.length;i++){
-			var $input = $inputs.eq(i);
-			$input.prop('disabled', !config.enabled);
-			if($input.prop('type') == 'checkbox'){
-				var id = $input.prop('id');
-				var spike = findSpikeCfg(config.monitorTypes, id);
-				if(spike != null){
-					$input.prop('checked', true);
-					var $abs = $input.parent().next().children();
-					$abs.val(spike.abs);
-				}else{
-					$input.prop('checked', false);
-					var $abs = $input.parent().next().children();
-					$abs.val(10);
-				}				
-			}
-		}	
-	}
-	$('#monoForm :input[name="enabled"]').click(function(){
-		var $me=$(this);
-		var $inputs = $('#monoParameter :input');
-		var disabled = !$me.prop('checked'); 
-		for(var i=0;i<$inputs.length;i++){
-			var $check = $inputs.eq(i);
-			$check.prop("disabled", disabled);
-		}
-	});
-	$('#monoForm').submit(function(){
-		var param={};
-		var $enabled = $('#monoForm :input[name="enabled"]')
-		var $inputs = $('#monoParameter :input[name="monitorType"]');
-		var $count = $('#monoForm :input[name="count"]');
-		param.enabled = $enabled.prop("checked");
-		param.count = parseInt($count.val());
-		param.monitorTypes=[];
-		for(var i=0;i<$inputs.length;i++){
-			var $check = $inputs.eq(i);
-			if($check.prop("checked")){				
-				var mt={};
-				mt.id = $check.prop('id');
-				var $abs = $check.parent().next().children();				
-				mt.abs = parseFloat($abs.val());
-				param.monitorTypes.push(mt);
-			}
-		}
-		auditConfig.monoRule = param;
-		postAuditCfg();
-		event.preventDefault();
-	});
-	
+	refreshAuditConfig(activeMonitor);	
 });
 </script>
