@@ -58,7 +58,7 @@
 				@if(MonitorType.map(item.monitorType).sd_law.isDefined && item.sd_pnt > MonitorType.map(item.monitorType).sd_law.get){
 					<td style="color:red">@MonitorType.format(item.monitorType, Some(item.sd_pnt))</td>
 				}else {
-					@if(item.sd_pnt > MonitorType.map(item.monitorType).sd_internal.get){
+					@if(MonitorType.map(item.monitorType).sd_internal.isDefined && item.sd_pnt > MonitorType.map(item.monitorType).sd_internal.get){
 						<td style="color:blue">@MonitorType.format(item.monitorType, Some(item.sd_pnt))</td>
 					}else{
 						<td>@MonitorType.format(item.monitorType, Some(item.sd_pnt))</td>	
