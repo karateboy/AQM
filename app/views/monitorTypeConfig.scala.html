@@ -141,28 +141,31 @@ var dataTableL10N = '@routes.Assets.at("localization/zh_tw.json")';
 	});
 	$("#autoAuditNormal").change(function(evt){
 		var $ctrl = $(this);
-		var v = $ctrl.prop("checked");		
+		var v = $ctrl.prop("checked");
+		var obj ={
+			value: v
+		};
 		var url = "/AutoAuditNormal/" + v;
 		console.log(url);
+		
 		$.ajax({
 			url: url,
-			data: JSON.stringify(v),
+			data: JSON.stringify(obj),
 			contentType: "application/json; charset=utf-8",
 			method:"POST",			
 			dataType: "json",
 			success: function(result){
-				if(result.ok){
-					alert("成功");
-				}else{
-					alert("失敗:"+result.msg);
-				}
+				if(result.ok)
+					alert("設定成功");
+				else
+					alert("無法設定");
 			},
 			error: function(xhr, status, errorThrown){
-				alert("失敗:" + status + "-" + errorThrown);
+				alert(status + ":" + errorThrown);
 			},
 
 			complete: function(xhr, status){
 			}					
-		});
+		});	
 	});
 </script>

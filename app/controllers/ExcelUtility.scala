@@ -1779,4 +1779,16 @@ object ExcelUtility {
     }
     finishExcel(reportFilePath, pkg, wb)
   }
+  
+  def minMonthlyReport(monitors:List[Monitor.Value], start:DateTime)={
+    val (reportFilePath, pkg, wb) = prepareTemplate("minMonthlyReport.xlsx")
+    val evaluator = wb.getCreationHelper().createFormulaEvaluator()
+
+    for((m, idx)<-monitors.zipWithIndex){ 
+      Logger.debug(s"get ${m} min Data")
+      val minRecords = Record.getMinRecords(m, start, start + 1.month)
+      val sheet = wb.createSheet(Monitor.map(m).name)
+    }
+    finishExcel(reportFilePath, pkg, wb)
+  }
 }

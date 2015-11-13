@@ -1,6 +1,6 @@
 @* periodReport Template File *@
 @import com.github.nscala_time.time.Imports._
-@(privilege: Privilege)
+@(privilege: Privilege)(implicit request: RequestHeader)
 
 <div class="row">
    	<div class="col-lg-12">
@@ -58,6 +58,27 @@
             		</form>
             	</div>
         	</div>
+        	<!-- Modal -->
+  			<div class="modal fade" id="MinMonthlyDialog" role="dialog">
+    			<div class="modal-dialog modal-lg">
+      				<div class="modal-content">
+        			<div class="modal-header">
+          			<button type="button" class="close" data-dismiss="modal">&times;</button>
+          				<h4 class="modal-title">@PeriodReport.map(PeriodReport.MinMonthlyReport)</h4>
+        			</div>
+        			<div class="modal-body">
+          				<div class="progress">
+  							<div id="progressBar" class="progress-bar progress-bar-striped active" role="progressbar"
+  								aria-valuenow="1" aria-valuemin="0" aria-valuemax="100" style="width:1%">
+    							1%
+  							</div>
+						</div>
+        			</div>
+      				</div>
+    			</div>
+  			</div>
+
+        	
         	<div class="panel panel-success" style="display:none" id="reportPanel">
              	<div class="panel-body panel-collapse" id="monitorReport">
             		<div align="right">
@@ -74,9 +95,22 @@
 <script>
 	var l10n_url = '@routes.Assets.at("localization/zh_tw.json")';
 	var swf_path = "@routes.Assets.at("js/plugins/dataTables/swf/copy_csv_xls_pdf.swf")";
+	var ws_url = '@routes.Report.getMinMonthlySocket().webSocketURL()';
 </script>
 <script>
 $( document ).ready(function() {
+	function downloadMinMonthly(obj){
+		$('#MinMonthlyDialog').modal({keyboard: false});
+		//var url="/Excel/monitorReport/"+reportType+"/"+monitor+"/"+reportDate;
+		//window.location.assign(url);
+		var socket = new WebSocket(ws_url);
+		var $bar = $('#progressBar');
+		$bar.prop('aria-valuenow', 5);
+		$bar.prop('style', "width:5%");
+		$bar.text("5%");
+		$("body").css("cursor", "default");
+	}
+	
 	$('#reportDate').datetimepicker({
 		format: 'YYYY-MM-D',
 		defaultDate: moment().subtract(1, 'days'),
@@ -87,7 +121,7 @@ $( document ).ready(function() {
 		var me = $(this)
 		if(me.attr('id') == 'daily'){
 			$('#reportDate').data("DateTimePicker").format("YYYY-M-D");			
-		}else if(me.attr('id') == 'monthly'){
+		}else if(me.attr('id') == 'monthly' || me.attr('id') == 'MinMonthly'){
 			$('#reportDate').data("DateTimePicker").format("YYYY-M");
 		}else{
 			$('#reportDate').data("DateTimePicker").format("YYYY");			
@@ -115,13 +149,11 @@ $( document ).ready(function() {
 		
 		return true;
 	}
+
 	
 	$('#queryReport').click(function(){
 		if(!validate())
 			return;
-
-		$("#reportPanel").css('display','block');
-		$("#reportPanel").collapse('show');
 
 		var obj = {
 			'monitor':monitor,
@@ -129,44 +161,51 @@ $( document ).ready(function() {
 			'startTime':reportDate
 		};
 
-		$('#reportDiv').html('');
 		$("body").css("cursor", "progress");
-		console.log(JSON.stringify(obj));
-		var url="/monitorReport/"+reportType+"/"+monitor+"/"+reportDate;
-		$.ajax({
-			url: url,
-			data: "",
-			contentType: "application/json; charset=utf-8",
-			type: "GET",
-			dataType: "html",
-			success: function(result){
-				$('#reportDiv').html(result);
 
-				$('#reportTable').dataTable( {
-					responsive: true,
-					"dom": 'T<"clear">lfrtip',
-					language: {
-						url: l10n_url,							
-					},
-					"tableTools": {
-        				"sSwfPath": swf_path,
-        				"aButtons": ["copy", "print", "csv"]
-        			},
-					"paging":   false,
-					"searching": false
-	    		} );
-	    		
-	    		$("#downloadPDF").prop("href", "/PDF" + url);
-				$("#downloadExcel").prop("href", "/Excel" + url);	    			    		
-			},
-			error: function(xhr, status, errorThrown){
-				console.log("錯誤訊息:" + status + "-" + errorThrown);
-			},
+		if(reportType == 'MinMonthly'){
+			downloadMinMonthly(obj);	
+		}else {
+			$('#reportDiv').html('');
+			$("#reportPanel").css('display','block');
+			$("#reportPanel").collapse('show');
+				
+			var url="/monitorReport/"+reportType+"/"+monitor+"/"+reportDate;
+			$.ajax({
+				url: url,
+				data: "",
+				contentType: "application/json; charset=utf-8",
+				type: "GET",
+				dataType: "html",
+				success: function(result){
+					$('#reportDiv').html(result);
 
-			complete: function(xhr, status){
-				$("body").css("cursor", "default");
-			}					
-		});
+					$('#reportTable').dataTable( {
+						responsive: true,
+						"dom": 'T<"clear">lfrtip',
+						language: {
+							url: l10n_url,							
+						},
+						"tableTools": {
+	        				"sSwfPath": swf_path,
+	        				"aButtons": ["copy", "print", "csv"]
+	        			},
+						"paging":   false,
+						"searching": false
+		    		} );
+		    		
+		    		$("#downloadPDF").prop("href", "/PDF" + url);
+					$("#downloadExcel").prop("href", "/Excel" + url);	    			    		
+				},
+				error: function(xhr, status, errorThrown){
+					console.log("錯誤訊息:" + status + "-" + errorThrown);
+				},
+
+				complete: function(xhr, status){
+					$("body").css("cursor", "default");
+				}					
+			});				
+		}
 	});
 });
 </script>

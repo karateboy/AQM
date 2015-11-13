@@ -186,3 +186,5 @@ GET		/EventLogReport/:start/:end	controllers.Maintance.eventLogReport(start, end
 
 GET		/TestAlarmMail		controllers.Maintance.testAlarmMail
 GET		/DutySchedule		controllers.Maintance.dutySchedule
+
+GET		/MinMonthlyReportSocket		controllers.Report.getMinMonthlySocket
