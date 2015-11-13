@@ -42,10 +42,12 @@
 				}else{
 					<td>@item.endTime.toString("hh:mm")</td>
 				}
-				@if(MonitorType.map(item.monitorType).zd_law.isDefined && item.z_val > MonitorType.map(item.monitorType).zd_law.get){
+				@if(MonitorType.map(item.monitorType).zd_law.isDefined && 
+					(item.z_val > MonitorType.map(item.monitorType).zd_law.get)){
 					<td style="color:red">@MonitorType.format(item.monitorType, Some(item.z_val))</td>
 				}else {
-					@if(MonitorType.map(item.monitorType).zd_internal.isDefined && item.z_val > MonitorType.map(item.monitorType).zd_internal.get){
+					@if(MonitorType.map(item.monitorType).zd_internal.isDefined && 
+						(item.z_val > MonitorType.map(item.monitorType).zd_internal.get)){
 						<td style="color:blue">@MonitorType.format(item.monitorType, Some(item.z_val))</td>
 					}else{
 						<td>@MonitorType.format(item.monitorType, Some(item.z_val))</td>	
@@ -55,10 +57,12 @@
 				<td>@MonitorType.map(item.monitorType).zd_law</td>
 				<td>@MonitorType.format(item.monitorType, Some(item.s_sval))</td>
 				<td>@MonitorType.format(item.monitorType, Some(item.s_std))</td>
-				@if(MonitorType.map(item.monitorType).sd_law.isDefined && item.sd_pnt > MonitorType.map(item.monitorType).sd_law.get){
+				@if(MonitorType.map(item.monitorType).sd_law.isDefined && 
+					(item.sd_pnt > MonitorType.map(item.monitorType).sd_law.get)){
 					<td style="color:red">@MonitorType.format(item.monitorType, Some(item.sd_pnt))</td>
 				}else {
-					@if(MonitorType.map(item.monitorType).sd_internal.isDefined && item.sd_pnt > MonitorType.map(item.monitorType).sd_internal.get){
+					@if(MonitorType.map(item.monitorType).sd_internal.isDefined && 
+						(item.sd_pnt > MonitorType.map(item.monitorType).sd_internal.get)){
 						<td style="color:blue">@MonitorType.format(item.monitorType, Some(item.sd_pnt))</td>
 					}else{
 						<td>@MonitorType.format(item.monitorType, Some(item.sd_pnt))</td>	
@@ -67,12 +71,16 @@
 				
 				<td>@MonitorType.map(item.monitorType).sd_internal</td>
 				<td>@MonitorType.map(item.monitorType).sd_law</td>
-				@if(MonitorType.map(item.monitorType).zd_law.isDefined && item.z_val > MonitorType.map(item.monitorType).zd_law.get || 
-					MonitorType.map(item.monitorType).sd_law.isDefined && item.sd_pnt > MonitorType.map(item.monitorType).sd_law.get){
+				@if((MonitorType.map(item.monitorType).zd_law.isDefined && 
+					(item.z_val > MonitorType.map(item.monitorType).zd_law.get)) || 
+					(MonitorType.map(item.monitorType).sd_law.isDefined && 
+						(item.sd_pnt > MonitorType.map(item.monitorType).sd_law.get))){
 					<td style="color:red">失敗</td>
 				}else {
-					@if(MonitorType.map(item.monitorType).zd_internal.isDefined && item.z_val > MonitorType.map(item.monitorType).zd_internal.get || 
-						MonitorType.map(item.monitorType).sd_internal.isDefined && item.sd_pnt > MonitorType.map(item.monitorType).sd_internal.get){
+					@if((MonitorType.map(item.monitorType).zd_internal.isDefined && 
+						(item.z_val > MonitorType.map(item.monitorType).zd_internal.get)) || 
+						(MonitorType.map(item.monitorType).sd_internal.isDefined && 
+						(item.sd_pnt > MonitorType.map(item.monitorType).sd_internal.get))){
 						<td style="color:blue">成功</td>
 					}else{
 						<td>成功</td>	
