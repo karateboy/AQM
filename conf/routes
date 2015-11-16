@@ -189,3 +189,4 @@ GET		/TestAlarmMail		controllers.Maintance.testAlarmMail
 GET		/DutySchedule		controllers.Maintance.dutySchedule
 
 GET		/MinMonthlyReportSocket		controllers.Report.getMinMonthlySocket
+GET		/DownloadMinMonthlyReport/:n	controllers.Report.downloadMinMontlyReport(n: Int)

@@ -69,8 +69,8 @@
         			<div class="modal-body">
           				<div class="progress">
   							<div id="progressBar" class="progress-bar progress-bar-striped active" role="progressbar"
-  								aria-valuenow="1" aria-valuemin="0" aria-valuemax="100" style="width:1%">
-    							1%
+  								aria-valuenow="0" aria-valuemin="0" aria-valuemax="100" style="width:0%">
+    							0%
   							</div>
 						</div>
         			</div>
@@ -99,16 +99,45 @@
 </script>
 <script>
 $( document ).ready(function() {
-	function downloadMinMonthly(obj){
-		$('#MinMonthlyDialog').modal({keyboard: false});
-		//var url="/Excel/monitorReport/"+reportType+"/"+monitor+"/"+reportDate;
-		//window.location.assign(url);
-		var socket = new WebSocket(ws_url);
+	var webSocket;
+	function updateProgress(n){
 		var $bar = $('#progressBar');
-		$bar.prop('aria-valuenow', 5);
-		$bar.prop('style', "width:5%");
-		$bar.text("5%");
-		$("body").css("cursor", "default");
+		$bar.prop('aria-valuenow', n);
+		$bar.width(n+"%");
+		$bar.text(n+"%");
+	}
+	
+	function downloadMinMonthly(obj){
+		updateProgress(0);
+		$('#MinMonthlyDialog').modal({keyboard: false});
+		console.log(ws_url);
+		webSocket = new WebSocket(ws_url);
+		webSocket.onmessage = function(evt){
+			var cmd = evt.data.split(":");
+			if(cmd[0] == "progress"){				
+				updateProgress(cmd[1]);
+			}else if(cmd[0] == "finish"){
+				console.log("finish");
+				updateProgress(100);
+				webSocket.close();
+				$('#MinMonthlyDialog').modal('hide');
+				window.open("/DownloadMinMonthlyReport/"+cmd[1],'Download');
+			}
+		}
+		
+		webSocket.onopen = function(evt){
+			console.log("Connection open...");
+			webSocket.send("start:" + obj.monitor + ":" + obj.startTime);
+		}
+		webSocket.onclose = function(evt){
+			console.log("Connection closed.");
+		}
+		webSocket.onerror = function(evt){
+			console.log("Error!");
+			webSocket.close();
+		}
+		
+		$("body").css("cursor", "default");		
 	}
 	
 	$('#reportDate').datetimepicker({

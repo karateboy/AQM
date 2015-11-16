@@ -317,21 +317,25 @@ object Application extends Controller {
   import play.api.libs.concurrent.Execution.Implicits.defaultContext
   def realtimeEpaRecord = Security.Authenticated.async {
     implicit request =>
-      {
-        val url = "http://opendata.epa.gov.tw/ws/Data/AQX/?$orderby=SiteName&$skip=0&$top=1000&format=json"
-        WS.url(url).get().map {
-          response =>
+      val url = "http://opendata.epa.gov.tw/ws/Data/AQX/?$orderby=SiteName&$skip=0&$top=1000&format=json"
+      WS.url(url).get().map {
+        response =>
+          try {
             val epaData = response.json.validate[Seq[EpaRealtimeData]]
             epaData.fold(
               error => {
                 Logger.error(JsError.toFlatJson(error).toString())
-                BadRequest(Json.obj("ok" -> false, "msg" -> JsError.toFlatJson(error)))
+                Ok(views.html.epaRealtimeData(url, Seq.empty[EpaRealtimeData]))
               },
               data => {
-                Logger.info("#=" + data.length)
                 Ok(views.html.epaRealtimeData(url, data))
               })
-        }
+
+          } catch {
+            case ex: Exception =>
+              Logger.error(ex.toString)
+              Ok(views.html.epaRealtimeData(url, Seq.empty[EpaRealtimeData]))
+          }
       }
   }
 

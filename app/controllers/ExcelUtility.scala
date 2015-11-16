@@ -1779,15 +1779,59 @@ object ExcelUtility {
     }
     finishExcel(reportFilePath, pkg, wb)
   }
-  
-  def minMonthlyReport(monitors:List[Monitor.Value], start:DateTime)={
+
+  def minMonthlyReport(monitors: List[Monitor.Value], start: DateTime, callback: (Int) => Unit) = {
     val (reportFilePath, pkg, wb) = prepareTemplate("minMonthlyReport.xlsx")
     val evaluator = wb.getCreationHelper().createFormulaEvaluator()
 
-    for((m, idx)<-monitors.zipWithIndex){ 
-      Logger.debug(s"get ${m} min Data")
+    val fgColors =
+      {
+        val sheet0 = wb.getSheetAt(0)
+        val seqColors =
+          for (col <- 1 to 6)
+            yield sheet0.getRow(1).getCell(col).getCellStyle.getFillForegroundXSSFColor
+        seqColors.toArray
+      }
+
+    for ((m, idx) <- monitors.zipWithIndex) {
       val minRecords = Record.getMinRecords(m, start, start + 1.month)
       val sheet = wb.createSheet(Monitor.map(m).name)
+      sheet.createRow(0).createCell(0).setCellValue("時間")
+      val timeSeries = minRecords.map{Record.timeProjection}
+      for {(time, time_idx) <- timeSeries.zipWithIndex}{
+        val row = sheet.createRow(time_idx+1)
+        val time_cell = row.createCell(0)
+        time_cell.setCellValue(time.toString("YYYY/MM/dd HH:mm"))
+      }
+      
+      for {
+        (mt, mt_idx) <- Monitor.map(m).monitorTypes.zipWithIndex
+        set_title = sheet.getRow(0).createCell(mt_idx+1).setCellValue(MonitorType.map(mt).desp)
+        mtRecords = minRecords.map { Record.monitorTypeProject2(mt)}
+        normalStyle = createStyle(mt)(wb)
+        abnormalStyles = createColorStyle(fgColors, mt)(wb)
+        (rec, rec_idx) <- mtRecords.zipWithIndex
+      } {
+        val row = sheet.getRow(rec_idx +1)
+        val cell = row.createCell(mt_idx +1)
+        val valueOpt = rec._1
+        val statusOpt = rec._2
+        
+        if (valueOpt.isEmpty || statusOpt.isEmpty) {
+          cell.setCellValue("-")
+        } else {
+          val value = valueOpt.get
+          val status = statusOpt.get
+          cell.setCellValue(value)
+
+          val cellStyle = getStyle(status, normalStyle, abnormalStyles)
+          cell.setCellStyle(cellStyle)
+        } 
+        
+        val progress = 100 * (mt_idx+1) / Monitor.map(m).monitorTypes.length
+        callback(progress)
+      }
+
     }
     finishExcel(reportFilePath, pkg, wb)
   }

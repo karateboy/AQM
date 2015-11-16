@@ -13,7 +13,35 @@ import EnumUtils._
 
 object SystemConfig{
   val AutoAuditAsNormal = "AutoAuditAsNormal"
-
+  val DownloadLink = "DownloadLink"
+  
+  private val MaxFileLink = 10
+  def getFreeDownloadLink():Int = {
+    for(i <- 0 to MaxFileLink){
+      val link = SystemConfig.getConfig(DownloadLink + i, "")
+      if(link.length() == 0)
+        return i
+    }
+    
+    return 0
+  }
+  
+  import java.io.File
+  def setDownloadLink(n:Int, file:File){
+    assert(n <= MaxFileLink)
+    SystemConfig.setConfig(DownloadLink+n, file.getAbsolutePath)
+  }
+  def cleanDownloadLink(n:Int){
+    assert(n <= MaxFileLink)
+    SystemConfig.setConfig(DownloadLink+n, "")
+  }
+  
+  def getDownloadLink(n:Int) = {
+    assert(n <= MaxFileLink)
+    val path = SystemConfig.getConfig(DownloadLink + n, "")
+    new File(path)
+  }
+    
   var map = {
     val configPair =
       DB readOnly {

@@ -19,6 +19,22 @@
 		</tr>
 	</thead>
 	<tbody>
+	@if(dataList.length ==0){
+		<tr>
+			<td>環保署網站發生錯誤</td>
+			<td>-</td>
+			<td>-</td>
+			<td>-</td>
+			<td>-</td>
+			<td>-</td>
+			<td>-</td>
+			<td>-</td>
+			<td>-</td>
+			<td>-</td>
+			<td>-</td>
+			<td>-</td>
+		</tr>
+	}else{
 		@for(data<-dataList){
 			<tr>
 				<td>@data.siteName</td>
@@ -35,6 +51,7 @@
 				<td>@data.publishTime</td>
 			</tr>
 		}
+	}
 	</tbody>
 </table>
 <script>

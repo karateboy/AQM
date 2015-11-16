@@ -839,22 +839,22 @@ object Query extends Controller {
       val end = DateTime.parse(endStr) + 1.day
 
       try {
-        val (thisYearRecord, lastYearRecord) = Record.getLastYearCompareList(monitor, monitorType, start, end)
-
         val title = s"${Monitor.map(monitor).name} ${MonitorType.map(monitorType).desp}同期比較圖"
-        val thisYearData = thisYearRecord.map(i => Seq(Some(i._1.getMillis.toDouble), i._2._1.map { _.toDouble}))
-        val lastYearData = lastYearRecord.map(i => Seq(Some((new DateTime(i._1) + 1.year).getMillis.toDouble), i._2._1.map { _.toDouble}))
+        val compareList = Record.getComparedList(monitor, monitorType, start, end, 3)
         
         import Realtime._
 
-        val series = Seq(seqData(start.getYear.toString(), thisYearData), seqData((start - 1.year).getYear.toString(), lastYearData))
-
+        val series = 
+          for( yData <- compareList.zipWithIndex)
+            yield seqData((start.getYear - yData._2).toString, 
+                yData._1.map(i => Seq(Some((new DateTime(i._1) + yData._2.year).getMillis.toDouble), i._2._1.map { _.toDouble})))
+                
         val c = HighchartData(
           scala.collection.immutable.Map("type" -> "line"),
           scala.collection.immutable.Map("text" -> title),
           XAxis(None),
           Seq(YAxis(None, AxisTitle(Some(Some(""))), None)),
-          series)
+          series.toSeq)
 
         Results.Ok(Json.toJson(c))
 

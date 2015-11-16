@@ -694,23 +694,21 @@ object Record {
     windMap.map(kv => (kv._1, winSpeedPercent(kv._2)))
   }
 
-  def getLastYearCompareList(monitor: Monitor.Value, monitorType: MonitorType.Value, start: DateTime, end: DateTime) = {
+  def getComparedList(monitor: Monitor.Value, monitorType: MonitorType.Value, start: DateTime, end: DateTime, nYear:Int) = {
     val lastYearStart = start - 1.year
     val lastYearEnd = end - 1.year
-
-    val records = getHourRecords(monitor, start, end)
 
     def f(r:HourRecord)={
       (timeProjection(r), monitorTypeProject2(monitorType)(r))
     }
-    
-    val typeRecords = records.map(f).filter(t => t._2._1.isDefined && t._2._2.isDefined && MonitorStatus.isNormal(t._2._2.get))
-    
-    val lastYearRaw = getHourRecords(monitor, lastYearStart, lastYearEnd)
-    
-    val typeLastYearRecords = lastYearRaw.map(f).filter(t => t._2._1.isDefined && t._2._2.isDefined && MonitorStatus.isNormal(t._2._2.get))
 
-    (typeRecords, typeLastYearRecords)
+    val result =
+      for {
+        i <- 0 to nYear - 1
+        records = getHourRecords(monitor, start - i.year, end - i.year)
+      } yield records.map(f).filter(t => t._2._1.isDefined && t._2._2.isDefined && MonitorStatus.isNormal(t._2._2.get))
+        
+    result
   }
 
   def getRegressionData(monitor: Monitor.Value, monitorType: MonitorType.Value, start: DateTime, end: DateTime) = {

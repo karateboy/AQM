@@ -19,7 +19,7 @@ object PeriodReport extends Enumeration {
   val MonthlyReport = Value("monthly")
   val MinMonthlyReport = Value("MinMonthly")
   val YearlyReport = Value("yearly")
-  def map = Map(DailyReport -> "日報", MonthlyReport -> "月報", MinMonthlyReport->"全測站各測項分鐘月報", YearlyReport -> "年報")
+  def map = Map(DailyReport -> "日報", MonthlyReport -> "月報", MinMonthlyReport->"分鐘月報", YearlyReport -> "年報")
 }
 
 object ReportType extends Enumeration {
@@ -553,12 +553,14 @@ object Report extends Controller {
               val nDay = monthlyReport.typeArray(0).dataList.length
               ("月報" + startTime.toString("YYYYMM"), ExcelUtility.createMonthlyReport(monitor, adjustStartDate, monthlyReport, nDay))
 
+            /*  
             case PeriodReport.MinMonthlyReport =>
               Logger.error("Shall not be there...")
               val adjustStartDate = DateTime.parse(startTime.toString("YYYY-MM-1"))
               val monthlyReport = getMonthlyReport(monitor, adjustStartDate)
               val nDay = monthlyReport.typeArray(0).dataList.length
               ("各站分鐘月報" + startTime.toString("YYYYMM"), ExcelUtility.minMonthlyReport(group.privilege.allowedMonitors.toList, adjustStartDate))
+            */
               
             case PeriodReport.YearlyReport =>
               val adjustStartDate = DateTime.parse(startTime.toString("YYYY-1-1"))
@@ -578,6 +580,14 @@ object Report extends Controller {
       MinMonthlyReportWorker.props(out)
   }
   
+  def downloadMinMontlyReport(n:Int) = Security.Authenticated {
+    val file = SystemConfig.getDownloadLink(n)
+    SystemConfig.cleanDownloadLink(n)
+    Ok.sendFile(file, fileName = _ =>
+          play.utils.UriEncoding.encodePathSegment("分鐘月報" + ".xlsx", "UTF-8"),
+          onClose = () => { Files.deleteIfExists(file.toPath()) })
+
+  }
   def psiReportPrompt() = Security.Authenticated {
     implicit request =>
       val userInfo = Security.getUserinfo(request).get
