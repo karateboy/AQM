@@ -190,3 +190,4 @@ GET		/DutySchedule		controllers.Maintance.dutySchedule
 
 GET		/MinMonthlyReportSocket		controllers.Report.getMinMonthlySocket
 GET		/DownloadMinMonthlyReport/:n	controllers.Report.downloadMinMontlyReport(n: Int)
+GET		/AlarmNotificationSocket	controllers.Realtime.alarmNofificationSocket

@@ -10,6 +10,7 @@ import play.api.libs.json._
 import play.api.libs.functional.syntax._
 import PdfUtility._
 import models.ModelHelper._
+import play.api.Play.current
 
 object Realtime extends Controller {
   def realtimeStat(outputTypeStr: String) = Security.Authenticated {
@@ -254,4 +255,9 @@ object Realtime extends Controller {
 
       Ok(Json.toJson(RealtimeMapInfo(mapInfos)))
   }
+  
+  def alarmNofificationSocket  = WebSocket.acceptWithActor[String, String] { request =>
+    out =>
+      AlarmNotifier.props(out)
+  } 
 }

@@ -1,6 +1,6 @@
 @* outline Template File *@
 @import controllers.Security._
-@(title: String, user:controllers.Security.UserInfo, privilege: Privilege, content:Html)
+@(title: String, user:controllers.Security.UserInfo, privilege: Privilege, content:Html)(implicit request: RequestHeader)
 <!DOCTYPE html>
 <html lang="zh-tw">
 
@@ -73,7 +73,7 @@
     
             
     <script type="text/javascript"
-      src="http://maps.googleapis.com/maps/api/js?key=AIzaSyCFuSnApEhdYSANwfU4OZ4tH902Tu3vjFI&sensor=FALSE">
+      src="http://maps.googleapis.com/maps/api/js?key=AIzaSyCFuSnApEhdYSANwfU4OZ4tH902Tu3vjFI">
     </script>
     
     <script src="@routes.Assets.at("js/plugins/infobox/infobox_packed.js")"></script>
@@ -260,49 +260,22 @@
         	</span>            
         </div>
         <ul class="nav navbar-top-links navbar-right">
-            <li class="dropdown">
+            <li id="alertButton" class="dropdown">
                 <a class="dropdown-toggle count-info" data-toggle="dropdown" href="#">
-                    <i class="fa fa-bell"></i>  <span class="label label-primary">8</span>
+                    <i class="fa fa-bell"></i>  <span id="alert_count" class="label label-danger">8</span>
                 </a>
-                <ul class="dropdown-menu dropdown-alerts">
-                    <li>
-                        <a href="mailbox.html">
-                            <div>
-                                <i class="fa fa-envelope fa-fw"></i> You have 16 messages
-                                <span class="pull-right text-muted small">4 minutes ago</span>
-                            </div>
-                        </a>
-                    </li>
-                    <li class="divider"></li>
-                    <li>
-                        <a href="profile.html">
-                            <div>
-                                <i class="fa fa-twitter fa-fw"></i> 3 New Followers
-                                <span class="pull-right text-muted small">12 minutes ago</span>
-                            </div>
-                        </a>
-                    </li>
-                    <li class="divider"></li>
-                    <li>
-                        <a href="grid_options.html">
-                            <div>
-                                <i class="fa fa-upload fa-fw"></i> Server Rebooted
-                                <span class="pull-right text-muted small">4 minutes ago</span>
-                            </div>
-                        </a>
-                    </li>
+                <ul id="alert_list" class="dropdown-menu dropdown-alerts">
                     <li class="divider"></li>
                     <li>
                         <div class="text-center link-block">
-                            <a href="notifications.html">
-                                <strong>See All Alerts</strong>
+                            <a href="#" onClick="loadPage('/Alarm','數據查詢','警報記錄查詢')">
+                                <strong>警報記錄查詢</strong>
                                 <i class="fa fa-angle-right"></i>
                             </a>
                         </div>
                     </li>
                 </ul>
             </li>
-
 
             <li>
                 <a href="/logout">
@@ -328,7 +301,59 @@
 
 </div>
 </div>
+<script>
+	var userId = '@user.id';
+	var n_url = '@routes.Realtime.alarmNofificationSocket().webSocketURL()';
+</script>
+<script>
+	var nAlert = 0;
+	var nSocket;
+	function updateAlertCount(){
+		$alert_count = $('#alert_count');
+		if(nAlert == 0)
+			$alert_count.text('');
+		else
+			$alert_count.text(nAlert);
+	}
+	
+	nSocket = new WebSocket(n_url);
+	nSocket.onmessage = function(evt){
+		var cmd = evt.data.split("!");
+		if(cmd[0] == "alert"){	
+			nAlert++;
+			console.log(cmd[1]);
+			var $firstItem = $('#alert_list li:first');
+			$firstItem.before("<li>" + cmd[1] + "</li>");		
+			updateAlertCount();
+		}
+	}
+	
+	nSocket.onopen = function(evt){
+		console.log("Connection open...");
+		nSocket.send("start:" + userId);
+	}
+	nSocket.onclose = function(evt){
+		console.log("Connection closed.");
+	}
+	nSocket.onerror = function(evt){
+		console.log("Error!");
+		nSocket.close();
+	}
 
+	$('#alertButton').on('shown.bs.dropdown', function () {
+		nAlert = 0;
+		updateAlertCount();
+	})
+	
+	$('#alertButton').on('hidden.bs.dropdown', function () {
+		var $alertList = $('#alert_list');
+		$alertList.empty();
+		$alertList.append('<li class="divider">');
+		$alertList.append('</li><li><div class="text-center link-block"><a href="#" onClick="loadPage("/Alarm","數據查詢","警報記錄查詢")"><strong>警報記錄查詢</strong><i class="fa fa-angle-right"></i></a></div></li>');
+	})
+		 
+	updateAlertCount();
+</script>
 </body>
 
 </html>
