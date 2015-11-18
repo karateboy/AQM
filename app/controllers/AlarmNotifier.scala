@@ -63,7 +63,7 @@ class AlarmNotifier(out: ActorRef) extends Actor {
         if (alarmConfig.monitorFilter.contains(ar.monitor) &&
           alarmConfig.statusFilter.contains(ar.code)) {
 
-          val msg = s"${CmdType.alert}!${Monitor.map(ar.monitor).name}- ${ar.time.toString("YY-MM-dd HH:mm")}:${Alarm.map(ar.mItem)}:${MonitorStatus.map(ar.code).desp}"
+          val msg = s"${CmdType.alert}!${ar.time.toString("MM-dd HH:mm")} ${Monitor.map(ar.monitor).name}:${Alarm.map(ar.mItem)}-${MonitorStatus.map(ar.code).desp}"
           out ! msg
         }
       }

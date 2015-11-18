@@ -36,10 +36,10 @@ object Query extends Controller {
     implicit request =>
       val userInfo = Security.getUserinfo(request).get
       val group = Group.getGroup(userInfo.groupID).get
-      Ok(views.html.history("/AuditedQueryReport/", group.privilege, true))
+      Ok(views.html.auditQuery(group.privilege))
   }
 
-  def auditedReport(monitorStr: String, epaMonitor:String, monitorTypeStr: String, recordTypeStr: String, startStr: String, endStr: String, outputTypeStr: String) = Security.Authenticated {
+  def auditReport(monitorStr: String, monitorTypeStr: String, recordTypeStr: String, startStr: String, endStr: String, outputTypeStr: String, reaudit: Boolean) = Security.Authenticated {
     implicit request =>
 
       import scala.collection.JavaConverters._
@@ -48,16 +48,18 @@ object Query extends Controller {
       val monitorType = MonitorType.withName(monitorTypeStr)
       val tabType = TableType.withName(recordTypeStr)
       val start =
-          DateTime.parse(startStr, DateTimeFormat.forPattern("YYYY-MM-dd HH:mm"))
+        DateTime.parse(startStr, DateTimeFormat.forPattern("YYYY-MM-dd HH:mm"))
 
       val end =
-          DateTime.parse(endStr, DateTimeFormat.forPattern("YYYY-MM-dd HH:mm"))
+        DateTime.parse(endStr, DateTimeFormat.forPattern("YYYY-MM-dd HH:mm"))
       val outputType = OutputType.withName(outputTypeStr)
 
       var timeSet = Set.empty[DateTime]
-      for (m <- monitors)
-        Auditor.auditHourData(m, Monitor.map(m).autoAudit, start, end)
 
+      if (reaudit) {
+        for (m <- monitors)
+          Auditor.auditHourData(m, Monitor.map(m).autoAudit, start, end)
+      }
       val pairs =
         for {
           m <- monitors

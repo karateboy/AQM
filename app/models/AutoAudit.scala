@@ -4,15 +4,7 @@ import play.api.libs.functional.syntax._
 import scalikejdbc._
 import scalikejdbc.config._
 
-abstract class Rule(val shift:Int) {
-  lazy val mask=1<<shift
-  def isTriggered(v:Int)={
-    (v & mask) != 0
-  }
-  def setTriggered(v:Int)={
-    v | mask
-  }
-}
+abstract class Rule(val lead:Char)
 
 case class MinMaxCfg(
   id:MonitorType.Value,
@@ -23,7 +15,7 @@ case class MinMaxCfg(
 case class MinMaxRule (
   enabled:Boolean,
   monitorTypes:Seq[MinMaxCfg]    
-)extends Rule(0)
+)extends Rule('a')
 
 object MinMaxRule{
   implicit val minMaxCfgRead = Json.reads[MinMaxCfg]
@@ -36,7 +28,7 @@ object MinMaxRule{
 
 case class CompareRule(
   enabled:Boolean    
-)extends Rule(1)
+)extends Rule('b')
 
 object CompareRule{
   implicit val compareRuleRead = Json.reads[CompareRule]
@@ -49,7 +41,7 @@ case class DifferenceRule(
   enabled:Boolean,
   multiplier:Float,
   monitorTypes:Seq[MonitorType.Value]  
-)extends Rule(2)
+)extends Rule('c')
 
 object DifferenceRule{
   implicit val differenceRuleRead = Json.reads[DifferenceRule]
@@ -65,7 +57,7 @@ case class SpikeCfg(
 case class SpikeRule(
   enabled:Boolean,
   monitorTypes:Seq[SpikeCfg]
-)extends Rule(3)
+)extends Rule('d')
 
 object SpikeRule{
   implicit val spikeCfgRead = Json.reads[SpikeCfg]
@@ -79,7 +71,7 @@ object SpikeRule{
 case class PersistenceRule(
   enabled:Boolean,
   same:Int
-)extends Rule(4)
+)extends Rule('e')
 
 object PersistenceRule{
   implicit val persistenceRuleRead = Json.reads[PersistenceRule]
@@ -94,7 +86,7 @@ case class MonoCfg(
 )
 
 case class MonoRule(enabled:Boolean, count:Int, 
-    monitorTypes:Seq[MonoCfg])extends Rule(5)
+    monitorTypes:Seq[MonoCfg])extends Rule('f')
 object MonoRule{
   implicit val monoCfgRead = Json.reads[MonoCfg]
   implicit val monoCfgWrite = Json.writes[MonoCfg]
@@ -105,7 +97,7 @@ object MonoRule{
   
 }
 
-case class TwoHourRule(enabled:Boolean, monitorTypes:Seq[MonoCfg])
+case class TwoHourRule(enabled:Boolean, monitorTypes:Seq[MonoCfg])extends Rule('g')
 object TwoHourRule{
   import MonoRule._
   implicit val read = Json.reads[TwoHourRule]
@@ -118,7 +110,7 @@ case class ThreeHourCfg(
     abs:Float,
     percent:Float
 )
-case class ThreeHourRule(enabled:Boolean, monitorTypes:Seq[ThreeHourCfg])
+case class ThreeHourRule(enabled:Boolean, monitorTypes:Seq[ThreeHourCfg])extends Rule('h')
 object ThreeHourRule{
   implicit val thcfgRead = Json.reads[ThreeHourCfg]
   implicit val thcfgWrite = Json.writes[ThreeHourCfg]
@@ -132,7 +124,7 @@ case class FourHourCfg(
     id:MonitorType.Value,
     abs:Float)
 
-case class FourHourRule(enabled:Boolean, monitorTypes:Seq[FourHourCfg])
+case class FourHourRule(enabled:Boolean, monitorTypes:Seq[FourHourCfg])extends Rule('i')
 object FourHourRule{
   implicit val thcfgRead = Json.reads[FourHourCfg]
   implicit val thcfgWrite = Json.writes[FourHourCfg]
@@ -170,4 +162,16 @@ object AutoAudit {
       TwoHourRule.default,
       ThreeHourRule.default,
       FourHourRule.default) 
+      
+  val map= Map(
+    'a' -> "極大極小值",
+    'b' -> "合理性",
+    'c' -> "單調性",
+    'd' -> "突波高值",
+    'e' -> "持續性",
+    'f' -> "一致性",
+    'g' -> "小時測值變化驗證",
+    'h' -> "三小時變化測值驗證",
+    'i' -> "四小時變化測值驗證"
+  )
 }

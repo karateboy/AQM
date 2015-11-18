@@ -1804,7 +1804,7 @@ object ExcelUtility {
         val time_cell = row.createCell(0)
         time_cell.setCellValue(time.toString("YYYY/MM/dd HH:mm"))
       }
-      Logger.debug(DateTime.now.toString() + ":fill time")
+
       for {
         (mt, mt_idx) <- Monitor.map(m).monitorTypes.zipWithIndex
         set_title = sheet.getRow(0).createCell(mt_idx + 1).setCellValue(MonitorType.map(mt).desp)

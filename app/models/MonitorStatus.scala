@@ -12,9 +12,12 @@ object StatusType extends Enumeration{
 }
 
 case class MonitorStatus(statusType:StatusType.Value, id:String, desp:String, outage:Boolean, valid:Boolean)
-case class TagInfo(statusType:StatusType.Value, id:String){
+case class TagInfo(statusType:StatusType.Value, auditRule:Option[Char], id:String){
   override def toString={
-    statusType + id
+    if(statusType == StatusType.Auto  && auditRule.isDefined)
+      auditRule.get + id
+    else
+      statusType + id
   }
 }
 
@@ -30,49 +33,33 @@ object MonitorStatus {
         MonitorStatus(tagInfo.statusType, tagInfo.id, r.string(2).trim(), r.boolean(3), r.boolean(4)    
       )}.list.apply
     }
-  
-  def getTagInfo(tag:String)= {
-    if(tag.length() == 2)
-      TagInfo(StatusType.Internal, tag)
-    else{
-      val statusType = StatusType.withName(tag.charAt(0).toString)
+
+  def getTagInfo(tag: String) = {
+    if (tag.length() == 2)
+      TagInfo(StatusType.Internal, None, tag)
+    else {
       val id = tag.substring(1)
-      TagInfo(statusType, id)
+      val t = tag.charAt(0)
+      if (t == '0')
+        TagInfo(StatusType.Internal, None, id)
+      else if (t == 'm' || t == 'M') {
+        TagInfo(StatusType.Manual, None, id)
+      } else if (t.isLetter)
+        TagInfo(StatusType.Auto, Some(t), id)
+      else
+        throw new Exception("Unknown type:" + t)
     }
   }
 
-  def getAutoAuditTagStr(mask:Int)={
-    assert(mask < (1<<8))
-    val id = "%02x".format(mask)
-    TagInfo(StatusType.Auto, id).toString
+  def getAutoAuditTagStr(lead:Char, info:TagInfo)={
+    
   }
-  
+    
   def getExplainStr(tag:String)={
     val tagInfo = getTagInfo(tag)
     if(tagInfo.statusType == StatusType.Auto){
-      val mask = Integer.parseInt(tagInfo.id, 16)
-      import scala.collection.mutable.StringBuilder
-      val buf = new StringBuilder()
-      if((mask & AutoAudit.default.minMaxRule.mask) != 0){
-        buf.append("|極大極小值")
-      }
-      if((mask & AutoAudit.default.compareRule.mask) != 0){
-        buf.append("|合理性")
-      }
-      if((mask & AutoAudit.default.differenceRule.mask) != 0){
-        buf.append("|單調性")
-      }
-      if((mask & AutoAudit.default.spikeRule.mask) != 0){
-        buf.append("|突波高值")
-      }
-      if((mask & AutoAudit.default.persistenceRule.mask) != 0){
-        buf.append("|持續性")
-      }
-      if((mask & AutoAudit.default.monoRule.mask) != 0){
-        buf.append("|一致性")
-      }
-      buf.delete(0, 1)
-      buf.toString
+      val t = tag.charAt(0)
+      AutoAudit.map(t.toLower)
     }else {
       val ms = map(tag)
       ms.desp
@@ -85,13 +72,37 @@ object MonitorStatus {
   val BELOW_STAT = "012"
 
   def isNormalStat(s: String) = {
+    val tagInfo = getTagInfo(s)
     val VALID_STATS = List(NORMAL_STAT, OVER_STAT, BELOW_STAT, CALBRATION_DIVERSION_STAT).map(getTagInfo)
-    VALID_STATS.contains(getTagInfo(s))
+    
+    tagInfo.statusType match {
+      case StatusType.Internal =>
+        VALID_STATS.contains(getTagInfo(s))
+      case StatusType.Auto=>
+        if(tagInfo.auditRule.isDefined && tagInfo.auditRule.get.isLower)
+          true
+        else
+          false
+      case _ =>
+        false
+    }
   }
 
   def isValid(s: String) = {
+    val tagInfo = getTagInfo(s)
     val VALID_STATS = List(NORMAL_STAT, OVER_STAT, BELOW_STAT, CALBRATION_DIVERSION_STAT).map(getTagInfo)
-    VALID_STATS.contains(getTagInfo(s))  
+    
+    tagInfo.statusType match {
+      case StatusType.Internal =>
+        VALID_STATS.contains(getTagInfo(s))
+      case StatusType.Auto=>
+        if(tagInfo.auditRule.isDefined && tagInfo.auditRule.get.isLower)
+          true
+        else
+          false
+      case _ =>
+        false
+    }
   }
   
   def isNormal(s:String)={
@@ -153,7 +164,7 @@ object MonitorStatus {
     getTagInfo(DATA_LOSS_STAT) == getTagInfo(s)
   }
   
-  def getTagStr(s:MonitorStatus)=TagInfo(s.statusType, s.id).toString()
+  def getTagStr(s:MonitorStatus)=TagInfo(s.statusType, None, s.id).toString()
   
   def getCssStyleStr(tag:String, overInternal:Boolean=false, overLaw:Boolean=false)={
    val bkColor =  getBkColorStr(tag)

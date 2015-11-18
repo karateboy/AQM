@@ -124,23 +124,23 @@ class AuditStat(hr: HourRecord) {
       */
   }
 
-  def setAuditStat(mt: MonitorType.Value, mask: Int) {
+  def setAuditStat(mt: MonitorType.Value, lead: Char) {
     val old_stat = getStat(mt)
     if (old_stat.isEmpty)
       return
 
     val tagInfo = MonitorStatus.getTagInfo(old_stat.get)
 
-    tagInfo.statusType match {
-      case StatusType.Internal =>
-        val tag = MonitorStatus.getAutoAuditTagStr(mask)
-        setStat(mt, tag)
-      case StatusType.Auto =>
-        val old_mask = Integer.parseInt(tagInfo.id, 16)
-        val new_mask = old_mask | mask
-        val tag = MonitorStatus.getAutoAuditTagStr(new_mask)
-        setStat(mt, tag)
-      case StatusType.Manual =>
+    if(tagInfo.statusType == StatusType.Internal){
+        val autoAsNormal = SystemConfig.getConfig(SystemConfig.AutoAuditAsNormal, "True").toBoolean
+        val l = 
+          if(autoAsNormal) 
+            lead.toLower
+          else
+            lead.toUpper
+            
+        setStat(mt, l + tagInfo.id)
+      
     }
   }
 
@@ -184,15 +184,12 @@ object Auditor {
     val prestart = 
       List(auditConfig.persistenceRule.same, auditConfig.monoRule.count).max
       
-    
-    //val records = getUnauditedRecords(monitor, start - prestart, end + 1.hour).toArray
     def clearAuditData()={
       val records = getHourRecords(monitor, start - prestart.hour, end + 1.hour).toArray
       val auditStatList = records.map { new AuditStat(_) }
       auditStatList.foreach { _.clear}
     }
     
-    clearAuditData()
     val records = getHourRecords(monitor, start - prestart, end + 1.hour).toArray
     def isOk(r: (Option[Float], Option[String])) = {
       r._1.isDefined && r._2.isDefined && 
@@ -238,7 +235,7 @@ object Auditor {
             }
           if(marks.count { p => p} == 1){
             invalid = true
-            targetStat.setAuditStat(mt, auditConfig.minMaxRule.mask)
+            targetStat.setAuditStat(mt, auditConfig.minMaxRule.lead)
           }
         }
       }
@@ -252,8 +249,8 @@ object Auditor {
           val ch4 = ch4_rec._1.get
           if (ch4 < thc) {
             invalid = true
-            targetStat.setAuditStat(A226, auditConfig.compareRule.mask)
-            targetStat.setAuditStat(A286, auditConfig.compareRule.mask)
+            targetStat.setAuditStat(A226, auditConfig.compareRule.lead)
+            targetStat.setAuditStat(A286, auditConfig.compareRule.lead)
           }
         }
 
@@ -264,8 +261,8 @@ object Auditor {
           val no2 = no2_rec._1.get
           if (nox < no2) {
             invalid = true
-            targetStat.setAuditStat(A223, auditConfig.compareRule.mask)
-            targetStat.setAuditStat(A293, auditConfig.compareRule.mask)
+            targetStat.setAuditStat(A223, auditConfig.compareRule.lead)
+            targetStat.setAuditStat(A293, auditConfig.compareRule.lead)
           }
         }
       }
@@ -279,7 +276,7 @@ object Auditor {
           val (avg, std) = avgStdMap(mt)
           if (Math.abs(v - avg) > auditConfig.differenceRule.multiplier * std) {
             invalid = true
-            targetStat.setAuditStat(mt, auditConfig.differenceRule.mask)
+            targetStat.setAuditStat(mt, auditConfig.differenceRule.lead)
           }
         }
       }
@@ -307,7 +304,7 @@ object Auditor {
 
               if (testSame(idx - auditConfig.persistenceRule.same + 1)) {
                 invalid = true
-                targetStat.setAuditStat(mt, auditConfig.persistenceRule.mask)
+                targetStat.setAuditStat(mt, auditConfig.persistenceRule.lead)
               }
             }
           }
@@ -328,7 +325,7 @@ object Auditor {
                 val v = mt_rec._1.get
                 if (Math.abs(v - avg) > mtcfg.abs) {
                   invalid = true
-                  targetStat.setAuditStat(mtcfg.id, auditConfig.spikeRule.mask)
+                  targetStat.setAuditStat(mtcfg.id, auditConfig.spikeRule.lead)
                 }
               }
             }
