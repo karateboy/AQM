@@ -30,7 +30,12 @@ class DataAlarmChecker extends Actor{
                 if(MonitorStatus.isNormalStat(status) 
                     && v > std_internal){
                       val ar = Alarm.Alarm(m, mt.toString, r._1.toDateTime, 1.0f, "011")
-                      Alarm.insertAlarm(ar)
+                      try{
+                        Alarm.insertAlarm(ar)  
+                      }catch{
+                        case ex:Exception=>
+                          // Skip duplicate alarm
+                      }                      
                 }
             }
           }

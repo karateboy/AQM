@@ -1793,45 +1793,49 @@ object ExcelUtility {
         seqColors.toArray
       }
 
+    callback(20)
     for ((m, idx) <- monitors.zipWithIndex) {
       val minRecords = Record.getMinRecords(m, start, start + 1.month)
       val sheet = wb.createSheet(Monitor.map(m).name)
       sheet.createRow(0).createCell(0).setCellValue("時間")
-      val timeSeries = minRecords.map{Record.timeProjection}
-      for {(time, time_idx) <- timeSeries.zipWithIndex}{
-        val row = sheet.createRow(time_idx+1)
+      val timeSeries = minRecords.map { Record.timeProjection }
+      for { (time, time_idx) <- timeSeries.zipWithIndex } {
+        val row = sheet.createRow(time_idx + 1)
         val time_cell = row.createCell(0)
         time_cell.setCellValue(time.toString("YYYY/MM/dd HH:mm"))
       }
-      
+      Logger.debug(DateTime.now.toString() + ":fill time")
       for {
         (mt, mt_idx) <- Monitor.map(m).monitorTypes.zipWithIndex
-        set_title = sheet.getRow(0).createCell(mt_idx+1).setCellValue(MonitorType.map(mt).desp)
-        mtRecords = minRecords.map { Record.monitorTypeProject2(mt)}
+        set_title = sheet.getRow(0).createCell(mt_idx + 1).setCellValue(MonitorType.map(mt).desp)
+        mtRecords = minRecords.map { Record.monitorTypeProject2(mt) }
         normalStyle = createStyle(mt)(wb)
         abnormalStyles = createColorStyle(fgColors, mt)(wb)
-        (rec, rec_idx) <- mtRecords.zipWithIndex
       } {
-        val row = sheet.getRow(rec_idx +1)
-        val cell = row.createCell(mt_idx +1)
-        val valueOpt = rec._1
-        val statusOpt = rec._2
-        
-        if (valueOpt.isEmpty || statusOpt.isEmpty) {
-          cell.setCellValue("-")
-        } else {
-          val value = valueOpt.get
-          val status = statusOpt.get
-          cell.setCellValue(value)
 
-          val cellStyle = getStyle(status, normalStyle, abnormalStyles)
-          cell.setCellStyle(cellStyle)
-        } 
-        
-        val progress = 100 * (mt_idx+1) / Monitor.map(m).monitorTypes.length
+        val progress = 20 + 80 * (mt_idx + 1) / Monitor.map(m).monitorTypes.length
         callback(progress)
-      }
 
+        for {
+          (rec, rec_idx) <- mtRecords.zipWithIndex
+        } {
+          val row = sheet.getRow(rec_idx + 1)
+          val cell = row.createCell(mt_idx + 1)
+          val valueOpt = rec._1
+          val statusOpt = rec._2
+
+          if (valueOpt.isEmpty || statusOpt.isEmpty) {
+            cell.setCellValue("-")
+          } else {
+            val value = valueOpt.get
+            val status = statusOpt.get
+            cell.setCellValue(value)
+
+            val cellStyle = getStyle(status, normalStyle, abnormalStyles)
+            cell.setCellStyle(cellStyle)
+          }
+        }
+      }
     }
     finishExcel(reportFilePath, pkg, wb)
   }
