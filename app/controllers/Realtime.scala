@@ -210,8 +210,9 @@ object Realtime extends Controller {
   def realtimeMap = Security.Authenticated {
     implicit request =>
       val current = getLatestRecordTime(TableType.SixSec).get
-      val weatherMap = getRealtimeWeatherMap(current)
-      val statusMap = getRealtimeMonitorStatusMap(current)
+      val sub_current = current.toDateTime -1.minute
+      val weatherMap = getRealtimeWeatherMap(sub_current)
+      val statusMap = getRealtimeMonitorStatusMap(sub_current)
 
       def getStatusIndex(statusMapOpt: Option[Map[MonitorType.Value, Option[String]]]): (Int, String) = {
         val statusBuilder = new StringBuilder
