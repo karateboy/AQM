@@ -4,7 +4,7 @@
 <thead>
 	<tr>
 		<th>測站</th>
-		<th>測項</th>
+		<th>內容</th>
 		<th>起始</th>
 		<th>結束</th>
 		<th>維修與維護說明</th>
@@ -15,9 +15,9 @@
 @for(t <- tickets){
 		<td>@Monitor.map(t.monitor).name</td>
 		@if(t.monitorType.isEmpty){
-			<td>-</td>
+			<td>定保</td>
 		}else{
-			<td>@MonitorType.map(t.monitorType.get).desp</td>
+			<td>維修(@MonitorType.map(t.monitorType.get).desp)</td>
 		}
 		@if(t.ticketType == TicketType.repair){
 			<td>@t.getRepairForm.start</td>
