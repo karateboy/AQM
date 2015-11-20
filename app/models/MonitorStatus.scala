@@ -230,8 +230,7 @@ object MonitorStatus {
   val manualMonitorStatusList = {msvList.filter { _map(_).statusType == StatusType.Manual }}
   val alarmList = List("011","030", "033", "034", "035",  
       "043",
-      "050", "051", "052", "053", "054", "055", "056", "057", "058", "059",
-      "099")
+      "050", "051", "052", "053", "054", "055", "056", "057", "058", "059")
 
   def map(key: String) = {
     _map.getOrElse(key, {
