@@ -30,12 +30,8 @@ class AlarmMaster extends Actor{
     case DataCheck=>
       if(!dataChecking){
         dataChecking = true
-        val latestTime = getLatestRecordTime(TableType.Hour).get
-        if(dataCheckingTime != latestTime){
-          dataCheckingTime = latestTime
-          val worker = context.actorOf(Props[DataAlarmChecker], name = "dataChecker")
-          worker ! Start(dataCheckingTime)
-        }        
+        val worker = context.actorOf(Props[DataAlarmChecker], name = "dataChecker")
+        worker ! Start(dataCheckingTime)
       }
     case DataCheckFinish=>
       dataChecking = false

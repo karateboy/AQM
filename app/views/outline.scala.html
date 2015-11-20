@@ -7,6 +7,8 @@
 <head>
 
     <meta charset="utf-8">
+    <META HTTP-EQUIV="Pragma" CONTENT="no-cache">
+	<META HTTP-EQUIV="Expires" CONTENT="-1">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="description" content="">
@@ -308,6 +310,13 @@
 <script>
 	var nAlert = 0;
 	var nSocket;
+	var alertBuffer = [];
+	function removeOldAlerts(){
+		while(alertBuffer.length > 10){
+			alertBuffer.shift();
+		}
+	}
+	
 	function updateAlertCount(){
 		$alert_count = $('#alert_count');
 		if(nAlert == 0)
@@ -321,9 +330,10 @@
 		var cmd = evt.data.split("!");
 		if(cmd[0] == "alert"){	
 			nAlert++;
-			console.log(cmd[1]);
 			var $firstItem = $('#alert_list li:first');
-			$firstItem.before("<li>" + cmd[1] + "</li>");		
+			var item = "<li style='Color:Blue'>" + cmd[1] + "</li>";
+			$firstItem.before(item);
+			alertBuffer.push(item);		
 			updateAlertCount();
 		}
 	}
@@ -348,6 +358,11 @@
 	$('#alertButton').on('hidden.bs.dropdown', function () {
 		var $alertList = $('#alert_list');
 		$alertList.empty();
+		removeOldAlerts();
+		for(var i=alertBuffer.length-1;i>=0;i--){
+			$alertList.append(alertBuffer[i]);
+		}
+		
 		$alertList.append('<li class="divider">');
 		$alertList.append('</li><li><div class="text-center link-block"><a href="#" onClick="loadPage("/Alarm","數據查詢","警報記錄查詢")"><strong>警報記錄查詢</strong><i class="fa fa-angle-right"></i></a></div></li>');
 	})

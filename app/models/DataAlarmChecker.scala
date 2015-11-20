@@ -16,8 +16,10 @@ class DataAlarmChecker extends Actor{
   }
    
   def checkHourData(startTime:DateTime)={
+    val currentHour = Realtime.getLatestRecordTime(TableType.Hour).get
+    
     for{m <- Monitor.mvList
-      hours = Record.getHourRecords(m, startTime - 1.hour, startTime) if hours.length >=0
+      hours = Record.getHourRecords(m, currentHour, currentHour.toDateTime + 1.hour) if hours.length >=0
       mCase = Monitor.map(m)
     }{ 
       for(mt <- mCase.monitorTypes){
@@ -41,7 +43,7 @@ class DataAlarmChecker extends Actor{
           }
       }
       //Auto audit
-      Auditor.auditHourData(m, mCase.autoAudit, startTime - 1.hour, startTime)
+      //Auditor.auditHourData(m, mCase.autoAudit, startTime - 1.hour, startTime)
     }
     
     DataCheckFinish

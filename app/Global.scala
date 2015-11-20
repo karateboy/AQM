@@ -16,7 +16,7 @@ object Global extends GlobalSettings {
     val alarmActor = Akka.system.actorOf(Props[AlarmMaster], name = "AlarmMaster")
     
     Akka.system.scheduler.schedule(Duration(30, SECONDS), Duration(60, SECONDS), alarmActor, AlarmCheck)
-    Akka.system.scheduler.schedule(Duration(60, SECONDS), Duration(30, MINUTES), alarmActor, DataCheck)
+    Akka.system.scheduler.schedule(Duration(60, SECONDS), Duration(10, MINUTES), alarmActor, DataCheck)
   }
 
   override def onStop(app: Application) {

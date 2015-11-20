@@ -136,8 +136,9 @@ object Realtime extends Controller {
       val mt = MonitorType.withName(monitorTypeStr)
       val mtCase = MonitorType.map(mt)
 
-      val latestRecordTime = getLatestRecordTime(TableType.Min).get
-
+      val current = getLatestRecordTime(TableType.Min).get
+      val latestRecordTime = current.toDateTime - 1.minutes  
+      
       val realtimeValueMap =
         if (group.privilege.allowedMonitorTypes.contains(mt))
           getRealtimeMonitorValueMap(mt, latestRecordTime)

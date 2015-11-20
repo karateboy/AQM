@@ -101,7 +101,11 @@
 					<div class="col-lg-10">
 						<select id="userToBeUpdated">
 		    				@for(u<-userList){
-		    					<option  name='user' value="@u.id">
+		    					@if(u.id == user.id){
+		    						<option  name='user' value="@u.id" selected>
+		    					}else{
+		    						<option  name='user' value="@u.id">
+		    					}
 		    						@u.name (@u.email)
 		    					</option>
 	        				}        		
