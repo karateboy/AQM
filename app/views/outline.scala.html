@@ -264,11 +264,11 @@
         <ul class="nav navbar-top-links navbar-right">
             <li id="alertButton" class="dropdown">
                 <a class="dropdown-toggle count-info" data-toggle="dropdown" href="#">
-                    <i class="fa fa-bell"></i>  <span id="alert_count" class="label label-danger">8</span>
+                    <i class="fa fa-bell"></i>  <span id="alert_count" class="label label-danger"></span>
                 </a>
                 <ul id="alert_list" class="dropdown-menu dropdown-alerts">
                     <li class="divider"></li>
-                    <li>
+                    <li id="alarmQuery">
                         <div class="text-center link-block">
                             <a href="#" onClick="loadPage('/Alarm','數據查詢','警報記錄查詢')">
                                 <strong>警報記錄查詢</strong>
@@ -354,17 +354,18 @@
 		nAlert = 0;
 		updateAlertCount();
 	})
-	
+	var $alarmQueryLi = $('#alarmQuery').html();
 	$('#alertButton').on('hidden.bs.dropdown', function () {
-		var $alertList = $('#alert_list');
+		var $alertList = $('#alert_list');		
 		$alertList.empty();
 		removeOldAlerts();
 		for(var i=alertBuffer.length-1;i>=0;i--){
 			$alertList.append(alertBuffer[i]);
 		}
 		
-		$alertList.append('<li class="divider">');
-		$alertList.append('</li><li><div class="text-center link-block"><a href="#" onClick="loadPage("/Alarm","數據查詢","警報記錄查詢")"><strong>警報記錄查詢</strong><i class="fa fa-angle-right"></i></a></div></li>');
+		$alertList.append('<li class="divider"></li>');
+		$alertList.append($alarmQueryLi);
+		//onClick="loadPage("/Alarm","數據查詢","警報記錄查詢")"
 	})
 		 
 	updateAlertCount();

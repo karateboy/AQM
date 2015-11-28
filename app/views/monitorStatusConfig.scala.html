@@ -19,9 +19,9 @@
             		</thead>
             		<tbody>
             			@for(ms<-MonitorStatus.msList){
-            				<tr id="@MonitorStatus.getTagStr(ms)">
-            					<th>@StatusType.map(ms.statusType)</th>
-            					<th>@ms.id</th>
+            				<tr id="@ms.info">
+            					<th>@StatusType.map(ms.info.statusType)</th>
+            					<th>@ms.info.id</th>
             					<td>@ms.desp</td>
             				</tr>
             			}

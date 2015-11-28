@@ -7,7 +7,7 @@ import scalikejdbc.config._
 import EnumUtils._
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
-
+import models.ModelHelper._
 
 case class Monitor(id:String, name:String, lat:Double, lng:Double, url:String, autoAudit:AutoAudit, 
     monitorTypes: Seq[MonitorType.Value], monitorTypeStds:Seq[MonitorTypeStandard]){
@@ -284,6 +284,27 @@ object MonitorType extends Enumeration{
   val C215 = MonitorType.withName("C215")
   val C216 = MonitorType.withName("C216")
 
+  import com.github.nscala_time.time.Imports._
+  import java.sql.Timestamp
+  def getManualAuditTooltip(m:Monitor.Value, mt: MonitorType.Value, v: (Option[Float], Option[String]), 
+      dataTime:DateTime, tabType:TableType.Value = TableType.Hour):String = {
+    if (v._1.isEmpty || v._2.isEmpty)
+      return ""
+    
+    val tagInfo = MonitorStatus.getTagInfo(v._2.get)
+    if(tagInfo.statusType != StatusType.Manual)
+      return ""
+      
+    val auditLogOpt = ManualAuditLog.getLog(tabType, m, dataTime, mt)
+    if(auditLogOpt.isEmpty)
+      return ""
+    
+    val log = auditLogOpt.get
+    return s"""
+      title=${log.modified_time.toString("YYYY-MM-dd-HH:mm")}-${log.operator}註記
+      data-toggle=tooltip data-container=body data-trigger=hover
+      """
+  }
   def getStyleStr(m:Monitor.Value, mt: MonitorType.Value, v: (Option[Float], Option[String])) = {
     val mtCase = map(mt)
     if (v._1.isEmpty || v._2.isEmpty)

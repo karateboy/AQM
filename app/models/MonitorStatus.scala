@@ -11,10 +11,11 @@ object StatusType extends Enumeration{
   def map= Map(Internal->"系統", Auto->"自動註記", Manual->"人工註記")
 }
 
-case class MonitorStatus(statusType:StatusType.Value, id:String, desp:String, outage:Boolean, valid:Boolean)
+case class MonitorStatus(info:TagInfo, desp:String)
 case class TagInfo(statusType:StatusType.Value, auditRule:Option[Char], id:String){
-  override def toString={
-    if(statusType == StatusType.Auto  && auditRule.isDefined)
+  override def toString={    
+    if((statusType == StatusType.Auto || statusType == StatusType.Manual)
+        && auditRule.isDefined)
       auditRule.get + id
     else
       statusType + id
@@ -25,13 +26,13 @@ object MonitorStatus {
   def msList:List[MonitorStatus] =
     DB readOnly{ implicit session =>
       sql"""
-        SELECT [statusNo],[statusName],[isOutage],[isValid]
+        SELECT [statusNo],[statusName]
         FROM [AQMSDB].[dbo].[Infor_Status]
         Order by [statusNo] Asc
       """.map { r =>  
         val tagInfo = getTagInfo(r.string(1)) 
-        MonitorStatus(tagInfo.statusType, tagInfo.id, r.string(2).trim(), r.boolean(3), r.boolean(4)    
-      )}.list.apply
+        MonitorStatus(tagInfo, r.string(2).trim())
+        }.list.apply
     }
 
   def getTagInfo(tag: String) = {
@@ -43,7 +44,7 @@ object MonitorStatus {
       if (t == '0')
         TagInfo(StatusType.Internal, None, id)
       else if (t == 'm' || t == 'M') {
-        TagInfo(StatusType.Manual, None, id)
+        TagInfo(StatusType.Manual, Some(t), id)
       } else if (t.isLetter)
         TagInfo(StatusType.Auto, Some(t), id)
       else
@@ -58,7 +59,7 @@ object MonitorStatus {
   def getExplainStr(tag:String)={
     val tagInfo = getTagInfo(tag)
     if(tagInfo.statusType == StatusType.Auto){
-      val t = tag.charAt(0)
+      val t = tagInfo.auditRule.get
       AutoAudit.map(t.toLower)
     }else {
       val ms = map(tag)
@@ -163,9 +164,7 @@ object MonitorStatus {
   def isDataLost(s:String)={
     getTagInfo(DATA_LOSS_STAT) == getTagInfo(s)
   }
-  
-  def getTagStr(s:MonitorStatus)=TagInfo(s.statusType, None, s.id).toString()
-  
+    
   def getCssStyleStr(tag:String, overInternal:Boolean=false, overLaw:Boolean=false)={
    val bkColor =  getBkColorStr(tag)
    val fgColor = 
@@ -222,12 +221,12 @@ object MonitorStatus {
   }
   
   private def refreshMap() = {
-    _map = Map(msList.map{s=>getTagStr(s)->s}:_*)
+    _map = Map(msList.map{s=>s.info.toString()->s}:_*)
     _map
   }
   private var _map:Map[String, MonitorStatus] = refreshMap
-  val msvList = msList.map {r=>getTagStr(r)}
-  val manualMonitorStatusList = {msvList.filter { _map(_).statusType == StatusType.Manual }}
+  val msvList = msList.map {r=>r.info.toString}
+  val manualMonitorStatusList = {msvList.filter { _map(_).info.statusType == StatusType.Manual }}
   val alarmList = List("011","030", "033", "034", "035",  
       "043",
       "050", "051", "052", "053", "054", "055", "056", "057", "058", "059")
@@ -237,11 +236,11 @@ object MonitorStatus {
       val tagInfo = getTagInfo(key)
       tagInfo.statusType match {
         case StatusType.Auto =>
-          MonitorStatus(tagInfo.statusType, tagInfo.id, "自動註記", false, false)
+          MonitorStatus(tagInfo, "自動註記")
         case StatusType.Manual =>
-          MonitorStatus(tagInfo.statusType, tagInfo.id, "人工註記", false, false)
+          MonitorStatus(tagInfo, "人工註記")
         case StatusType.Internal =>
-          MonitorStatus(tagInfo.statusType, tagInfo.id, "未知:" + key, false, false)
+          MonitorStatus(tagInfo, "未知:" + key)
       }
 
     })

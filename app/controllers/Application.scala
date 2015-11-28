@@ -503,8 +503,26 @@ object Application extends Controller {
         },
         manualAuditList => {
           for (ma <- manualAuditList.list.reverse) {
-            EventLog.create(EventLog(DateTime.now, EventLog.evtTypeManualAudit, 
+            val now = DateTime.now
+            val tagInfo = MonitorStatus.getTagInfo(ma.status)
+            EventLog.create(EventLog(now, EventLog.evtTypeManualAudit, 
                 s"${user.name} 進行人工註記 :${new DateTime(ma.time).toString("YYYY/MM/dd HH:mm")}:${Monitor.map(ma.monitor).name}:${MonitorType.map(ma.monitorType).desp}-${MonitorStatus.map(ma.status).desp}"))
+            if(tagInfo.statusType == StatusType.Manual){
+              val log = ManualAuditLog(tabType, ma.monitor, new DateTime(ma.time), ma.monitorType, now, ma.status, user.name)
+              try{
+                val logOpt = ManualAuditLog.getLog(tabType, ma.monitor, new DateTime(ma.time), ma.monitorType)
+                if(logOpt.isEmpty)
+                  ManualAuditLog.newLog(log)
+                else
+                  ManualAuditLog.updateLog(log)
+              }catch{
+                case ex:Exception=>
+                  
+              }
+            }else if(tagInfo.statusType == StatusType.Internal){
+              ManualAuditLog.deleteLog(tabType, ma.monitor, new DateTime(ma.time), ma.monitorType)
+            }
+            
             Record.updateRecordStatus(tabType, ma.monitor, ma.monitorType, ma.time, ma.status)
           }
 

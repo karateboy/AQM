@@ -49,9 +49,11 @@
 				@if(recordMap(m).get(t).isEmpty||recordMap(m)(t)._1.isEmpty||recordMap(m)(t)._2.isEmpty){
 					<td>-</td>
 				}else{
-					<td style="@MonitorType.getStyleStr(m, monitorType, recordMap(m)(t))">@MonitorType.format(monitorType, recordMap(m)(t)._1)
+					<td style="@MonitorType.getStyleStr(m, monitorType, recordMap(m)(t))"
+						@MonitorType.getManualAuditTooltip(m, monitorType, recordMap(m)(t), t)					
+						>@MonitorType.format(monitorType, recordMap(m)(t)._1)
 						@if(editable){
-							<input type="checkbox" id="@m:@monitorType:@t.getMillis">
+							<input type="checkbox" id="@m:@monitorType:@t.getMillis:@recordMap(m)(t)._2.get">
 						}
 					</td>
 				}				
@@ -87,6 +89,7 @@
 </script>
 <script>
 $(document ).ready(function() {
+	$('[data-toggle="tooltip"]').tooltip();
 	$('#historyReport').dataTable( {
 		responsive: true,
 		"dom": 'T&lt'+'clear'+'&gtlfrtip',
@@ -114,7 +117,7 @@ $(document ).ready(function() {
 			audit.monitor=param[0];
 			audit.monitorType=param[1];
 			audit.time=parseInt(param[2]);
-			audit.status=$manualStatus;
+			audit.status=$manualStatus.substr(0,1) + param[3].substr(1, param[3].length-1);
 			manualAuditList.push(audit);
 		}
 		obj.list=manualAuditList;

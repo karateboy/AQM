@@ -48,7 +48,7 @@
 						}
 						</td>
 					}else{
-						<td style="@getCssStyleStr(recordMap(m)(t)._2.get)">@("%.2f".format(recordMap(m)(t)._1.get))</td>
+						<td style="@MonitorType.getStyleStr(m, monitorType, recordMap(m)(t))">@MonitorType.format(monitorType, recordMap(m)(t)._1)</td>
 					}
 				}
 				@if(recordMap(m)(t)._2.isEmpty){
@@ -72,22 +72,23 @@
 	
 }
 <script>
+	var l10n_url = '@routes.Assets.at("localization/zh_tw.json")';
+	var editable = @editable;
+</script>
+<script>
 $(document ).ready(function() {
+	$('[data-toggle="tooltip"]').tooltip();
 	$('#historyReport').dataTable( {
 		responsive: true,
 		"dom": 'T&lt'+'clear'+'&gtlfrtip',
 		language: {
-			url: '@routes.Assets.at("localization/zh_tw.json")',							
+			url: l10n_url,							
 		},
-		"tableTools": {
-        	"sSwfPath": "@routes.Assets.at("js/plugins/dataTables/swf/copy_csv_xls_pdf.swf")",
-        	"aButtons": ["copy", "print", "csv", "xls"]
-        },
 		"paging":   false,
 		searching: false
 	} );
 	
-	@if(editable){
+	if(editable){
 		$('#manualAuditApply').click(function(){
 			var $inputs=$("#historyReport :input:checked");
 			var $manualStatus = $('#manualStatusSelection :checked');

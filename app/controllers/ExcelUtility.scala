@@ -811,7 +811,7 @@ object ExcelUtility {
         (13 -> "西北西"), (14 -> "西北"), (15 -> "北北西"))
 
     val step = 360/16
-    val dir = (((degree - (step/2)) / step).toInt)% 16
+    val dir = Math.ceil((degree-(step/2))/step).toInt % 16
     dirMap(dir)
   }
   
@@ -873,12 +873,18 @@ object ExcelUtility {
       if (myMap(mt._1)._2.count != 0) {
         val stat = myMap(mt._1)._2
         sheet.getRow(row).getCell(26).setCellValue(stat.min)
-        sheet.getRow(row).getCell(27).setCellValue(stat.max)
+        sheet.getRow(row+2).getCell(26).setCellValue(covertDegToDir(stat.min))        
+        sheet.getRow(row).getCell(27).setCellValue(stat.max)        
+        sheet.getRow(row+2).getCell(27).setCellValue(covertDegToDir(stat.max))        
         sheet.getRow(row).getCell(28).setCellValue(stat.avg)
+        sheet.getRow(row+2).getCell(28).setCellValue(covertDegToDir(stat.avg))
       } else {
         sheet.getRow(row).getCell(26).setCellValue("-")
         sheet.getRow(row).getCell(27).setCellValue("-")
         sheet.getRow(row).getCell(28).setCellValue("-")
+        sheet.getRow(row+2).getCell(26).setCellValue("-")
+        sheet.getRow(row+2).getCell(27).setCellValue("-")
+        sheet.getRow(row+2).getCell(28).setCellValue("-")
       }
 
       for {
@@ -907,10 +913,16 @@ object ExcelUtility {
         sheet.getRow(row + 1).getCell(26).setCellValue(stat.min)
         sheet.getRow(row + 1).getCell(27).setCellValue(stat.max)
         sheet.getRow(row + 1).getCell(28).setCellValue(stat.avg)
+        sheet.getRow(row + 3).getCell(26).setCellValue(covertDegToDir(stat.min))
+        sheet.getRow(row + 3).getCell(27).setCellValue(covertDegToDir(stat.max))
+        sheet.getRow(row + 3).getCell(28).setCellValue(covertDegToDir(stat.avg))
       } else {
         sheet.getRow(row + 1).getCell(26).setCellValue("-")
         sheet.getRow(row + 1).getCell(27).setCellValue("-")
         sheet.getRow(row + 1).getCell(28).setCellValue("-")
+        sheet.getRow(row + 3).getCell(26).setCellValue("-")
+        sheet.getRow(row + 3).getCell(27).setCellValue("-")
+        sheet.getRow(row + 3).getCell(28).setCellValue("-")
       }
       
       if(mt._1 == MonitorType.C212)
@@ -1720,7 +1732,6 @@ object ExcelUtility {
       
       def fillCell(i:Int, v:String)={
         val row = sheet.getRow(idx + 4)
-        row.getCell(i).setCellStyle(style)
         row.getCell(i).setCellValue(v)        
       }
 

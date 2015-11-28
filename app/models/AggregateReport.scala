@@ -72,9 +72,9 @@ object AggregateReport {
             t <- dailyReport.typeList if Monitor.map(m).getStdInternal(t.monitorType).isDefined
             mCase = MonitorType.map(t.monitorType)
             mtInternal = Monitor.map(m).getStdInternal(t.monitorType).get
-            hrOpt = t.dataList.find(r => r._2.isDefined && r._3.isDefined && MonitorStatus.isNormalStat(r._3.get)
-              && r._2.get > mtInternal) if hrOpt.isDefined
-            hr = hrOpt.get
+            over_hrs = t.dataList.filter(r => r._2.isDefined && r._3.isDefined && MonitorStatus.isNormalStat(r._3.get)
+              && r._2.get > mtInternal)
+            hr <-over_hrs
           } yield {
             import java.util.Calendar
             val calendar = Calendar.getInstance();
@@ -97,7 +97,7 @@ object AggregateReport {
               } else
                 ",未超過法規值"
 
-            val dir = dirMap((((windDir.stat.avg + 22.5 / 2) / 22.5).toInt) / 16)
+            val dir = dirMap(Math.ceil((windDir.stat.avg - 22.5 / 2) / 22.5).toInt % 16)
             val summary = s"(最大風速${windSpeed.stat.max}m/s, 平均風向${dir}, 濃度${t.stat.min}~${t.stat.max} ${mCase.unit})"
 
             header + overLaw + summary

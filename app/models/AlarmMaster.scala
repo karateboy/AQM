@@ -18,7 +18,7 @@ class AlarmMaster extends Actor{
   def receive = {
     case AlarmCheck=>
       if(!checking){
-        val worker = context.actorOf(Props[AlarmWorker], name = "alarmWorker")
+        val worker = context.actorOf(Props[AlarmWorker], name = "alarmWorker" + (Math.random()*1000).toInt)
         worker ! Start(checkStartTime)
         checking = true
       } 
@@ -30,7 +30,7 @@ class AlarmMaster extends Actor{
     case DataCheck=>
       if(!dataChecking){
         dataChecking = true
-        val worker = context.actorOf(Props[DataAlarmChecker], name = "dataChecker")
+        val worker = context.actorOf(Props[DataAlarmChecker], name = "dataChecker" + (Math.random()*1000).toInt)
         worker ! Start(dataCheckingTime)
       }
     case DataCheckFinish=>

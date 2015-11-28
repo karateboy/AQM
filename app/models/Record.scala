@@ -159,6 +159,19 @@ object Record {
       """.map { mapper }.list().apply()
   }
 
+  def getUncheckedHourRecords(monitor: Monitor.Value, startTime: DateTime, endTime: DateTime)(implicit session: DBSession = AutoSession) = {
+    val start: Timestamp = startTime
+    val end: Timestamp = endTime
+    val monitorName = monitor.toString()
+    val tab_name = getTabName(TableType.Hour, startTime.getYear)
+    sql"""
+        Select * 
+        From ${tab_name}
+        Where DP_NO=${monitorName} and M_DateTime >= ${start} and M_DateTime < ${end} and CHK is Null
+        ORDER BY M_DateTime ASC
+      """.map { mapper }.list().apply()
+  }
+    
   def getInvalidHourRecords(monitor: Monitor.Value, startTime: DateTime, endTime: DateTime)(implicit session: DBSession = AutoSession) = {
     val start: Timestamp = startTime
     val end: Timestamp = endTime
@@ -401,6 +414,16 @@ object Record {
     val validWind = windRecord.filter(t=>validFilter(t._1)&&validFilter(t._2)).map(r=>(r._1._2.get, r._2._2.get))
     val wind_sin = validWind.map(v => v._1 * Math.sin(Math.toRadians(v._2))).sum
     val wind_cos = validWind.map(v => v._1 * Math.cos(Math.toRadians(v._2))).sum
+    windAvg(wind_sin, wind_cos)
+  }
+  
+  def windAvgF(windSpeed: List[Float], windDir:List[Float]):Float = {
+    if(windSpeed.length != windDir.length)
+      Logger.error(s"windSpeed #=${windSpeed.length} windDir #=${windDir.length}")
+
+    val windRecord = windSpeed.zip(windDir)
+    val wind_sin = windRecord.map(v => v._1 * Math.sin(Math.toRadians(v._2))).sum
+    val wind_cos = windRecord.map(v => v._1 * Math.cos(Math.toRadians(v._2))).sum
     windAvg(wind_sin, wind_cos)
   }
   
@@ -665,7 +688,7 @@ object Record {
     var total = 0
     for (w <- windRecords) {
       if (w._1.isDefined && w._2.isDefined) {
-        val dir = (((w._1.get - (step/2)) / step).toInt)% nDiv
+        val dir = (Math.ceil((w._1.get - (step/2)) / step).toInt)% nDiv
         windMap(dir) += w._2.get
         total += 1
       }
@@ -759,16 +782,25 @@ object Record {
     val pairs =
       for {
         mt <- MonitorType.epaReportList
-        mtRecord = hrRecord.map { rs => (timeProjection(rs).toDateTime, monitorTypeProject2(mt)(rs)) }
+        mtRecord = hrRecord.map { rs => 
+          (timeProjection(rs).toDateTime, monitorTypeProject2(mt)(rs)) }
         mtMap = Map(mtRecord: _*)
       } yield {
         val data = mtRecord.filter(
           r => r._2._1.isDefined && r._2._2.isDefined && MonitorStatus.isNormal(r._2._2.get)).map(_._2._1.get)
         val count = data.length
         val stat =
-          if (count != 0)
-            Stat(data.sum / count, data.min, data.max, count, 24, 0)
-          else
+          if (count != 0){
+            if (MonitorType.windDirList.contains(mt)){
+              val windDir = mtRecord.map(r=>(r._1:java.sql.Timestamp, r._2._1, r._2._2))
+              val wsT = monitorTypeProject2(MonitorType.C211)
+              val windSpeed = hrRecord.map(rs => (rs.date:java.sql.Timestamp, wsT(rs)._1, wsT(rs)._2))            
+              val wind_avg = windAvg(windSpeed, windDir)
+              Stat(wind_avg, data.min, data.max, count, 24, 0)
+            }else{
+              Stat(data.sum / count, data.min, data.max, count, 24, 0)
+            }
+          }else
             Stat(0, 0, 0, count, 24, 0)
 
         mt -> (mtMap, stat)
@@ -786,9 +818,16 @@ object Record {
         val data = epaPairs.map(t => t._2.value)
         val count = data.length
         val stat =
-          if (count != 0)
-            Stat(data.sum / count, data.min, data.max, count, 24, 0)
-          else
+          if (count != 0){
+            if (MonitorType.windDirList.contains(mt)){
+              val windDir = data
+              val windSpeed = getEpaHourRecord(epaMonitor, MonitorType.C211, start, end).map { r => r.value }
+              val wind_avg = windAvgF(windSpeed, windDir)
+              Stat(wind_avg, data.min, data.max, count, 24, 0)
+            }else{
+              Stat(data.sum / count, data.min, data.max, count, 24, 0)  
+            }            
+          }else
             Stat(0, 0, 0, count, 24, 0)
 
         mt -> (epaMap, stat)
