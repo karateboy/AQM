@@ -52,6 +52,11 @@ object MonitorStatus {
     }
   }
 
+  def switchTagToInternal(tag:String)={
+    val info = getTagInfo(tag)
+    '0' + info.id
+  }
+  
   def getAutoAuditTagStr(lead:Char, info:TagInfo)={
     
   }

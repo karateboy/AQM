@@ -107,7 +107,8 @@ class AuditStat(hr: HourRecord) {
     for (mt <- MonitorType.mtvAllList) {
       val stat = getStat(mt)
       if (stat.isDefined && MonitorStatus.getTagInfo(stat.get).statusType == StatusType.Auto) {
-        setStat(mt, MonitorStatus.NORMAL_STAT)
+        val internalStatus = MonitorStatus.switchTagToInternal(stat.get)
+        setStat(mt, internalStatus)
       }
     }
     updateDB
@@ -131,16 +132,16 @@ class AuditStat(hr: HourRecord) {
 
     val tagInfo = MonitorStatus.getTagInfo(old_stat.get)
 
-    if(tagInfo.statusType == StatusType.Internal){
-        val autoAsNormal = SystemConfig.getConfig(SystemConfig.AutoAuditAsNormal, "True").toBoolean
-        val l = 
-          if(autoAsNormal) 
-            lead.toLower
-          else
-            lead.toUpper
-            
-        setStat(mt, l + tagInfo.id)
-      
+    if (tagInfo.statusType == StatusType.Internal) {
+      val autoAsNormal = SystemConfig.getConfig(SystemConfig.AutoAuditAsNormal, "True").toBoolean
+      val l =
+        if (autoAsNormal)
+          lead.toLower
+        else
+          lead.toUpper
+
+      setStat(mt, l + tagInfo.id)
+
     }
   }
 
@@ -180,165 +181,60 @@ class AuditStat(hr: HourRecord) {
 }
 
 object Auditor {
-  def auditHourData(monitor: Monitor.Value, auditConfig: AutoAudit, start: DateTime, end: DateTime)(implicit session: DBSession = AutoSession) = {
-    val prestart = 
-      List(auditConfig.persistenceRule.same, auditConfig.monoRule.count).max
+  def clearAuditData(records: List[HourRecord]) = {
+    val auditStatList = records.map { new AuditStat(_) }
+    auditStatList.foreach { _.clear }
+  }
+
+  def isOk(r: (Option[Float], Option[String])) = {
+    r._1.isDefined && r._2.isDefined &&
+      (MonitorStatus.isNormalStat(r._2.get) || MonitorStatus.getTagInfo(r._2.get).statusType == StatusType.Auto)
+  }
       
-    def clearAuditData()={
-      val records = getHourRecords(monitor, start - prestart.hour, end + 1.hour).toArray
-      val auditStatList = records.map { new AuditStat(_) }
-      auditStatList.foreach { _.clear}
-    }
-    
-    val records = getHourRecords(monitor, start - prestart, end + 1.hour).toArray
-    def isOk(r: (Option[Float], Option[String])) = {
-      r._1.isDefined && r._2.isDefined && 
-      (MonitorStatus.isNormalStat(r._2.get)|| MonitorStatus.getTagInfo(r._2.get).statusType == StatusType.Auto )
-    }
-
-    val mtAvgStdPairs =
-      for {
-        mt <- auditConfig.differenceRule.monitorTypes
-        mt_records = records.map { Record.monitorTypeProject2(mt) }.filter(isOk).map { r => r._1.get } if (mt_records.length != 0)
-      } yield {
-        val count = mt_records.length
-        val avg = mt_records.sum / count
-        val std = Math.sqrt(mt_records.map { r => (r - avg) * (r - avg) }.sum / count)
-        mt -> (avg, std)
-      }
-
-    val avgStdMap = Map(mtAvgStdPairs: _*)
+  def auditHourData(monitor: Monitor.Value, auditConfig: AutoAudit, start: DateTime, end: DateTime)(implicit session: DBSession = AutoSession) = {
+    val records = getUncheckedHourRecords(monitor, start, end).toArray
 
     for {
-      hr <- records.zipWithIndex if (hr._2 >= prestart && hr._2 < records.length - 1)
+      hr <- records.zipWithIndex
       record = hr._1
       idx = hr._2
       targetStat = new AuditStat(record)
     } {
       var invalid = false
-      if (auditConfig.minMaxRule.enabled) {
-        for (cfg <- auditConfig.minMaxRule.monitorTypes) {
-          val mt = cfg.id
-          val marks =
-            for (i <- idx to idx) yield {
-              val mtRecord = Record.monitorTypeProject2(mt)(records(i))
+      if(auditConfig.minMaxRule.checkInvalid(record, targetStat))
+        invalid = true
 
-              if (isOk(mtRecord)) {
-                val mt_value = mtRecord._1.get
+      if(auditConfig.compareRule.checkInvalid(record, targetStat))
+        invalid = true
 
-                if (mt_value > cfg.max || mt_value <= cfg.min)
-                  true
-                else
-                  false
-              } else
-                false
-            }
-          if(marks.count { p => p} == 1){
-            invalid = true
-            targetStat.setAuditStat(mt, auditConfig.minMaxRule.lead)
-          }
-        }
-      }
+      if(auditConfig.differenceRule.checkInvalid(record, targetStat, monitor, start))
+        invalid = true
 
-      if (auditConfig.compareRule.enabled) {
-        Logger.debug("compareRule checking")
-        val thc_rec = Record.monitorTypeProject2(A226)(record)
-        val ch4_rec = Record.monitorTypeProject2(A286)(record)
-        if (isOk(thc_rec) && isOk(ch4_rec)) {
-          val thc = thc_rec._1.get
-          val ch4 = ch4_rec._1.get
-          if (ch4 < thc) {
-            invalid = true
-            targetStat.setAuditStat(A226, auditConfig.compareRule.lead)
-            targetStat.setAuditStat(A286, auditConfig.compareRule.lead)
-          }
-        }
+      if(auditConfig.persistenceRule.checkInvalid(record, targetStat, monitor, start))
+        invalid = true
+      
 
-        val nox_rec = Record.monitorTypeProject2(A223)(record)
-        val no2_rec = Record.monitorTypeProject2(A293)(record)
-        if (isOk(nox_rec) && isOk(no2_rec)) {
-          val nox = nox_rec._1.get
-          val no2 = no2_rec._1.get
-          if (nox < no2) {
-            invalid = true
-            targetStat.setAuditStat(A223, auditConfig.compareRule.lead)
-            targetStat.setAuditStat(A293, auditConfig.compareRule.lead)
-          }
-        }
-      }
+      if(auditConfig.spikeRule.checkInvalid(record, targetStat, monitor, start))
+        invalid = true
 
-      if (auditConfig.differenceRule.enabled) {
-        for {
-          mt <- auditConfig.differenceRule.monitorTypes
-          mr_record = Record.monitorTypeProject2(mt)(record) if (isOk(mr_record))
-        } {
-          val v = mr_record._1.get
-          val (avg, std) = avgStdMap(mt)
-          if (Math.abs(v - avg) > auditConfig.differenceRule.multiplier * std) {
-            invalid = true
-            targetStat.setAuditStat(mt, auditConfig.differenceRule.lead)
-          }
-        }
-      }
-
-      if (auditConfig.persistenceRule.enabled) {
-        if (idx > auditConfig.persistenceRule.same) {
-          for (mt <- MonitorType.mtvAllList) {
-            val mt_rec = Record.monitorTypeProject2(mt)(record)
-            if (isOk(mt_rec)) {
-              val end_idx = idx - 1
-              def testSame(i: Int): Boolean = {
-                if (i >= end_idx)
-                  return false
-
-                val test_rec = Record.monitorTypeProject2(mt)(records(i))
-                if (!isOk(test_rec))
-                  return false
-
-                val v = test_rec._1.get
-                if (v != mt_rec._1.get)
-                  return false
-
-                return testSame(i + 1)
-              }
-
-              if (testSame(idx - auditConfig.persistenceRule.same + 1)) {
-                invalid = true
-                targetStat.setAuditStat(mt, auditConfig.persistenceRule.lead)
-              }
-            }
-          }
-        }
-      }
-
-      if (auditConfig.spikeRule.enabled) {
-        for (mtcfg <- auditConfig.spikeRule.monitorTypes) {
-          val mt_rec = Record.monitorTypeProject2(mtcfg.id)(record)
-          if (isOk(mt_rec)) {
-            val pre_idx = idx - 1
-            val post_idx = idx + 1
-            if (pre_idx >= 0 && post_idx < records.length) {
-              val pre = Record.monitorTypeProject2(mtcfg.id)(records(pre_idx))
-              val post = Record.monitorTypeProject2(mtcfg.id)(records(post_idx))
-              if (isOk(pre) && isOk(post)) {
-                val avg = (pre._1.get + post._1.get) / 2
-                val v = mt_rec._1.get
-                if (Math.abs(v - avg) > mtcfg.abs) {
-                  invalid = true
-                  targetStat.setAuditStat(mtcfg.id, auditConfig.spikeRule.lead)
-                }
-              }
-            }
-          }
-        }
-      }
-
+      if(auditConfig.twoHourRule.checkInvalid(record, targetStat, monitor, start))
+        invalid = true
+        
+      if(auditConfig.threeHourRule.checkInvalid(record, targetStat, monitor, start))
+        invalid = true
+        
+      if(auditConfig.fourHourRule.checkInvalid(record, targetStat, monitor, start))
+        invalid = true
+        
+      if(auditConfig.monoRule.checkInvalid(record, targetStat, monitor, start))
+        invalid = true
+        
       //Save
-      if(invalid)
+      if (invalid)
         targetStat.chk = Some("BAD")
       else
         targetStat.chk = Some("OK")
-       
+
       targetStat.updateDB
     }
   }

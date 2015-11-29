@@ -92,9 +92,12 @@ object ExcelUtility {
             abnormalStyles(3)
         }
       case StatusType.Auto =>
-        abnormalStyles(4)
+        if(SystemConfig.getConfig(SystemConfig.AutoAuditAsNormal, "True").toBoolean)
+          normalStyle
+        else
+          abnormalStyles(3)
       case StatusType.Manual =>
-        abnormalStyles(5)
+        abnormalStyles(4)
     }
   }
 
@@ -108,7 +111,7 @@ object ExcelUtility {
     val fgColors =
       {
         val seqColors =
-          for (col <- 3 to 8)
+          for (col <- 3 to 7)
             yield titleRow.getCell(col).getCellStyle.getFillForegroundXSSFColor
         seqColors.toArray
       }
@@ -1799,7 +1802,7 @@ object ExcelUtility {
       {
         val sheet0 = wb.getSheetAt(0)
         val seqColors =
-          for (col <- 1 to 6)
+          for (col <- 1 to 5)
             yield sheet0.getRow(1).getCell(col).getCellStyle.getFillForegroundXSSFColor
         seqColors.toArray
       }
