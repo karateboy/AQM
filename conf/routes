@@ -100,6 +100,7 @@ GET		/JSON/RegressionChart/:monitor/:monitorType/:start/:end	controllers.Query.r
 GET		/CalibrationQuery			controllers.Query.calibrationQuery
 GET		/CalibrationQueryReport/:monitor/:start/:end controllers.Query.calibrationQueryReport(monitor, start, end, outputTypeStr="html")
 GET		/PDF/CalibrationQueryReport/:monitor/:start/:end controllers.Query.calibrationQueryReport(monitor, start, end, outputTypeStr="pdf")
+GET		/Excel/CalibrationQueryReport/:monitor/:start/:end controllers.Query.calibrationQueryReport(monitor, start, end, outputTypeStr="excel")
 
 GET		/Monitor					controllers.Application.monitor(monitor = "A001")
 GET		/Monitor/:monitor			controllers.Application.monitor(monitor)

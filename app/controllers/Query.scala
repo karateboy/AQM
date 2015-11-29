@@ -343,12 +343,14 @@ object Query extends Controller {
 
     val series = local_series ++ epa_series
 
-    /*
-    val title = {
+    
+    val downloadFileName = {
+      val startName = start.toString("YYMMdd")
       val mNames = monitors.map { Monitor.map(_).name }
       val mtNames = monitorTypes.map { MonitorType.map(_).desp }
-      mNames.mkString + mtNames.mkString + "趨勢圖"
-    }*/
+      startName + mNames.mkString + mtNames.mkString
+    }
+    
     val title = "趨勢圖"
 
     val timeStrSeq = timeSeq.map { tWithIndex =>
@@ -447,7 +449,8 @@ object Query extends Controller {
             Seq(YAxis(None, AxisTitle(Some(Some(s"${mtCase.desp} (${mtCase.unit})"))), getAxisLines(mt)))
           else
             Seq(windYaxis),
-          series)
+          series,
+          Some(downloadFileName))
       } else {
         val yAxis =
           if (monitorTypes.contains(windMtv)) {
@@ -472,7 +475,8 @@ object Query extends Controller {
           Map("text" -> title),
           xAxis,
           yAxis,
-          series)
+          series,
+          Some(downloadFileName))
       }
 
     chart
@@ -511,8 +515,15 @@ object Query extends Controller {
         val mts = monitors.flatMap {_=> monitorTypes.toList }
         val epaMts = epaMonitors.flatMap {_=> monitorTypes.toList }
         val excelFile = ExcelUtility.exportChartData(chart, mts++epaMts)
+        val downloadFileName = 
+            if(chart.downloadFileName.isDefined)
+              chart.downloadFileName.get
+            else
+              chart.title("text")
+
         Ok.sendFile(excelFile, fileName = _ =>
-          play.utils.UriEncoding.encodePathSegment(chart.title("text") + ".xlsx", "UTF-8"),
+              
+          play.utils.UriEncoding.encodePathSegment(downloadFileName + ".xlsx", "UTF-8"),
           onClose = () => { Files.deleteIfExists(excelFile.toPath()) })
       } else {
         Results.Ok(Json.toJson(chart))
@@ -994,6 +1005,12 @@ object Query extends Controller {
             fileName = _ =>
               play.utils.UriEncoding.encodePathSegment(Monitor.map(monitor).name + title + start.toString("YYYYMMdd") + "_" +
                 end.toString("MMdd") + ".pdf", "UTF-8"))
+        case OutputType.excel =>
+          val excelFile = ExcelUtility.calibrationDailyReport(title, start, result, true)
+          Ok.sendFile(excelFile, fileName = _ =>
+            play.utils.UriEncoding.encodePathSegment(title + start.toString("YYMMdd")+"_"+end.toString("YYMMdd") + ".xlsx", "UTF-8"),
+            onClose = () => { Files.deleteIfExists(excelFile.toPath()) })
+          
       }
   }
 

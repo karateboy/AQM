@@ -108,7 +108,8 @@ object Realtime extends Controller {
                            title: Map[String, String],
                            xAxis: XAxis,
                            yAxis: Seq[YAxis],
-                           series: Seq[seqData])
+                           series: Seq[seqData],
+                           downloadFileName: Option[String]=None)
   case class FrequencyTab(header:Seq[String], body:Seq[Seq[String]], footer:Seq[String])                         
   case class WindRoseReport(chart:HighchartData, table:FrequencyTab)
   implicit val xaWrite = Json.writes[XAxis]

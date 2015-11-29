@@ -937,7 +937,7 @@ object ExcelUtility {
   }
 
   import Calibration._
-  def calibrationDailyReport(title: String, reportDate: DateTime, report: List[CalibrationItem]) = {
+  def calibrationDailyReport(title: String, reportDate: DateTime, report: List[CalibrationItem], displayDate:Boolean=false) = {
     val (reportFilePath, pkg, wb) = prepareTemplate("calibration_daily.xlsx")
     val evaluator = wb.getCreationHelper().createFormulaEvaluator()
 
@@ -983,7 +983,11 @@ object ExcelUtility {
     } {
       adjustStyleIdx(item.monitor)
       fillCell(sheet.getRow(row).getCell(0), Monitor.map(item.monitor).name, 0)
-      fillCell(sheet.getRow(row).getCell(1), item.startTime.toString("HH:mm"), 0)
+      if(!displayDate)
+        fillCell(sheet.getRow(row).getCell(1), item.startTime.toString("HH:mm"), 0)
+      else
+        fillCell(sheet.getRow(row).getCell(1), item.startTime.toString("YYYY-M-d HH:mm"), 0)
+        
       fillCell(sheet.getRow(row).getCell(2), MonitorType.map(item.monitorType).desp, 0)
       if (item.z_val > MonitorType.map(item.monitorType).zd_law.get) {
         fillCellF(sheet.getRow(row).getCell(3), item.z_val, 2)
