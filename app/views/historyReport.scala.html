@@ -71,16 +71,26 @@
 </tbody>
 </table>
 @if(editable){
-<label>註記代碼</label>	
-<select id="manualStatus">
-	<option value='@NORMAL_STAT'>@MonitorStatus.map(NORMAL_STAT).desp</option>
-	@for(ms<-MonitorStatus.manualMonitorStatusList){
-		<option value='@ms'>@MonitorStatus.map(ms).desp</option>
-	}
-		
-</select>
-<button type="button" class="btn btn-primary" id="manualAuditApply">註記</button>
-	
+<form class="form-horizontal" id="weekForm">
+	<div class="form-group">
+		<label class="col-lg-1 control-label">註記理由</label>
+		<textarea id="reason" class="col-lg-2" row=3></textarea>
+	</div>
+	<div class="form-group">
+		<label  class="col-lg-1 control-label">註記代碼</label>	
+		<select class="col-lg-2" id="manualStatus">
+			<option value='@NORMAL_STAT'>@MonitorStatus.map(NORMAL_STAT).desp</option>
+			@for(ms<-MonitorStatus.manualMonitorStatusList){
+				<option value='@ms'>@MonitorStatus.map(ms).desp</option>
+			}		
+		</select>
+	</div>
+	<div class="form-group">
+		<div class="col-lg-1 col-lg-offset-1">
+			<button type="button" class="btn btn-primary" id="manualAuditApply">註記</button>
+		</div>
+	</div>
+</form>
 }
 <script>
 	var local_url = '@routes.Assets.at("localization/zh_tw.json")';
@@ -92,19 +102,20 @@ $(document ).ready(function() {
 	$('[data-toggle="tooltip"]').tooltip();
 	$('#historyReport').dataTable( {
 		responsive: true,
-		"dom": 'T&lt'+'clear'+'&gtlfrtip',
 		language: {
 			url: local_url,							
 		},
-		"tableTools": {
-        	"sSwfPath": sSwfPath,
-        	"aButtons": ["copy", "print", "csv", "xls"]
-        },
 		"paging":   false,
 		searching: false
 	} );
 	
 	$('#manualAuditApply').click(function(){
+		var reason = $('#reason').val();
+		if(reason.length == 0){
+			alert('請填寫註記理由!');
+			return;
+		}
+		
 		var $inputs=$("#historyReport :input:checked");
 		var $manualStatus = $('#manualStatus').val();		
 		var obj={};			
@@ -118,6 +129,7 @@ $(document ).ready(function() {
 			audit.monitorType=param[1];
 			audit.time=parseInt(param[2]);
 			audit.status=$manualStatus.substr(0,1) + param[3].substr(1, param[3].length-1);
+			audit.reason=reason;
 			manualAuditList.push(audit);
 		}
 		obj.list=manualAuditList;

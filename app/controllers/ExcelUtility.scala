@@ -196,7 +196,7 @@ object ExcelUtility {
     val fgColors =
       {
         val seqColors =
-          for (col <- 3 to 8)
+          for (col <- 3 to 7)
             yield titleRow.getCell(col).getCellStyle.getFillForegroundXSSFColor
         seqColors.toArray
       }
@@ -264,7 +264,7 @@ object ExcelUtility {
     val fgColors =
       {
         val seqColors =
-          for (col <- 17 to 22)
+          for (col <- 17 to 21)
             yield wb.getSheetAt(2).getRow(2).getCell(col).getCellStyle.getFillForegroundXSSFColor
         seqColors.toArray
       }
@@ -830,7 +830,7 @@ object ExcelUtility {
     val abnormalColor =
         {
           val seqColors =
-            for (col <- 9 to 14)
+            for (col <- 9 to 13)
               yield wb.getSheetAt(0).getRow(2).getCell(col).getCellStyle.getFillForegroundXSSFColor            
               
           seqColors.toArray

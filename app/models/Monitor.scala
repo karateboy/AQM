@@ -300,8 +300,13 @@ object MonitorType extends Enumeration{
       return ""
     
     val log = auditLogOpt.get
+    val reason = if(log.reason.isDefined)
+      log.reason.get
+    else
+      "無"
+      
     return s"""
-      title=${log.modified_time.toString("YYYY-MM-dd-HH:mm")}-${log.operator}註記
+      title=${log.modified_time.toString("YYYY-MM-dd-HH:mm")}-${log.operator}註記-理由:${reason}
       data-toggle=tooltip data-container=body data-trigger=hover
       """
   }

@@ -7,7 +7,7 @@ import com.github.nscala_time.time.Imports._
 import models.ModelHelper._
 
 case class ManualAuditLog(tabType:TableType.Value, monitor:Monitor.Value, dataTime:DateTime, monitorType:MonitorType.Value, 
-    modified_time:DateTime, changed_status:String, operator:String)
+    modified_time:DateTime, changed_status:String, operator:String, reason:Option[String])
 object ManualAuditLog {
   val mapping = List(
       1-> TableType.SixSec,
@@ -32,7 +32,8 @@ object ManualAuditLog {
                 monitorType = MonitorType.withName(rs.string(4)),
                 modified_time = rs.timestamp(5),
                 changed_status = rs.string(6),
-                operator = rs.string(7)              
+                operator = rs.string(7),
+                reason = rs.stringOpt(8)
               )}.single.apply        
     }
   }
@@ -67,7 +68,8 @@ object ManualAuditLog {
            ,[monitorType]
            ,[modified_time]
            ,[changed_status]
-           ,[operator])
+           ,[operator]
+           ,[reason])
      VALUES
            (${tabTypeToIdMap(log.tabType)}
            ,${log.monitor.toString()}
@@ -75,7 +77,8 @@ object ManualAuditLog {
            ,${log.monitorType.toString}
            ,${modified_time}
            ,${log.changed_status}
-           ,${log.operator})
+           ,${log.operator}
+           ,${log.reason})
           """.update.apply
     }
   }

@@ -486,7 +486,7 @@ object Application extends Controller {
       Ok(views.html.history("/HistoryQueryReport/true/", group.privilege))
   }
 
-  case class ManualAudit(monitor: Monitor.Value, monitorType: MonitorType.Value, time: Long, status: String)
+  case class ManualAudit(monitor: Monitor.Value, monitorType: MonitorType.Value, time: Long, status: String, reason:Option[String])
   case class ManualAuditList(list: Seq[ManualAudit])
   def manualAuditApply(recordTypeStr:String) = Security.Authenticated(BodyParsers.parse.json) {
     implicit request =>
@@ -508,7 +508,7 @@ object Application extends Controller {
             EventLog.create(EventLog(now, EventLog.evtTypeManualAudit, 
                 s"${user.name} 進行人工註記 :${new DateTime(ma.time).toString("YYYY/MM/dd HH:mm")}:${Monitor.map(ma.monitor).name}:${MonitorType.map(ma.monitorType).desp}-${MonitorStatus.map(ma.status).desp}"))
             if(tagInfo.statusType == StatusType.Manual){
-              val log = ManualAuditLog(tabType, ma.monitor, new DateTime(ma.time), ma.monitorType, now, ma.status, user.name)
+              val log = ManualAuditLog(tabType, ma.monitor, new DateTime(ma.time), ma.monitorType, now, ma.status, user.name, ma.reason)
               try{
                 val logOpt = ManualAuditLog.getLog(tabType, ma.monitor, new DateTime(ma.time), ma.monitorType)
                 if(logOpt.isEmpty)
