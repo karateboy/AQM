@@ -1075,6 +1075,7 @@ object ExcelUtility {
       }
       sheet.getRow(36).getCell(0).setCellValue(s"${Monitor.map(monitor).name} (${MonitorType.map(monitorType).desp})零點校正趨勢圖")
       sheet.getRow(37).getCell(0).setCellValue(s"${Monitor.map(monitor).name} (${MonitorType.map(monitorType).desp})全幅校正趨勢圖")
+      //sheet.getRow(38).getCell(0).setCellValue(s"${Monitor.map(monitor).name} (${MonitorType.map(monitorType).desp})全幅讀值趨勢圖")
     }
 
     for ((mt, idx) <- MonitorType.calibrationList.zipWithIndex) {
