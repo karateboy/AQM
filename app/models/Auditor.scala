@@ -191,14 +191,25 @@ object Auditor {
       (MonitorStatus.isNormalStat(r._2.get) || MonitorStatus.getTagInfo(r._2.get).statusType == StatusType.Auto)
   }
       
-  def auditHourData(monitor: Monitor.Value, auditConfig: AutoAudit, start: DateTime, end: DateTime)(implicit session: DBSession = AutoSession) = {
-    val records = getUncheckedHourRecords(monitor, start, end).toArray
+  def auditHourData(monitor: Monitor.Value, auditConfig: AutoAudit, start: DateTime, end: DateTime, reaudit:Boolean = false)(implicit session: DBSession = AutoSession) = {
+    val records =
+      if(reaudit)
+        getHourRecords(monitor, start, end).toArray
+      else
+        getUncheckedHourRecords(monitor, start, end).toArray
+      
 
     for {
       hr <- records.zipWithIndex
       record = hr._1
       idx = hr._2
-      targetStat = new AuditStat(record)
+      targetStat = {
+        if(reaudit){
+          val as = new AuditStat(record)
+          as.clear()
+          as
+        }else
+          new AuditStat(record)}
     } {
       var invalid = false
       if(auditConfig.minMaxRule.checkInvalid(record, targetStat))

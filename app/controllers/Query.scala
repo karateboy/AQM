@@ -58,7 +58,7 @@ object Query extends Controller {
 
       if (reaudit) {
         for (m <- monitors)
-          Auditor.auditHourData(m, Monitor.map(m).autoAudit, start, end)
+          Auditor.auditHourData(m, Monitor.map(m).autoAudit, start, end, reaudit)
       }
       val pairs =
         for {
