@@ -53,6 +53,14 @@ object Application extends Controller {
       Ok(Json.toJson(info))
   }
 
+  def getMonitorBios(monitorStr: String) = Security.Authenticated {
+    implicit request =>
+      val m = Monitor.withName(monitorStr)
+      val bios = MonitorBios.map(m)
+
+      Ok(views.html.monitorBios(m, bios))
+  }
+
   def setMonitorTypes(monitorStr: String) = Security.Authenticated(BodyParsers.parse.json) {
     implicit request =>
       val monitor = Monitor.withName(monitorStr)

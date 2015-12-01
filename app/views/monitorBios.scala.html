@@ -1,0 +1,68 @@
+@* monitorBios Template File *@
+@(m: Monitor.Value, bios:MonitorBios)
+<table class="table table-striped table-bordered table-hover">
+<tbody>
+<tr>
+	<td class="info">測站位置</td>
+	<td>@bios.location</td>
+</tr>
+<tr>
+	<td class="info">測站類型</td>
+	<td>@bios.monitor_type</td>
+</tr>
+<tr>
+	<td class="info">測站地址</td>
+	<td>@bios.address</td>
+</tr>
+<tr>
+	<td class="info">測站行政區</td>
+	<td>@bios.town</td>
+</tr>
+<tr>
+	<td class="info">測站土地面積</td>
+	<td>@bios.area</td>
+</tr>
+<tr>
+	<td class="info">測站人口密度</td>
+	<td>@bios.density</td>
+</tr>
+<tr>
+	<td class="info">測站設置日期</td>
+	<td>@bios.founded</td>
+</tr>
+
+<tr>
+	<td class="info">測站高度</td>
+	<td>@bios.height</td>
+</tr>
+
+<tr>
+	<td class="info">採樣口氣流角度</td>
+	<td>@bios.angle</td>
+</tr>
+<tr>
+	<td class="info">採樣口高度</td>
+	<td>@bios.sample_height</td>
+</tr>
+<tr>
+	<td class="info">主要道路最近距離</td>
+	<td>@bios.distance</td>
+</tr>
+<tr>
+	<td class="info">經度</td>
+	<td>@Monitor.map(m).lat</td>
+</tr>
+<tr>
+	<td class="info">緯度</td>
+	<td>@Monitor.map(m).lng</td>
+</tr>
+<tr>
+	<td class="info">測站正面圖</td>
+	<td><img src='@routes.Assets.at("images/monitor/" + m.toString + "_1.jpg")' class="img-responsive" alt="測站正面圖"></td>
+</tr>
+<tr>
+	<td class="info">測站周圍環境</td>
+	<td><img src='@routes.Assets.at("images/monitor/" + m.toString + "_2.jpg")' class="img-responsive" alt="測站周圍環境"></td>
+</tr>
+</tbody>
+</table>

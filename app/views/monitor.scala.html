@@ -31,7 +31,9 @@
 		<li @if(hightlightEquip){class="active"}>
 			<a data-toggle="tab" href="#equipmentTab"> <span class="glyphicons glyphicons-hotspot"></span>設備</a>
 		</li>
-				
+		<li>
+			<a data-toggle="tab" href="#monitorBiosTab"> <span class="glyphicons glyphicons-hotspot"></span>測站基本資料</a>
+		</li>		
 	</ul>
 	<div class="tab-content">
 		<div id="monitorTypeTab" class="tab-pane @if(!hightlightEquip){active}">	
@@ -182,6 +184,9 @@
             			</tbody>
             			</table>					
 				</div>
+				<div id="monitorBiosTab" class="tab-pane">
+					<div id="monitorBiosDiv"></div>
+				</div>
 			</div>
 			</div>
         </div>    
@@ -232,6 +237,7 @@ function() {
 
 		$("#imgUrl").val(mInfo.imgUrl);
 		updateEquipment(mInfo.equipments);
+		$("#monitorBiosDiv").load("/MonitorBios/"+monitor);
 	}
 
 	function updateEquipment(equipments) {
