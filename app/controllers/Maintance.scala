@@ -313,7 +313,7 @@ object Maintance extends Controller {
       val end = DateTime.parse(endStr) + 1.day
 
       val tickets = Ticket.queryTickets(start, end)
-      val filterTicket = tickets.filter { t => monitors.contains(t.monitor) }
+      val filterTicket = tickets.filter { t => monitors.contains(t.monitor) && t.ticketType == TicketType.repair }
       val adminUsers = User.getAdminUsers()
       val usrMap = Map(adminUsers.map { u => (u.id.get -> u) }: _*)
 

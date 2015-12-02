@@ -1,10 +1,11 @@
 @* dashboard Template File *@
 @(privilege: Privilege)
 <div class="row">
-	<div class="col-lg-2">
-		<div class="ibox float-e-margins">
+	@for(mt<-MonitorType.myMtvList(privilege)){
+		<div class="col-lg-2">
+			<div class="ibox float-e-margins">
                <div class="ibox-title">
-               	<h5>TSP 即時資料</h5>
+               	<h5>@MonitorType.map(mt).desp 即時資料</h5>
                        <div class="ibox-tools">
                            <a class="collapse-link">
                                <i class="fa fa-chevron-up"></i>
@@ -15,136 +16,11 @@
                        </div>
                    </div>
                <div class="ibox-content">
-				<div id="tsp_realtimChart"></div>                        
-           	</div>
+			   <div id="realtimChart_@mt"></div>                        
+           	   </div>
            </div>
-       </div>
-	<div class="col-lg-2">
-		<div class="ibox float-e-margins">
-               <div class="ibox-title">
-               	<h5>PM10 即時資料</h5>
-                       <div class="ibox-tools">
-                           <a class="collapse-link">
-                               <i class="fa fa-chevron-up"></i>
-                           </a>                                                      
-                           <a class="close-link">
-                               <i class="fa fa-times"></i>
-                           </a>
-                       </div>
-                   </div>
-               <div class="ibox-content">
-				<div id="pm10_realtimChart"></div>                       
-           	</div>
-           </div>
-	</div>
-	<div class="col-lg-2">
-		<div class="ibox float-e-margins">
-               <div class="ibox-title">
-               	<h5>二氧化硫 即時資料</h5>
-                       <div class="ibox-tools">
-                           <a class="collapse-link">
-                               <i class="fa fa-chevron-up"></i>
-                           </a>                                                     
-                           <a class="close-link">
-                               <i class="fa fa-times"></i>
-                           </a>
-                       </div>
-                   </div>
-               <div class="ibox-content">
-				<div id="so2_realtimChart"></div>                       
-           	</div>
-           </div>		
-	</div>
-	<div class="col-lg-2">
-		<div class="ibox float-e-margins">
-               <div class="ibox-title">
-               	<h5>二氧化氮 即時資料</h5>
-                       <div class="ibox-tools">
-                           <a class="collapse-link">
-                               <i class="fa fa-chevron-up"></i>
-                           </a>                                                   
-                           <a class="close-link">
-                               <i class="fa fa-times"></i>
-                           </a>
-                       </div>
-                   </div>
-               <div class="ibox-content">
-				<div id="no2_realtimChart"></div>                       
-           	</div>
-           </div>
-	</div>
-	<div class="col-lg-2">
-		<div class="ibox float-e-margins">
-               <div class="ibox-title">
-               	<h5>臭氧 即時資料</h5>
-                       <div class="ibox-tools">
-                           <a class="collapse-link">
-                               <i class="fa fa-chevron-up"></i>
-                           </a>                                                  
-                           <a class="close-link">
-                               <i class="fa fa-times"></i>
-                           </a>
-                       </div>
-                   </div>
-               <div class="ibox-content">
-				<div id="o3_realtimChart"></div>                       
-           	</div>
-           </div>
-	</div>
-	<div class="col-lg-2">
-		<div class="ibox float-e-margins">
-               <div class="ibox-title">
-               	<h5>一氧化碳 即時資料</h5>
-                       <div class="ibox-tools">
-                           <a class="collapse-link">
-                               <i class="fa fa-chevron-up"></i>
-                           </a>                           
-                           <a class="close-link">
-                               <i class="fa fa-times"></i>
-                           </a>
-                       </div>
-                   </div>
-               <div class="ibox-content">
-				<div id="co_realtimChart"></div>                       
-           	</div>
-           </div>
-	</div>
-	<div class="col-lg-2">
-		<div class="ibox float-e-margins">
-               <div class="ibox-title">
-               	<h5>甲烷 即時資料</h5>
-                       <div class="ibox-tools">
-                           <a class="collapse-link">
-                               <i class="fa fa-chevron-up"></i>
-                           </a>                           
-                           <a class="close-link">
-                               <i class="fa fa-times"></i>
-                           </a>
-                       </div>
-                   </div>
-               <div class="ibox-content">
-				<div id="ch4_realtimChart"></div>                       
-           	</div>
-           </div>
-	</div>
-	<div class="col-lg-2">
-		<div class="ibox float-e-margins">
-               <div class="ibox-title">
-               	<h5>非甲烷 即時資料</h5>
-                       <div class="ibox-tools">
-                           <a class="collapse-link">
-                               <i class="fa fa-chevron-up"></i>
-                           </a>                           
-                           <a class="close-link">
-                               <i class="fa fa-times"></i>
-                           </a>
-                       </div>
-                   </div>
-               <div class="ibox-content">
-				<div id="non_ch4_realtimChart"></div>                       
-           	</div>
-           </div>
-	</div>
+       </div>		
+	}	
 </div>
 
 <div class="row">
@@ -170,6 +46,12 @@ var monitorInfo = [];
 			lng:'@Monitor.map(m).lng',
 			status:'@Monitor.map(m).name',			
 		});
+}
+
+function refreshRealtimeChart() {
+	@for(mt<-MonitorType.myMtvList(privilege)){
+		getRealtimChart('#realtimChart_@mt', "@mt");
+	}
 }
 
 var statusIconUrl = [
@@ -479,17 +361,6 @@ var statusMarkerArray = [];
 
 			}
 		});
-	}
-
-	function refreshRealtimeChart() {
-		getRealtimChart('#tsp_realtimChart', "A213");
-		getRealtimChart('#pm10_realtimChart', "A214");
-		getRealtimChart('#so2_realtimChart', "A222");
-		getRealtimChart('#no2_realtimChart', "A293");
-		getRealtimChart('#o3_realtimChart', "A225");
-		getRealtimChart('#co_realtimChart', "A224");
-		getRealtimChart('#ch4_realtimChart', "A286");
-		getRealtimChart('#non_ch4_realtimChart', "A296");
 	}
 
 	function initRealtimeMap() {

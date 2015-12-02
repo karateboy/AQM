@@ -491,7 +491,7 @@ object Application extends Controller {
     implicit request =>
       val userInfo = Security.getUserinfo(request).get
       val group = Group.getGroup(userInfo.groupID).get
-      Ok(views.html.history("/HistoryQueryReport/true/", group.privilege))
+      Ok(views.html.history("/HistoryQueryReport/true/", group.privilege, true))
   }
 
   case class ManualAudit(monitor: Monitor.Value, monitorType: MonitorType.Value, time: Long, status: String, reason:Option[String])

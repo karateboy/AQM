@@ -4,30 +4,30 @@
 <thead>
 	<tr>
 		<th>測站</th>
-		<th>內容</th>
+		<th>測項</th>
 		<th>起始</th>
 		<th>結束</th>
 		<th>維修與維護說明</th>
+		<th>儀器</th>
+		<th>更換零件</th>
 		<th>下載表單</th>
 	</tr>
 </thead>
 <tbody>
 @for(t <- tickets){
 		<td>@Monitor.map(t.monitor).name</td>
-		@if(t.monitorType.isEmpty){
-			<td>定保</td>
-		}else{
-			<td>維修(@MonitorType.map(t.monitorType.get).desp)</td>
-		}
-		@if(t.ticketType == TicketType.repair){
-			<td>@t.getRepairForm.start</td>
-			<td>@t.getRepairForm.end</td>
-			<td>@t.getRepairForm.explain<br/>@t.getRepairForm.result</td>
-		}else{
-			<td>@t.getForm.start</td>
-			<td>@t.getForm.end</td>
-			<td>@t.getForm.comments</td>		
-		}
+		<td>@MonitorType.map(t.monitorType.get).desp</td>
+		<td>@t.getRepairForm.start</td>
+		<td>@t.getRepairForm.end</td>
+		<td>@t.getRepairForm.explain<br/>@t.getRepairForm.result</td>
+		<td>@t.getRepairForm.equipmentId</td>
+		<td>
+			@if(t.getRepairForm.parts.length == 0){
+				無
+			}else{
+				@t.getRepairForm.parts.map(_.id)
+			}		
+		</td>
 		<td><a href="/DownloadForm/@t.id"><i class="fa fa-file-excel-o fa-2x"></i></td>
 	</tr>
 }

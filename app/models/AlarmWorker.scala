@@ -49,7 +49,13 @@ class AlarmWorker extends Actor{
   }
   
   import play.api.libs.mailer._
-  def sendAlarmEmail(users:List[User], alarm: Alarm)={
+  def sendAlarmEmail(users: List[User], alarm: Alarm) = {
+    val ar_state =
+      if (alarm.mVal == 0)
+        "恢復正常"
+      else
+        "觸發"
+
     val email = Email(
       s"警報: ${Monitor.map(alarm.monitor).name}-${Alarm.map(alarm.mItem)}(${MonitorStatus.map(alarm.code).desp})",
       "警報服務 <karateboy.huang@gmail.com>",
@@ -57,10 +63,9 @@ class AlarmWorker extends Actor{
       // adds attachment
       attachments = Seq(),
       // sends text, HTML or both...
-      bodyText = Some(s"${Monitor.map(alarm.monitor).name}- ${alarm.time.toString}:${Alarm.map(alarm.mItem)}:${MonitorStatus.map(alarm.code).desp}"),
-      bodyHtml = Some(s"<html><body><p><b>${Monitor.map(alarm.monitor).name}-${alarm.time.toString("YYYY/MM/dd HH:mm")}:${Alarm.map(alarm.mItem)}:${MonitorStatus.map(alarm.code).desp}</b></p></body></html>")
-    )
-    
+      bodyText = Some(s"${Monitor.map(alarm.monitor).name}- ${alarm.time.toString}:${Alarm.map(alarm.mItem)}:${MonitorStatus.map(alarm.code).desp}:${ar_state}"),
+      bodyHtml = Some(s"<html><body><p><b>${Monitor.map(alarm.monitor).name}-${alarm.time.toString("YYYY/MM/dd HH:mm")}:${Alarm.map(alarm.mItem)}:${MonitorStatus.map(alarm.code).desp}</b></p></body></html>"))
+
     MailerPlugin.send(email)
   }
 }
