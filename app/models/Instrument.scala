@@ -25,12 +25,18 @@ case class T300Record(monitor: Monitor.Value, time: DateTime, range: Float, stab
 case class T400Record(monitor: Monitor.Value, time: DateTime, range: Float, stabil: Float, o3_meas: Float, o3_ref: Float, pres: Float, samp_fl: Float,
                       sample_temp: Float, photo_lamp: Float, box_temp: Float, slope: Float, offset: Float)
 
+case class PM10Record(monitor: Monitor.Value, time: DateTime, Conc:Option[Float], Qtot:Option[Float], RH:Option[Float], AT:Option[Float])
+
+case class PM25Record(monitor: Monitor.Value, time: DateTime, Conc:Option[Float], Qtot:Option[Float], RH:Option[Float], AT:Option[Float])
+
 object Instrument extends Enumeration {
-  val H370 = Value("H370")
-  val T100 = Value("T100")
-  val T200 = Value("T200")
-  val T300 = Value("T300")
-  val T400 = Value("T400")
+  val H370 = Value
+  val T100 = Value
+  val T200 = Value
+  val T300 = Value
+  val T400 = Value
+  val PM10 = Value
+  val PM25 = Value
 
   def getTabName(inst: Instrument.Value, year: Int) = {
     SQLSyntax.createUnsafely(s"[AQMSDB].[dbo].[P1234567_Diag${inst.toString}_${year}]")
@@ -121,6 +127,33 @@ object Instrument extends Enumeration {
         rs.floatOpt(8).getOrElse(0f), rs.floatOpt(10).getOrElse(0f), rs.floatOpt(12).getOrElse(0f),
         rs.floatOpt(14).getOrElse(0f), rs.floatOpt(16).getOrElse(0f), rs.floatOpt(18).getOrElse(0f),
         rs.floatOpt(20).getOrElse(0f), rs.floatOpt(22).getOrElse(0f), rs.floatOpt(24).getOrElse(0f))
+    }.list().apply()
+  }
+  
+  def getPM10Record(monitor: Monitor.Value, start: DateTime, end: DateTime)(implicit session: DBSession = AutoSession) = {
+    val tab = getTabName(PM10, start.getYear)
+    sql"""
+      Select *
+      From ${tab}
+      Where DP_NO=${monitor.toString} and M_DateTime>= ${start} and M_DateTime<${end}
+      """.map { rs =>
+      val m = Monitor.withName(rs.string(1))
+      val time = rs.timestamp(2)
+      PM10Record(m, time, rs.floatOpt(4), rs.floatOpt(6),
+        rs.floatOpt(8), rs.floatOpt(10))
+    }.list().apply()
+  }
+  
+  def getPM25Record(monitor: Monitor.Value, start: DateTime, end: DateTime)(implicit session: DBSession = AutoSession) = {
+    val tab = getTabName(PM25, start.getYear)
+    sql"""
+      Select *
+      From ${tab}
+      Where DP_NO=${monitor.toString} and M_DateTime>= ${start} and M_DateTime<${end}
+      """.map { rs =>
+      val m = Monitor.withName(rs.string(1))
+      val time = rs.timestamp(2)
+      PM25Record(m, time, rs.floatOpt(4), rs.floatOpt(6), rs.floatOpt(8), rs.floatOpt(10))
     }.list().apply()
   }
 }

@@ -1,7 +1,7 @@
 @* dashboard Template File *@
-@(privilege: Privilege)
+@(user:User, privilege: Privilege)
 <div class="row">
-	@for(mt<-MonitorType.myMtvList(privilege)){
+	@for(mt<-user.myWidget){
 		<div class="col-lg-2">
 			<div class="ibox float-e-margins">
                <div class="ibox-title">
@@ -49,7 +49,7 @@ var monitorInfo = [];
 }
 
 function refreshRealtimeChart() {
-	@for(mt<-MonitorType.myMtvList(privilege)){
+	@for(mt<-user.myWidget){
 		getRealtimChart('#realtimChart_@mt', "@mt");
 	}
 }
@@ -65,7 +65,7 @@ var statusIconUrl = [
  var mapLegendImgHTML = "<br/><img src='@routes.Assets.at("images/map_label.png")' style='width:50%;height:50%' />";
 </script>
 <script>
-var mapCenter = new google.maps.LatLng(23.65875446, 120.2805895);
+var mapCenter = new google.maps.LatLng(23.64475446, 120.2805895);
 
 // Define a property to hold the Home state.
 HomeControl.prototype.home_ = null;
@@ -301,7 +301,7 @@ var statusMarkerArray = [];
 					width : "60px"
 				},
 				disableAutoPan : true,
-				pixelOffset : new google.maps.Size(-30, 20),
+				pixelOffset : new google.maps.Size(-30, 10),
 				position : new google.maps.LatLng(monitor.lat, monitor.lng),
 				closeBoxURL : "",
 				isHidden : false,
@@ -381,7 +381,7 @@ var statusMarkerArray = [];
 		} ];
 
 		var mapOptions = {
-			center : new google.maps.LatLng(23.65875446, 120.2805895),
+			center : mapCenter,
 			zoom : 11,
 			panControl : false,
 			zoomControl : false,

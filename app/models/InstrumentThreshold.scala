@@ -78,6 +78,15 @@ object InstrumentThreshold extends Enumeration {
   val T400_BOX_TEMP = Value
   val T400_SLOPE = Value
   val T400_OFFSET = Value
+  val PM25_CONC = Value
+  val PM25_QTOT = Value
+  val PM25_RH = Value
+  val PM25_AT = Value  
+  val PM10_CONC = Value
+  val PM10_QTOT = Value
+  val PM10_RH = Value
+  val PM10_AT = Value
+
 
   private def getValue(strKey:String)={
     val value = SystemConfig.getConfig(strKey, "")
@@ -109,4 +118,29 @@ object InstrumentThreshold extends Enumeration {
     else 
       s"Color:Black"
   }
+  
+  def getStyle(key: InstrumentThreshold.Value, valueOpt:Option[Float]):String={
+    if(valueOpt.isEmpty)
+      return s"Color:Red"
+      
+    val value = valueOpt.get
+    val maxOpt = getMax(key)
+    val minOpt = getMin(key)
+    if((maxOpt.isDefined && value > maxOpt.get) ||
+        (minOpt.isDefined && value < minOpt.get))
+      s"Color:Red"
+    else 
+      s"Color:Black"
+  }
+  
+  def formatV(fmt:String, valueOpt:Option[Float])={
+    if(valueOpt.isEmpty)
+      "-"
+    else{
+      val value = valueOpt.get
+      fmt.format(value)
+    }
+
+  }
+  
 }

@@ -30,8 +30,9 @@ object Application extends Controller {
         Forbidden("Invalid access!")
       } else {
         val userInfo = userInfoOpt.get
+        val user = User.getUserById(userInfo.id).get
         val group = Group.getGroup(userInfo.groupID).get
-        Ok(views.html.index(title, userInfo, group.privilege))
+        Ok(views.html.index(title, user, userInfo, group.privilege))
       }
   }
 
@@ -605,6 +606,12 @@ object Application extends Controller {
         case Instrument.T400 =>
           val records = Instrument.getT400Record(monitor, start, end)
           views.html.T400Report(monitor, start, end, records)
+        case Instrument.PM25 =>
+          val records = Instrument.getPM25Record(monitor, start, end)
+          views.html.PM25Report(monitor, start, end, records)
+        case Instrument.PM10 =>
+          val records = Instrument.getPM10Record(monitor, start, end)
+          views.html.PM10Report(monitor, start, end, records)
       }
     val title = "儀器狀態"
 

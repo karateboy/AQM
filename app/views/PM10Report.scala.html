@@ -1,0 +1,35 @@
+@* PM10Report Template File *@
+@import com.github.nscala_time.time.Imports._
+@import InstrumentThreshold._
+@(monitor:Monitor.Value, start:DateTime, end:DateTime, rsList: List[PM10Record])
+<H3>測站:@Monitor.map(monitor).name</H3>
+<H5>儀器:PM10</H5>
+<H5>開始:@start.toString("YYYY-MM-dd")</H5>
+<H5>結束:@end.toString("YYYY-MM-dd")</H5>
+<span style="color:red">超過內控值</span>
+<table id="reportTable" class="table">
+<thead>
+	<tr>		
+		<th>時間</th>
+      	<th>Conc (ug/m3)</th>
+      	<th>Qtot (m3)</th>
+      	<th>RH (%)</th>
+	    <th>AT (C)</th>
+	</tr>
+</thead>
+<tbody>
+	@for(rs<-rsList){
+		<tr>
+			<td>@rs.time.toString("YYYY-MM-dd HH:mm")</td>
+			<td style="@getStyle(PM10_CONC, rs.Conc)">@formatV("%.0f", rs.Conc)</td>
+			<td style="@getStyle(PM10_QTOT, rs.Qtot)">@formatV("%.1f", rs.Qtot)</td>
+			<td style="@getStyle(PM10_RH, rs.RH)">@formatV("%.1f", rs.RH)</td>
+			<td style="@getStyle(PM10_AT, rs.AT)">@formatV("%.1f", rs.AT)</td>
+		</tr>
+	}
+</tbody>
+</table>
+<script>
+$(document ).ready(function() {
+});
+</script>
