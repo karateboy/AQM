@@ -275,12 +275,20 @@ object Query extends Controller {
               Seq(Some(time.getMillis.toDouble), Some(recordMap(m)(mt)(time)._1.get.toDouble))
             else
               Seq(Some(time.getMillis.toDouble), None)
-          }          
+          } 
+          timeStatus = timeSeq.map { t =>
+            val time = t._1
+            val x = t._2
+            if (recordMap(m)(mt).contains(time))
+              Some(recordMap(m)(mt)(time)._2.get)
+            else
+              None
+          } 
         } yield {
           if (mt != windMtv)
-            seqData(Monitor.map(m).name + "_" + MonitorType.map(mt).desp, timeData)
+            seqData(name=Monitor.map(m).name + "_" + MonitorType.map(mt).desp, data=timeData, status=Some(timeStatus))
           else
-            seqData(Monitor.map(m).name + "_" + MonitorType.map(mt).desp, timeData, 1, Some("scatter"))
+            seqData(name=Monitor.map(m).name + "_" + MonitorType.map(mt).desp, data=timeData,  yAxis=1, chartType=Some("scatter"), status=Some(timeStatus))
         }
       } else {
         for {
@@ -293,9 +301,17 @@ object Query extends Controller {
               Seq(Some(time.getMillis.toDouble), Some(recordMap(m)(mt)(time)._1.get.toDouble))
             else
               Seq(Some(time.getMillis.toDouble), None)
-          }          
+          } 
+          timeStatus = timeSeq.map { t =>
+            val time = t._1
+            val x = t._2
+            if (recordMap(m)(mt).contains(time))
+              Some(recordMap(m)(mt)(time)._2.get)
+            else
+              None
+          } 
         } yield {
-          seqData(Monitor.map(m).name + "_" + MonitorType.map(mt).desp, timeData)
+          seqData(name = Monitor.map(m).name + "_" + MonitorType.map(mt).desp, data=timeData, status=Some(timeStatus))
         }
       }
 

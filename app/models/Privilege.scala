@@ -16,13 +16,15 @@ object MenuRight extends Enumeration{
   val Report = Value("Report")
   val Statistics = Value("Statistics")
   val SystemManagement = Value("System management")
+  val RepartMaintance = Value
   
   val map = Map(
         RealtimeInfo->"即時資訊",
         DataQuery->"數據查詢",
         Report->"報表查詢",
         Statistics->"統計分析",
-        SystemManagement->"系統管理"
+        SystemManagement->"系統管理",
+        RepartMaintance->"維修保養"
       )
   def getDisplayName(v:MenuRight.Value)={
     map(v)

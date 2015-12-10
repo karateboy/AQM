@@ -103,7 +103,8 @@ object Realtime extends Controller {
       floor:Option[Int]=None, ceiling:Option[Int]=None, min:Option[Int]=None, max:Option[Int]=None, tickInterval:Option[Int]=None, 
       gridLineWidth:Option[Int]=None, gridLineColor:Option[String]=None)
       
-  case class seqData(name: String, data: Seq[Seq[Option[Double]]], yAxis:Int=0, chartType:Option[String]=None)
+  case class seqData(name: String, data: Seq[Seq[Option[Double]]], yAxis:Int=0, chartType:Option[String]=None, 
+      status:Option[Seq[Option[String]]]=None)
   case class HighchartData(chart: Map[String, String],
                            title: Map[String, String],
                            xAxis: XAxis,
@@ -123,7 +124,8 @@ object Realtime extends Controller {
     (__ \ "name").write[String] and
     (__ \ "data").write[Seq[Seq[Option[Double]]]] and
     (__ \ "yAxis").write[Int] and
-    (__ \ "type").write[Option[String]]
+    (__ \ "type").write[Option[String]] and
+    (__ \ "status").write[Option[Seq[Option[String]]]]
   )(unlift(seqData.unapply))
   implicit val hcWrite = Json.writes[HighchartData]
   implicit val feqWrite = Json.writes[FrequencyTab]

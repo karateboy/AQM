@@ -1160,11 +1160,17 @@ object ExcelUtility {
     val headerRow = sheet.createRow(0)
     headerRow.createCell(0).setCellValue("時間")
 
+    var pos = 0
     for {
       col <- 1 to chart.series.length
       series = chart.series(col - 1)
     } {
-      headerRow.createCell(col).setCellValue(series.name)
+      headerRow.createCell(pos+1).setCellValue(series.name)
+      pos+=1
+      if(series.status.isDefined){
+        headerRow.createCell(pos+1).setCellValue("狀態碼")
+        pos+=1
+      }
     }
 
     val styles = precArray.map { prec =>
@@ -1205,11 +1211,13 @@ object ExcelUtility {
       for (row <- 1 to rowMax) {
         val thisRow = sheet.createRow(row)
         val timeCell = thisRow.createCell(0)
+        pos = 0
         for {
           col <- 1 to chart.series.length
           series = chart.series(col - 1)
-        } {
-          val cell = thisRow.createCell(col)
+         } {
+          val cell = thisRow.createCell(pos +1)
+          pos +=1
           cell.setCellStyle(styles(col - 1))
 
           val pair = series.data(row - 1)
@@ -1219,6 +1227,15 @@ object ExcelUtility {
           }
           if (pair(1).isDefined) {
             cell.setCellValue(pair(1).get)
+          }
+                    
+          if(series.status.isDefined){
+            val statusCell = thisRow.createCell(pos+1)
+            pos+=1
+            val statusOpt = series.status.get(row -1)
+            if(statusOpt.isDefined){              
+              statusCell.setCellValue(statusOpt.get)              
+            }
           }
         }
       }
@@ -1826,7 +1843,8 @@ object ExcelUtility {
 
       for {
         (mt, mt_idx) <- Monitor.map(m).monitorTypes.zipWithIndex
-        set_title = sheet.getRow(0).createCell(mt_idx + 1).setCellValue(MonitorType.map(mt).desp)
+        unit1 = sheet.getRow(0).createCell(mt_idx*2 + 1).setCellValue(MonitorType.map(mt).desp)
+        unit2 = sheet.getRow(0).createCell(mt_idx*2 + 2).setCellValue("狀態碼")
         mtRecords = minRecords.map { Record.monitorTypeProject2(mt) }
         normalStyle = createStyle(mt)(wb)
         abnormalStyles = createColorStyle(fgColors, mt)(wb)
@@ -1839,19 +1857,21 @@ object ExcelUtility {
           (rec, rec_idx) <- mtRecords.zipWithIndex
         } {
           val row = sheet.getRow(rec_idx + 1)
-          val cell = row.createCell(mt_idx + 1)
+          val vCell = row.createCell(mt_idx*2 + 1)
+          val sCell = row.createCell(mt_idx*2 + 2)
           val valueOpt = rec._1
           val statusOpt = rec._2
 
           if (valueOpt.isEmpty || statusOpt.isEmpty) {
-            cell.setCellValue("-")
+            vCell.setCellValue("-")
+            sCell.setCellValue("-")
           } else {
             val value = valueOpt.get
             val status = statusOpt.get
-            cell.setCellValue(value)
-
+            vCell.setCellValue(value)
+            sCell.setCellValue(status)
             val cellStyle = getStyle(status, normalStyle, abnormalStyles)
-            cell.setCellStyle(cellStyle)
+            vCell.setCellStyle(cellStyle)
           }
         }
       }
