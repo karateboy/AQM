@@ -606,9 +606,9 @@ object Application extends Controller {
         case Instrument.T400 =>
           val records = Instrument.getT400Record(monitor, start, end)
           views.html.T400Report(monitor, start, end, records)
-        case Instrument.PM25 =>
-          val records = Instrument.getPM25Record(monitor, start, end)
-          views.html.PM25Report(monitor, start, end, records)
+        case Instrument.TSP =>
+          val records = Instrument.getTSPRecord(monitor, start, end)
+          views.html.TSPReport(monitor, start, end, records)
         case Instrument.PM10 =>
           val records = Instrument.getPM10Record(monitor, start, end)
           views.html.PM10Report(monitor, start, end, records)

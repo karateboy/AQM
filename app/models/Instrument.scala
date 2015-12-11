@@ -27,7 +27,7 @@ case class T400Record(monitor: Monitor.Value, time: DateTime, range: Float, stab
 
 case class PM10Record(monitor: Monitor.Value, time: DateTime, Conc:Option[Float], Qtot:Option[Float], RH:Option[Float], AT:Option[Float])
 
-case class PM25Record(monitor: Monitor.Value, time: DateTime, Conc:Option[Float], Qtot:Option[Float], RH:Option[Float], AT:Option[Float])
+case class TSPRecord(monitor: Monitor.Value, time: DateTime, Conc:Option[Float], Qtot:Option[Float], RH:Option[Float], AT:Option[Float])
 
 object Instrument extends Enumeration {
   val H370 = Value
@@ -36,8 +36,9 @@ object Instrument extends Enumeration {
   val T300 = Value
   val T400 = Value
   val PM10 = Value
-  val PM25 = Value
+  val TSP = Value
 
+  
   def getTabName(inst: Instrument.Value, year: Int) = {
     SQLSyntax.createUnsafely(s"[AQMSDB].[dbo].[P1234567_Diag${inst.toString}_${year}]")
   }
@@ -108,9 +109,9 @@ object Instrument extends Enumeration {
       val time = rs.timestamp(2)
       T300Record(m, time, rs.floatOpt(4).getOrElse(0f), rs.floatOpt(6).getOrElse(0f),
         rs.floatOpt(8).getOrElse(0f), rs.floatOpt(10).getOrElse(0f), rs.floatOpt(12).getOrElse(0f),
-        rs.floatOpt(14).getOrElse(0f), rs.floatOpt(16).getOrElse(0f), rs.floatOpt(18).getOrElse(0f),
-        rs.floatOpt(20).getOrElse(0f), rs.floatOpt(22).getOrElse(0f), rs.floatOpt(24).getOrElse(0f),
-        rs.floatOpt(26).getOrElse(0f), rs.floatOpt(28).getOrElse(0f), rs.floatOpt(30).getOrElse(0f))
+        rs.floatOpt(16).getOrElse(0f), rs.floatOpt(18).getOrElse(0f), rs.floatOpt(20).getOrElse(0f),
+        rs.floatOpt(22).getOrElse(0f), rs.floatOpt(24).getOrElse(0f), rs.floatOpt(26).getOrElse(0f),
+        rs.floatOpt(30).getOrElse(0f), rs.floatOpt(32).getOrElse(0f), rs.floatOpt(34).getOrElse(0f))
     }.list().apply()
   }
 
@@ -144,8 +145,8 @@ object Instrument extends Enumeration {
     }.list().apply()
   }
   
-  def getPM25Record(monitor: Monitor.Value, start: DateTime, end: DateTime)(implicit session: DBSession = AutoSession) = {
-    val tab = getTabName(PM25, start.getYear)
+  def getTSPRecord(monitor: Monitor.Value, start: DateTime, end: DateTime)(implicit session: DBSession = AutoSession) = {
+    val tab = getTabName(TSP, start.getYear)
     sql"""
       Select *
       From ${tab}
@@ -153,7 +154,7 @@ object Instrument extends Enumeration {
       """.map { rs =>
       val m = Monitor.withName(rs.string(1))
       val time = rs.timestamp(2)
-      PM25Record(m, time, rs.floatOpt(4), rs.floatOpt(6), rs.floatOpt(8), rs.floatOpt(10))
+      TSPRecord(m, time, rs.floatOpt(4), rs.floatOpt(6), rs.floatOpt(8), rs.floatOpt(10))
     }.list().apply()
   }
 }

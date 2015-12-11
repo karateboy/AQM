@@ -78,10 +78,10 @@ object InstrumentThreshold extends Enumeration {
   val T400_BOX_TEMP = Value
   val T400_SLOPE = Value
   val T400_OFFSET = Value
-  val PM25_CONC = Value
-  val PM25_QTOT = Value
-  val PM25_RH = Value
-  val PM25_AT = Value  
+  val TSP_CONC = Value
+  val TSP_QTOT = Value
+  val TSP_RH = Value
+  val TSP_AT = Value  
   val PM10_CONC = Value
   val PM10_QTOT = Value
   val PM10_RH = Value

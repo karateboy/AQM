@@ -1,9 +1,9 @@
 @* PM25Report Template File *@
 @import com.github.nscala_time.time.Imports._
 @import InstrumentThreshold._
-@(monitor:Monitor.Value, start:DateTime, end:DateTime, rsList: List[PM25Record])
+@(monitor:Monitor.Value, start:DateTime, end:DateTime, rsList: List[TSPRecord])
 <H3>測站:@Monitor.map(monitor).name</H3>
-<H5>儀器:PM25</H5>
+<H5>儀器:TSP</H5>
 <H5>開始:@start.toString("YYYY-MM-dd")</H5>
 <H5>結束:@end.toString("YYYY-MM-dd")</H5>
 <span style="color:red">超過內控值</span>
@@ -21,10 +21,10 @@
 	@for(rs<-rsList){
 		<tr>
 			<td>@rs.time.toString("YYYY-MM-dd HH:mm")</td>
-			<td style="@getStyle(PM25_CONC, rs.Conc)">@formatV("%.0f", rs.Conc)</td>
-			<td style="@getStyle(PM25_QTOT, rs.Qtot)">@formatV("%.1f", rs.Qtot)</td>
-			<td style="@getStyle(PM25_RH, rs.RH)">@formatV("%.1f", rs.RH)</td>
-			<td style="@getStyle(PM25_AT, rs.AT)">@formatV("%.1f", rs.AT)</td>
+			<td style="@getStyle(TSP_CONC, rs.Conc)">@formatV("%.0f", rs.Conc)</td>
+			<td style="@getStyle(TSP_QTOT, rs.Qtot)">@formatV("%.1f", rs.Qtot)</td>
+			<td style="@getStyle(TSP_RH, rs.RH)">@formatV("%.1f", rs.RH)</td>
+			<td style="@getStyle(TSP_AT, rs.AT)">@formatV("%.1f", rs.AT)</td>
 		</tr>
 	}
 </tbody>
