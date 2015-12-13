@@ -66,9 +66,18 @@ object Maintance extends Controller {
                   ticketParam.owner, m, Some(mt), ticketParam.reason, DateTime.parse(date), Json.toJson(Ticket.defaultRepairFormData).toString)
               }
             }
-          for (t <- tickets)
+          for (t <- tickets){
             Ticket.newTicket(t)
-
+            if(t.ticketType == TicketType.repair){
+              val notification = views.html.notificationPage(List(t))
+              val title = s"環保局通報單_${Monitor.map(t.monitor).name}${t.submit_date.toString("MMdd_HHmm")}"
+              val pdf = creatPdfWithReportHeaderP(title, notification)
+              import java.nio.file.StandardCopyOption._
+              import java.nio.file.Paths
+              val targetPath = Paths.get(current.path.getAbsolutePath + s"/notification/${title}.pdf")
+              Files.move(pdf.toPath, targetPath, REPLACE_EXISTING)
+            }
+          }
           Ok(Json.obj("ok" -> true, "nNewCase" -> tickets.length))
         })
   }
@@ -496,5 +505,31 @@ object Maintance extends Controller {
     val end = DateTime.parse(endStr) + 1.day
     val logs = EventLog.getList(start, end)
     Ok(views.html.eventLogReport(logs))
+  }
+
+  def downloadNotification = Security.Authenticated {
+    Ok(views.html.downloadNotification())
+  }
+
+  def downloadNotificationForm(startStr: String, endStr: String) = Security.Authenticated {
+    val start = DateTime.parse(startStr)
+    val end = DateTime.parse(endStr) + 1.day
+    
+    val tickets = Ticket.queryActiveTickets(start, end)
+
+    if (tickets.length != 0) {
+      val output = views.html.notificationPage(tickets)
+      val title = s"環保局通報單${start.toString("MMdd")}_${end.toString("MMdd")}"
+      Ok.sendFile(creatPdfWithReportHeaderP(title, output),
+        fileName = _ =>
+          play.utils.UriEncoding.encodePathSegment(title + ".pdf", "UTF-8"))
+    }else{
+      val output = views.html.notificationPage(tickets)
+      val title = s"查詢區間無定保案件"
+      Ok.sendFile(creatPdfWithReportHeaderP(title, output),
+        fileName = _ =>
+          play.utils.UriEncoding.encodePathSegment(title + ".pdf", "UTF-8"))
+    }
+    
   }
 }

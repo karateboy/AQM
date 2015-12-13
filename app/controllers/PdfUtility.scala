@@ -35,7 +35,12 @@ object PdfUtility {
     createPdf(html.toString)
   }
   
-  def createPdf(htmlInput: String) = {
+  def creatPdfWithReportHeaderP(title:String, content:play.twirl.api.HtmlFormat.Appendable)={
+    val html = views.html.reportTemplate(title, content)
+    createPdf(html.toString, false)
+  }
+  
+  def createPdf(htmlInput: String, landscape:Boolean=true) = {
 
     //debug
     import java.io.FileOutputStream
@@ -45,7 +50,12 @@ object PdfUtility {
     //outs.close()
     
     // step 1
-    val document = new Document(PageSize.A4.rotate());
+    val document =
+      if(landscape)
+        new Document(PageSize.A4.rotate());
+      else
+        new Document(PageSize.A4);
+    
     // step 2
     import java.io._
     import java.nio.charset.Charset

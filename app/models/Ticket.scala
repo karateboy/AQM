@@ -215,17 +215,27 @@ object Ticket {
     sql"""
       Select *
       From Ticket
-      Where submit_date between ${start} and ${end}
+      Where execute_date between ${start} and ${end}
       Order by submit_date      
       """.map {ticketMapper}.list().apply()
   }
 
-  def queryRepairTickets(start: DateTime, end: DateTime)(implicit session: DBSession = AutoSession) = {
+  
+  def queryActiveTickets(start: DateTime, end: DateTime)(implicit session: DBSession = AutoSession) = {
     sql"""
       Select *
       From Ticket
-      Where submit_date between ${start} and ${end} and ticketType = ${TicketType.repair.id} and active = 0
-      Order by submit_date      
+      Where execute_date between ${start} and ${end} and active = 1
+      Order by execute_date      
+      """.map {ticketMapper}.list().apply()
+  }
+  
+  def queryMaintanceTickets(start: DateTime, end: DateTime)(implicit session: DBSession = AutoSession) = {
+    sql"""
+      Select *
+      From Ticket
+      Where execute_date between ${start} and ${end} and ticketType != ${TicketType.repair.id} and active = 1
+      Order by execute_date      
       """.map {ticketMapper}.list().apply()
   }
   

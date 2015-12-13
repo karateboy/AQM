@@ -65,7 +65,7 @@ case class CompareRule(
     if (isOk(thc_rec) && isOk(ch4_rec)) {
       val thc = thc_rec._1.get
       val ch4 = ch4_rec._1.get
-      if (ch4 < thc) {
+      if (ch4 > thc) {
         invalid = true
         targetStat.setAuditStat(A226, lead)
         targetStat.setAuditStat(A286, lead)

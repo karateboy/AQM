@@ -190,6 +190,9 @@ GET		/EventLogReport/:start/:end	controllers.Maintance.eventLogReport(start, end
 GET		/TestAlarmMail		controllers.Maintance.testAlarmMail
 GET		/DutySchedule		controllers.Maintance.dutySchedule
 
+GET		/DownloadNotification	controllers.Maintance.downloadNotification
+GET		/DownloadNotificationForm/:start/:end	controllers.Maintance.downloadNotificationForm(start, end)
+# websockets
 GET		/MinMonthlyReportSocket		controllers.Report.getMinMonthlySocket
 GET		/DownloadMinMonthlyReport/:n	controllers.Report.downloadMinMontlyReport(n: Int)
 GET		/AlarmNotificationSocket	controllers.Realtime.alarmNofificationSocket

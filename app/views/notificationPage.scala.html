@@ -1,0 +1,66 @@
+@* notificationPage Template File *@
+@import com.github.nscala_time.time.Imports._
+@(tickets: List[Ticket])
+@for(t<-tickets){
+	<H3><strong>環保通報單</strong></H3>
+	<table	class="table table-bordered">
+		<tbody>
+			<tr>
+				<th>發生單位</th>
+				<td colspan="3">總管理處安全衛生環保中心環保管理處</td>
+			</tr>
+			<tr>
+				<th>發生時間</th>
+				@if(t.ticketType == TicketType.repair){
+					<td colspan="3">@t.submit_date.toString("YYYY/MM/dd HH:mm")</td>
+				}else{
+					<td colspan="3">@t.executeDate.toString("YYYY/MM/dd") 9:00:00 AM</td>
+				}
+			</tr>
+			<tr>
+				<th>發生地點<br/>(載明何種製程、設備名稱及位置)</th>
+				<td colspan="3">台塑空氣品質監測站-@Monitor.map(t.monitor).name</td>
+			</tr>
+			<tr>
+				<th>污染類別</th>
+				<td colspan="3">09.其他	異常事項: 測站維護保養</td>
+			</tr>
+			<tr>
+				<th>事故物質名稱</th>
+				<td colspan="2">99.其他(無)</td><td>狀態： 無</td>
+			</tr>
+			<tr>
+				<th>事故說明暨發生原因</th>
+				<td colspan="3">執行空氣品質監測站 - @TicketType.map(t.ticketType)</td>
+			</tr>
+			<tr>
+				<th>預定修復完成時間</th>
+				@if(t.ticketType == TicketType.repair){
+					<td colspan="3">@((t.submit_date+8.hour).toString("YYYY/MM/dd HH:mm"))</td>
+				}else{
+					<td colspan="3">@t.executeDate.toString("YYYY/MM/DD") 5:00:00 PM</td>
+				}
+			</tr>
+			<tr>
+				<th>因應措施<br/>已處理情形及處理結果<br/>後續採取措施</th>
+				<td colspan="3">儘速完成空氣品質監測站保養作業，恢復持續監測作業。</td>
+			</tr>
+			<tr>
+				<th>主管(含職稱)</th>
+				<td colspan="3">簡槐志高工師</td>
+			</tr>
+			<tr>
+				<th>報備人員</th>
+				<td colspan="3">簡槐志<br/>電話：05-6818274<br/>傳真：05-6811049</td>
+			</tr>
+		</tbody>
+	</table>
+	<div align="left">
+		<strong>向環保局報備人員簽名：________</strong>
+	</div>
+	<div align="left">
+		<strong>通報日期時間:&nbsp;&nbsp;&nbsp;@DateTime.now.toString("YYYY/MM/dd HH:mm")</strong>
+	</div>
+	
+	<p style="page-break-after:always;"></p>
+}
