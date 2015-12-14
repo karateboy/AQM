@@ -367,7 +367,7 @@ object Query extends Controller {
       startName + mNames.mkString + mtNames.mkString
     }
     
-    val title = "趨勢圖"
+    val title = s"趨勢圖 (${start.toString("YYYY/MM/dd HH:mm")}~${end.toString("YYYY/MM/dd HH:mm")})"
 
     val timeStrSeq = timeSeq.map { tWithIndex =>
       val t = tWithIndex._1

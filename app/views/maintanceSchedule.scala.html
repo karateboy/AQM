@@ -1,0 +1,36 @@
+@* maintanceSchedule Template File *@
+@import Maintance._
+@(entries: List[MaintanceWeekEntry])
+<div class="row">
+   	<div class="col-lg-12">
+        <div class="panel panel-success">
+        	<div class="panel-body panel-collapse">
+
+<table class="table table-bordered">
+<thead>
+	<tr>
+		<th>周</th>
+		@for(m<-Monitor.mvList){
+			<th>@Monitor.map(m).name</th>
+		}
+	</tr>
+</thead>
+<tbody>
+	@for(entry<-entries){
+		<tr>
+			<td>@entry.start.toString("MM-dd")</td>
+			@for(m<-Monitor.mvList){
+				<td
+					@if(entry.map(m).values.sum == 0){
+						style="color:black;background-color:red"
+					}
+				>@Html(getMaintanceStr(entry.map(m)))</td>
+			}
+		</tr>
+	}
+</tbody>
+</table>
+</div>
+</div>
+</div>
+</div>

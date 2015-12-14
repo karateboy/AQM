@@ -7,6 +7,7 @@ import Record._
 import Auditor._
 import MonitorType._
 import com.github.nscala_time.time.Imports._
+import models.ModelHelper._
 
 abstract class Rule(val lead:Char)
 
@@ -86,18 +87,46 @@ case class CompareRule(
     val pm25 = Record.monitorTypeProject2(A215)(record)
     val pm10 = Record.monitorTypeProject2(A214)(record)
     val tsp = Record.monitorTypeProject2(A213)(record)
-    if(isOk(tsp) && isOk(pm10)){
-      if(pm10._1.get > tsp._1.get){
+    if (isOk(tsp) && isOk(pm10)) {
+      if (pm10._1.get > tsp._1.get) {
         invalid = true
         targetStat.setAuditStat(A214, lead)
         targetStat.setAuditStat(A213, lead)
+        val ar = Alarm.Alarm(Monitor.withName(record.name), "Z206", record.date, 1.0f, "056")
+        try {
+          Alarm.insertAlarm(ar)
+        } catch {
+          case ex: Exception =>
+          // Skip duplicate alarm
+        }
       }
+    }
+    if(isOk(pm25) && isOk(tsp)){
+      if (pm25._1.get > tsp._1.get) {
+        invalid = true
+        targetStat.setAuditStat(A215, lead)
+        targetStat.setAuditStat(A213, lead)
+        val ar = Alarm.Alarm(Monitor.withName(record.name), "Z216", record.date, 1.0f, "058")
+        try {
+          Alarm.insertAlarm(ar)
+        } catch {
+          case ex: Exception =>
+          // Skip duplicate alarm
+        }
+      }      
     }
     if(isOk(pm25) && isOk(pm10)){
       if(pm25._1.get > pm10._1.get){
         invalid = true
         targetStat.setAuditStat(A214, lead)
         targetStat.setAuditStat(A215, lead)
+        val ar = Alarm.Alarm(Monitor.withName(record.name), "Z226", record.date, 1.0f, "059")
+        try {
+          Alarm.insertAlarm(ar)
+        } catch {
+          case ex: Exception =>
+          // Skip duplicate alarm
+        }
       }
     }
     invalid

@@ -44,8 +44,26 @@ object Alarm {
 
   def insertAlarm(ar: Alarm) = {
     val tab = getTabName(ar.time.getYear)
-    DB localTx { implicit session =>
-      sql"""
+    def checkExist() = {
+      import java.sql.Timestamp
+      val time: Timestamp = ar.time
+
+      DB readOnly { implicit session =>
+        sql"""
+          Select *
+          From ${tab}
+          Where DP_NO = ${ar.monitor.toString} and M_DateTime = ${time} and M_ITEM = ${ar.mItem}          
+          """.map(rs =>
+          Alarm(Monitor.withName(rs.string(1)), rs.string(2), rs.timestamp(3), rs.float(4),
+            MonitorStatus.getTagInfo(rs.string(5).trim()).toString)).single.apply
+      }
+    }
+    val arOpt = checkExist()
+    if (arOpt.isDefined)
+      0
+    else {
+      DB localTx { implicit session =>
+        sql"""
       INSERT INTO ${tab}
            ([DP_NO]
            ,[M_ITEM]
@@ -61,9 +79,11 @@ object Alarm {
            ,${ar.code}
            ,NULL)
       """.update.apply
+      }
+
     }
   }
-  
+
   def getTabName(year: Int) = {
     SQLSyntax.createUnsafely(s"[AQMSDB].[dbo].[P1234567_Alm_${year}]")
   }
@@ -78,9 +98,9 @@ object Alarm {
       }.list.apply
     }
   private val _map: Map[String, String] = Map(arList.map { r => (r.id -> r.desp) }: _*)
-  
+
   def map(key: String) = {
-    _map.getOrElse(key, "未知的警告代碼:"+key)
+    _map.getOrElse(key, "未知的警告代碼:" + key)
   }
 
 }

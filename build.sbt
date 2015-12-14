@@ -16,7 +16,7 @@ libraryDependencies ++= Seq(
   "org.scalikejdbc" %% "scalikejdbc-config"			% "2.2.6",
   "org.scalikejdbc" %% "scalikejdbc-play-plugin"	% "2.3.6",
   "org.scalikejdbc" %% "scalikejdbc-play-dbplugin-adapter" % "2.3.6",
-  "com.github.nscala-time" %% "nscala-time" % "2.0.0",
+  "com.github.nscala-time" %% "nscala-time" % "2.6.0",
   "io.github.cloudify" %% "spdf" % "1.3.1",
   "com.typesafe.play" %% "play-mailer" % "2.4.1"
 )

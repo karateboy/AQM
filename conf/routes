@@ -192,6 +192,7 @@ GET		/DutySchedule		controllers.Maintance.dutySchedule
 
 GET		/DownloadNotification	controllers.Maintance.downloadNotification
 GET		/DownloadNotificationForm/:start/:end	controllers.Maintance.downloadNotificationForm(start, end)
+GET		/MaintanceSchedule		controllers.Maintance.maintanceSchedule
 # websockets
 GET		/MinMonthlyReportSocket		controllers.Report.getMinMonthlySocket
 GET		/DownloadMinMonthlyReport/:n	controllers.Report.downloadMinMontlyReport(n: Int)

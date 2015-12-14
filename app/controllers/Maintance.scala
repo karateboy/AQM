@@ -532,4 +532,52 @@ object Maintance extends Controller {
     }
     
   }
+
+  case class MaintanceWeekEntry(start:DateTime, map:Map[Monitor.Value, Map[TicketType.Value, Int]])
+  def maintanceSchedule = Security.Authenticated {
+    val today = DateTime.now.toLocalDate().toDateTimeAtStartOfDay()
+    val first_day = today - today.getDayOfWeek.day
+
+    def weekTicketMap(offset: Int) = {
+      val begin = first_day + offset.week
+      val tickets = queryAllMaintanceTickets(begin, begin + 1.week)
+
+      val mPairs =
+        for {
+          monitor <- Monitor.mvList
+          pairs = tickets.map(t => t.monitor -> t)
+          monitorTickets = tickets.filter { t => t.monitor == monitor }
+          ttPair = TicketType.values.toList.map { tt => tt -> monitorTickets.count { t => t.ticketType == tt } }
+          ttMap = Map(ttPair: _*)
+        } yield monitor -> ttMap
+
+      Map(mPairs: _*)
+    }
+    
+    val weekEntries =
+      for( offset <- -2 to 3)
+        yield MaintanceWeekEntry(first_day+offset.week, weekTicketMap(offset))
+
+    Ok(views.html.maintanceSchedule(weekEntries.toList))
+  }
+
+  def getMaintanceStr(map: Map[TicketType.Value, Int]) = {
+    val maintanceType = {
+      import TicketType._
+      List(maintance_week, maintance_biweek, maintance_month, maintance_quarter, maintance_half_year, maintance_year)
+    }
+    if (map.values.sum == 0) {
+      "無定保!"
+    } else {
+      import scala.collection.mutable.ListBuffer
+      val buff = ListBuffer.empty[String]
+      for (tt <- maintanceType) {
+        if (map(tt) != 0)
+          buff.append(s"${TicketType.map(tt)}:${map(tt)}")
+      }
+
+      buff.mkString("<br/>")
+
+    }
+  }
 }
