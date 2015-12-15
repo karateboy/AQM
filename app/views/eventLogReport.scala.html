@@ -12,7 +12,7 @@
 <tbody>
 	@for(log<-logs){
 		<tr>
-			<td>@log.evtTime.toString("YYYY-M-d H:m")</td>
+			<td>@log.evtTime.toString("YYYY-MM-dd HH:mm")</td>
 			<td>@EventLog.evtTypeToStr(log.evtType)</td>
 			<td>@log.evtDesc</td>
 		</tr>	
