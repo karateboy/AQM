@@ -585,8 +585,15 @@ object Maintance extends Controller {
               s"""
                <a href="#" onClick="loadPage('/Ticket/${t.id}','維修保養','案件細節')">${dateStr}</a>                              
                """
-          }          
-          buff.append(s"<strong>${TicketType.map(tt)}</strong>:${ticketDates.mkString(",")}")          
+          }
+          val ttMap =
+            {
+              import TicketType._
+              Map(repair -> "維修", maintance_week -> "單周", maintance_biweek -> "雙周",
+                maintance_month -> "月", maintance_quarter -> "季", maintance_half_year -> "半年", maintance_year -> "年")
+            }
+
+          buff.append(s"<strong>${ttMap(tt)}</strong>:${ticketDates.mkString(",")}")          
         }
       }
 
