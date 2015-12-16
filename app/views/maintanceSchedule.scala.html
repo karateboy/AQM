@@ -5,7 +5,7 @@
    	<div class="col-lg-12">
         <div class="panel panel-success">
         	<div class="panel-body panel-collapse">
-
+<p>以今天為基準, 顯示前四周和後四周的定保排班表. 紅色表示已經執行但尚未結案</p>
 <table class="table table-bordered">
 <thead>
 	<tr>
@@ -17,14 +17,15 @@
 </thead>
 <tbody>
 	@for(entry<-entries){
-		<tr>
-			<td>@entry.start.toString("MM-dd")</td>
+		<tr @if(entry.offset == 0){
+				class="info"
+			}
+			>
+			<td>@entry.start.toString("MM/dd")<br/>
+				@entry.end.toString("MM/dd")
+			</td>
 			@for(m<-Monitor.mvList){
-				<td
-					@if(entry.map(m).values.sum == 0){
-						style="color:black;background-color:red"
-					}
-				>@Html(getMaintanceStr(entry.map(m)))</td>
+				<td>@Html(getMaintanceStr(entry.map(m)))</td>
 			}
 		</tr>
 	}

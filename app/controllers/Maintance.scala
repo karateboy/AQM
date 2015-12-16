@@ -533,7 +533,7 @@ object Maintance extends Controller {
     
   }
 
-  case class MaintanceWeekEntry(start:DateTime, map:Map[Monitor.Value, Map[TicketType.Value, Int]])
+  case class MaintanceWeekEntry(start:DateTime, end:DateTime, offset:Int, map:Map[Monitor.Value, Map[TicketType.Value, List[Ticket]]])
   def maintanceSchedule = Security.Authenticated {
     val today = DateTime.now.toLocalDate().toDateTimeAtStartOfDay()
     val first_day = today - today.getDayOfWeek.day
@@ -547,7 +547,7 @@ object Maintance extends Controller {
           monitor <- Monitor.mvList
           pairs = tickets.map(t => t.monitor -> t)
           monitorTickets = tickets.filter { t => t.monitor == monitor }
-          ttPair = TicketType.values.toList.map { tt => tt -> monitorTickets.count { t => t.ticketType == tt } }
+          ttPair = TicketType.values.toList.map { tt => tt -> monitorTickets.filter { t => t.ticketType == tt } }
           ttMap = Map(ttPair: _*)
         } yield monitor -> ttMap
 
@@ -555,25 +555,39 @@ object Maintance extends Controller {
     }
     
     val weekEntries =
-      for( offset <- -2 to 3)
-        yield MaintanceWeekEntry(first_day+offset.week, weekTicketMap(offset))
+      for( offset <- -4 to 4)
+        yield MaintanceWeekEntry(first_day+offset.week, first_day+offset.week+6.day, offset, weekTicketMap(offset))
 
     Ok(views.html.maintanceSchedule(weekEntries.toList))
   }
 
-  def getMaintanceStr(map: Map[TicketType.Value, Int]) = {
+  def getMaintanceStr(map: Map[TicketType.Value, List[Ticket]]) = {
     val maintanceType = {
       import TicketType._
       List(maintance_week, maintance_biweek, maintance_month, maintance_quarter, maintance_half_year, maintance_year)
     }
-    if (map.values.sum == 0) {
-      "無定保!"
+    if (map.values.map { _.length }.sum == 0) {
+      ""
     } else {
+      val today = DateTime.now.toLocalDate().toDateTimeAtStartOfDay()
+
       import scala.collection.mutable.ListBuffer
       val buff = ListBuffer.empty[String]
       for (tt <- maintanceType) {
-        if (map(tt) != 0)
-          buff.append(s"${TicketType.map(tt)}:${map(tt)}")
+        if (map(tt).length != 0){
+          val ticketDates = map(tt).map{ t=>
+            val dateStr = t.executeDate.toString("MM/dd")
+            if(t.executeDate < today && t.active)
+             s"""
+               <a href="#" onClick="loadPage('/Ticket/${t.id}','維修保養','案件細節')"><font color="red">${dateStr}</font></a>                              
+               """
+            else
+              s"""
+               <a href="#" onClick="loadPage('/Ticket/${t.id}','維修保養','案件細節')">${dateStr}</a>                              
+               """
+          }          
+          buff.append(s"<strong>${TicketType.map(tt)}</strong>:${ticketDates.mkString(",")}")          
+        }
       }
 
       buff.mkString("<br/>")
