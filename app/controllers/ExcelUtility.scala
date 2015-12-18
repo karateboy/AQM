@@ -1037,7 +1037,7 @@ object ExcelUtility {
 
       for {
         row <- 4 to (4 + nDays - 1)
-        itemOpt = map.get((row - 4).toString)
+        itemOpt = map.get((row - 3).toString)
       } {
         if (itemOpt.isDefined) {
           val item = itemOpt.get
