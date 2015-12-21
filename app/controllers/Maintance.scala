@@ -512,6 +512,7 @@ object Maintance extends Controller {
   }
 
   def downloadNotificationForm(startStr: String, endStr: String) = Security.Authenticated {
+
     val start = DateTime.parse(startStr)
     val end = DateTime.parse(endStr) + 1.day
     
@@ -535,6 +536,10 @@ object Maintance extends Controller {
 
   case class MaintanceWeekEntry(start:DateTime, end:DateTime, offset:Int, map:Map[Monitor.Value, Map[TicketType.Value, List[Ticket]]])
   def maintanceSchedule = Security.Authenticated {
+    implicit request =>
+      val userInfoOpt = Security.getUserinfo(request)
+      val userInfo = userInfoOpt.get
+
     val today = DateTime.now.toLocalDate().toDateTimeAtStartOfDay()
     val first_day = today - today.getDayOfWeek.day
 
@@ -558,6 +563,7 @@ object Maintance extends Controller {
       for( offset <- -4 to 4)
         yield MaintanceWeekEntry(first_day+offset.week, first_day+offset.week+6.day, offset, weekTicketMap(offset))
 
+    SmsSender.send(List(User.getUserById(userInfo.id).get), "測試簡訊...")
     Ok(views.html.maintanceSchedule(weekEntries.toList))
   }
 

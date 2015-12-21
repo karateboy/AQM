@@ -557,6 +557,7 @@ object ExcelUtility {
     fillMonthlyHourSheet(monthlyHourReport)
     fillGraphHourSheet(monthlyHourReport, 2 + monthlyHourReport.dailyReports(0).typeList.length)
 
+    wb.setActiveSheet(0)
     finishExcel(reportFilePath, pkg, wb)
   }
 
@@ -982,41 +983,42 @@ object ExcelUtility {
       mt = item.monitorType
     } {
       adjustStyleIdx(item.monitor)
-      fillCell(sheet.getRow(row).getCell(0), Monitor.map(item.monitor).name, 0)
+      val newRow = sheet.createRow(row)
+      fillCell(newRow.createCell(0), Monitor.map(item.monitor).name, 0)
       if(!displayDate)
-        fillCell(sheet.getRow(row).getCell(1), item.startTime.toString("HH:mm"), 0)
+        fillCell(newRow.createCell(1), item.startTime.toString("HH:mm"), 0)
       else
-        fillCell(sheet.getRow(row).getCell(1), item.startTime.toString("YYYY-M-d HH:mm"), 0)
+        fillCell(newRow.createCell(1), item.startTime.toString("YYYY-M-d HH:mm"), 0)
         
-      fillCell(sheet.getRow(row).getCell(2), MonitorType.map(item.monitorType).desp, 0)
+      fillCell(newRow.createCell(2), MonitorType.map(item.monitorType).desp, 0)
       if (item.z_val > MonitorType.map(item.monitorType).zd_law.get) {
-        fillCellF(sheet.getRow(row).getCell(3), item.z_val, 2)
+        fillCellF(newRow.createCell(3), item.z_val, 2)
       } else if (item.z_val > MonitorType.map(item.monitorType).zd_internal.get) {
-        fillCellF(sheet.getRow(row).getCell(3), item.z_val, 1)
+        fillCellF(newRow.createCell(3), item.z_val, 1)
       }else
-        fillCellF(sheet.getRow(row).getCell(3), item.z_val, 0)
+        fillCellF(newRow.createCell(3), item.z_val, 0)
         
-      fillCellF(sheet.getRow(row).getCell(4), MonitorType.map(item.monitorType).zd_internal.get, 0)
-      fillCellF(sheet.getRow(row).getCell(5), MonitorType.map(item.monitorType).zd_law.get, 0)
-      fillCellF(sheet.getRow(row).getCell(6), item.s_std, 0)
-      fillCellF(sheet.getRow(row).getCell(7), item.s_sval, 0)
+      fillCellF(newRow.createCell(4), MonitorType.map(item.monitorType).zd_internal.get, 0)
+      fillCellF(newRow.createCell(5), MonitorType.map(item.monitorType).zd_law.get, 0)
+      fillCellF(newRow.createCell(6), item.s_std, 0)
+      fillCellF(newRow.createCell(7), item.s_sval, 0)
       if (item.sd_pnt > MonitorType.map(item.monitorType).sd_law.get) {
-        fillCellF(sheet.getRow(row).getCell(8), item.sd_pnt, 2)
+        fillCellF(newRow.createCell(8), item.sd_pnt, 2)
       } else if (item.sd_pnt > MonitorType.map(item.monitorType).sd_internal.get) {
-        fillCellF(sheet.getRow(row).getCell(8), item.sd_pnt, 1)
+        fillCellF(newRow.createCell(8), item.sd_pnt, 1)
       } else
-        fillCellF(sheet.getRow(row).getCell(8), item.sd_pnt, 0)
+        fillCellF(newRow.createCell(8), item.sd_pnt, 0)
         
       
-      fillCellF(sheet.getRow(row).getCell(9), MonitorType.map(item.monitorType).sd_internal.get, 0)
-      fillCellF(sheet.getRow(row).getCell(10), MonitorType.map(item.monitorType).sd_law.get, 0)
+      fillCellF(newRow.createCell(9), MonitorType.map(item.monitorType).sd_internal.get, 0)
+      fillCellF(newRow.createCell(10), MonitorType.map(item.monitorType).sd_law.get, 0)
       if (item.z_val > MonitorType.map(item.monitorType).zd_law.get || item.sd_pnt > MonitorType.map(item.monitorType).sd_law.get) {        
-        fillCell(sheet.getRow(row).getCell(11), "失敗", 2)
+        fillCell(newRow.createCell(11), "失敗", 2)
       } else {
         if (item.z_val > MonitorType.map(item.monitorType).zd_internal.get || item.sd_pnt > MonitorType.map(item.monitorType).sd_internal.get) {
-          fillCell(sheet.getRow(row).getCell(11), "成功", 1)
+          fillCell(newRow.createCell(11), "成功", 1)
         }else
-          fillCell(sheet.getRow(row).getCell(11), "成功", 0)
+          fillCell(newRow.createCell(11), "成功", 0)
       }
     }
     finishExcel(reportFilePath, pkg, wb)
@@ -1051,7 +1053,7 @@ object ExcelUtility {
           sheet.getRow(row).getCell(3).setCellValue(item.z_val)
           sheet.getRow(row).getCell(4).setCellValue(MonitorType.map(item.monitorType).zd_internal.get)
           sheet.getRow(row).getCell(5).setCellValue(MonitorType.map(item.monitorType).zd_law.get)
-          sheet.getRow(row).getCell(6).setCellValue(item.sd_val)
+          sheet.getRow(row).getCell(6).setCellValue(item.s_std)
           sheet.getRow(row).getCell(7).setCellValue(item.s_sval)
           if (item.sd_pnt > MonitorType.map(item.monitorType).sd_law.get) {
             sheet.getRow(row).getCell(8).setCellStyle(lawStyle)
@@ -1078,14 +1080,21 @@ object ExcelUtility {
       //sheet.getRow(38).getCell(0).setCellValue(s"${Monitor.map(monitor).name} (${MonitorType.map(monitorType).desp})全幅讀值趨勢圖")
     }
 
+    var first_mtidx = -1
     for ((mt, idx) <- MonitorType.calibrationList.zipWithIndex) {
       val mtMap = map.get(mt)
-      if (mtMap.isDefined && mtMap.get.size > 0)
+      if (mtMap.isDefined && mtMap.get.size > 0){
         fillMonitorTypeReport(mt, mtMap.get, idx)
-      else {
+        if(first_mtidx== -1){
+          first_mtidx = idx
+        }
+      }else {
         wb.setSheetHidden(idx, true)
       }
     }
+    if(first_mtidx != -1)
+      wb.setActiveSheet(first_mtidx)
+      
     finishExcel(reportFilePath, pkg, wb)
   }
   
@@ -1876,6 +1885,7 @@ object ExcelUtility {
         }
       }
     }
+    wb.setActiveSheet(1)
     finishExcel(reportFilePath, pkg, wb)
   }
 }

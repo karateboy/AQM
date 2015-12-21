@@ -64,7 +64,7 @@ class AlarmWorker extends Actor{
       attachments = Seq(),
       // sends text, HTML or both...
       bodyText = Some(s"${Monitor.map(alarm.monitor).name}- ${alarm.time.toString}:${Alarm.map(alarm.mItem)}:${MonitorStatus.map(alarm.code).desp}:${ar_state}"),
-      bodyHtml = Some(s"<html><body><p><b>${Monitor.map(alarm.monitor).name}-${alarm.time.toString("YYYY/MM/dd HH:mm")}:${Alarm.map(alarm.mItem)}:${MonitorStatus.map(alarm.code).desp}</b></p></body></html>"))
+      bodyHtml = Some(s"<html><body><p><b>${Monitor.map(alarm.monitor).name}-${alarm.time.toString("YYYY/MM/dd HH:mm")}:${Alarm.map(alarm.mItem)}:${MonitorStatus.map(alarm.code).desp}:${ar_state}</b></p></body></html>"))
 
     MailerPlugin.send(email)
   }
