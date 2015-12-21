@@ -563,7 +563,7 @@ object Maintance extends Controller {
       for( offset <- -4 to 4)
         yield MaintanceWeekEntry(first_day+offset.week, first_day+offset.week+6.day, offset, weekTicketMap(offset))
 
-    SmsSender.send(List(User.getUserById(userInfo.id).get), "測試簡訊...")
+    //SmsSender.send(List(User.getUserById(userInfo.id).get), "測試簡訊...")
     Ok(views.html.maintanceSchedule(weekEntries.toList))
   }
 
