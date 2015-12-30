@@ -149,6 +149,7 @@ $( document ).ready(function(){
 			data: "",
 			contentType: "application/json; charset=utf-8",
 			method: "GET",
+			cache:false,
 			dataType: "json",
 			success: function(groups){				
 				for(var i=0;i<groups.length;i++){

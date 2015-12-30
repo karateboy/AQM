@@ -69,13 +69,13 @@ object Maintance extends Controller {
           for (t <- tickets){
             Ticket.newTicket(t)
             if(t.ticketType == TicketType.repair){
-              val notification = views.html.notificationPage(List(t))
+              val excel = ExcelUtility.epbNotification(List(t))
               val title = s"環保局通報單_${Monitor.map(t.monitor).name}${t.submit_date.toString("MMdd_HHmm")}"
-              val pdf = creatPdfWithReportHeaderP(title, notification)
+              
               import java.nio.file.StandardCopyOption._
               import java.nio.file.Paths
-              val targetPath = Paths.get(current.path.getAbsolutePath + s"/notification/${title}.pdf")
-              Files.move(pdf.toPath, targetPath, REPLACE_EXISTING)
+              val targetPath = Paths.get(current.path.getAbsolutePath + s"/notification/${title}.xlsx")
+              Files.move(excel.toPath, targetPath, REPLACE_EXISTING)
             }
           }
           Ok(Json.obj("ok" -> true, "nNewCase" -> tickets.length))
@@ -519,11 +519,13 @@ object Maintance extends Controller {
     val tickets = Ticket.queryActiveTickets(start, end)
 
     if (tickets.length != 0) {
-      val output = views.html.notificationPage(tickets)
+      val excelFile = ExcelUtility.epbNotification(tickets)
       val title = s"環保局通報單${start.toString("MMdd")}_${end.toString("MMdd")}"
-      Ok.sendFile(creatPdfWithReportHeaderP(title, output),
-        fileName = _ =>
-          play.utils.UriEncoding.encodePathSegment(title + ".pdf", "UTF-8"))
+      
+      Ok.sendFile(excelFile, fileName = _ =>
+        play.utils.UriEncoding.encodePathSegment(title + ".xlsx", "UTF-8"),
+        onClose = () => { Files.deleteIfExists(excelFile.toPath()) })
+
     }else{
       val output = views.html.notificationPage(tickets)
       val title = s"查詢區間無定保案件"
@@ -563,7 +565,6 @@ object Maintance extends Controller {
       for( offset <- -4 to 4)
         yield MaintanceWeekEntry(first_day+offset.week, first_day+offset.week+6.day, offset, weekTicketMap(offset))
 
-    //SmsSender.send(List(User.getUserById(userInfo.id).get), "測試簡訊...")
     Ok(views.html.maintanceSchedule(weekEntries.toList))
   }
 

@@ -296,6 +296,7 @@ function() {
 					data : "",
 					contentType : "application/json; charset=utf-8",
 					method : "GET",
+					cache:false,
 					dataType : "json",
 					success : function(info) {
 						monitorInfo[monitor] = info;
@@ -363,6 +364,7 @@ function() {
 					data : "",
 					contentType : "application/json; charset=utf-8",
 					method : "GET",
+					cache:false,
 					dataType : "json",
 					success : function(result) {
 						$("#stdInternal").val(result.std);

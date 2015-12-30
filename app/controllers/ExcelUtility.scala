@@ -161,7 +161,7 @@ object ExcelUtility {
           sheet.getRow(29).getCell(col).setCellValue("-")
           sheet.getRow(30).getCell(col).setCellValue("-")
           sheet.getRow(31).getCell(col).setCellValue("-")
-        }
+        }      
       }
 
       //Hide col not in use
@@ -318,8 +318,8 @@ object ExcelUtility {
       val titleRow = sheet.getRow(2)
       val titleCell = titleRow.getCell(0)
       titleCell.setCellValue("監測站:" + Monitor.map(monitor).name)
-      sheet.getRow(1).getCell(19).setCellValue("查詢日期:" + DateTime.now.toString("YYYY/MM/dd"))
-      titleRow.getCell(19).setCellValue("資料日期:" + reportDate.toString("YYYY年MM月"))      
+      sheet.getRow(1).getCell(22).setCellValue("查詢日期:" + DateTime.now.toString("YYYY/MM/dd"))
+      titleRow.getCell(22).setCellValue("資料日期:" + reportDate.toString("YYYY年MM月"))      
 
       val abnormalColor =
         {
@@ -380,10 +380,13 @@ object ExcelUtility {
         row = sheet.getRow(43)
       } {
         val mtCase = MonitorType.map(mt._1)
-        val title = if (mtCase.std_law.isDefined)
-          s"${Monitor.map(monitor).name}${mtCase.desp}小時趨勢圖 (法規:${mtCase.std_law.get}${mtCase.unit})"
-        else
-          s"${Monitor.map(monitor).name}${mtCase.desp}小時趨勢圖 "
+        val title =
+          if (!Monitor.map(monitor).monitorTypes.contains(mt._1))
+            s"${Monitor.map(monitor).name}無${mtCase.desp}測項"
+          else if (mtCase.std_law.isDefined)
+            s"${Monitor.map(monitor).name}${mtCase.desp}小時趨勢圖 (法規:${mtCase.std_law.get}${mtCase.unit})"
+          else
+            s"${Monitor.map(monitor).name}${mtCase.desp}小時趨勢圖 "
 
         row.getCell(mt._2).setCellValue(title)
       }
@@ -565,8 +568,8 @@ object ExcelUtility {
     implicit val (reportFilePath, pkg, wb) = prepareTemplate("yearly_report.xlsx")
     val sheet = wb.getSheetAt(0)
     sheet.getRow(2).getCell(0).setCellValue("監測站:" + Monitor.map(monitor).name)
-    sheet.getRow(1).getCell(19).setCellValue("查詢日期:" + DateTime.now.toString("YYYY/MM/dd"))
-    sheet.getRow(2).getCell(19).setCellValue("資料日期:" + reportDate.toString("YYYY年"))
+    sheet.getRow(1).getCell(22).setCellValue("查詢日期:" + DateTime.now.toString("YYYY/MM/dd"))
+    sheet.getRow(2).getCell(22).setCellValue("資料日期:" + reportDate.toString("YYYY年"))
 
     val abnormalColor =
         {
@@ -1886,6 +1889,40 @@ object ExcelUtility {
       }
     }
     wb.setActiveSheet(1)
+    finishExcel(reportFilePath, pkg, wb)
+  }
+  
+  def epbNotification(tickets: List[Ticket])={
+    val (reportFilePath, pkg, wb) = prepareTemplate("epb.xlsx")
+    val evaluator = wb.getCreationHelper().createFormulaEvaluator()
+
+    var sheetN = 0
+    for (t <- tickets) {
+      if (sheetN != 0) {
+        wb.cloneSheet(0)
+      }
+      val sheet = wb.getSheetAt(sheetN)
+      //發生時間
+      if (t.ticketType == TicketType.repair) {
+        sheet.getRow(3).getCell(1).setCellValue(t.submit_date.toString("YYYY/MM/dd HH:mm"))
+      } else {
+        sheet.getRow(3).getCell(1).setCellValue(t.executeDate.toString("YYYY/MM/dd") + " 9:00:00 AM")
+      }
+      //發生地點
+      sheet.getRow(4).getCell(1).setCellValue(s"台塑空氣品質監測站-${Monitor.map(t.monitor).name}")
+
+      //事故說明 
+      sheet.getRow(10).getCell(1).setCellValue(s"執行空氣品質監測站 - ${TicketType.map(t.ticketType)}")
+
+      //結束時間
+      if (t.ticketType == TicketType.repair) {
+        sheet.getRow(12).getCell(1).setCellValue((t.submit_date + 8.hour).toString("YYYY/MM/dd HH:mm"))
+      } else {
+        sheet.getRow(12).getCell(1).setCellValue(t.executeDate.toString("YYYY/MM/dd") + " 5:00:00 PM")
+      }
+      sheetN+=1
+    }
+    wb.setActiveSheet(0)
     finishExcel(reportFilePath, pkg, wb)
   }
 }

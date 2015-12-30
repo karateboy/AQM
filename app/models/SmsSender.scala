@@ -1,27 +1,57 @@
 package models
 import play.api._
-import hiairv2._
+import com.cht.messaging.sns._;
+import java.io._;
 
 object SmsSender {
-  
-    def send(users:List[User], msg:String){
-      val mySms = new sms2()
+    val strIp = "203.66.172.133"
+    val nPort = 8001
+    val account = "10358"
+    val password = "10358"
 
-      val server = "api.hiair.hinet.net"
-      val port = 8000
-      
-      if(mySms.create_conn(server, port, "0911510358", "10358") != 0){
-        Logger.error(s"無法建立連線! ${mySms.get_message}")
-        return;
+  def submitMsg(phoneNoList: List[String], text: String): Boolean =
+    {
+      val sns = new SnsClient_V1(strIp, nPort)
+      val sdm = new SubmitDataModel()
+      // Login server
+      sdm.setType(IConstants.SERV_LOGIN)
+      sdm.setAccount(account)
+      sdm.setPassword(password)
+      if (sns.login(sdm) == false) {
+        Logger.error("login server fail(" + sns.getLastMessage() + ")")
+        sns.logout()
+        return false
       }
-      for(user<-users){
-        val ret = mySms.send_text_message(user.phone, msg);
-        if(ret != 0){
-          Logger.error(s"簡訊傳送發生錯誤! ret=${ret} ${mySms.get_message}")
-          mySms.close_conn()
-          return
+      
+      var noError = true
+      for (phoneNo <- phoneNoList) {
+        sdm.reset();
+        sdm.setType(IConstants.SERV_SUBMIT_MSG);
+        sdm.setCoding(1);
+        sdm.setRcvMsisdn(phoneNo);
+        sdm.setTranType(IConstants.DEFAULT_TRAN_TYPE);
+        sdm.setLength(text.getBytes().length.toByte);
+        sdm.setMessage(text);
+        val rdm = sns.submitMessage(sdm);
+        if (rdm != null) {
+          if (rdm.getCode != 0) {
+            Logger.error(new String(rdm.getDesc()).trim())
+            noError = false
+          }
+        } else // could not receive response from SNS server
+        {
+          Logger.error("Submit fail:" + sns.getLastMessage())
+          noError = false
         }
       }
-      mySms.close_conn()      
+      
+      // Logout server
+      sns.logout();
+      return noError
+    }
+
+    def send(users:List[User], msg:String){
+      val phones = users.filter { u => u.setting.isDefined && u.setting.get.smsNotification.isDefined && u.setting.get.smsNotification.get }.map { _.phone }
+      submitMsg(phones, msg);
     }
 }

@@ -8,7 +8,7 @@ import play.api.libs.json._
 import play.api.libs.functional.syntax._
 import play.api.libs.json.Json
 import Privilege._
-case class UserSetting(widgets:Option[Seq[MonitorType.Value]])
+case class UserSetting(widgets:Option[Seq[MonitorType.Value]], smsNotification:Option[Boolean])
 case class User(id: Option[Int], email: String, password: String, name: String, 
     phone: String, isAdmin: Boolean, groupID: Int, alarmConfig:Option[AlarmConfig], setting:Option[UserSetting]){
   val myWidget={
@@ -23,7 +23,7 @@ case class User(id: Option[Int], email: String, password: String, name: String,
 }
 
 object User {
-  val defaultUserSetting = UserSetting(Some(Seq.empty[MonitorType.Value]))
+  val defaultUserSetting = UserSetting(Some(Seq.empty[MonitorType.Value]), Some(false))
   implicit val settingRead = Json.reads[UserSetting]
   implicit val settingWrite = Json.writes[UserSetting]
   

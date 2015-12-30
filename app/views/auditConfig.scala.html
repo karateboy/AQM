@@ -126,6 +126,7 @@ $( document ).ready(function(){
 			data: "",
 			contentType: "application/json; charset=utf-8",
 			method: "GET",
+			cache:false,
 			dataType: "json",
 			success: function(config){
 				auditConfig=config;

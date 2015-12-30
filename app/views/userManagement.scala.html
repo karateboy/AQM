@@ -173,6 +173,15 @@
                 </div>
             </div>
             <div class="form-group">
+	        	<label class="col-lg-2 control-label">簡訊通報</label>
+	        	<div class="col-lg-10">
+	        		<input id='smsNotification' type="checkbox" class="form-control"
+                		@if(user.setting.get.smsNotification.isDefined && user.setting.get.smsNotification.get){ checked }
+                		>	
+                </div>
+	        </div>
+ 
+            <div class="form-group">
 	        	<label class="col-lg-2 control-label">關注測站</label>
 	            <div class="col-lg-10">
 	            	<div id="alarmConfigMonitor" class="btn-group" data-toggle="buttons">	            					            				
@@ -220,8 +229,7 @@
 	            </div>
 	            </div>	            			            		
 	        </div>
-	        
-            <div class="form-group">
+           <div class="form-group">
                 <div class="col-lg-offset-2 col-lg-10">
                     <button class="btn btn-primary" type="submit">更新</button>
                 </div>
@@ -242,6 +250,7 @@ $( document ).ready(function(){
 			data: "",
 			contentType: "application/json; charset=utf-8",
 			method: "GET",
+			cache: false,
 			dataType: "json",
 			success: function(users){				
 				$('#userToBeDeleted').empty();				
@@ -267,6 +276,7 @@ $( document ).ready(function(){
 			data: "",
 			contentType: "application/json; charset=utf-8",
 			method: "GET",
+			cache: false,
 			dataType: "json",
 			success: function(users){
 				userInfos={};
@@ -306,7 +316,8 @@ $( document ).ready(function(){
 		$("#updateUser :input[name='admin']").prop("checked", user.isAdmin);
 		$("#updateUser :input[name='groupID']").val(user.groupID);
 		$("#alarmConfigEnable").prop("checked", user.alarmConfig.enable);
-
+		$("#smsNotification").prop("checked", user.setting.smsNotification);
+		
 		var $MonitorLabels = $('#alarmConfigMonitor').children();
 		for (var i = 0; i < $MonitorLabels.length; i++) {
 			var $label = $MonitorLabels.eq(i);
@@ -404,6 +415,8 @@ $( document ).ready(function(){
 		for (var i = 0; i < $widgets.length; i++) {
 			widgets.push($widgets[i].id);
 		}
+
+		var smsNotification = $("#smsNotification").prop("checked");
 		
 		values['alarmConfig'] = {
 			enable: alarmConfigEnable,
@@ -412,7 +425,8 @@ $( document ).ready(function(){
 		}
 
 		values['setting'] = {
-			widgets: widgets
+			widgets: widgets,
+			smsNotification: smsNotification
 		};
 	
 	    

@@ -288,7 +288,8 @@ $( document ).ready(function() {
 			url: url,
 			data: '',
 			contentType: "application/json; charset=utf-8",
-			method:"GET",			
+			method:"GET",	
+			cache:false,		
 			dataType: "html",
 			success: function(result){
 				$('#reportDiv').html(result);
