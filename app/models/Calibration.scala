@@ -16,11 +16,16 @@ object Calibration {
         s_std:Float, s_sval:Float, sd_val:Float, sd_pnt:Float
       )
 
+  def getTabName(year: Int) = {
+    SQLSyntax.createUnsafely(s"[AQMSDB].[dbo].[P1234567_Cal_${year}]")
+  }
+  
   def calibrationQueryReport(monitor: Monitor.Value, start: Timestamp, end: Timestamp) = {
+    val tab = getTabName(start.toDateTime.getYear)
     DB readOnly { implicit session =>
       sql"""
       SELECT *
-      FROM [AQMSDB].[dbo].[P1234567_Cal_2015]
+      FROM ${tab}
       Where DP_NO=${monitor.toString} and S_DateTime >= ${start} and S_DateTime < ${end}
       Order by S_DateTime
       """.map { rs =>
