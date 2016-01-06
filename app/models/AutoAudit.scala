@@ -9,22 +9,20 @@ import MonitorType._
 import com.github.nscala_time.time.Imports._
 import models.ModelHelper._
 
-abstract class Rule(val lead:Char)
+abstract class Rule(val lead: Char)
 
 case class MinMaxCfg(
-  id:MonitorType.Value,
-  min:Float,
-  max:Float
-)
+  id: MonitorType.Value,
+  min: Float,
+  max: Float)
 
-case class MinMaxRule (
-  enabled:Boolean,
-  monitorTypes:Seq[MinMaxCfg]    
-)extends Rule('a'){
-  def checkInvalid(record: HourRecord, targetStat: AuditStat):Boolean = {
-    if(!enabled)
+case class MinMaxRule(
+    enabled: Boolean,
+    monitorTypes: Seq[MinMaxCfg]) extends Rule('a') {
+  def checkInvalid(record: HourRecord, targetStat: AuditStat): Boolean = {
+    if (!enabled)
       return false
-      
+
     var invalid = false
     for (cfg <- monitorTypes) {
       val mt = cfg.id
@@ -35,6 +33,13 @@ case class MinMaxRule (
 
         if (mt_value > cfg.max || mt_value <= cfg.min) {
           targetStat.setAuditStat(mt, lead)
+          val ar = Alarm.Alarm(Monitor.withName(record.name), MonitorType.map(mt).id, record.date, 1.0f, lead + "10")
+          try {
+            Alarm.insertAlarm(ar)
+          } catch {
+            case ex: Exception =>
+            // Skip duplicate alarm
+          }
           invalid = true
         }
       }
@@ -43,8 +48,7 @@ case class MinMaxRule (
   }
 }
 
-
-object MinMaxRule{
+object MinMaxRule {
   implicit val minMaxCfgRead = Json.reads[MinMaxCfg]
   implicit val minMaxCfgWrite = Json.writes[MinMaxCfg]
   implicit val minMaxRuleWrite = Json.writes[MinMaxRule]
@@ -54,8 +58,7 @@ object MinMaxRule{
 }
 
 case class CompareRule(
-  enabled:Boolean    
-)extends Rule('b'){
+    enabled: Boolean) extends Rule('b') {
   def checkInvalid(record: HourRecord, targetStat: AuditStat): Boolean = {
     if (!enabled)
       return false
@@ -68,6 +71,14 @@ case class CompareRule(
       val ch4 = ch4_rec._1.get
       if (ch4 > thc) {
         invalid = true
+        val ar = Alarm.Alarm(Monitor.withName(record.name), MonitorType.map(A226).id, record.date, 1.0f, lead + "10")
+        try {
+          Alarm.insertAlarm(ar)
+        } catch {
+          case ex: Exception =>
+          // Skip duplicate alarm
+        }
+
         targetStat.setAuditStat(A226, lead)
         targetStat.setAuditStat(A286, lead)
       }
@@ -80,6 +91,14 @@ case class CompareRule(
       val no2 = no2_rec._1.get
       if (nox < no2) {
         invalid = true
+        val ar = Alarm.Alarm(Monitor.withName(record.name), MonitorType.map(A223).id, record.date, 1.0f, lead + "10")
+        try {
+          Alarm.insertAlarm(ar)
+        } catch {
+          case ex: Exception =>
+          // Skip duplicate alarm
+        }
+
         targetStat.setAuditStat(A223, lead)
         targetStat.setAuditStat(A293, lead)
       }
@@ -101,7 +120,7 @@ case class CompareRule(
         }
       }
     }
-    if(isOk(pm25) && isOk(tsp)){
+    if (isOk(pm25) && isOk(tsp)) {
       if (pm25._1.get > tsp._1.get) {
         invalid = true
         targetStat.setAuditStat(A215, lead)
@@ -113,10 +132,10 @@ case class CompareRule(
           case ex: Exception =>
           // Skip duplicate alarm
         }
-      }      
+      }
     }
-    if(isOk(pm25) && isOk(pm10)){
-      if(pm25._1.get > pm10._1.get){
+    if (isOk(pm25) && isOk(pm10)) {
+      if (pm25._1.get > pm10._1.get) {
         invalid = true
         targetStat.setAuditStat(A214, lead)
         targetStat.setAuditStat(A215, lead)
@@ -133,19 +152,18 @@ case class CompareRule(
   }
 }
 
-object CompareRule{
+object CompareRule {
   implicit val compareRuleRead = Json.reads[CompareRule]
   implicit val compareRuleWrite = Json.writes[CompareRule]
-  
+
   val default = CompareRule(false)
 }
 
 case class DifferenceRule(
-  enabled:Boolean,
-  multiplier:Float,
-  monitorTypes:Seq[MonitorType.Value]  
-)extends Rule('c'){
-  def checkInvalid(record: HourRecord, targetStat: AuditStat, monitor:Monitor.Value, start: DateTime): Boolean = {
+    enabled: Boolean,
+    multiplier: Float,
+    monitorTypes: Seq[MonitorType.Value]) extends Rule('c') {
+  def checkInvalid(record: HourRecord, targetStat: AuditStat, monitor: Monitor.Value, start: DateTime): Boolean = {
     if (!enabled)
       return false
 
@@ -172,6 +190,13 @@ case class DifferenceRule(
       val (avg, std) = avgStdMap(mt)
       if (Math.abs(v - avg) > multiplier * std) {
         invalid = true
+        val ar = Alarm.Alarm(Monitor.withName(record.name), MonitorType.map(mt).id, record.date, 1.0f, lead + "10")
+        try {
+          Alarm.insertAlarm(ar)
+        } catch {
+          case ex: Exception =>
+          // Skip duplicate alarm
+        }
         targetStat.setAuditStat(mt, lead)
       }
     }
@@ -180,21 +205,19 @@ case class DifferenceRule(
   }
 }
 
-object DifferenceRule{
+object DifferenceRule {
   implicit val differenceRuleRead = Json.reads[DifferenceRule]
   implicit val differenceRuleWrite = Json.writes[DifferenceRule]
-  
+
   val default = DifferenceRule(false, 3, Seq())
 }
 
 case class SpikeCfg(
-  id:MonitorType.Value,
-  abs:Float
-)
+  id: MonitorType.Value,
+  abs: Float)
 case class SpikeRule(
-  enabled:Boolean,
-  monitorTypes:Seq[SpikeCfg]
-)extends Rule('d'){
+    enabled: Boolean,
+    monitorTypes: Seq[SpikeCfg]) extends Rule('d') {
   def checkInvalid(record: HourRecord, targetStat: AuditStat, monitor: Monitor.Value, start: DateTime): Boolean = {
     if (!enabled)
       return false
@@ -209,6 +232,14 @@ case class SpikeRule(
         val v = pre_mt_rec(1)._1.get
         if (Math.abs(v - avg) > mtcfg.abs) {
           invalid = true
+          val ar = Alarm.Alarm(Monitor.withName(record.name), MonitorType.map(mtcfg.id).id, record.date, 1.0f, lead + "10")
+          try {
+            Alarm.insertAlarm(ar)
+          } catch {
+            case ex: Exception =>
+            // Skip duplicate alarm
+          }
+
           targetStat.setAuditStat(mtcfg.id, lead)
         }
       }
@@ -218,32 +249,39 @@ case class SpikeRule(
   }
 }
 
-object SpikeRule{
+object SpikeRule {
   implicit val spikeCfgRead = Json.reads[SpikeCfg]
   implicit val spikeRuleRead = Json.reads[SpikeRule]
   implicit val spikeCfgWrite = Json.writes[SpikeCfg]
   implicit val spikeRuleWrite = Json.writes[SpikeRule]
-  
+
   val default = SpikeRule(false, Seq())
 }
 
 case class PersistenceRule(
-  enabled:Boolean,
-  same:Int
-)extends Rule('e'){
-  def checkInvalid(record: HourRecord, targetStat: AuditStat, monitor:Monitor.Value, start: DateTime): Boolean = {
+    enabled: Boolean,
+    same: Int) extends Rule('e') {
+  def checkInvalid(record: HourRecord, targetStat: AuditStat, monitor: Monitor.Value, start: DateTime): Boolean = {
     if (!enabled)
       return false
 
     var invalid = false
-    val pre_records = getHourRecords(monitor, start - (same-1).hour, start).toArray
-    
+    val pre_records = getHourRecords(monitor, start - (same - 1).hour, start).toArray
+
     for (mt <- MonitorType.mtvAllList) {
       val mt_rec = Record.monitorTypeProject2(mt)(record)
       if (isOk(mt_rec)) {
-        val pre_mt_rec = pre_records.map(Record.monitorTypeProject2(mt)).filter(isOk).filter(r=>r._1.get == mt_rec._1.get)
-        if (pre_mt_rec.length == same-1) {
+        val pre_mt_rec = pre_records.map(Record.monitorTypeProject2(mt)).filter(isOk).filter(r => r._1.get == mt_rec._1.get)
+        if (pre_mt_rec.length == same - 1) {
           invalid = true
+          val ar = Alarm.Alarm(Monitor.withName(record.name), MonitorType.map(mt).id, record.date, 1.0f, lead + "10")
+          try {
+            Alarm.insertAlarm(ar)
+          } catch {
+            case ex: Exception =>
+            // Skip duplicate alarm
+          }
+
           targetStat.setAuditStat(mt, lead)
         }
       }
@@ -253,36 +291,43 @@ case class PersistenceRule(
   }
 }
 
-object PersistenceRule{
+object PersistenceRule {
   implicit val persistenceRuleRead = Json.reads[PersistenceRule]
   implicit val persistenceRuleWrite = Json.writes[PersistenceRule]
-  
+
   val default = PersistenceRule(false, 3)
 }
 
 case class MonoCfg(
-    id:MonitorType.Value,
-    abs:Float
-)
+  id: MonitorType.Value,
+  abs: Float)
 
-case class MonoRule(enabled:Boolean, count:Int, 
-    monitorTypes:Seq[MonoCfg])extends Rule('f'){
+case class MonoRule(enabled: Boolean, count: Int,
+                    monitorTypes: Seq[MonoCfg]) extends Rule('f') {
   def checkInvalid(record: HourRecord, targetStat: AuditStat, monitor: Monitor.Value, start: DateTime): Boolean = {
     if (!enabled)
       return false
 
     var invalid = false
-    val pre_records = getHourRecords(monitor, start - (count-1).hour, start).toList
+    val pre_records = getHourRecords(monitor, start - (count - 1).hour, start).toList
 
     for (mtcfg <- monitorTypes) {
       val mt_rec = Record.monitorTypeProject2(mtcfg.id)(record)
       val pre_rec = pre_records.map(Record.monitorTypeProject2(mtcfg.id)).filter(isOk)
-      if (isOk(mt_rec) && pre_rec.length == count-1) {
+      if (isOk(mt_rec) && pre_rec.length == count - 1) {
         val values = pre_rec.map(_._1.get) ::: List(mt_rec._1.get)
         val max = values.max
         val min = values.min
         if ((max - min) < mtcfg.abs) {
           invalid = true
+          val ar = Alarm.Alarm(Monitor.withName(record.name), MonitorType.map(mtcfg.id).id, record.date, 1.0f, lead + "10")
+          try {
+            Alarm.insertAlarm(ar)
+          } catch {
+            case ex: Exception =>
+            // Skip duplicate alarm
+          }
+
           targetStat.setAuditStat(mtcfg.id, lead)
         }
       }
@@ -292,14 +337,14 @@ case class MonoRule(enabled:Boolean, count:Int,
   }
 }
 
-object MonoRule{
+object MonoRule {
   implicit val monoCfgRead = Json.reads[MonoCfg]
   implicit val monoCfgWrite = Json.writes[MonoCfg]
   implicit val monoRuleRead = Json.reads[MonoRule]
   implicit val monoRuleWrite = Json.writes[MonoRule]
-  
+
   val default = MonoRule(false, 3, Seq.empty[MonoCfg])
-  
+
 }
 
 case class TwoHourRule(enabled: Boolean, monitorTypes: Seq[MonoCfg]) extends Rule('g') {
@@ -316,6 +361,14 @@ case class TwoHourRule(enabled: Boolean, monitorTypes: Seq[MonoCfg]) extends Rul
       if (isOk(mt_rec) && pre_rec.length == 1) {
         if (Math.abs(pre_rec(0)._1.get - mt_rec._1.get) > mtcfg.abs) {
           invalid = true
+          val ar = Alarm.Alarm(Monitor.withName(record.name), MonitorType.map(mtcfg.id).id, record.date, 1.0f, lead + "10")
+          try {
+            Alarm.insertAlarm(ar)
+          } catch {
+            case ex: Exception =>
+            // Skip duplicate alarm
+          }
+
           targetStat.setAuditStat(mtcfg.id, lead)
         }
       }
@@ -325,7 +378,7 @@ case class TwoHourRule(enabled: Boolean, monitorTypes: Seq[MonoCfg]) extends Rul
   }
 }
 
-object TwoHourRule{
+object TwoHourRule {
   import MonoRule._
   implicit val read = Json.reads[TwoHourRule]
   implicit val write = Json.writes[TwoHourRule]
@@ -333,11 +386,10 @@ object TwoHourRule{
 }
 
 case class ThreeHourCfg(
-    id:MonitorType.Value,
-    abs:Float,
-    percent:Float
-)
-case class ThreeHourRule(enabled:Boolean, monitorTypes:Seq[ThreeHourCfg])extends Rule('h') {
+  id: MonitorType.Value,
+  abs: Float,
+  percent: Float)
+case class ThreeHourRule(enabled: Boolean, monitorTypes: Seq[ThreeHourCfg]) extends Rule('h') {
   def checkInvalid(record: HourRecord, targetStat: AuditStat, monitor: Monitor.Value, start: DateTime): Boolean = {
     if (!enabled)
       return false
@@ -351,14 +403,21 @@ case class ThreeHourRule(enabled:Boolean, monitorTypes:Seq[ThreeHourCfg])extends
       if (isOk(mt_rec) && pre_rec.length == 2) {
         val values = pre_rec.map(_._1.get) ::: List(mt_rec._1.get)
         val abs_percent =
-          for(v1 <- values.zipWithIndex.dropRight(1))
-            yield{
+          for (v1 <- values.zipWithIndex.dropRight(1)) yield {
             val v2 = values(v1._2)
-            (Math.abs(v1._1 - v2), Math.abs((1 - v1._1/v2)*100))
+            (Math.abs(v1._1 - v2), Math.abs((1 - v1._1 / v2) * 100))
           }
-        val overs = abs_percent.filter(v => v._1 > mtcfg.abs && v._2> mtcfg.percent)
+        val overs = abs_percent.filter(v => v._1 > mtcfg.abs && v._2 > mtcfg.percent)
         if (overs.length == 2) {
           invalid = true
+          val ar = Alarm.Alarm(Monitor.withName(record.name), MonitorType.map(mtcfg.id).id, record.date, 1.0f, lead + "10")
+          try {
+            Alarm.insertAlarm(ar)
+          } catch {
+            case ex: Exception =>
+            // Skip duplicate alarm
+          }
+
           targetStat.setAuditStat(mtcfg.id, lead)
         }
       }
@@ -367,20 +426,20 @@ case class ThreeHourRule(enabled:Boolean, monitorTypes:Seq[ThreeHourCfg])extends
     invalid
   }
 }
-object ThreeHourRule{
+object ThreeHourRule {
   implicit val thcfgRead = Json.reads[ThreeHourCfg]
   implicit val thcfgWrite = Json.writes[ThreeHourCfg]
   implicit val reads = Json.reads[ThreeHourRule]
   implicit val writes = Json.writes[ThreeHourRule]
-  
+
   val default = ThreeHourRule(false, Seq.empty[ThreeHourCfg])
 }
 
 case class FourHourCfg(
-    id:MonitorType.Value,
-    abs:Float)
+  id: MonitorType.Value,
+  abs: Float)
 
-case class FourHourRule(enabled:Boolean, monitorTypes:Seq[FourHourCfg])extends Rule('i') {
+case class FourHourRule(enabled: Boolean, monitorTypes: Seq[FourHourCfg]) extends Rule('i') {
   def checkInvalid(record: HourRecord, targetStat: AuditStat, monitor: Monitor.Value, start: DateTime): Boolean = {
     if (!enabled)
       return false
@@ -393,9 +452,17 @@ case class FourHourRule(enabled:Boolean, monitorTypes:Seq[FourHourCfg])extends R
       val pre_rec = pre_records.map(Record.monitorTypeProject2(mtcfg.id)).filter(isOk)
       if (isOk(mt_rec) && pre_rec.length == 3) {
         val values = pre_rec.map(_._1.get) ::: List(mt_rec._1.get)
-        val avg = values.sum/4
+        val avg = values.sum / 4
         if (avg > mtcfg.abs) {
           invalid = true
+          val ar = Alarm.Alarm(Monitor.withName(record.name), MonitorType.map(mtcfg.id).id, record.date, 1.0f, lead + "10")
+          try {
+            Alarm.insertAlarm(ar)
+          } catch {
+            case ex: Exception =>
+            // Skip duplicate alarm
+          }
+
           targetStat.setAuditStat(mtcfg.id, lead)
         }
       }
@@ -404,25 +471,24 @@ case class FourHourRule(enabled:Boolean, monitorTypes:Seq[FourHourCfg])extends R
     invalid
   }
 }
-object FourHourRule{
+object FourHourRule {
   implicit val thcfgRead = Json.reads[FourHourCfg]
   implicit val thcfgWrite = Json.writes[FourHourCfg]
   implicit val reads = Json.reads[FourHourRule]
   implicit val writes = Json.writes[FourHourRule]
-  
+
   val default = FourHourRule(false, Seq.empty[FourHourCfg])
 }
 case class AutoAudit(
-    minMaxRule:MinMaxRule,
-    compareRule:CompareRule,
-    differenceRule:DifferenceRule,
-    spikeRule:SpikeRule,
-    persistenceRule:PersistenceRule,
-    monoRule:MonoRule,
-    twoHourRule:TwoHourRule,
-    threeHourRule:ThreeHourRule,
-    fourHourRule:FourHourRule
-)
+  minMaxRule: MinMaxRule,
+  compareRule: CompareRule,
+  differenceRule: DifferenceRule,
+  spikeRule: SpikeRule,
+  persistenceRule: PersistenceRule,
+  monoRule: MonoRule,
+  twoHourRule: TwoHourRule,
+  threeHourRule: ThreeHourRule,
+  fourHourRule: FourHourRule)
 
 /**
  * @author user
@@ -430,19 +496,19 @@ case class AutoAudit(
 object AutoAudit {
   implicit val autoAuditRead = Json.reads[AutoAudit]
   implicit val autoAuditWrite = Json.writes[AutoAudit]
-  
+
   val default = AutoAudit(
-      MinMaxRule.default, 
-      CompareRule.default, 
-      DifferenceRule.default,
-      SpikeRule.default,
-      PersistenceRule.default,
-      MonoRule.default,
-      TwoHourRule.default,
-      ThreeHourRule.default,
-      FourHourRule.default) 
-      
-  val map= Map(
+    MinMaxRule.default,
+    CompareRule.default,
+    DifferenceRule.default,
+    SpikeRule.default,
+    PersistenceRule.default,
+    MonoRule.default,
+    TwoHourRule.default,
+    ThreeHourRule.default,
+    FourHourRule.default)
+
+  val map = Map(
     'a' -> "極大極小值",
     'b' -> "合理性",
     'c' -> "單調性",
@@ -451,6 +517,5 @@ object AutoAudit {
     'f' -> "一致性",
     'g' -> "小時測值變化驗證",
     'h' -> "三小時變化測值驗證",
-    'i' -> "四小時變化測值驗證"
-  )
+    'i' -> "四小時變化測值驗證")
 }

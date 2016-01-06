@@ -234,14 +234,16 @@ object MonitorStatus {
   val manualMonitorStatusList = {msvList.filter { _map(_).info.statusType == StatusType.Manual }}
   val alarmList = List("000", "011", "031", "033", "035",  
       "043",
-      "050", "052", "053", "054", "056", "057", "058", "059", "060")
+      "050", "052", "053", "054", "056", "057", "058", "059", "060",
+      "a10", "b10", "c10", "d10", "e10", "f10", "g10", "h10", "i10")
 
   def map(key: String) = {
     _map.getOrElse(key, {
       val tagInfo = getTagInfo(key)
       tagInfo.statusType match {
         case StatusType.Auto =>
-          MonitorStatus(tagInfo, "自動註記")
+          val ruleId = tagInfo.auditRule.get.toLower
+          MonitorStatus(tagInfo, s"自動註記:${AutoAudit.map(ruleId)}")
         case StatusType.Manual =>
           MonitorStatus(tagInfo, "人工註記")
         case StatusType.Internal =>
