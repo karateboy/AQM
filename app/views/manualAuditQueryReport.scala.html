@@ -1,0 +1,56 @@
+@* manualAuditQueryReport Template File *@
+@import com.github.nscala_time.time.Imports._
+@import MonitorStatus._
+@import models.Alarm._
+@(start:DateTime, end:DateTime, report:List[ManualAuditLog])
+
+<H3>人工註記歷史報表</H3>
+<H5>開始:@start.toString("YYYY-MM-dd")</H5>
+<H5>結束:@end.toString("YYYY-MM-dd")</H5>
+
+<table id="manualAuditReport" class="table">
+<thead>
+	<tr>		
+		<th>測站</th>
+		<th>資料時間</th>
+		<th>測項</th>
+		<th>註記時間</th>
+		<th>註記狀態</th>
+		<th>註記人員</th>
+		<th>理由</th>
+	</tr>
+</thead>
+<tbody>
+	@for(m <- report){
+		<tr>
+			<td>@Monitor.map(m.monitor).name</td>
+			<td>@m.dataTime.toString("YYYY/MM/dd HH:mm")</td>
+			<td>@MonitorType.map(m.monitorType).desp</td>
+			<td>@m.modified_time.toString("YYYY/MM/dd HH:mm")</td>
+			<td>@m.changed_status</td>
+			<td>@m.operator</td>
+			<td>
+				@if(m.reason.isDefined){
+					@m.reason.get
+				}
+			</td>
+		
+		</tr>
+	}
+</tbody>
+</table>
+<script>
+	var localized_url = '@routes.Assets.at("localization/zh_tw.json")';
+</script>
+<script>
+$( document ).ready(function() {
+	$('#manualAuditReport').dataTable( {
+		responsive: true,
+		language: {
+			url: localized_url,							
+		},
+		searching: false,
+		paging: false
+	} );
+});
+</script>

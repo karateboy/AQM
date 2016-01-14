@@ -10,6 +10,7 @@ import play.api.libs.concurrent.Akka
 import akka.actor._
 import play.api.Play.current
 import scala.concurrent.ExecutionContext.Implicits.global
+  import scala.concurrent.duration._
 
 
 object AlarmNotifier {
@@ -17,13 +18,16 @@ object AlarmNotifier {
 }
 
 class AlarmNotifier(out: ActorRef) extends Actor {
-  var lastCheckTime = DateTime.now
+  var lastCheckTime = DateTime.now  
+
   object CmdType extends Enumeration{
     val start = Value /* start:userId */
     val alert = Value /* */
-
   }
-  
+
+  val cancelable = Akka.system.scheduler.schedule(scala.concurrent.duration.Duration(10, SECONDS),
+          scala.concurrent.duration.Duration(1, MINUTES), self, AlarmCheck)
+
   var progress: Int = _
   var userId:Int = _
   def parseStartCmd(msg:String)={
@@ -35,17 +39,15 @@ class AlarmNotifier(out: ActorRef) extends Actor {
     case msg: String =>
       val (cmd, id) = parseStartCmd(msg)
       userId = id
-
-      import scala.concurrent.duration._
-
-      Akka.system.scheduler.schedule(scala.concurrent.duration.Duration(10, SECONDS),
-          scala.concurrent.duration.Duration(1, MINUTES), self, AlarmCheck)
-
-
+      
     case AlarmCheck =>
       checkAlarm   
   }
 
+  override def postStop(): Unit = {
+    cancelable.cancel()
+  }
+  
   def checkAlarm() {
     val userOpt = User.getUserById(userId)
     if (userOpt.isEmpty)
@@ -75,10 +77,9 @@ class AlarmNotifier(out: ActorRef) extends Actor {
 
       if (alarms.length != 0) {
         val latestTime = alarms.last.time
-        lastCheckTime = latestTime + 1.second
+        lastCheckTime = latestTime.plusSeconds(1)
 
       }
     }
-
   }
 }

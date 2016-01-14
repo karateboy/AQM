@@ -1925,4 +1925,33 @@ object ExcelUtility {
     wb.setActiveSheet(0)
     finishExcel(reportFilePath, pkg, wb)
   }
+  
+  def equipmentHistoryReport(tickets: List[Ticket], start:DateTime, end:DateTime)={
+    val (reportFilePath, pkg, wb) = prepareTemplate("equipHistory.xlsx")
+    val evaluator = wb.getCreationHelper().createFormulaEvaluator()
+    val sheet = wb.getSheetAt(0)
+    
+    sheet.getRow(1).getCell(6).setCellValue("起始日期:" + start.toString("YYYY/MM/dd"))
+    sheet.getRow(2).getCell(6).setCellValue("結束日期:" + end.toString("YYYY/MM/dd"))
+
+    for(tz<-tickets.zipWithIndex){
+      val t = tz._1
+      val rowN = tz._2 + 4
+      val row = sheet.getRow(rowN)
+      row.getCell(0).setCellValue(Monitor.map(t.monitor).name)
+      row.getCell(1).setCellValue(MonitorType.map(t.monitorType.get).desp)        
+      row.getCell(2).setCellValue(t.getRepairForm.start)
+      row.getCell(3).setCellValue(t.getRepairForm.end)
+      row.getCell(4).setCellValue(t.getRepairForm.explain + t.getRepairForm.result)
+      row.getCell(5).setCellValue(t.getRepairForm.equipmentId)
+      if(t.getRepairForm.parts.length == 0){
+        row.getCell(6).setCellValue("無")
+			}else{
+			  row.getCell(6).setCellValue(t.getRepairForm.parts.map(_.id).mkString(","))
+			}
+      
+    }
+    finishExcel(reportFilePath, pkg, wb)
+  }
+
 }

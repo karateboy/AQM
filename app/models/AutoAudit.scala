@@ -1,4 +1,5 @@
 package models
+import play.api._
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
 import scalikejdbc._
@@ -471,6 +472,7 @@ case class FourHourRule(enabled: Boolean, monitorTypes: Seq[FourHourCfg]) extend
     invalid
   }
 }
+
 object FourHourRule {
   implicit val thcfgRead = Json.reads[FourHourCfg]
   implicit val thcfgWrite = Json.writes[FourHourCfg]
@@ -479,6 +481,80 @@ object FourHourRule {
 
   val default = FourHourRule(false, Seq.empty[FourHourCfg])
 }
+
+case class OverInternalStdMinRule(enabled: Boolean, threshold: Int) extends Rule('j') {
+  def checkInvalid(m: Monitor.Value): Boolean = {
+    if (!enabled)
+      return false
+  
+    var invalid = false
+    val mCase = Monitor.map(m)
+
+    val records = Record.getMinRecords(m, DateTime.now - 1.hour, DateTime.now)
+    for {
+      mt <- mCase.monitorTypes if mCase.getStdInternal(mt).isDefined
+      std_internal = mCase.getStdInternal(mt).get
+      mtRecords = records.map { Record.monitorTypeProject2(mt) }
+    } {
+      val over = mtRecords.count(r => r._1.isDefined && r._2.isDefined
+        && MonitorStatus.isNormalStat(r._2.get)
+        && r._1.get > std_internal)
+
+      if (over > threshold) {
+        invalid = true
+        val ar = Alarm.Alarm(m, mt.toString, DateTime.now, 1.0f, lead + "10")
+        try {
+          Alarm.insertAlarm(ar)
+        } catch {
+          case ex: Exception =>
+          // Skip duplicate alarm
+        }
+      }
+
+    }
+
+    invalid
+  }
+}
+
+object OverInternalStdMinRule {
+  implicit val reads = Json.reads[OverInternalStdMinRule]
+  implicit val writes = Json.writes[OverInternalStdMinRule]
+  val default = OverInternalStdMinRule(false, 20)
+}
+
+case class DataReadyMinRule(enabled: Boolean, overdue: Int) extends Rule('k') {
+  def checkInvalid(m: Monitor.Value): Boolean = {
+    if (!enabled)
+      return false
+
+    val currentMinOpt = Realtime.getLatestMonitorRecordTime(TableType.Min, m)
+    if (currentMinOpt.isDefined) {
+      val duetime = DateTime.now() - overdue.minutes
+      if (currentMinOpt.get.toDateTime < duetime) {
+        for (mt <- Monitor.map(m).monitorTypes) {
+          val ar = Alarm.Alarm(m, mt.toString, DateTime.now, 1.0f, lead + "10")
+          try {
+            Alarm.insertAlarm(ar)
+          } catch {
+            case ex: Exception =>
+            // Skip duplicate alarm
+          }
+        }
+        return true
+      }
+    }
+
+    false
+  }
+}
+
+object DataReadyMinRule {
+  implicit val reads = Json.reads[DataReadyMinRule]
+  implicit val writes = Json.writes[DataReadyMinRule]
+  val default = DataReadyMinRule(false, 10)
+}
+
 case class AutoAudit(
   minMaxRule: MinMaxRule,
   compareRule: CompareRule,
@@ -488,7 +564,9 @@ case class AutoAudit(
   monoRule: MonoRule,
   twoHourRule: TwoHourRule,
   threeHourRule: ThreeHourRule,
-  fourHourRule: FourHourRule)
+  fourHourRule: FourHourRule,
+  overInternalStdMinRule: Option[OverInternalStdMinRule] = Some(OverInternalStdMinRule.default),
+  dataReadyMinRule: Option[DataReadyMinRule] = Some(DataReadyMinRule.default))
 
 /**
  * @author user
@@ -517,5 +595,7 @@ object AutoAudit {
     'f' -> "一致性",
     'g' -> "小時測值變化驗證",
     'h' -> "三小時變化測值驗證",
-    'i' -> "四小時變化測值驗證")
+    'i' -> "四小時變化測值驗證",
+    'j' -> "分鐘值超過內控",
+    'k' -> "分鐘值回傳超時")
 }

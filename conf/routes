@@ -142,6 +142,10 @@ DELETE	/Group/:id			controllers.Application.deleteGroup(id: Int)
 
 GET		/ManualAudit		controllers.Application.manualAudit
 POST	/ManualAudit/:recordType		controllers.Application.manualAuditApply(recordType)
+GET		/ManualAuditQuery				controllers.Application.manualAuditQuery
+GET		/ManualAuditQueryReport/:monitor/:start/:end	controllers.Application.manualAuditQueryReport(monitor, start, end, outputType="html")
+GET		/PDF/ManualAuditQueryReport/:monitor/:start/:end	controllers.Application.manualAuditQueryReport(monitor, start, end, outputType="pdf")
+GET		/Excel/ManualAuditQueryReport/:monitor/:start/:end	controllers.Application.manualAuditQueryReport(monitor, start, end, outputType="excel")
 
 GET		/AuditConfig			controllers.Application.auditConfig
 GET		/AuditConfig/:monitor	controllers.Application.getMonitorAuditConfig(monitor)
@@ -171,7 +175,8 @@ GET		/DownloadForm/:ID	controllers.Maintance.downloadForm(ID:Int)
 
 GET		/Form/:ID	controllers.Maintance.getForm(ID:Int)
 GET		/EquipmentHistory	controllers.Maintance.equipmentHistory
-GET		/EquipmentHistoryReport/:monitors/:start/:end controllers.Maintance.equipmentHistoryReport(monitors, start, end)
+GET		/EquipmentHistoryReport/:monitors/:monitorType/:start/:end controllers.Maintance.equipmentHistoryReport(monitors, monitorType, start, end, outputTypeStr="html")
+GET		/Excel/EquipmentHistoryReport/:monitors/:monitorType/:start/:end controllers.Maintance.equipmentHistoryReport(monitors, monitorType, start, end, outputTypeStr="excel")
 
 GET		/MonitorJournal		controllers.Maintance.monitorJournal
 GET		/MonitorJournalReport/:monitor/:date		controllers.Maintance.monitorJournalReport(monitor, date, outputTypeStr="html")

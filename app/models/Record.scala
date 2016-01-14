@@ -139,76 +139,102 @@ object Record {
     SixSecRecord(Monitor.withName(rs.string(1)), rs.timestamp(2), windSpeed, windSpeed_stat, windDir, windDir_stat)
   }
 
-  def getCount(start: Timestamp, end: Timestamp) = {
-    DB readOnly { implicit session =>
-      val query = sql"select count(*) from P1234567_Hr_2015 where M_DateTime >= ${start} and M_DateTime < ${end}"
-      query.map { _.int(1) }.single().apply()
-    }
-  }
-
-  def getHourRecords(monitor: Monitor.Value, startTime: DateTime, endTime: DateTime)(implicit session: DBSession = AutoSession) = {
+  def getHourRecords(monitor: Monitor.Value, startTime: DateTime, endTime: DateTime)(implicit session: DBSession = AutoSession):List[Record.HourRecord] = {
     val start: Timestamp = startTime
     val end: Timestamp = endTime
     val monitorName = monitor.toString()
+    assert(endTime.getYear >= startTime.getYear)
+    
     val tab_name = getTabName(TableType.Hour, startTime.getYear)
-    sql"""
+    val result = sql"""
         Select * 
         From ${tab_name}
         Where DP_NO=${monitorName} and M_DateTime >= ${start} and M_DateTime < ${end}
         ORDER BY M_DateTime ASC
       """.map { mapper }.list().apply()
+    if(startTime.getYear == endTime.getYear)
+      result
+    else
+      result ++ getHourRecords(monitor, DateTime.parse(s"${startTime.getYear+1}-1-1"), endTime)
   }
 
-  def getUncheckedHourRecords(monitor: Monitor.Value, startTime: DateTime, endTime: DateTime)(implicit session: DBSession = AutoSession) = {
+  def getUncheckedHourRecords(monitor: Monitor.Value, startTime: DateTime, endTime: DateTime)
+  (implicit session: DBSession = AutoSession):List[Record.HourRecord] = {
     val start: Timestamp = startTime
     val end: Timestamp = endTime
     val monitorName = monitor.toString()
+    assert(endTime.getYear >= startTime.getYear)
+    
     val tab_name = getTabName(TableType.Hour, startTime.getYear)
-    sql"""
+    val result = sql"""
         Select * 
         From ${tab_name}
         Where DP_NO=${monitorName} and M_DateTime >= ${start} and M_DateTime < ${end} and CHK is Null
         ORDER BY M_DateTime ASC
       """.map { mapper }.list().apply()
+    if(startTime.getYear == endTime.getYear)
+      result
+    else
+      result ++ getUncheckedHourRecords(monitor, DateTime.parse(s"${startTime.getYear+1}-1-1"), endTime)  
   }
     
-  def getInvalidHourRecords(monitor: Monitor.Value, startTime: DateTime, endTime: DateTime)(implicit session: DBSession = AutoSession) = {
+  def getInvalidHourRecords(monitor: Monitor.Value, startTime: DateTime, endTime: DateTime)
+    (implicit session: DBSession = AutoSession):List[Record.HourRecord] = {
     val start: Timestamp = startTime
     val end: Timestamp = endTime
+    assert(endTime.getYear >= startTime.getYear)
+
     val monitorName = monitor.toString()
     val tab_name = getTabName(TableType.Hour, startTime.getYear)
-    sql"""
+    val result = sql"""
         Select * 
         From ${tab_name}
         Where DP_NO=${monitorName} and M_DateTime >= ${start} and M_DateTime < ${end} and CHK = 'BAD'
         ORDER BY M_DateTime ASC
       """.map { mapper }.list().apply()
+    if(startTime.getYear == endTime.getYear)
+      result
+    else
+      result ++ getInvalidHourRecords(monitor, DateTime.parse(s"${startTime.getYear+1}-1-1"), endTime)  
   }
 
-  def getMinRecords(monitor: Monitor.Value, startTime: DateTime, endTime: DateTime)(implicit session: DBSession = AutoSession) = {
+  def getMinRecords(monitor: Monitor.Value, startTime: DateTime, endTime: DateTime)
+  (implicit session: DBSession = AutoSession):List[Record.HourRecord] = {
     val start: Timestamp = startTime
     val end: Timestamp = endTime
+    assert(endTime.getYear >= startTime.getYear)
+
     val monitorName = monitor.toString()
     val tab_name = getTabName(TableType.Min, startTime.getYear)
-    sql"""
+    val result = sql"""
         Select * 
         From ${tab_name}
         Where DP_NO=${monitorName} and M_DateTime >= ${start} and M_DateTime < ${end}
         ORDER BY M_DateTime ASC
       """.map { mapper }.list().apply()
+    if(startTime.getYear == endTime.getYear)
+      result
+    else
+      result ++ getMinRecords(monitor, DateTime.parse(s"${startTime.getYear+1}-1-1"), endTime)  
   }
 
-  def getSecRecords(monitor: Monitor.Value, startTime: DateTime, endTime: DateTime)(implicit session: DBSession = AutoSession) = {
+  def getSecRecords(monitor: Monitor.Value, startTime: DateTime, endTime: DateTime)
+  (implicit session: DBSession = AutoSession):List[Record.SixSecRecord] = {
     val start: Timestamp = startTime
     val end: Timestamp = endTime
+    assert(endTime.getYear >= startTime.getYear)
     val monitorName = monitor.toString()
     val tab_name = getTabName(TableType.SixSec, startTime.getYear)
-    sql"""
+    val result = sql"""
         Select * 
         From ${tab_name}
         Where DP_NO=${monitorName} and M_DateTime >= ${start} and M_DateTime < ${end}
         ORDER BY M_DateTime ASC
       """.map { sixSecMapper }.list().apply()
+    if(startTime.getYear == endTime.getYear)
+      result
+    else
+      result ++ getSecRecords(monitor, DateTime.parse(s"${startTime.getYear+1}-1-1"), endTime)  
   }
 
   def secRecordProject(mt: MonitorType.Value) =
@@ -355,20 +381,22 @@ object Record {
 
       val hourReport = Map(hrRecords: _*)
 
+      val mintab_name = getTabName(TableType.Min, start.getYear)
       val minRecords =
         sql"""
         SELECT DP_NO, count(DP_NO)
-        FROM [AQMSDB].[dbo].[P1234567_M1_2015]
+        FROM ${mintab_name}
         Where M_DateTime >= ${start} and M_DateTime < ${end}
         GROUP BY DP_NO
       """.map { rs => (Monitor.withName(rs.string(1)), rs.int(2)) }.list().apply()
 
       val minReport = Map(minRecords: _*)
 
+      val sectab_name = getTabName(TableType.SixSec, start.getYear)
       val sixSecRecords =
         sql"""
         SELECT DP_NO, count(DP_NO)
-        FROM [AQMSDB].[dbo].[P1234567_S6_2015]
+        FROM ${sectab_name}
         Where M_DateTime >= ${start} and M_DateTime < ${end}
         GROUP BY DP_NO
       """.map { rs => (Monitor.withName(rs.string(1)), rs.int(2)) }.list().apply()

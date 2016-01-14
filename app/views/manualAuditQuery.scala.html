@@ -1,4 +1,4 @@
-@* alarm Template File *@
+@* manualAuditQuery Template File *@
 @import com.github.nscala_time.time.Imports._
 @(privilege: Privilege)
 <div class="row">
@@ -27,17 +27,6 @@
 	            				</div>
 	            			</div>	            			            		
 	                    </div>
-            			<div class="form-group">
-	            			<label class="col-lg-1 control-label">警報項目篩選</label>
-	            			<div class="col-lg-11">
-	            				<div class="btn-group" data-toggle="buttons">	            					            				
-	            					@for(a<-MonitorStatus.alarmList){
-            							<label class="btn btn-outline btn-primary dim">
-										<input type="checkbox" name="monitorStatus" id="@a">@MonitorStatus.map(a).desp</label>		
-            						}
-	            				</div>
-	            			</div>	            			            		
-	                    </div>
 	                    <div class="form-group">
 	            			<label class="col-lg-1 control-label">查詢區間</label>	
 	            			<div class="col-lg-5">
@@ -59,7 +48,10 @@
         	</div>
         	<div class="panel panel-success" style="display:none" id="reportPanel">
             	<div class="panel-body panel-collapse" id="monitorReport">
-            	
+            		<div align="right">
+            			<label class="btn btn-outline" data-toggle="tooltip" data-placement="bottom" title="PDF"><a href="#" id="downloadPDF"><i class="fa fa-file-pdf-o fa-2x pdf"></i></a></label>            			 
+            			<label class="btn btn-outline" data-toggle="tooltip" data-placement="bottom" title="Excel"><a href="#" id="downloadExcel"><i class="fa fa-file-excel-o fa-2x"></i></a></label>            			            			
+                	</div>
 					<div id="reportDiv" align="center" style="overflow-x:auto">
             		</div>
             	</div>
@@ -87,7 +79,7 @@ $( document ).ready(function() {
 	    language: "zh-TW"
 	});
 
-	var monitors, statusFilter, reportStart, reportEnd;
+	var monitors, reportStart, reportEnd;
 	
 	function validate(){
 		monitors = $("input[name='monitor']:checked");
@@ -97,9 +89,6 @@ $( document ).ready(function() {
 			return false;
 		}
 
-		statusFilter = $("input[name='monitorStatus']:checked");
-		console.log(statusFilter);
-		
 		reportStart = $('#reportStart').val();
 		if(reportStart.length === 0){
 			alert('請選擇開始日期');
@@ -132,20 +121,8 @@ $( document ).ready(function() {
 			else
 				monitorParam += ':' + monitors[i].id;
 		}
-		
-		var statusFilterParam='';
-		if(statusFilter.length==0){
-			statusFilterParam='None';
-		}else{
-			for (var i = 0; i < statusFilter.length; i++) {
-				if(statusFilterParam=='')
-					statusFilterParam = statusFilter[i].id;
-				else
-					statusFilterParam += ':' + statusFilter[i].id;
-			}			
-		}
-		
-		var url = "/AlarmReport/" + monitorParam + "/" + statusFilterParam + "/" + reportStart + "/" + reportEnd;
+				
+		var url = "/ManualAuditQueryReport/" + monitorParam + "/" + reportStart + "/" + reportEnd;
 		$.ajax({
 			url: url,
 			data: '',
@@ -155,16 +132,7 @@ $( document ).ready(function() {
 			success: function(result){
 				$('#reportDiv').html(result);
 				$("#downloadPDF").prop("href", "/PDF" + url);
-				$( document ).ready(function() {
-					$('#alarmReport').dataTable( {
-						responsive: true,
-						language: {
-							url: localized_url,							
-						},
-        				searching: false,
-        				paging: false
-					} );
-				});
+				$("#downloadExcel").prop("href", "/Excel" + url);				
 			},
 			error: function(xhr, status, errorThrown){
 				console.log("錯誤訊息:" + status + "-" + errorThrown);

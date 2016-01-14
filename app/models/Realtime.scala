@@ -56,52 +56,6 @@ object Realtime {
     }
   }
 
-  def getRealtimeStatus(privilege: Privilege) = {
-    DB readOnly { implicit session =>
-      val rt_result =
-        for { m <- privilege.allowedMonitors } yield {
-          val optHr =
-            sql"""
-              SELECT TOP 1 *
-              FROM [AQMSDB].[dbo].[P1234567_Hr_2015]
-              WHERE DP_NO = ${m.id}
-              ORDER BY M_DateTime  DESC
-             """.map { Record.mapper }.single.apply
-
-          val hr = optHr.getOrElse(emptyRecord(m.toString(), DateTime.now))
-          val type_record = monitorTypeProjection.map(
-            t => (t._1 -> (t._2._1(hr), t._2._2(hr))))
-          (m -> type_record)
-        }
-      val windMapList =
-        for { m <- privilege.allowedMonitors } yield {
-          val wind_record =
-            sql"""
-            SELECT TOP 1 *
-            FROM [AQMSDB].[dbo].[P1234567_S6_2014]
-            WHERE DP_NO = ${m.id}
-            ORDER BY M_DateTime  DESC
-           """.map { SixSecRecordMapper }.single.apply.getOrElse(
-              SixSecRecord(Array[(Option[Float], Option[String])]((None, None)), Array[(Option[Float], Option[String])]((None, None))))
-
-          def getLatest(arr: Array[(Option[Float], Option[String])]): (Option[Float], Option[String]) = {
-            arr.last
-          }
-
-          m -> Map(MonitorType.withName("C911") -> getLatest(wind_record.c911),
-            MonitorType.withName("C912") -> getLatest(wind_record.c912))
-        }
-      //combine
-      val hr_map = Map(rt_result: _*)
-      val sec_map = Map(windMapList: _*)
-      val final_list =
-        for { m <- privilege.allowedMonitors } yield {
-          m -> (hr_map(m) ++ sec_map(m))
-        }
-      Map(final_list: _*)
-    }
-  }
-
   def statusFilter(msf: MonitorStatusFilter.Value)(data: (Option[Float], Option[String])): Boolean = {
     if (data._2.isEmpty)
       return false
@@ -376,6 +330,16 @@ object Realtime {
     sql"""
       SELECT TOP 1 M_DateTime
       FROM ${tab_name}
+      ORDER BY M_DateTime  DESC
+      """.map { r=>r.timestamp(1) }.single.apply  
+  }
+  
+  def getLatestMonitorRecordTime(tabType:TableType.Value, m:Monitor.Value)(implicit session: DBSession = AutoSession) = {
+    val tab_name = Record.getTabName(tabType, DateTime.now.getYear)
+    sql"""
+      SELECT TOP 1 M_DateTime
+      FROM ${tab_name}
+      WHERE DP_NO = ${m.toString}
       ORDER BY M_DateTime  DESC
       """.map { r=>r.timestamp(1) }.single.apply  
   }

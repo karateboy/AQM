@@ -232,10 +232,10 @@ object MonitorStatus {
   private var _map:Map[String, MonitorStatus] = refreshMap
   val msvList = msList.map {r=>r.info.toString}
   val manualMonitorStatusList = {msvList.filter { _map(_).info.statusType == StatusType.Manual }}
-  val alarmList = List("000", "011", "031", "033", "035",  
+  val alarmList = List("000", "011", "031", "033", "035", "036",  
       "043",
       "050", "052", "053", "054", "056", "057", "058", "059", "060",
-      "a10", "b10", "c10", "d10", "e10", "f10", "g10", "h10", "i10")
+      "a10", "b10", "c10", "d10", "e10", "f10", "g10", "h10", "i10", "j10", "k10")
 
   def map(key: String) = {
     _map.getOrElse(key, {

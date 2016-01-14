@@ -316,17 +316,31 @@ object Maintance extends Controller {
       Ok(views.html.equipmentHistory(userInfo, group.privilege, adminUsers))
   }
 
-  def equipmentHistoryReport(monitorStr: String, startStr: String, endStr: String) = Security.Authenticated {
+  def equipmentHistoryReport(monitorStr: String, monitorTypeStr:String, startStr: String, endStr: String, outputTypeStr:String) = Security.Authenticated {
       val monitors = monitorStr.split(":").map { Monitor.withName }
+      val monitorType = MonitorType.withName(monitorTypeStr)
       val start = DateTime.parse(startStr)
       val end = DateTime.parse(endStr) + 1.day
+      val outputType = OutputType.withName(outputTypeStr)
 
       val tickets = Ticket.queryTickets(start, end)
-      val filterTicket = tickets.filter { t => monitors.contains(t.monitor) && t.ticketType == TicketType.repair }
+      val filterTicket = tickets.filter { t => 
+        monitors.contains(t.monitor) && 
+        t.ticketType == TicketType.repair && 
+        t.monitorType.isDefined && 
+        t.monitorType.get == monitorType }
       val adminUsers = User.getAdminUsers()
       val usrMap = Map(adminUsers.map { u => (u.id.get -> u) }: _*)
 
-    Ok(views.html.equipmentHistoryReport(filterTicket, usrMap))
+    if(outputType == OutputType.html)
+      Ok(views.html.equipmentHistoryReport(filterTicket, usrMap))
+    else{
+      val excelFile = ExcelUtility.equipmentHistoryReport(filterTicket, start, end)
+      Ok.sendFile(excelFile, fileName = _ =>
+            play.utils.UriEncoding.encodePathSegment("儀器保養履歷" + start.toString("YYMMdd")+"_"+
+                end.toString("YYMMdd") + ".xlsx", "UTF-8"),
+            onClose = () => { Files.deleteIfExists(excelFile.toPath()) })
+    }
   }
 
   def monitorJournal = Security.Authenticated {

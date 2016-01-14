@@ -34,13 +34,18 @@ object EventLog {
       }.list.apply
     }
   }
-  
-  def create(evt:EventLog)={
-    DB localTx { implicit session =>
-      sql"""
+
+  def create(evt: EventLog) = {
+    try {
+      DB localTx { implicit session =>
+        sql"""
         Insert into eventLog(evtTime, evtType, evtDesc)
         Values(${DateTime.now}, ${evt.evtType}, ${evt.evtDesc})
         """.update.apply
+      }
+    } catch {
+      case ex: Exception =>
+        //Ignore logging error
     }
   }
 }

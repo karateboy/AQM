@@ -539,6 +539,37 @@ object Application extends Controller {
         })
   }
 
+  def manualAuditQuery() = Security.Authenticated {
+    implicit request =>
+      val userInfo = Security.getUserinfo(request).get
+      val group = Group.getGroup(userInfo.groupID).get
+
+      Ok(views.html.manualAuditQuery(group.privilege))
+  }  
+  
+  def manualAuditQueryReport(monitorStr: String, startStr: String, endStr: String, outputTypeStr: String) = Security.Authenticated {
+    val monitorStrArray = monitorStr.split(':')
+    val monitors = monitorStrArray.map { Monitor.withName }
+    val start = DateTime.parse(startStr)
+    val end = DateTime.parse(endStr) + 1.day
+    val outputType = OutputType.withName(outputTypeStr)
+
+    val records = ManualAuditLog.getLogs(TableType.Hour, monitors, start, end)
+
+    val output = views.html.manualAuditQueryReport(start, end, records)
+    val title = "人工註記查詢"
+    outputType match {
+      case OutputType.html =>
+        Ok(output)
+      case OutputType.pdf =>
+        Ok.sendFile(creatPdfWithReportHeader(title, output),
+          fileName = _ =>
+            play.utils.UriEncoding.encodePathSegment(title + start.toString("YYMMdd") + "_" + end.toString("MMdd") + ".pdf", "UTF-8"))
+    }
+
+  }
+
+
   def auditConfig() = Security.Authenticated {
     implicit request =>
       val userInfo = Security.getUserinfo(request).get
@@ -553,9 +584,9 @@ object Application extends Controller {
       val group = Group.getGroup(userInfo.groupID).get
       val m = Monitor.withName(monitorStr)
 
-      val auditConfig = Monitor.map(m).autoAudit
+      val autoAudit = Monitor.map(m).autoAudit
 
-      Ok(Json.toJson(auditConfig))
+      Ok(Json.toJson(autoAudit))
   }
 
   def setMonitorAuditConfig(monitorStr: String) = Security.Authenticated(BodyParsers.parse.json) {
