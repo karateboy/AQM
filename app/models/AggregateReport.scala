@@ -73,26 +73,50 @@ object AggregateReport {
             mCase = MonitorType.map(t.monitorType)
             mtInternal = Monitor.map(m).getStdInternal(t.monitorType).get
             over_hrs = t.dataList.filter(r => r._2.isDefined && r._3.isDefined && MonitorStatus.isNormalStat(r._3.get)
-              && r._2.get > mtInternal)
-            hr <-over_hrs
+              && r._2.get > mtInternal) if !over_hrs.isEmpty
           } yield {
             import java.util.Calendar
-            val calendar = Calendar.getInstance();
-            calendar.setTime(hr._1);
-            val hours = calendar.get(Calendar.HOUR_OF_DAY);
-            val header = s"${mCase.desp}於${hours}時超過內控(${mtInternal})"
+            val calendar = Calendar.getInstance()
+            def genDesc(start: Int, expected: Int, list: List[Int]): String = {
+              def output = {
+                if (start != (expected-1))
+                  s"${start}-${expected-1}"
+                else
+                  s"${start}"
+              }
+              list match {
+                case Nil =>
+                  output
+                case head :: tail =>
+                  if (expected != head)
+                    output + "," + genDesc(head, head+1, tail)
+                  else
+                    genDesc(start, expected+1, tail)
+              }
+            }
+            val hours = over_hrs.map { hr =>
+              calendar.setTime(hr._1)
+              calendar.get(Calendar.HOUR_OF_DAY)
+            }
+            val header = s"${mCase.desp}於${genDesc(hours(0),hours(0)+1, hours.drop(1))}時超過內控(${mtInternal}${mCase.unit})"
             val overLaw =
               if (mCase.std_law.isDefined) {
                 if (t.monitorType == MonitorType.A214 || t.monitorType == MonitorType.A213) {
                   if (t.stat.avg > mCase.std_law.get)
-                    s",日均值超過法規值(${mCase.std_law.get}${mCase.unit})"
+                    s",日均值${t.stat.avg}超過法規值(${mCase.std_law.get}${mCase.unit})"
                   else
-                    ",日均值未超過法規值"
+                    s",日均值${t.stat.avg}未超過法規值"
                 } else {
-                  if (hr._2.get >= mCase.std_law.get)
-                    s",超過法規值(${mCase.std_law.get}${mCase.unit})"
+                  val overLawHr = over_hrs.filter(_._2.get >= mCase.std_law.get).map{
+                    hr=>
+                      calendar.setTime(hr._1)
+                      calendar.get(Calendar.HOUR_OF_DAY)
+                  }
+                  
+                  if (!overLawHr.isEmpty)
+                    s",${genDesc(overLawHr(0), overLawHr(0)+1, overLawHr.drop(1))}超過法規值(${mCase.std_law.get}${mCase.unit})"
                   else
-                    ",未超過法規值"
+                    ",未超過法規值(${mCase.std_law.get}${mCase.unit})"
                 }
               } else
                 ",未超過法規值"
