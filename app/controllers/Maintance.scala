@@ -66,9 +66,10 @@ object Maintance extends Controller {
                   ticketParam.owner, m, Some(mt), ticketParam.reason, DateTime.parse(date), Json.toJson(Ticket.defaultRepairFormData).toString)
               }
             }
+          var epbNotification = false
           for (t <- tickets){
             Ticket.newTicket(t)
-            if(t.ticketType == TicketType.repair){
+            if(t.ticketType == TicketType.repair && !epbNotification){
               val excel = ExcelUtility.epbNotification(List(t))
               val title = s"環保局通報單_${Monitor.map(t.monitor).name}${t.submit_date.toString("MMdd_HHmm")}"
               
@@ -76,6 +77,7 @@ object Maintance extends Controller {
               import java.nio.file.Paths
               val targetPath = Paths.get(current.path.getAbsolutePath + s"/notification/${title}.xlsx")
               Files.move(excel.toPath, targetPath, REPLACE_EXISTING)
+              epbNotification = true
             }
           }
           Ok(Json.obj("ok" -> true, "nNewCase" -> tickets.length))
@@ -610,7 +612,7 @@ object Maintance extends Controller {
           val ttMap =
             {
               import TicketType._
-              Map(repair -> "維修", maintance_week -> "單周", maintance_biweek -> "雙周",
+              Map(repair -> "維修", maintance_week -> "單週", maintance_biweek -> "雙週",
                 maintance_month -> "月", maintance_quarter -> "季", maintance_half_year -> "半年", maintance_year -> "年")
             }
 

@@ -100,7 +100,7 @@ object TicketType extends Enumeration {
   val maintance_year = Value
   val repair = Value
 
-  val map = Map(repair -> "維修", maintance_week -> "單周定保", maintance_biweek -> "雙周定保",
+  val map = Map(repair -> "維修", maintance_week -> "單週定保", maintance_biweek -> "雙週定保",
     maintance_month -> "月定保", maintance_quarter -> "季定保", maintance_half_year->"半年定保", maintance_year -> "年定保")
 
   def withId(id: Int) = {

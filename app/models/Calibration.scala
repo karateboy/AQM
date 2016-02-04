@@ -61,11 +61,12 @@ object Calibration {
   def calibrationMonthly(monitor: Monitor.Value, monitorType: MonitorType.Value, start: DateTime) = {
     val end = start + 1.month
     val mtStr = monitorType.toString().replace("A2", "A4")
+    val tab = getTabName(start.toDateTime.getYear)
     val report =
       DB readOnly { implicit session =>
         sql"""
       SELECT *
-      FROM [AQMSDB].[dbo].[P1234567_Cal_2015]
+      FROM ${tab}
       Where DP_NO=${monitor.toString} and S_DateTime >= ${start} and S_DateTime < ${end} and M_ITEM = ${mtStr}
       Order by S_DateTime
       """.map { rs =>

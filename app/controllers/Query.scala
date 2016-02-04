@@ -20,7 +20,7 @@ object ReportUnit extends Enumeration {
   val Week = Value("week")
   val Month = Value("month")
   val Quarter = Value("quarter")
-  val map = Map((Min -> "分"), (TenMin -> "十分"), (Hour -> "小時"), (EightHour -> "八小時"), (Day -> "日"), (Week -> "周"), (Month -> "月"), (Quarter -> "季"))
+  val map = Map((Min -> "分"), (TenMin -> "十分"), (Hour -> "小時"), (EightHour -> "八小時"), (Day -> "日"), (Week -> "週"), (Month -> "月"), (Quarter -> "季"))
 }
 
 object Query extends Controller {
