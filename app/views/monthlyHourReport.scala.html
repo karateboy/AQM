@@ -39,17 +39,9 @@
 		<tr>
 			<td>平均</td>
 			@for(stat<-report.hourStatArray){
-				@if(stat.count==0){
-					<td>-</td>
-				}else{
-				<td>@MonitorType.format(mt, Some(stat.avg))</td>
-				}
+				<td>@MonitorType.format(mt, stat.avg)</td>
 			}
-			@if(report.StatStat.count != 0){
-				<td>@MonitorType.format(mt, Some(report.StatStat.avg))</td>
-			}else{
-				<td></td>
-			}
+			<td>@MonitorType.format(mt, report.StatStat.avg)</td>
 			<td></td>
 			<td></td>
 			<td>@report.StatStat.count</td>
@@ -57,37 +49,21 @@
 		<tr>
 			<td>最大</td>
 			@for(stat<-report.hourStatArray){
-				@if(stat.count==0){
-					<td>-</td>
-				}else{
-				<td>@MonitorType.format(mt, Some(stat.max))</td>
-				}
+				<td>@MonitorType.format(mt, stat.max)</td>
 			}
 			<td></td>
-			@if(report.StatStat.count != 0){
-				<td>@MonitorType.format(mt, Some(report.StatStat.max))</td>
-			}else{
-				<td></td>
-			}
+			<td>@MonitorType.format(mt, report.StatStat.max)</td>
 			<td></td>
 			<td>@report.StatStat.count</td>
 		</tr>
 		<tr>
 			<td>最小</td>
 			@for(stat<-report.hourStatArray){
-				@if(stat.count==0){
-					<td>-</td>
-				}else{
-				<td>@MonitorType.format(mt, Some(stat.min))</td>
-				}
+				<td>@MonitorType.format(mt, stat.min)</td>
 			}
 			<td></td>
 			<td></td>
-			@if(report.StatStat.count != 0){
-				<td>@MonitorType.format(mt, Some(report.StatStat.min))</td>	
-			}else{
-				<td>-</td>
-			}
+				<td>@MonitorType.format(mt, report.StatStat.min)</td>	
 			<td>@report.StatStat.count</td>
 			
 		</tr>
@@ -101,21 +77,9 @@
 					@MonitorType.format(mt, report.dailyReports(d).typeList(0).dataList(hour)._2)</span>
 				</td>
 			}
-			@if(report.dailyReports(d).typeList(0).stat.count != 0){
-				<td>@MonitorType.format(mt, Some(report.dailyReports(d).typeList(0).stat.avg))</td>	
-			}else{
-				<td>-</td>
-			}
-			@if(report.dailyReports(d).typeList(0).stat.count != 0){
-				<td>@MonitorType.format(mt, Some(report.dailyReports(d).typeList(0).stat.max))</td>	
-			}else{
-				<td>-</td>
-			}
-			@if(report.dailyReports(d).typeList(0).stat.count != 0){
-				<td>@MonitorType.format(mt, Some(report.dailyReports(d).typeList(0).stat.min))</td>	
-			}else{
-				<td>-</td>
-			}
+				<td>@MonitorType.format(mt, report.dailyReports(d).typeList(0).stat.avg)</td>	
+				<td>@MonitorType.format(mt, report.dailyReports(d).typeList(0).stat.max)</td>	
+				<td>@MonitorType.format(mt, report.dailyReports(d).typeList(0).stat.min)</td>	
 			<td>@report.dailyReports(d).typeList(0).stat.count</td>
 			
 			</tr>

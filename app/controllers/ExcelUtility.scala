@@ -152,10 +152,10 @@ object ExcelUtility {
       } {
         val stat = data.typeList(col - 1).stat
         if (stat.count != 0) {
-          sheet.getRow(28).getCell(col).setCellValue(stat.avg)
-          sheet.getRow(29).getCell(col).setCellValue(stat.max)
-          sheet.getRow(30).getCell(col).setCellValue(stat.min)
-          sheet.getRow(31).getCell(col).setCellValue(stat.effectPercent * 100)
+          sheet.getRow(28).getCell(col).setCellValue(stat.avg.get)
+          sheet.getRow(29).getCell(col).setCellValue(stat.max.get)
+          sheet.getRow(30).getCell(col).setCellValue(stat.min.get)
+          sheet.getRow(31).getCell(col).setCellValue(stat.effectPercent.get * 100)
         } else {
           sheet.getRow(28).getCell(col).setCellValue("-")
           sheet.getRow(29).getCell(col).setCellValue("-")
@@ -232,10 +232,10 @@ object ExcelUtility {
     } {
       val stat = data.typeList(col - 1).stat
       if (stat.count != 0) {
-        sheet.getRow(28).getCell(col).setCellValue(stat.avg)
-        sheet.getRow(29).getCell(col).setCellValue(stat.max)
-        sheet.getRow(30).getCell(col).setCellValue(stat.min)
-        sheet.getRow(31).getCell(col).setCellValue(stat.effectPercent * 100)
+        sheet.getRow(28).getCell(col).setCellValue(stat.avg.get)
+        sheet.getRow(29).getCell(col).setCellValue(stat.max.get)
+        sheet.getRow(30).getCell(col).setCellValue(stat.min.get)
+        sheet.getRow(31).getCell(col).setCellValue(stat.effectPercent.get * 100)
       } else {
         sheet.getRow(28).getCell(col).setCellValue("-")
         sheet.getRow(29).getCell(col).setCellValue("-")
@@ -341,8 +341,8 @@ object ExcelUtility {
         if (cellData.count == 0)
           cell.setCellValue("-")
         else {
-          cell.setCellValue(cellData.avg)
-          if (cellData.effectPercent >= 0.75)
+          cell.setCellValue(cellData.avg.get)
+          if (cellData.effectPercent.isDefined && cellData.effectPercent.get >= 0.75)
             cell.setCellStyle(normalStyle)
           else
             cell.setCellStyle(abnormalStyles(0))
@@ -354,11 +354,13 @@ object ExcelUtility {
         mtRecord = data.typeArray(col - 1)
       } {
         val stat = mtRecord.stat
-        sheet.getRow(36).getCell(col).setCellValue(stat.avg)
+        
         if (stat.count >= 1) {
-          sheet.getRow(37).getCell(col).setCellValue(stat.max)
-          sheet.getRow(38).getCell(col).setCellValue(stat.min)
+          sheet.getRow(36).getCell(col).setCellValue(stat.avg.get)
+          sheet.getRow(37).getCell(col).setCellValue(stat.max.get)
+          sheet.getRow(38).getCell(col).setCellValue(stat.min.get)
         } else {
+          sheet.getRow(36).getCell(col).setCellValue("-")
           sheet.getRow(37).getCell(col).setCellValue("-")
           sheet.getRow(38).getCell(col).setCellValue("-")
         }
@@ -446,11 +448,11 @@ object ExcelUtility {
         stat = dayRecord.typeList(sheetIndex - 2).stat
       } {
         if (stat.count != 0) {
-          sheet.getRow(row).getCell(25).setCellValue(stat.avg)
+          sheet.getRow(row).getCell(25).setCellValue(stat.avg.get)
           sheet.getRow(row).getCell(26).setCellValue(stat.count)
-          sheet.getRow(row).getCell(27).setCellValue(stat.max)
-          sheet.getRow(row).getCell(28).setCellValue(stat.min)
-          sheet.getRow(row).getCell(29).setCellValue(stat.avg * stat.count)
+          sheet.getRow(row).getCell(27).setCellValue(stat.max.get)
+          sheet.getRow(row).getCell(28).setCellValue(stat.min.get)
+          sheet.getRow(row).getCell(29).setCellValue(stat.avg.get * stat.count)
         } else {
           sheet.getRow(row).getCell(25).setCellValue("-")
           sheet.getRow(row).getCell(26).setCellValue(0)
@@ -595,8 +597,8 @@ object ExcelUtility {
       } {
         val cell = sheet.getRow(row).getCell(col)
         if (data.count != 0) {
-          cell.setCellValue(data.avg)
-          if (data.effectPercent >= 0.75)
+          cell.setCellValue(data.avg.get)
+          if (data.effectPercent.isDefined && data.effectPercent.get >= 0.75)
             cell.setCellStyle(normalStyle)
           else
             cell.setCellStyle(abnormalStyles(0))
@@ -605,13 +607,13 @@ object ExcelUtility {
       }
       val stat = report.typeArray(col - 1).stat
       if (stat.count != 0) {
-        sheet.getRow(16).getCell(col).setCellValue(stat.avg)
+        sheet.getRow(16).getCell(col).setCellValue(stat.avg.get)
         sheet.getRow(16).getCell(col).setCellStyle(normalStyle)
-        sheet.getRow(17).getCell(col).setCellValue(stat.max)
+        sheet.getRow(17).getCell(col).setCellValue(stat.max.get)
         sheet.getRow(17).getCell(col).setCellStyle(normalStyle)
-        sheet.getRow(18).getCell(col).setCellValue(stat.min)
+        sheet.getRow(18).getCell(col).setCellValue(stat.min.get)
         sheet.getRow(18).getCell(col).setCellStyle(normalStyle)
-        sheet.getRow(19).getCell(col).setCellValue(stat.effectPercent * 100)
+        sheet.getRow(19).getCell(col).setCellValue(stat.effectPercent.get * 100)
         sheet.getRow(19).getCell(col).setCellStyle(normalStyle)
       } else {
         sheet.getRow(16).getCell(col).setCellValue("-")
@@ -646,9 +648,9 @@ object ExcelUtility {
       mt <- MonitorType.monitorReportList.zipWithIndex
       stat = statMap(mt._1)
     } {
-      sheet.getRow(16).getCell(mt._2 + 1).setCellValue(stat.min * 100)
-      sheet.getRow(17).getCell(mt._2 + 1).setCellValue(stat.max * 100)
-      sheet.getRow(18).getCell(mt._2 + 1).setCellValue(stat.avg * 100)
+      sheet.getRow(16).getCell(mt._2 + 1).setCellValue(stat.min.get * 100)
+      sheet.getRow(17).getCell(mt._2 + 1).setCellValue(stat.max.get * 100)
+      sheet.getRow(18).getCell(mt._2 + 1).setCellValue(stat.avg.get * 100)
     }
     finishExcel(reportFilePath, pkg, wb)
   }
@@ -682,9 +684,15 @@ object ExcelUtility {
       m <- Monitor.mvList.zipWithIndex
       stat = statMap(m._1)
     } {
-      sheet.getRow(16).getCell(m._2 + 1).setCellValue(stat.min * 100)
-      sheet.getRow(17).getCell(m._2 + 1).setCellValue(stat.max * 100)
-      sheet.getRow(18).getCell(m._2 + 1).setCellValue(stat.avg * 100)
+      if(stat.count >0){
+        sheet.getRow(16).getCell(m._2 + 1).setCellValue(stat.min.get * 100)
+        sheet.getRow(17).getCell(m._2 + 1).setCellValue(stat.max.get * 100)
+        sheet.getRow(18).getCell(m._2 + 1).setCellValue(stat.avg.get * 100)
+      }else{
+        sheet.getRow(16).getCell(m._2 + 1).setCellValue("-")
+        sheet.getRow(17).getCell(m._2 + 1).setCellValue("-")
+        sheet.getRow(18).getCell(m._2 + 1).setCellValue("-")
+      }
     }
 
     finishExcel(reportFilePath, pkg, wb)
@@ -878,12 +886,12 @@ object ExcelUtility {
 
       if (myMap(mt._1)._2.count != 0) {
         val stat = myMap(mt._1)._2
-        sheet.getRow(row).getCell(26).setCellValue(stat.min)
-        sheet.getRow(row + 2).getCell(26).setCellValue(covertDegToDir(stat.min))
-        sheet.getRow(row).getCell(27).setCellValue(stat.max)
-        sheet.getRow(row + 2).getCell(27).setCellValue(covertDegToDir(stat.max))
-        sheet.getRow(row).getCell(28).setCellValue(stat.avg)
-        sheet.getRow(row + 2).getCell(28).setCellValue(covertDegToDir(stat.avg))
+        sheet.getRow(row).getCell(26).setCellValue(stat.min.get)
+        sheet.getRow(row + 2).getCell(26).setCellValue(covertDegToDir(stat.min.get))
+        sheet.getRow(row).getCell(27).setCellValue(stat.max.get)
+        sheet.getRow(row + 2).getCell(27).setCellValue(covertDegToDir(stat.max.get))
+        sheet.getRow(row).getCell(28).setCellValue(stat.avg.get)
+        sheet.getRow(row + 2).getCell(28).setCellValue(covertDegToDir(stat.avg.get))
       } else {
         sheet.getRow(row).getCell(26).setCellValue("-")
         sheet.getRow(row).getCell(27).setCellValue("-")
@@ -916,12 +924,12 @@ object ExcelUtility {
 
       if (epaMap(mt._1)._2.count != 0) {
         val stat = epaMap(mt._1)._2
-        sheet.getRow(row + 1).getCell(26).setCellValue(stat.min)
-        sheet.getRow(row + 1).getCell(27).setCellValue(stat.max)
-        sheet.getRow(row + 1).getCell(28).setCellValue(stat.avg)
-        sheet.getRow(row + 3).getCell(26).setCellValue(covertDegToDir(stat.min))
-        sheet.getRow(row + 3).getCell(27).setCellValue(covertDegToDir(stat.max))
-        sheet.getRow(row + 3).getCell(28).setCellValue(covertDegToDir(stat.avg))
+        sheet.getRow(row + 1).getCell(26).setCellValue(stat.min.get)
+        sheet.getRow(row + 1).getCell(27).setCellValue(stat.max.get)
+        sheet.getRow(row + 1).getCell(28).setCellValue(stat.avg.get)
+        sheet.getRow(row + 3).getCell(26).setCellValue(covertDegToDir(stat.min.get))
+        sheet.getRow(row + 3).getCell(27).setCellValue(covertDegToDir(stat.max.get))
+        sheet.getRow(row + 3).getCell(28).setCellValue(covertDegToDir(stat.avg.get))
       } else {
         sheet.getRow(row + 1).getCell(26).setCellValue("-")
         sheet.getRow(row + 1).getCell(27).setCellValue("-")

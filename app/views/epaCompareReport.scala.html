@@ -55,9 +55,9 @@
 					<td>-</td>
 					<td>-</td>
 				}else{
-					<td>@MonitorType.format(mt, Some(myMap(mt)._2.max))</td>
-					<td>@MonitorType.format(mt, Some(myMap(mt)._2.min))</td>
-					<td>@MonitorType.format(mt, Some(myMap(mt)._2.avg))</td>
+					<td>@MonitorType.format(mt, myMap(mt)._2.max)</td>
+					<td>@MonitorType.format(mt, myMap(mt)._2.min)</td>
+					<td>@MonitorType.format(mt, myMap(mt)._2.avg)</td>
 				}
 									
 			</tr>
@@ -75,9 +75,9 @@
 					<td>-</td>
 					<td>-</td>
 				}else{
-					<td>@MonitorType.format(mt, Some(epaMap(mt)._2.max))</td>
-					<td>@MonitorType.format(mt, Some(epaMap(mt)._2.min))</td>
-					<td>@MonitorType.format(mt, Some(epaMap(mt)._2.avg))</td>
+					<td>@MonitorType.format(mt, epaMap(mt)._2.max)</td>
+					<td>@MonitorType.format(mt, epaMap(mt)._2.min)</td>
+					<td>@MonitorType.format(mt, epaMap(mt)._2.avg)</td>
 				}
 				
 			</tr>

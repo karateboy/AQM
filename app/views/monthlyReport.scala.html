@@ -30,31 +30,19 @@
 		<tr>
 			<td>平均</td>
 			@for(t<-report.typeArray if Monitor.map(monitor).monitorTypes.contains(t.monitorType)){
-				@if(t.stat.count==0){
-					<td>-</td>
-				}else{
-					<td>@MonitorType.format(t.monitorType, Some(t.stat.avg))</td>
-				}
+				<td>@MonitorType.format(t.monitorType, t.stat.avg)</td>
 			}
 		</tr>
 		<tr>
 			<td>最大</td>
 			@for(t<-report.typeArray if Monitor.map(monitor).monitorTypes.contains(t.monitorType)){
-				@if(t.stat.count==0){
-					<td>-</td>
-				}else{
-					<td>@MonitorType.format(t.monitorType, Some(t.stat.max))</td>
-				}
+				<td>@MonitorType.format(t.monitorType, t.stat.max)</td>
 			}
 		</tr>
 		<tr>
 			<td>最小</td>
 			@for(t<-report.typeArray if Monitor.map(monitor).monitorTypes.contains(t.monitorType)){
-				@if(t.stat.count==0){
-					<td>-</td>
-				}else{
-					<td>@MonitorType.format(t.monitorType, Some(t.stat.min))</td>
-				}
+				<td>@MonitorType.format(t.monitorType, t.stat.min)</td>
 			}
 		</tr>
 		<tr>
@@ -69,15 +57,11 @@
 			<tr>
 			<th>@(i+1)</th>
 			@for(t<-report.typeArray if Monitor.map(monitor).monitorTypes.contains(t.monitorType)){
-				@if(t.dataList(i).count != 0){
-					@if(t.dataList(i).effectPercent >= 0.75){
-						<td>@MonitorType.format(t.monitorType, Some(t.dataList(i).avg))</td>
+					@if(t.dataList(i).effectPercent.isDefined && t.dataList(i).effectPercent.get >= 0.75){
+						<td>@MonitorType.format(t.monitorType, t.dataList(i).avg)</td>
 					}else{
-						<td style="color:black;background-color:red">@MonitorType.format(t.monitorType, Some(t.dataList(i).avg))</td>
+						<td style="color:black;background-color:red">@MonitorType.format(t.monitorType, t.dataList(i).avg)</td>
 					}					
-				}else{
-					<td>-</td>
-				}						
 			}
 			</tr>
 		}

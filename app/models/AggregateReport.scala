@@ -102,7 +102,7 @@ object AggregateReport {
             val overLaw =
               if (mCase.std_law.isDefined) {
                 if (t.monitorType == MonitorType.A214 || t.monitorType == MonitorType.A213) {
-                  if (t.stat.avg > mCase.std_law.get)
+                  if (t.stat.avg.isDefined && t.stat.avg.get > mCase.std_law.get)
                     s",日均值${t.stat.avg}超過法規值(${mCase.std_law.get}${mCase.unit})"
                   else
                     s",日均值${t.stat.avg}未超過法規值"
@@ -121,7 +121,7 @@ object AggregateReport {
               } else
                 ",未超過法規值"
 
-            val dir = dirMap(Math.ceil((windDir.stat.avg - 22.5 / 2) / 22.5).toInt % 16)
+            val dir = dirMap(Math.ceil((windDir.stat.avg.get - 22.5 / 2) / 22.5).toInt % 16)
             val summary = s"(最大風速${windSpeed.stat.max}m/s, 平均風向${dir}, 濃度${t.stat.min}~${t.stat.max} ${mCase.unit})"
 
             header + overLaw + summary

@@ -47,9 +47,9 @@ object Realtime {
           }
 
           val hr = hrMap.getOrElse(m, emptyRecord(Monitor.map(m).id, current))
-          val type_record = monitorTypeProjection
+          val type_record = monitorTypeProject2
           .map(
-            t => (t._1 -> (t._2._1(hr), t._2._2(hr))))
+            t => (t._1 -> t._2(hr)))
           (m -> type_record)
         }
       Map(rt_result: _*)

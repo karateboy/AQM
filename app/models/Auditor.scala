@@ -41,7 +41,16 @@ class AuditStat(hr: HourRecord) {
   var temp_stat = hr.temp_stat
   var humid_stat = hr.temp_stat
   var air_pressure_stat = hr.air_pressure_stat
-
+  
+  var h2s_stat = hr.h2s_stat
+  var noy_dif_stat = hr.noy_dif_stat
+  var nh3_nt_stat = hr.nh3_nt_stat
+  var nh3_nox_stat = hr.nh3_nox_stat
+  var nh3_no_stat = hr.nh3_no_stat
+  var nh3_no2_stat = hr.nh3_no2_stat
+  var h2s_cs_stat = hr.h2s_cs_stat
+  var h2s_so2_stat = hr.h2s_so2_stat
+  
   def getStat(mt: MonitorType.Value) = {
     mt match {
       case A213 => tsp_stat
@@ -69,6 +78,17 @@ class AuditStat(hr: HourRecord) {
       case C214 => temp_stat
       case C215 => humid_stat
       case C216 => air_pressure_stat
+      
+      //New MT
+      case A234 => h2s_stat
+      case A242 => noy_dif_stat
+      case A236 => nh3_nt_stat
+      case A237 => nh3_nox_stat
+      case A238 => nh3_no_stat
+      case A239 => nh3_no2_stat
+      case A244 => h2s_cs_stat
+      case A245 => h2s_so2_stat
+      
     }
   }
 
@@ -99,6 +119,17 @@ class AuditStat(hr: HourRecord) {
       case C214 => temp_stat = Some(stat)
       case C215 => humid_stat = Some(stat)
       case C216 => air_pressure_stat = Some(stat)
+            
+      //New MT
+      case A234 => h2s_stat = Some(stat)
+      case A242 => noy_dif_stat = Some(stat)
+      case A236 => nh3_nt_stat = Some(stat)
+      case A237 => nh3_nox_stat = Some(stat)
+      case A238 => nh3_no_stat = Some(stat)
+      case A239 => nh3_no2_stat = Some(stat)
+      case A244 => h2s_cs_stat = Some(stat)
+      case A245 => h2s_so2_stat = Some(stat)
+      
     }
   }
 

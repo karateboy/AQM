@@ -35,37 +35,25 @@
 		<tr>
 			<td>平均</td>
 			@for(t<-report.typeList if Monitor.map(monitor).monitorTypes.contains(t.monitorType)){
-				@if(t.stat.count==0){
-					<td>-</td>
-				}else{
-				<td>@MonitorType.format(t.monitorType, Some(t.stat.avg))</td>
-				}
+				<td>@MonitorType.format(t.monitorType, t.stat.avg)</td>
 			}
 		</tr>
 		<tr>
 			<td>最大</td>
 			@for(t<-report.typeList if Monitor.map(monitor).monitorTypes.contains(t.monitorType)){
-				@if(t.stat.count==0){
-					<td>-</td>
-				}else{
-				<td>@MonitorType.format(t.monitorType, Some(t.stat.max))</td>
-				}
+				<td>@MonitorType.format(t.monitorType, t.stat.max)</td>
 			}
 		</tr>
 		<tr>
 			<td>最小</td>
 			@for(t<-report.typeList if Monitor.map(monitor).monitorTypes.contains(t.monitorType)){
-				@if(t.stat.count==0){
-					<td>-</td>
-				}else{
-				<td>@MonitorType.format(t.monitorType, Some(t.stat.min))</td>
-				}
+				<td>@MonitorType.format(t.monitorType, t.stat.min)</td>
 			}
 		</tr>
 		<tr>
 			<td>有效率(%)</td>
 			@for(t<-report.typeList if Monitor.map(monitor).monitorTypes.contains(t.monitorType)){
-				<td>@("%.0f".format(t.stat.count.toFloat/t.stat.total*100))</td>
+				<td>@MonitorType.format(t.monitorType, t.stat.effectPercent)</td>
 			}
 		</tr>
 	</tfoot>

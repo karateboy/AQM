@@ -21,31 +21,19 @@
 		<tr>
 			<td>平均%</td>
 			@for(mt<-MonitorType.mtvList){
-				@if(statMap(mt).count==0){
-					<td>-</td>
-				}else{
-				<td>@("%.0f".format(statMap(mt).avg*100))</td>
-				}
+				<td>@MonitorType.formatAvg(statMap(mt).avg)</td>
 			}
 		</tr>
 		<tr>
 			<td>最大%</td>
 			@for(mt<-MonitorType.mtvList){
-				@if(statMap(mt).count==0){
-					<td>-</td>
-				}else{
-				<td>@("%.0f".format(statMap(mt).max*100))</td>
-				}
+				<td>@MonitorType.formatAvg(statMap(mt).max)</td>
 			}
 		</tr>
 		<tr>
 			<td>最小%</td>
 			@for(mt<-MonitorType.mtvList){
-				@if(statMap(mt).count==0){
-					<td>-</td>
-				}else{
-				<td>@("%.0f".format(statMap(mt).min*100))</td>
-				}
+				<td>@MonitorType.formatAvg(statMap(mt).min)</td>
 			}
 		</tr>
 	</tfoot>

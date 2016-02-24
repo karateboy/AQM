@@ -158,7 +158,7 @@ object MonitorType extends Enumeration{
     }
   
   var map:Map[Value, MonitorType] = Map(mtList.map{e=>Value(e.id)->e}:_*) - MonitorType.withName("A325")
-  val mtvAllList = mtList.map(mt=>MonitorType.withName(mt.id)).filter { !List(MonitorType.withName("A325"), MonitorType.withName("C911"), MonitorType.withName("C912")).contains(_) }
+  val mtvAllList = mtList.map(mt=>MonitorType.withName(mt.id)).filter { !List(MonitorType.withName("A325")).contains(_) }
   
   def mtvList = {
     var mtSet = Set.empty[MonitorType.Value]
@@ -179,7 +179,7 @@ object MonitorType extends Enumeration{
       mtSet = mtSet.union(Monitor.map(m).monitorTypes.toSet)
     }
         
-     mtSet.filter { !List(MonitorType.withName("C911"), MonitorType.withName("C912")).contains(_)}.toList.sortBy { map(_).order } 
+     mtSet.toList.sortBy { map(_).order } 
   }
 
   def updateMonitorType(mt: MonitorType.Value, colname: String, newValue: String) = {
@@ -227,37 +227,8 @@ object MonitorType extends Enumeration{
       map = (map + (mt -> newMtOpt.get))
     }
   }
-  
-  val psiList = List(MonitorType.withName("A214"),MonitorType.withName("A222"), MonitorType.withName("A224"), MonitorType.withName("A225"), MonitorType.withName("A293") )
-  val windDirList = List(MonitorType.withName("C212"), MonitorType.withName("C912"))
-  val monitorReportList = {
-    val name=List("A222", "A223", "A293", "A283", "A224", "A225", "A226", "A286", "A296", "A229", "A232", "A233", "A235", "A221",
-        "A213", "A214", "A215",        
-        "C211", "C212", "C214", "C215", "C216", "C213")
-    name.map { MonitorType.withName }
-  }
-  
-  val calibrationList = {
-    val name=List("A222", "A223", "A293", "A283", "A224", "A225", "A226", "A286", "A296", "A229", "A221",
-        "A213", "A214", "A215",        
-        "A288", "A289")
-    name.map { MonitorType.withName }    
-  }
-  
-  val epaList = {
-    val name=List("A214", "A215", "A222", "A223", "A224", "A225", "A226", "A283", "A286", "A293", "A296", "C211", "C212", "C213", "C214", "C215")
-    name.map { MonitorType.withName }
-  }
-  
-  val epaReportList ={
-    val name=List("C212", "C211", "A222", "A293", "A224", "A225", "A214", "A226", "A296")
-    name.map { MonitorType.withName }
-  }
-  
-  val epaMap={
-    map.filter(p=>p._2.epa_mapping.isDefined).map(kv=>(kv._2.epa_mapping.get, kv._1))
-  }
-  
+
+    
   val A213 = MonitorType.withName("A213")
   val A214 = MonitorType.withName("A214")
   val A215 = MonitorType.withName("A215")
@@ -283,7 +254,45 @@ object MonitorType extends Enumeration{
   val C214 = MonitorType.withName("C214")
   val C215 = MonitorType.withName("C215")
   val C216 = MonitorType.withName("C216")
+  //New Mt
+  val A234 = MonitorType.withName("A234")
+  val A236 = MonitorType.withName("A236")
+  val A237 = MonitorType.withName("A237")
+  val A238 = MonitorType.withName("A238")
+  val A239 = MonitorType.withName("A239")
+  val A242 = MonitorType.withName("A242")
+  val A244 = MonitorType.withName("A244")
+  val A245 = MonitorType.withName("A245")
 
+
+  val psiList = List(A214, A222, A224, A225, A293)
+  val windDirList = List(MonitorType.withName("C212"))
+  
+/*  val monitorReportList = 
+    List(A222, A223, A293, A283, A224, A225, A226, A286, A296, A229, A232, A233, A235, A221,
+        A213, A214, A215,        
+        C211, C212, C214, C215, C216, C213)
+  */
+
+  val monitorReportList = 
+    List(A222, A223, A293, A283, A224, A225, A226, A286, A296, A229, A232, A233, A236, A242, A235,  A237, A238, A239, A234, A244, A245, 
+        A221, A213, A214, A215,        
+        C211, C212, C214, C215, C216, C213)
+  
+
+  val calibrationList = List(A222, A223, A293, A283, A224, A225, A226, A286, A296, A229, A221,
+        A213, A214, A215,        
+        A288, A289)
+  
+  val epaList = 
+    List(A214, A215, A222, A223, A224, A225, A226, A283, A286, A293, A296, C211, C212, C213, C214, C215)
+  
+  val epaReportList =
+    List(C212, C211, A222, A293, A224, A225, A214, A226, A296)
+  
+  val epaMap={
+    map.filter(p=>p._2.epa_mapping.isDefined).map(kv=>(kv._2.epa_mapping.get, kv._1))
+  }
   import com.github.nscala_time.time.Imports._
   import java.sql.Timestamp
   def getManualAuditTooltip(m:Monitor.Value, mt: MonitorType.Value, v: (Option[Float], Option[String]), 
@@ -341,6 +350,22 @@ object MonitorType extends Enumeration{
     else{
       val prec = map(mt).prec
       s"%.${prec}f".format(v.get)
+    }
+  }
+  
+  def formatAvg(avg: Option[Float])={
+    if(avg.isEmpty)
+      "-"
+    else{
+      s"%.0f".format(avg.get * 100)
+    }
+  }
+  
+  def formatValue(v: Option[Float])={
+    if(v.isEmpty)
+      "-"
+    else{
+      s"%.0f".format(v.get)
     }
   }
 }

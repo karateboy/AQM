@@ -211,15 +211,9 @@ $( document ).ready(function() {
 					$('#reportDiv').html(result);
 
 					$('#reportTable').dataTable( {
-						responsive: true,
-						"dom": 'T<"clear">lfrtip',
 						language: {
 							url: l10n_url,							
 						},
-						"tableTools": {
-	        				"sSwfPath": swf_path,
-	        				"aButtons": ["copy", "print", "csv"]
-	        			},
 						"paging":   false,
 						"searching": false
 		    		} );

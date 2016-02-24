@@ -8,14 +8,14 @@ import models.ModelHelper._
 import models._
 
 case class Stat(
-    avg: Float,
-    min: Float,
-    max: Float,
+    avg: Option[Float],
+    min: Option[Float],
+    max: Option[Float],
     count: Int,
     total: Int,
     overCount: Int) {
-  val effectPercent = count.toFloat / total
-  val overPercent = overCount.toFloat / total
+  val effectPercent = if(total != 0) Some(count.toFloat*100 / total) else None
+  val overPercent = if(total != 0) Some(overCount.toFloat*100 / total) else None
 }
 
 case class MonitorTypeRecord(monitorType: MonitorType.Value, dataList: List[(Timestamp, Option[Float], Option[String])], stat: Stat)
@@ -83,7 +83,23 @@ object Record {
     humid: Option[Float],
     humid_stat: Option[String],
     air_pressure: Option[Float],
-    air_pressure_stat: Option[String])
+    air_pressure_stat: Option[String],
+    noy_dif: Option[Float],
+    noy_dif_stat: Option[String],
+    nh3_nt: Option[Float],
+    nh3_nt_stat: Option[String],
+    nh3_nox: Option[Float],
+    nh3_nox_stat: Option[String],
+    nh3_no: Option[Float],
+    nh3_no_stat: Option[String],
+    nh3_no2: Option[Float],
+    nh3_no2_stat: Option[String],
+    h2s_cs: Option[Float],
+    h2s_cs_stat: Option[String],
+    h2s_so2: Option[Float],
+    h2s_so2_stat: Option[String],
+    h2s: Option[Float],
+    h2s_stat: Option[String])
 
   case class SixSecRecord(
     monitor: Monitor.Value,
@@ -102,6 +118,23 @@ object Record {
     List.fill(10)(Some(MonitorStatus.DATA_LOSS_STAT)))
 
   def mapper(rs: WrappedResultSet) = {
+    def stringOpt(idx: Int) = {
+      try {
+        rs.stringOpt(idx)
+      } catch {
+        case ex: ResultSetExtractorException =>
+          None
+      }
+    }
+    def floatOpt(idx: Int) = {
+      try {
+        rs.floatOpt(idx)
+      } catch {
+        case ex: ResultSetExtractorException =>
+          None
+      }
+    }
+
     HourRecord(rs.string(1), rs.timestamp(2), rs.stringOpt(3), rs.floatOpt(4), rs.stringOpt(5),
       rs.floatOpt(6), rs.stringOpt(7), rs.floatOpt(8), rs.stringOpt(9), rs.floatOpt(10),
       rs.stringOpt(11), rs.floatOpt(12), rs.stringOpt(13), rs.floatOpt(14), rs.stringOpt(15),
@@ -112,7 +145,10 @@ object Record {
       rs.floatOpt(36), rs.stringOpt(37), rs.floatOpt(38), rs.stringOpt(39), rs.floatOpt(40),
       rs.stringOpt(41), rs.floatOpt(42), rs.stringOpt(43), rs.floatOpt(44), rs.stringOpt(45),
       rs.floatOpt(46), rs.stringOpt(47), rs.floatOpt(48), rs.stringOpt(49), rs.floatOpt(50),
-      rs.stringOpt(51), rs.floatOpt(52), rs.stringOpt(53))
+      rs.stringOpt(51), rs.floatOpt(52), rs.stringOpt(53), floatOpt(54), stringOpt(55),
+      floatOpt(56), stringOpt(57), floatOpt(58), stringOpt(59), floatOpt(60),
+      stringOpt(61), floatOpt(62), stringOpt(63), floatOpt(64), stringOpt(65),
+      floatOpt(56), stringOpt(57), floatOpt(58), stringOpt(59))
   }
 
   def sixSecMapper(rs: WrappedResultSet) = {
@@ -139,102 +175,117 @@ object Record {
     SixSecRecord(Monitor.withName(rs.string(1)), rs.timestamp(2), windSpeed, windSpeed_stat, windDir, windDir_stat)
   }
 
-  def getHourRecords(monitor: Monitor.Value, startTime: DateTime, endTime: DateTime)(implicit session: DBSession = AutoSession):List[Record.HourRecord] = {
+  def getHourRecords(monitor: Monitor.Value, startTime: DateTime, endTime: DateTime)(implicit session: DBSession = AutoSession): List[Record.HourRecord] = {
     val start: Timestamp = startTime
     val end: Timestamp = endTime
     val monitorName = monitor.toString()
-    assert(endTime.getYear >= startTime.getYear)
-    
-    val tab_name = getTabName(TableType.Hour, startTime.getYear)
-    val result = sql"""
+
+    if (startTime == endTime)
+      List.empty[HourRecord]
+    else {
+      val tab_name = getTabName(TableType.Hour, startTime.getYear)
+      val result = sql"""
         Select * 
         From ${tab_name}
         Where DP_NO=${monitorName} and M_DateTime >= ${start} and M_DateTime < ${end}
         ORDER BY M_DateTime ASC
       """.map { mapper }.list().apply()
-    if(startTime.getYear == endTime.getYear)
-      result
-    else
-      result ++ getHourRecords(monitor, DateTime.parse(s"${startTime.getYear+1}-1-1"), endTime)
+      if (startTime.getYear == endTime.getYear)
+        result
+      else
+        result ++ getHourRecords(monitor, DateTime.parse(s"${startTime.getYear + 1}-1-1"), endTime)
+    }
   }
 
-  def getUncheckedHourRecords(monitor: Monitor.Value, startTime: DateTime, endTime: DateTime)
-  (implicit session: DBSession = AutoSession):List[Record.HourRecord] = {
+  def getUncheckedHourRecords(monitor: Monitor.Value, startTime: DateTime, endTime: DateTime)(implicit session: DBSession = AutoSession): List[Record.HourRecord] = {
     val start: Timestamp = startTime
     val end: Timestamp = endTime
     val monitorName = monitor.toString()
-    assert(endTime.getYear >= startTime.getYear)
-    
-    val tab_name = getTabName(TableType.Hour, startTime.getYear)
-    val result = sql"""
+
+    if (startTime == endTime)
+      List.empty[HourRecord]
+    else {
+
+      val tab_name = getTabName(TableType.Hour, startTime.getYear)
+      val result = sql"""
         Select * 
         From ${tab_name}
         Where DP_NO=${monitorName} and M_DateTime >= ${start} and M_DateTime < ${end} and CHK is Null
         ORDER BY M_DateTime ASC
       """.map { mapper }.list().apply()
-    if(startTime.getYear == endTime.getYear)
-      result
-    else
-      result ++ getUncheckedHourRecords(monitor, DateTime.parse(s"${startTime.getYear+1}-1-1"), endTime)  
+      if (startTime.getYear == endTime.getYear)
+        result
+      else
+        result ++ getUncheckedHourRecords(monitor, DateTime.parse(s"${startTime.getYear + 1}-1-1"), endTime)
+    }
   }
-    
-  def getInvalidHourRecords(monitor: Monitor.Value, startTime: DateTime, endTime: DateTime)
-    (implicit session: DBSession = AutoSession):List[Record.HourRecord] = {
+
+  def getInvalidHourRecords(monitor: Monitor.Value, startTime: DateTime, endTime: DateTime)(implicit session: DBSession = AutoSession): List[Record.HourRecord] = {
     val start: Timestamp = startTime
     val end: Timestamp = endTime
-    assert(endTime.getYear >= startTime.getYear)
 
-    val monitorName = monitor.toString()
-    val tab_name = getTabName(TableType.Hour, startTime.getYear)
-    val result = sql"""
+    if (startTime == endTime)
+      List.empty[HourRecord]
+    else {
+
+      val monitorName = monitor.toString()
+      val tab_name = getTabName(TableType.Hour, startTime.getYear)
+      val result = sql"""
         Select * 
         From ${tab_name}
         Where DP_NO=${monitorName} and M_DateTime >= ${start} and M_DateTime < ${end} and CHK = 'BAD'
         ORDER BY M_DateTime ASC
       """.map { mapper }.list().apply()
-    if(startTime.getYear == endTime.getYear)
-      result
-    else
-      result ++ getInvalidHourRecords(monitor, DateTime.parse(s"${startTime.getYear+1}-1-1"), endTime)  
+      if (startTime.getYear == endTime.getYear)
+        result
+      else
+        result ++ getInvalidHourRecords(monitor, DateTime.parse(s"${startTime.getYear + 1}-1-1"), endTime)
+    }
   }
 
-  def getMinRecords(monitor: Monitor.Value, startTime: DateTime, endTime: DateTime)
-  (implicit session: DBSession = AutoSession):List[Record.HourRecord] = {
+  def getMinRecords(monitor: Monitor.Value, startTime: DateTime, endTime: DateTime)(implicit session: DBSession = AutoSession): List[Record.HourRecord] = {
     val start: Timestamp = startTime
     val end: Timestamp = endTime
-    assert(endTime.getYear >= startTime.getYear)
 
-    val monitorName = monitor.toString()
-    val tab_name = getTabName(TableType.Min, startTime.getYear)
-    val result = sql"""
+    if (startTime == endTime)
+      List.empty[HourRecord]
+    else {
+
+      val monitorName = monitor.toString()
+      val tab_name = getTabName(TableType.Min, startTime.getYear)
+      val result = sql"""
         Select * 
         From ${tab_name}
         Where DP_NO=${monitorName} and M_DateTime >= ${start} and M_DateTime < ${end}
         ORDER BY M_DateTime ASC
       """.map { mapper }.list().apply()
-    if(startTime.getYear == endTime.getYear)
-      result
-    else
-      result ++ getMinRecords(monitor, DateTime.parse(s"${startTime.getYear+1}-1-1"), endTime)  
+      if (startTime.getYear == endTime.getYear)
+        result
+      else
+        result ++ getMinRecords(monitor, DateTime.parse(s"${startTime.getYear + 1}-1-1"), endTime)
+    }
   }
 
-  def getSecRecords(monitor: Monitor.Value, startTime: DateTime, endTime: DateTime)
-  (implicit session: DBSession = AutoSession):List[Record.SixSecRecord] = {
+  def getSecRecords(monitor: Monitor.Value, startTime: DateTime, endTime: DateTime)(implicit session: DBSession = AutoSession): List[Record.SixSecRecord] = {
     val start: Timestamp = startTime
     val end: Timestamp = endTime
-    assert(endTime.getYear >= startTime.getYear)
-    val monitorName = monitor.toString()
-    val tab_name = getTabName(TableType.SixSec, startTime.getYear)
-    val result = sql"""
+    if (startTime == endTime)
+      List.empty[SixSecRecord]
+    else {
+
+      val monitorName = monitor.toString()
+      val tab_name = getTabName(TableType.SixSec, startTime.getYear)
+      val result = sql"""
         Select * 
         From ${tab_name}
         Where DP_NO=${monitorName} and M_DateTime >= ${start} and M_DateTime < ${end}
         ORDER BY M_DateTime ASC
       """.map { sixSecMapper }.list().apply()
-    if(startTime.getYear == endTime.getYear)
-      result
-    else
-      result ++ getSecRecords(monitor, DateTime.parse(s"${startTime.getYear+1}-1-1"), endTime)  
+      if (startTime.getYear == endTime.getYear)
+        result
+      else
+        result ++ getSecRecords(monitor, DateTime.parse(s"${startTime.getYear + 1}-1-1"), endTime)
+    }
   }
 
   def secRecordProject(mt: MonitorType.Value) =
@@ -256,39 +307,39 @@ object Record {
     rs => rs.date
   }
 
-  def getFieldName(tabType:TableType.Value, mt: MonitorType.Value, recordTime:Timestamp) = {
+  def getFieldName(tabType: TableType.Value, mt: MonitorType.Value, recordTime: Timestamp) = {
     val name = mt.toString
     val head = name.charAt(0)
     val tail = name.substring(2)
 
     tabType match {
-      case TableType.Hour=>
+      case TableType.Hour =>
         SQLSyntax.createUnsafely(s"${head}5${tail}s")
-      case TableType.Min=>
+      case TableType.Min =>
         SQLSyntax.createUnsafely(s"${head}2${tail}s")
-      case TableType.SixSec=>
-        val idx = recordTime.toDateTime.getSecondOfMinute/6
+      case TableType.SixSec =>
+        val idx = recordTime.toDateTime.getSecondOfMinute / 6
         SQLSyntax.createUnsafely(s"${head}9${tail}_${idx}s")
     }
-    
+
   }
 
-  def updateRecordStatus(tabType:TableType.Value, monitor: Monitor.Value, monitorType: MonitorType.Value, mill: Long, status: String)(implicit session: DBSession = AutoSession) = {
+  def updateRecordStatus(tabType: TableType.Value, monitor: Monitor.Value, monitorType: MonitorType.Value, mill: Long, status: String)(implicit session: DBSession = AutoSession) = {
     val recordTime = new Timestamp(mill)
     val monitorName = monitor.toString()
     val tab_name = getTabName(tabType, recordTime.toDateTime.getYear)
     val field_name = getFieldName(tabType, monitorType, recordTime)
-    if(tabType != TableType.SixSec){
+    if (tabType != TableType.SixSec) {
       sql""" 
           Update ${tab_name}
           Set ${field_name}=${status}
           Where DP_NO=${monitorName} and ${field_name} IS NOT NULL and M_DateTime = ${recordTime}        
-        """.update.apply      
-    }else{
+        """.update.apply
+    } else {
       val rt = recordTime.toDateTime()
       val rt1 = rt - rt.getSecondOfDay.second
-      val tt:Timestamp  = rt1
-      
+      val tt: Timestamp = rt1
+
       sql""" 
           Update ${tab_name}
           Set ${field_name}=${status}
@@ -297,34 +348,7 @@ object Record {
     }
   }
 
-  val monitorTypeProjection: Map[MonitorType.Value, (HourRecord => Option[Float], HourRecord => Option[String])] = Map(
-    MonitorType.withName("A213") -> (rs => { rs.tsp }, rs => { rs.tsp_stat }),
-    MonitorType.withName("A214") -> (rs => { rs.pm10 }, rs => { rs.pm10_stat }),
-    MonitorType.withName("A215") -> (rs => { rs.pm25 }, rs => { rs.pm25_stat }),
-    MonitorType.withName("A221") -> (rs => { rs.s }, rs => { rs.s_stat }),
-    MonitorType.withName("A222") -> (rs => { rs.so2 }, rs => { rs.so2_stat }),
-    MonitorType.withName("A223") -> (rs => { rs.nox }, rs => { rs.nox_stat }),
-    MonitorType.withName("A224") -> (rs => { rs.co }, rs => { rs.co_stat }),
-    MonitorType.withName("A225") -> (rs => { rs.o3 }, rs => { rs.o3_stat }),
-    MonitorType.withName("A226") -> (rs => { rs.thc }, rs => { rs.thc_stat }),
-    MonitorType.withName("A229") -> (rs => { rs.ammonia }, rs => { rs.ammonia_stat }),
-    MonitorType.withName("A232") -> (rs => { rs.noy }, rs => { rs.noy_stat }),
-    MonitorType.withName("A233") -> (rs => { rs.noy_no }, rs => { rs.noy_no_stat }),
-    MonitorType.withName("A235") -> (rs => { rs.nh3 }, rs => { rs.nh3_stat }),
-    MonitorType.withName("A283") -> (rs => { rs.no }, rs => { rs.no_stat }),
-    MonitorType.withName("A286") -> (rs => { rs.ch4 }, rs => { rs.ch4_stat }),
-    MonitorType.withName("A288") -> (rs => { rs.monitor_humid }, rs => { rs.monitor_humid_stat }),
-    MonitorType.withName("A289") -> (rs => { rs.monitor_temp }, rs => { rs.monitor_temp_stat }),
-    MonitorType.withName("A293") -> (rs => { rs.no2 }, rs => { rs.no2_stat }),
-    MonitorType.withName("A296") -> (rs => { rs.nmhc }, rs => { rs.nmhc_stat }),
-    MonitorType.withName("C211") -> (rs => { rs.wind_speed }, rs => { rs.wind_speed_stat }),
-    MonitorType.withName("C212") -> (rs => { rs.wind_dir }, rs => { rs.wind_dir_stat }),
-    MonitorType.withName("C213") -> (rs => { rs.rain }, rs => { rs.rain_stat }),
-    MonitorType.withName("C214") -> (rs => { rs.temp }, rs => { rs.temp_stat }),
-    MonitorType.withName("C215") -> (rs => { rs.humid }, rs => { rs.humid_stat }),
-    MonitorType.withName("C216") -> (rs => { rs.air_pressure }, rs => { rs.air_pressure_stat }))
-
-  val monitorTypeProject2: Map[MonitorType.Value, HourRecord => (Option[Float], Option[String])] = Map(
+  lazy val monitorTypeProject2: Map[MonitorType.Value, HourRecord => (Option[Float], Option[String])] = Map(
     MonitorType.withName("A213") -> (rs => (rs.tsp, rs.tsp_stat)),
     MonitorType.withName("A214") -> (rs => (rs.pm10, rs.pm10_stat)),
     MonitorType.withName("A215") -> (rs => (rs.pm25, rs.pm25_stat)),
@@ -349,7 +373,17 @@ object Record {
     MonitorType.withName("C213") -> (rs => (rs.rain, rs.rain_stat)),
     MonitorType.withName("C214") -> (rs => (rs.temp, rs.temp_stat)),
     MonitorType.withName("C215") -> (rs => (rs.humid, rs.humid_stat)),
-    MonitorType.withName("C216") -> (rs => (rs.air_pressure, rs.air_pressure_stat)))
+    MonitorType.withName("C216") -> (rs => (rs.air_pressure, rs.air_pressure_stat)),
+
+    //New MT
+    MonitorType.withName("A242") -> (rs => (rs.noy_dif, rs.noy_dif_stat)),
+    MonitorType.withName("A236") -> (rs => (rs.nh3_nt, rs.nh3_nt_stat)),
+    MonitorType.withName("A237") -> (rs => (rs.nh3_nox, rs.nh3_nox_stat)),
+    MonitorType.withName("A238") -> (rs => (rs.nh3_no, rs.nh3_no_stat)),
+    MonitorType.withName("A239") -> (rs => (rs.nh3_no2, rs.nh3_no2_stat)),
+    MonitorType.withName("A244") -> (rs => (rs.h2s_cs, rs.h2s_cs_stat)),
+    MonitorType.withName("A245") -> (rs => (rs.h2s_so2, rs.h2s_so2_stat)),
+    MonitorType.withName("A234") -> (rs => (rs.h2s, rs.h2s_stat)))
 
   def emptyRecord(monitor: String, start: DateTime) = {
     HourRecord(
@@ -360,7 +394,8 @@ object Record {
       None, None, None, None, None, None, None, None, None, None,
       None, None, None, None, None, None, None, None, None, None,
       None, None, None, None, None, None, None, None, None, None,
-      None)
+      None, None, None, None, None, None, None, None, None, None,
+      None, None, None, None, None, None, None)
   }
 
   case class RecordValidationReport(start: DateTime, end: DateTime,
@@ -416,15 +451,15 @@ object Record {
 
   def windAvg(sum_sin: Double, sum_cos: Double) = {
     val degree = Math.toDegrees(Math.atan2(sum_sin, sum_cos)).toFloat
-    if(degree >= 0)
-      degree 
+    if (degree >= 0)
+      degree
     else
       degree + 360
   }
-  
+
   type RecordT = (Timestamp, Option[Float], Option[String])
-  def windAvg(windSpeed: List[RecordT], windDir:List[RecordT]):Float = {
-    def validFilter(t:RecordT) = {
+  def windAvg(windSpeed: List[RecordT], windDir: List[RecordT]): Float = {
+    def validFilter(t: RecordT) = {
       if (t._2.isEmpty)
         false
       else {
@@ -435,18 +470,18 @@ object Record {
       }
     }
 
-    if(windSpeed.length != windDir.length)
+    if (windSpeed.length != windDir.length)
       Logger.error(s"windSpeed #=${windSpeed.length} windDir #=${windDir.length}")
-    
+
     val windRecord = windSpeed.zip(windDir)
-    val validWind = windRecord.filter(t=>validFilter(t._1)&&validFilter(t._2)).map(r=>(r._1._2.get, r._2._2.get))
+    val validWind = windRecord.filter(t => validFilter(t._1) && validFilter(t._2)).map(r => (r._1._2.get, r._2._2.get))
     val wind_sin = validWind.map(v => v._1 * Math.sin(Math.toRadians(v._2))).sum
     val wind_cos = validWind.map(v => v._1 * Math.cos(Math.toRadians(v._2))).sum
     windAvg(wind_sin, wind_cos)
   }
-  
-  def windAvgF(windSpeed: List[Float], windDir:List[Float]):Float = {
-    if(windSpeed.length != windDir.length)
+
+  def windAvgF(windSpeed: List[Float], windDir: List[Float]): Float = {
+    if (windSpeed.length != windDir.length)
       Logger.error(s"windSpeed #=${windSpeed.length} windDir #=${windDir.length}")
 
     val windRecord = windSpeed.zip(windDir)
@@ -454,23 +489,23 @@ object Record {
     val wind_cos = windRecord.map(v => v._1 * Math.cos(Math.toRadians(v._2))).sum
     windAvg(wind_sin, wind_cos)
   }
-  
-  def getPeriodReport(monitor: Monitor.Value, start: DateTime, period:Period, includeTypes: List[MonitorType.Value] = MonitorType.monitorReportList,
-                     monitorStatusFilter: MonitorStatusFilter.Value = MonitorStatusFilter.ValidData) = {
+
+  def getPeriodReport(monitor: Monitor.Value, start: DateTime, period: Period, includeTypes: List[MonitorType.Value] = MonitorType.monitorReportList,
+                      monitorStatusFilter: MonitorStatusFilter.Value = MonitorStatusFilter.ValidData) = {
     DB localTx { implicit session =>
-      
-      val isHourRecord = (start+period >= start + 1.hour)
+
+      val isHourRecord = (start + period >= start + 1.hour)
       val end = start + period
       val totalPeriod = new Period(start, end)
-      
-      val originalPeriodRecordList = 
-        if(isHourRecord)
+
+      val originalPeriodRecordList =
+        if (isHourRecord)
           getHourRecords(monitor, start, start + period)
         else
           getMinRecords(monitor, start, start + period)
-   
+
       val reportList =
-          originalPeriodRecordList
+        originalPeriodRecordList
 
       def statusFilter(data: (DateTime, (Option[Float], Option[String]))): Boolean = {
         if (data._2._1.isEmpty || data._2._2.isEmpty)
@@ -504,48 +539,48 @@ object Record {
             0f
           })
           count = validValues.length
-
-          max = if (count != 0) validValues.max else Float.MinValue
-          min = if (count != 0) validValues.min else Float.MaxValue
         } yield {
           val avg = if (MonitorType.windDirList.contains(mt)) {
             val windDir = projections
             val wsT = monitorTypeProject2(MonitorType.C211)
-            val windSpeed = reportList.map(rs => (rs.date, wsT(rs)._1, wsT(rs)._2))            
+            val windSpeed = reportList.map(rs => (rs.date, wsT(rs)._1, wsT(rs)._2))
             windAvg(windSpeed, windDir)
           } else {
             val sum = validValues.sum
             if (count != 0) sum / count else 0
           }
 
-          val stat = Stat(avg, min, max, count, total, 0)
+          val stat =
+            if (count != 0) {
+              val max = validValues.max
+              val min = validValues.min
+              Stat(Some(avg), Some(min), Some(max), count, total, 0)
+            } else
+              Stat(None, None, None, count, total, 0)
+
           MonitorTypeRecord(mt, projections, stat)
         }
 
       DailyReport(typeResultList.toArray)
     }
   }
-  
+
   def getDailyReport(monitor: Monitor.Value, start: DateTime, includeTypes: List[MonitorType.Value] = MonitorType.monitorReportList,
                      monitorStatusFilter: MonitorStatusFilter.Value = MonitorStatusFilter.ValidData) = {
-    DB localTx { implicit session =>
-      val originalHourRecordList = getHourRecords(monitor, start, start + 1.day)
+
+    DB readOnly { implicit session =>
+      val originalList = getHourRecords(monitor, start, start + 1.day)
+      val recordMap = Map(originalList.map { r => r.date -> r }: _*)
+
       val reportList =
-        if (originalHourRecordList.length == 24)
-          originalHourRecordList
+        if (originalList.length == 24)
+          originalList
         else {
           val endTime = start + 1.day
-          def checkHourRecord(checkTime: DateTime, checkList: List[HourRecord]): List[HourRecord] = {
-            if (checkTime >= endTime)
-              Nil
-            else {
-              if (checkList.isEmpty || checkTime != checkList.head.date.toDateTime())
-                emptyRecord(monitor.toString(), checkTime) :: checkHourRecord(checkTime + 1.hour, checkList)
-              else
-                checkList.head :: checkHourRecord(checkTime + 1.hour, checkList.tail)
-            }
-          }
-          checkHourRecord(start, originalHourRecordList)
+          import controllers.Report
+
+          for (t <- Report.getPeriods(start, endTime, 1.hour))
+            yield recordMap.getOrElse(t, emptyRecord(monitor.toString(), t))
         }
 
       def statusFilter(data: (DateTime, (Option[Float], Option[String]))): Boolean = {
@@ -569,7 +604,7 @@ object Record {
         for {
           mt <- includeTypes
           t = monitorTypeProject2(mt)
-          total = reportList.size
+          total = recordMap.size
           projections = reportList.map(rs => (rs.date, t(rs)._1, t(rs)._2))
           validStat = { t: (Timestamp, Option[Float], Option[String]) =>
             statusFilter(t._1, (t._2, t._3))
@@ -581,20 +616,23 @@ object Record {
           })
           count = validValues.length
 
-          max = if (count != 0) validValues.max else Float.MinValue
-          min = if (count != 0) validValues.min else Float.MaxValue
         } yield {
-          val avg = if (MonitorType.windDirList.contains(mt)) {
-            val windDir = projections
-            val windSpeedT = monitorTypeProject2(MonitorType.C211)
-            val windSpeed = reportList.map(rs => (rs.date, windSpeedT(rs)._1, windSpeedT(rs)._2))
-             windAvg(windSpeed, windDir)
-          } else {
-            val sum = validValues.sum
-            if (count != 0) sum / count else 0
-          }
-
-          val stat = Stat(avg, min, max, count, total, 0)
+          val stat =
+            if (count != 0) {
+              val avg = if (MonitorType.windDirList.contains(mt)) {
+                val windDir = projections
+                val windSpeedT = monitorTypeProject2(MonitorType.C211)
+                val windSpeed = reportList.map(rs => (rs.date, windSpeedT(rs)._1, windSpeedT(rs)._2))
+                windAvg(windSpeed, windDir)
+              } else {
+                val sum = validValues.sum
+                if (count != 0) sum / count else 0
+              }
+              val max = validValues.max
+              val min = validValues.min
+              Stat(Some(avg), Some(min), Some(max), count, total, 0)
+            } else
+              Stat(None, None, None, count, total, 0)
           MonitorTypeRecord(mt, projections, stat)
         }
 
@@ -676,9 +714,9 @@ object Record {
         avg = if (count != 0)
           sum / count else 0
       } yield if (count != 0)
-        (mt -> Stat(avg, mtRateList.filter { _ != 0 }.min, mtRateList.max, count, mtRateList.length, 0))
+        (mt -> Stat(Some(avg), Some(mtRateList.filter { _ != 0 }.min), Some(mtRateList.max), count, mtRateList.length, 0))
       else
-        (mt -> Stat(avg, 0, 0, count, mtRateList.length, 0))
+        (mt -> Stat(None, None, None, count, mtRateList.length, 0))
 
     Map(statList: _*)
   }
@@ -693,14 +731,14 @@ object Record {
         avg = if (count != 0)
           sum / count else 0
       } yield if (count != 0)
-        (m -> Stat(avg, mRateList.filter { _ != 0 }.min, mRateList.max, count, mRateList.length, 0))
+        (m -> Stat(Some(avg), Some(mRateList.filter { _ != 0 }.min), Some(mRateList.max), count, mRateList.length, 0))
       else
-        (m -> Stat(avg, 0, 0, count, mRateList.length, 0))
+        (m -> Stat(None, None, None, count, mRateList.length, 0))
 
     Map(statList: _*)
   }
 
-  def getWindRose(monitor: Monitor.Value, start: DateTime, end: DateTime, level:List[Float], nDiv: Int = 16) = {
+  def getWindRose(monitor: Monitor.Value, start: DateTime, end: DateTime, level: List[Float], nDiv: Int = 16) = {
     val records = getHourRecords(monitor, start, end)
     val windRecords = records.map { r => (r.wind_dir, r.wind_speed) }
     assert(windRecords.length != 0)
@@ -716,26 +754,26 @@ object Record {
     var total = 0
     for (w <- windRecords) {
       if (w._1.isDefined && w._2.isDefined) {
-        val dir = (Math.ceil((w._1.get - (step/2)) / step).toInt)% nDiv
+        val dir = (Math.ceil((w._1.get - (step / 2)) / step).toInt) % nDiv
         windMap(dir) += w._2.get
         total += 1
       }
     }
 
     def winSpeedPercent(winSpeedList: ListBuffer[Float]) = {
-      val count = new Array[Float](level.length+1)
-      def getIdx(v:Float):Int={
-        for(i <- 0 to level.length-1){
-          if(v < level(i))
+      val count = new Array[Float](level.length + 1)
+      def getIdx(v: Float): Int = {
+        for (i <- 0 to level.length - 1) {
+          if (v < level(i))
             return i
         }
-        
+
         return level.length
       }
-      
+
       for (w <- winSpeedList) {
         val i = getIdx(w)
-        count(i) +=1
+        count(i) += 1
       }
 
       assert(total != 0)
@@ -745,11 +783,11 @@ object Record {
     windMap.map(kv => (kv._1, winSpeedPercent(kv._2)))
   }
 
-  def getComparedList(monitor: Monitor.Value, monitorType: MonitorType.Value, start: DateTime, end: DateTime, nYear:Int) = {
+  def getComparedList(monitor: Monitor.Value, monitorType: MonitorType.Value, start: DateTime, end: DateTime, nYear: Int) = {
     val lastYearStart = start - 1.year
     val lastYearEnd = end - 1.year
 
-    def f(r:HourRecord)={
+    def f(r: HourRecord) = {
       (timeProjection(r), monitorTypeProject2(monitorType)(r))
     }
 
@@ -758,7 +796,7 @@ object Record {
         i <- 0 to nYear - 1
         records = getHourRecords(monitor, start - i.year, end - i.year)
       } yield records.map(f).filter(t => t._2._1.isDefined && t._2._2.isDefined && MonitorStatus.isNormal(t._2._2.get))
-        
+
     result
   }
 
@@ -810,26 +848,27 @@ object Record {
     val pairs =
       for {
         mt <- MonitorType.epaReportList
-        mtRecord = hrRecord.map { rs => 
-          (timeProjection(rs).toDateTime, monitorTypeProject2(mt)(rs)) }
+        mtRecord = hrRecord.map { rs =>
+          (timeProjection(rs).toDateTime, monitorTypeProject2(mt)(rs))
+        }
         mtMap = Map(mtRecord: _*)
       } yield {
         val data = mtRecord.filter(
           r => r._2._1.isDefined && r._2._2.isDefined && MonitorStatus.isNormal(r._2._2.get)).map(_._2._1.get)
         val count = data.length
         val stat =
-          if (count != 0){
-            if (MonitorType.windDirList.contains(mt)){
-              val windDir = mtRecord.map(r=>(r._1:java.sql.Timestamp, r._2._1, r._2._2))
+          if (count != 0) {
+            if (MonitorType.windDirList.contains(mt)) {
+              val windDir = mtRecord.map(r => (r._1: java.sql.Timestamp, r._2._1, r._2._2))
               val wsT = monitorTypeProject2(MonitorType.C211)
-              val windSpeed = hrRecord.map(rs => (rs.date:java.sql.Timestamp, wsT(rs)._1, wsT(rs)._2))            
+              val windSpeed = hrRecord.map(rs => (rs.date: java.sql.Timestamp, wsT(rs)._1, wsT(rs)._2))
               val wind_avg = windAvg(windSpeed, windDir)
-              Stat(wind_avg, data.min, data.max, count, 24, 0)
-            }else{
-              Stat(data.sum / count, data.min, data.max, count, 24, 0)
+              Stat(Some(wind_avg), Some(data.min), Some(data.max), count, 24, 0)
+            } else {
+              Stat(Some(data.sum / count), Some(data.min), Some(data.max), count, 24, 0)
             }
-          }else
-            Stat(0, 0, 0, count, 24, 0)
+          } else
+            Stat(None, None, None, count, 24, 0)
 
         mt -> (mtMap, stat)
       }
@@ -846,17 +885,17 @@ object Record {
         val data = epaPairs.map(t => t._2.value)
         val count = data.length
         val stat =
-          if (count != 0){
-            if (MonitorType.windDirList.contains(mt)){
+          if (count != 0) {
+            if (MonitorType.windDirList.contains(mt)) {
               val windDir = data
               val windSpeed = getEpaHourRecord(epaMonitor, MonitorType.C211, start, end).map { r => r.value }
               val wind_avg = windAvgF(windSpeed, windDir)
-              Stat(wind_avg, data.min, data.max, count, 24, 0)
-            }else{
-              Stat(data.sum / count, data.min, data.max, count, 24, 0)  
-            }            
-          }else
-            Stat(0, 0, 0, count, 24, 0)
+              Stat(Some(wind_avg), Some(data.min), Some(data.max), count, 24, 0)
+            } else {
+              Stat(Some(data.sum / count), Some(data.min), Some(data.max), count, 24, 0)
+            }
+          } else
+            Stat(None, None, None, count, 24, 0)
 
         mt -> (epaMap, stat)
       }
