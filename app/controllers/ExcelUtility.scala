@@ -122,8 +122,8 @@ object ExcelUtility {
       val titleCell = titleRow.getCell(0)
 
       titleCell.setCellValue("監測站:" + Monitor.map(monitor).name)
-      sheet.getRow(1).getCell(19).setCellValue("查詢日期:" + DateTime.now.toString("YYYY/MM/dd"))
-      titleRow.getCell(19).setCellValue("資料日期:" + reportDate.toString("YYYY/MM/dd"))
+      sheet.getRow(1).getCell(27).setCellValue("查詢日期:" + DateTime.now.toString("YYYY/MM/dd"))
+      titleRow.getCell(27).setCellValue("資料日期:" + reportDate.toString("YYYY/MM/dd"))
 
       for {
         col <- 1 to data.typeList.length
@@ -179,9 +179,10 @@ object ExcelUtility {
       (monitor, sheetIdx) <- Monitor.mvList.zipWithIndex
       dailyReport = Record.getDailyReport(monitor, reportDate)
     } {
-      fillMonitorDailyReport(monitor, dailyReport, sheetIdx)
+      wb.setSheetName(sheetIdx, Monitor.map(monitor).name)
+      fillMonitorDailyReport(monitor, dailyReport, sheetIdx)      
     }
-
+    wb.setActiveSheet(0)
     finishExcel(reportFilePath, pkg, wb)
   }
 
@@ -288,7 +289,15 @@ object ExcelUtility {
         else
           cell.setCellValue(cellData.count)
       }
-
+      //Hide unused Monitor Type
+      for {
+        col <- 1 to data.typeArray.length
+        mtRecord = data.typeArray(col - 1)
+      }{
+        if(!Monitor.map(monitor).monitorTypes.contains(mtRecord.monitorType))
+          sheet.setColumnHidden(col, true)          
+      }
+      
       for {
         col <- 1 to data.typeArray.length
         mtRecord = data.typeArray(col - 1)
@@ -365,6 +374,7 @@ object ExcelUtility {
           sheet.getRow(38).getCell(col).setCellValue("-")
         }
         evaluator.evaluateFormulaCell(sheet.getRow(39).getCell(col))
+        
       }
 
       //Hide col not in use
@@ -570,8 +580,8 @@ object ExcelUtility {
     implicit val (reportFilePath, pkg, wb) = prepareTemplate("yearly_report.xlsx")
     val sheet = wb.getSheetAt(0)
     sheet.getRow(2).getCell(0).setCellValue("監測站:" + Monitor.map(monitor).name)
-    sheet.getRow(1).getCell(22).setCellValue("查詢日期:" + DateTime.now.toString("YYYY/MM/dd"))
-    sheet.getRow(2).getCell(22).setCellValue("資料日期:" + reportDate.toString("YYYY年"))
+    sheet.getRow(1).getCell(30).setCellValue("查詢日期:" + DateTime.now.toString("YYYY/MM/dd"))
+    sheet.getRow(2).getCell(30).setCellValue("資料日期:" + reportDate.toString("YYYY年"))
 
     val abnormalColor =
       {
@@ -613,7 +623,7 @@ object ExcelUtility {
         sheet.getRow(17).getCell(col).setCellStyle(normalStyle)
         sheet.getRow(18).getCell(col).setCellValue(stat.min.get)
         sheet.getRow(18).getCell(col).setCellStyle(normalStyle)
-        sheet.getRow(19).getCell(col).setCellValue(stat.effectPercent.get * 100)
+        sheet.getRow(19).getCell(col).setCellValue(stat.effectPercent.get)
         sheet.getRow(19).getCell(col).setCellStyle(normalStyle)
       } else {
         sheet.getRow(16).getCell(col).setCellValue("-")
