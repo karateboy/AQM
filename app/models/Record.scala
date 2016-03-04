@@ -148,7 +148,7 @@ object Record {
       rs.stringOpt(51), rs.floatOpt(52), rs.stringOpt(53), floatOpt(54), stringOpt(55),
       floatOpt(56), stringOpt(57), floatOpt(58), stringOpt(59), floatOpt(60),
       stringOpt(61), floatOpt(62), stringOpt(63), floatOpt(64), stringOpt(65),
-      floatOpt(56), stringOpt(57), floatOpt(58), stringOpt(59))
+      floatOpt(66), stringOpt(67), floatOpt(68), stringOpt(69))
   }
 
   def sixSecMapper(rs: WrappedResultSet) = {
