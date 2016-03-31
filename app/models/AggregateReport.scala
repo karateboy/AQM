@@ -116,7 +116,7 @@ object AggregateReport {
                   if (!overLawHr.isEmpty)
                     s",${genDesc(overLawHr(0), overLawHr(0)+1, overLawHr.drop(1))}超過法規值(${mCase.std_law.get}${mCase.unit})"
                   else
-                    ",未超過法規值(${mCase.std_law.get}${mCase.unit})"
+                    s",未超過法規值(${mCase.std_law.get}${mCase.unit})"
                 }
               } else
                 ",未超過法規值"
