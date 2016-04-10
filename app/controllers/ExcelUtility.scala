@@ -155,7 +155,7 @@ object ExcelUtility {
           sheet.getRow(28).getCell(col).setCellValue(stat.avg.get)
           sheet.getRow(29).getCell(col).setCellValue(stat.max.get)
           sheet.getRow(30).getCell(col).setCellValue(stat.min.get)
-          sheet.getRow(31).getCell(col).setCellValue(stat.effectPercent.get * 100)
+          sheet.getRow(31).getCell(col).setCellValue(stat.effectPercent.get)
         } else {
           sheet.getRow(28).getCell(col).setCellValue("-")
           sheet.getRow(29).getCell(col).setCellValue("-")

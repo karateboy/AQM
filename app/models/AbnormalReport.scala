@@ -79,7 +79,7 @@ object AbnormalReport {
               case Nil =>
                  output 
               case head :: tail =>
-                if (status != head._2)
+                if (status != head._2 || ((end+1) != head._1))
                   output + " ," + genDesc(head._1, head._1, head._2, tail)
                 else
                   genDesc(start, head._1, head._2, tail)

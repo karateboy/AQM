@@ -101,8 +101,8 @@ object Maintance extends Controller {
 
     val tickets = Ticket.queryTickets(start, end)
     val filterTicket = tickets.filter { t => ticketTypes.contains(t.ticketType) && monitors.contains(t.monitor) }
-    val adminUsers = User.getAdminUsers()
-    val usrMap = Map(adminUsers.map { u => (u.id.get -> u) }: _*)
+    val allUsers = User.getAllUsers()
+    val usrMap = Map(allUsers.map { u => (u.id.get -> u) }: _*)
 
     Ok(views.html.ticketReport(filterTicket, usrMap))
   }
@@ -116,8 +116,8 @@ object Maintance extends Controller {
         val userInfo = userInfoOpt.get
         val group = Group.getGroup(userInfo.groupID).get
         val tickets = Ticket.myTickets(userInfo.id)
-        val adminUsers = User.getAdminUsers()
-        val usrMap = Map(adminUsers.map { u => (u.id.get -> u) }: _*)
+        val allUsers = User.getAllUsers()
+        val usrMap = Map(allUsers.map { u => (u.id.get -> u) }: _*)
 
         Ok(views.html.myTicket(tickets, usrMap))
       }

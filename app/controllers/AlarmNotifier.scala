@@ -14,7 +14,7 @@ import scala.concurrent.ExecutionContext.Implicits.global
 
 
 object AlarmNotifier {
-  def props(out: ActorRef) = Props(new AlarmNotifier(out))
+  def props(out: ActorRef) = Props(classOf[AlarmNotifier], out)
 }
 
 class AlarmNotifier(out: ActorRef) extends Actor {
