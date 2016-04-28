@@ -287,8 +287,10 @@ object Maintance extends Controller {
       val title = TicketType.map(ticket.ticketType) + ticket.id
       val excelFile =
         ticket.ticketType match {
-          case TicketType.maintance_week =>
-            ExcelUtility.exportWeekForm(ticket, usrMap)
+          case TicketType.maintance_week =>{
+            val previousTicketOpt = Ticket.getPreviousTicket(ticket)
+            ExcelUtility.exportWeekForm(ticket, usrMap, previousTicketOpt)
+          }
           case TicketType.maintance_biweek =>
             ExcelUtility.exportBiWeekForm(ticket, usrMap)
           case TicketType.maintance_month =>

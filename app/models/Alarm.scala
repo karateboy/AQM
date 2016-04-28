@@ -9,7 +9,7 @@ import models._
 
 object Alarm {
 
-  case class Alarm(monitor: Monitor.Value, mItem: String, time: DateTime, mVal: Float, code: String)
+  case class Alarm(monitor: Monitor.Value, mItem: String, time: DateTime, mVal: Float, code: String, ticket: Option[String] = None)
   def getAlarm(monitors: Seq[Monitor.Value], statusFilter: Option[Seq[String]], start: DateTime, end: DateTime)(implicit session: DBSession = AutoSession): List[Alarm] = {
     val mStr = SQLSyntax.createUnsafely(monitors.mkString("('", "','", "')"))
     val startT: Timestamp = start
@@ -26,7 +26,7 @@ object Alarm {
         """.map {
           rs =>
             Alarm(Monitor.withName(rs.string(1)), rs.string(2), rs.timestamp(3), rs.float(4),
-              MonitorStatus.getTagInfo(rs.string(5).trim()).toString)
+              MonitorStatus.getTagInfo(rs.string(5).trim()).toString, rs.stringOpt(6))
         }.list.apply
       } else {
         val sfilter = SQLSyntax.createUnsafely(statusFilter.get.mkString("('", "','", "')"))
@@ -39,7 +39,7 @@ object Alarm {
         """.map {
           rs =>
             Alarm(Monitor.withName(rs.string(1)), rs.string(2), rs.timestamp(3), rs.float(4),
-              MonitorStatus.getTagInfo(rs.string(5).trim()).toString)
+              MonitorStatus.getTagInfo(rs.string(5).trim()).toString, rs.stringOpt(6))
         }.list.apply
       }
 
@@ -63,7 +63,7 @@ object Alarm {
           Where DP_NO = ${ar.monitor.toString} and M_DateTime = ${time} and M_ITEM = ${ar.mItem}          
           """.map(rs =>
           Alarm(Monitor.withName(rs.string(1)), rs.string(2), rs.timestamp(3), rs.float(4),
-            MonitorStatus.getTagInfo(rs.string(5).trim()).toString)).single.apply
+            MonitorStatus.getTagInfo(rs.string(5).trim()).toString, rs.stringOpt(6))).single.apply
       }
     }
     val arOpt = checkExist()

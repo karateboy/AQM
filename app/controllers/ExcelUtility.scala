@@ -1298,13 +1298,13 @@ object ExcelUtility {
     finishExcel(reportFilePath, pkg, wb)
   }
 
-  def exportWeekForm(ticket: Ticket, usrMap: Map[Int, User]) = {
+  def exportWeekForm(ticket: Ticket, usrMap: Map[Int, User], oldTicketOpt: Option[Ticket]=None) = {
     val (reportFilePath, pkg, wb) = prepareTemplate("weekMaintance.xlsx")
     val evaluator = wb.getCreationHelper().createFormulaEvaluator()
     val format = wb.createDataFormat();
 
     val form = ticket.getForm
-
+    val oldForm = oldTicketOpt.map{t=>t.getForm}
     val sheet = wb.getSheetAt(0)
     val monitorName = Monitor.map(ticket.monitor).name
     sheet.getRow(1).getCell(1).setCellValue(monitorName)
@@ -1317,96 +1317,116 @@ object ExcelUtility {
     sheet.getRow(42).getCell(5).setCellValue(dateStr)
     sheet.getRow(75).getCell(5).setCellValue(dateStr)
     sheet.getRow(113).getCell(5).setCellValue(dateStr)
-
+    oldTicketOpt.map{
+      old=>
+        val dateStr = old.executeDate.toString("YY/MM/d")
+        sheet.getRow(1).getCell(3).setCellValue(dateStr)
+    }
+    
     val usrName = usrMap(ticket.owner_id).name
     sheet.getRow(2).getCell(5).setCellValue(usrName)
     sheet.getRow(43).getCell(5).setCellValue(usrName)
     sheet.getRow(76).getCell(5).setCellValue(usrName)
     sheet.getRow(114).getCell(5).setCellValue(usrName)
 
-    sheet.getRow(3).getCell(4).setCellValue(form.getBoolSeq("☑", "□"))
-    sheet.getRow(4).getCell(4).setCellValue(form.getBoolSeq("☑", "□"))
-    sheet.getRow(6).getCell(4).setCellValue(form.getBoolSeq("☑", "□"))
-    sheet.getRow(7).getCell(4).setCellValue(form.getBoolSeq("☑", "□"))
+    
+    sheet.getRow(3).getCell(4).setCellValue(form.getBoolSeq("YES☑  NO□", "YES□ NO☑"))
+    sheet.getRow(4).getCell(4).setCellValue(form.getBoolSeq("YES☑  NO□", "YES□ NO☑"))
+    sheet.getRow(6).getCell(4).setCellValue(form.getBoolSeq("YES☑  NO□", "YES□ NO☑"))
+    sheet.getRow(7).getCell(4).setCellValue(form.getBoolSeq("YES☑  NO□", "YES□ NO☑"))
+    
+    oldForm.map { old => old.strIdx = form.strIdx }
     sheet.getRow(8).getCell(2).setCellValue(form.getStrSeq)
-    sheet.getRow(8).getCell(4).setCellValue(form.getBoolSeq("☑", "□"))
-
-    sheet.getRow(10).getCell(4).setCellValue(form.getBoolSeq("☑", "□"))
+    oldForm.map{old=>sheet.getRow(8).getCell(5).setCellValue(old.getStrSeq)}
+    
+    sheet.getRow(8).getCell(4).setCellValue(form.getBoolSeq("YES☑  NO□", "YES□ NO☑"))
+    sheet.getRow(10).getCell(4).setCellValue(form.getBoolSeq("YES☑  NO□", "YES□ NO☑"))
+    
     for (row <- 12 to 22) {
       sheet.getRow(row).getCell(2).setCellValue(form.getStrSeq)
-      sheet.getRow(row).getCell(4).setCellValue(form.getBoolSeq("☑", "□"))
+      oldForm.map{old=>sheet.getRow(row).getCell(5).setCellValue(old.getStrSeq)}
+      sheet.getRow(row).getCell(4).setCellValue(form.getBoolSeq("YES☑  NO□", "YES□ NO☑"))
     }
-    sheet.getRow(23).getCell(4).setCellValue(form.getBoolSeq("☑", "□"))
-    sheet.getRow(25).getCell(4).setCellValue(form.getBoolSeq("☑", "□"))
+    sheet.getRow(23).getCell(4).setCellValue(form.getBoolSeq("YES☑  NO□", "YES□ NO☑"))
+    sheet.getRow(25).getCell(4).setCellValue(form.getBoolSeq("YES☑  NO□", "YES□ NO☑"))
     for (row <- 27 to 36) {
       sheet.getRow(row).getCell(2).setCellValue(form.getStrSeq)
-      sheet.getRow(row).getCell(4).setCellValue(form.getBoolSeq("☑", "□"))
+      oldForm.map{old=>sheet.getRow(row).getCell(5).setCellValue(old.getStrSeq)}
+      sheet.getRow(row).getCell(4).setCellValue(form.getBoolSeq("YES☑  NO□", "YES□ NO☑"))
     }
-    sheet.getRow(37).getCell(4).setCellValue(form.getBoolSeq("☑", "□"))
+    sheet.getRow(37).getCell(4).setCellValue(form.getBoolSeq("YES☑  NO□", "YES□ NO☑"))
 
     //Page 2
-    sheet.getRow(44).getCell(4).setCellValue(form.getBoolSeq("☑", "□"))
+    sheet.getRow(44).getCell(4).setCellValue(form.getBoolSeq("YES☑  NO□", "YES□ NO☑"))
     for (row <- 46 to 51) {
       sheet.getRow(row).getCell(2).setCellValue(form.getStrSeq)
-      sheet.getRow(row).getCell(4).setCellValue(form.getBoolSeq("☑", "□"))
+      oldForm.map{old=>sheet.getRow(row).getCell(5).setCellValue(old.getStrSeq)}
+      sheet.getRow(row).getCell(4).setCellValue(form.getBoolSeq("YES☑  NO□", "YES□ NO☑"))
     }
-    sheet.getRow(52).getCell(4).setCellValue(form.getBoolSeq("☑", "□"))
-    sheet.getRow(54).getCell(4).setCellValue(form.getBoolSeq("☑", "□"))
+    sheet.getRow(52).getCell(4).setCellValue(form.getBoolSeq("YES☑  NO□", "YES□ NO☑"))
+    sheet.getRow(54).getCell(4).setCellValue(form.getBoolSeq("YES☑  NO□", "YES□ NO☑"))
     for (row <- 56 to 59) {
       sheet.getRow(row).getCell(2).setCellValue(form.getStrSeq)
-      sheet.getRow(row).getCell(4).setCellValue(form.getBoolSeq("☑", "□"))
+      oldForm.map{old=>sheet.getRow(row).getCell(5).setCellValue(old.getStrSeq)}
+      sheet.getRow(row).getCell(4).setCellValue(form.getBoolSeq("YES☑  NO□", "YES□ NO☑"))
     }
-    sheet.getRow(60).getCell(4).setCellValue(form.getBoolSeq("☑", "□"))
-    sheet.getRow(62).getCell(4).setCellValue(form.getBoolSeq("☑", "□"))
+    sheet.getRow(60).getCell(4).setCellValue(form.getBoolSeq("YES☑  NO□", "YES□ NO☑"))
+    sheet.getRow(62).getCell(4).setCellValue(form.getBoolSeq("YES☑  NO□", "YES□ NO☑"))
     for (row <- 64 to 67) {
       sheet.getRow(row).getCell(2).setCellValue(form.getStrSeq)
-      sheet.getRow(row).getCell(4).setCellValue(form.getBoolSeq("☑", "□"))
+      oldForm.map{old=>sheet.getRow(row).getCell(5).setCellValue(old.getStrSeq)}
+      sheet.getRow(row).getCell(4).setCellValue(form.getBoolSeq("YES☑  NO□", "YES□ NO☑"))
     }
-    sheet.getRow(68).getCell(4).setCellValue(form.getBoolSeq("☑", "□"))
-    sheet.getRow(69).getCell(4).setCellValue(form.getBoolSeq("☑", "□"))
-    sheet.getRow(70).getCell(4).setCellValue(form.getBoolSeq("☑", "□"))
+    sheet.getRow(68).getCell(4).setCellValue(form.getBoolSeq("YES☑  NO□", "YES□ NO☑"))
+    sheet.getRow(69).getCell(4).setCellValue(form.getBoolSeq("YES☑  NO□", "YES□ NO☑"))
+    sheet.getRow(70).getCell(4).setCellValue(form.getBoolSeq("YES☑  NO□", "YES□ NO☑"))
     //Page 3
-    sheet.getRow(77).getCell(4).setCellValue(form.getBoolSeq("☑", "□"))
+    sheet.getRow(77).getCell(4).setCellValue(form.getBoolSeq("YES☑  NO□", "YES□ NO☑"))
     for (row <- 78 to 78) {
       sheet.getRow(row).getCell(2).setCellValue(form.getStrSeq)
+      oldForm.map{old=>sheet.getRow(row).getCell(5).setCellValue(old.getStrSeq)}
       sheet.getRow(row).getCell(4).setCellValue(form.getBoolSeq("☑", "□"))
     }
-    sheet.getRow(79).getCell(4).setCellValue(form.getBoolSeq("☑", "□"))
-    sheet.getRow(80).getCell(4).setCellValue(form.getBoolSeq("☑", "□"))
-    sheet.getRow(81).getCell(4).setCellValue(form.getBoolSeq("☑", "□"))
-    sheet.getRow(83).getCell(4).setCellValue(form.getBoolSeq("☑", "□"))
+    sheet.getRow(79).getCell(4).setCellValue(form.getBoolSeq("YES☑  NO□", "YES□ NO☑"))
+    sheet.getRow(80).getCell(4).setCellValue(form.getBoolSeq("YES☑  NO□", "YES□ NO☑"))
+    sheet.getRow(81).getCell(4).setCellValue(form.getBoolSeq("YES☑  NO□", "YES□ NO☑"))
+    sheet.getRow(83).getCell(4).setCellValue(form.getBoolSeq("YES☑  NO□", "YES□ NO☑"))
     sheet.getRow(84).getCell(2).setCellValue("溫度：" + form.getStrSeq)
     sheet.getRow(84).getCell(3).setCellValue("濕度：" + form.getStrSeq)
-    sheet.getRow(84).getCell(4).setCellValue(form.getBoolSeq("☑", "□"))
-    sheet.getRow(85).getCell(4).setCellValue(form.getBoolSeq("☑", "□"))
-    sheet.getRow(86).getCell(4).setCellValue(form.getBoolSeq("☑", "□"))
+    oldForm.map{old=>sheet.getRow(84).getCell(5).setCellValue(old.getStrSeq + "/" + old.getStrSeq)}
+    sheet.getRow(84).getCell(4).setCellValue(form.getBoolSeq("YES☑  NO□", "YES□ NO☑"))
+    sheet.getRow(85).getCell(4).setCellValue(form.getBoolSeq("YES☑  NO□", "YES□ NO☑"))
+    sheet.getRow(86).getCell(4).setCellValue(form.getBoolSeq("YES☑  NO□", "YES□ NO☑"))
     sheet.getRow(89).getCell(2).setCellValue(form.getStrSeq)
-    sheet.getRow(89).getCell(4).setCellValue(form.getBoolSeq("☑", "□"))
-    sheet.getRow(90).getCell(4).setCellValue(form.getBoolSeq("☑", "□"))
+    oldForm.map{old=>sheet.getRow(89).getCell(5).setCellValue(old.getStrSeq)}
+    sheet.getRow(89).getCell(4).setCellValue(form.getBoolSeq("YES☑  NO□", "YES□ NO☑"))
+    sheet.getRow(90).getCell(4).setCellValue(form.getBoolSeq("YES☑  NO□", "YES□ NO☑"))
     sheet.getRow(91).getCell(2).setCellValue("用電量：" + form.getStrSeq)
-    sheet.getRow(91).getCell(4).setCellValue(form.getBoolSeq("☑", "□"))
+    oldForm.map{old=>sheet.getRow(91).getCell(5).setCellValue(old.getStrSeq)}
+    sheet.getRow(91).getCell(4).setCellValue(form.getBoolSeq("YES☑  NO□", "YES□ NO☑"))
     for (row <- 92 to 96) {
-      sheet.getRow(row).getCell(4).setCellValue(form.getBoolSeq("☑", "□"))
+      sheet.getRow(row).getCell(4).setCellValue(form.getBoolSeq("YES☑  NO□", "YES□ NO☑"))
     }
-    sheet.getRow(98).getCell(4).setCellValue(form.getBoolSeq("☑", "□"))
+    sheet.getRow(98).getCell(4).setCellValue(form.getBoolSeq("YES☑  NO□", "YES□ NO☑"))
     for (row <- 104 to 105) {
       sheet.getRow(row).getCell(2).setCellValue(form.getStrSeq)
-      sheet.getRow(row).getCell(4).setCellValue(form.getBoolSeq("☑", "□"))
+      oldForm.map{old=>sheet.getRow(row).getCell(5).setCellValue(old.getStrSeq)}
+      sheet.getRow(row).getCell(4).setCellValue(form.getBoolSeq("YES☑  NO□", "YES□ NO☑"))
     }
     for (row <- 106 to 108) {
-      sheet.getRow(row).getCell(4).setCellValue(form.getBoolSeq("☑", "□"))
+      sheet.getRow(row).getCell(4).setCellValue(form.getBoolSeq("YES☑  NO□", "YES□ NO☑"))
     }
 
     //Page 4
     for (row <- 116 to 119) {
-      sheet.getRow(row).getCell(4).setCellValue(form.getBoolSeq("☑", "□"))
+      sheet.getRow(row).getCell(4).setCellValue(form.getBoolSeq("YES☑  NO□", "YES□ NO☑"))
     }
 
     for (row <- 121 to 126) {
-      sheet.getRow(row).getCell(4).setCellValue(form.getBoolSeq("☑", "□"))
+      sheet.getRow(row).getCell(4).setCellValue(form.getBoolSeq("YES☑  NO□", "YES□ NO☑"))
     }
     for (row <- 128 to 129) {
-      sheet.getRow(row).getCell(4).setCellValue(form.getBoolSeq("☑", "□"))
+      sheet.getRow(row).getCell(4).setCellValue(form.getBoolSeq("YES☑  NO□", "YES□ NO☑"))
     }
 
     sheet.getRow(131).getCell(1).setCellValue(form.getComment(0))
@@ -1435,14 +1455,14 @@ object ExcelUtility {
 
     for (row <- 4 to 10) {
       sheet.getRow(row).getCell(1).setCellValue(form.getStrSeq)
-      sheet.getRow(row).getCell(3).setCellValue(form.getBoolSeq("☑", "□"))
+      sheet.getRow(row).getCell(3).setCellValue(form.getBoolSeq("YES☑  NO□", "YES□ NO☑"))
     }
 
     for (row <- 4 to 10) {
       sheet.getRow(row).getCell(4).setCellValue(form.getStrSeq)
       sheet.getRow(row).getCell(5).setCellValue(form.getStrSeq)
       sheet.getRow(row).getCell(6).setCellValue(form.getStrSeq)
-      sheet.getRow(row).getCell(7).setCellValue(form.getBoolSeq("☑", "□"))
+      sheet.getRow(row).getCell(7).setCellValue(form.getBoolSeq("YES☑  NO□", "YES□ NO☑"))
       sheet.getRow(row).getCell(8).setCellValue(form.getStrSeq)
       sheet.getRow(row).getCell(9).setCellValue(form.getStrSeq)
       sheet.getRow(row).getCell(10).setCellValue(form.getStrSeq)
@@ -1450,7 +1470,7 @@ object ExcelUtility {
     }
 
     for (row <- 12 to 18) {
-      sheet.getRow(row).getCell(7).setCellValue(form.getBoolSeq("☑", "□"))
+      sheet.getRow(row).getCell(7).setCellValue(form.getBoolSeq("YES☑  NO□", "YES□ NO☑"))
     }
     sheet.getRow(20).getCell(1).setCellValue(form.getComment(0))
 
@@ -1479,40 +1499,40 @@ object ExcelUtility {
     sheet.getRow(72).getCell(4).setCellValue(usrName)
 
     for (row <- 3 to 7) {
-      sheet.getRow(row).getCell(4).setCellValue(form.getBoolSeq("☑", "□"))
+      sheet.getRow(row).getCell(4).setCellValue(form.getBoolSeq("YES☑  NO□", "YES□ NO☑"))
     }
 
     for (row <- 9 to 10) {
-      sheet.getRow(row).getCell(4).setCellValue(form.getBoolSeq("☑", "□"))
+      sheet.getRow(row).getCell(4).setCellValue(form.getBoolSeq("YES☑  NO□", "YES□ NO☑"))
     }
 
     for (row <- 12 to 15) {
-      sheet.getRow(row).getCell(4).setCellValue(form.getBoolSeq("☑", "□"))
+      sheet.getRow(row).getCell(4).setCellValue(form.getBoolSeq("YES☑  NO□", "YES□ NO☑"))
     }
 
     for (row <- 17 to 20) {
-      sheet.getRow(row).getCell(4).setCellValue(form.getBoolSeq("☑", "□"))
+      sheet.getRow(row).getCell(4).setCellValue(form.getBoolSeq("YES☑  NO□", "YES□ NO☑"))
     }
     for (row <- 22 to 25) {
-      sheet.getRow(row).getCell(4).setCellValue(form.getBoolSeq("☑", "□"))
+      sheet.getRow(row).getCell(4).setCellValue(form.getBoolSeq("YES☑  NO□", "YES□ NO☑"))
     }
     for (row <- 27 to 30) {
-      sheet.getRow(row).getCell(4).setCellValue(form.getBoolSeq("☑", "□"))
+      sheet.getRow(row).getCell(4).setCellValue(form.getBoolSeq("YES☑  NO□", "YES□ NO☑"))
     }
     for (row <- 37 to 41) {
-      sheet.getRow(row).getCell(4).setCellValue(form.getBoolSeq("☑", "□"))
+      sheet.getRow(row).getCell(4).setCellValue(form.getBoolSeq("YES☑  NO□", "YES□ NO☑"))
     }
     for (row <- 43 to 45) {
-      sheet.getRow(row).getCell(4).setCellValue(form.getBoolSeq("☑", "□"))
+      sheet.getRow(row).getCell(4).setCellValue(form.getBoolSeq("YES☑  NO□", "YES□ NO☑"))
     }
     for (row <- 47 to 50) {
-      sheet.getRow(row).getCell(4).setCellValue(form.getBoolSeq("☑", "□"))
+      sheet.getRow(row).getCell(4).setCellValue(form.getBoolSeq("YES☑  NO□", "YES□ NO☑"))
     }
     for (row <- 52 to 58) {
-      sheet.getRow(row).getCell(4).setCellValue(form.getBoolSeq("☑", "□"))
+      sheet.getRow(row).getCell(4).setCellValue(form.getBoolSeq("YES☑  NO□", "YES□ NO☑"))
     }
     for (row <- 60 to 62) {
-      sheet.getRow(row).getCell(4).setCellValue(form.getBoolSeq("☑", "□"))
+      sheet.getRow(row).getCell(4).setCellValue(form.getBoolSeq("YES☑  NO□", "YES□ NO☑"))
     }
 
     sheet.getRow(64).getCell(1).setCellValue(form.getComment(0))
@@ -1541,37 +1561,37 @@ object ExcelUtility {
     sheet.getRow(41).getCell(5).setCellValue(usrName)
     sheet.getRow(64).getCell(4).setCellValue(usrName)
 
-    sheet.getRow(3).getCell(4).setCellValue(form.getBoolSeq("☑", "□"))
+    sheet.getRow(3).getCell(4).setCellValue(form.getBoolSeq("YES☑  NO□", "YES□ NO☑"))
 
     for (row <- 5 to 7) {
-      sheet.getRow(row).getCell(4).setCellValue(form.getBoolSeq("☑", "□"))
+      sheet.getRow(row).getCell(4).setCellValue(form.getBoolSeq("YES☑  NO□", "YES□ NO☑"))
     }
 
     for (row <- 9 to 14) {
-      sheet.getRow(row).getCell(4).setCellValue(form.getBoolSeq("☑", "□"))
+      sheet.getRow(row).getCell(4).setCellValue(form.getBoolSeq("YES☑  NO□", "YES□ NO☑"))
     }
 
     for (row <- 16 to 19) {
-      sheet.getRow(row).getCell(4).setCellValue(form.getBoolSeq("☑", "□"))
+      sheet.getRow(row).getCell(4).setCellValue(form.getBoolSeq("YES☑  NO□", "YES□ NO☑"))
     }
 
     for (row <- 21 to 24) {
-      sheet.getRow(row).getCell(4).setCellValue(form.getBoolSeq("☑", "□"))
+      sheet.getRow(row).getCell(4).setCellValue(form.getBoolSeq("YES☑  NO□", "YES□ NO☑"))
     }
     for (row <- 26 to 30) {
-      sheet.getRow(row).getCell(4).setCellValue(form.getBoolSeq("☑", "□"))
+      sheet.getRow(row).getCell(4).setCellValue(form.getBoolSeq("YES☑  NO□", "YES□ NO☑"))
     }
     for (row <- 32 to 35) {
-      sheet.getRow(row).getCell(4).setCellValue(form.getBoolSeq("☑", "□"))
+      sheet.getRow(row).getCell(4).setCellValue(form.getBoolSeq("YES☑  NO□", "YES□ NO☑"))
     }
     for (row <- 42 to 46) {
-      sheet.getRow(row).getCell(4).setCellValue(form.getBoolSeq("☑", "□"))
+      sheet.getRow(row).getCell(4).setCellValue(form.getBoolSeq("YES☑  NO□", "YES□ NO☑"))
     }
     for (row <- 48 to 50) {
-      sheet.getRow(row).getCell(4).setCellValue(form.getBoolSeq("☑", "□"))
+      sheet.getRow(row).getCell(4).setCellValue(form.getBoolSeq("YES☑  NO□", "YES□ NO☑"))
     }
     for (row <- 52 to 54) {
-      sheet.getRow(row).getCell(4).setCellValue(form.getBoolSeq("☑", "□"))
+      sheet.getRow(row).getCell(4).setCellValue(form.getBoolSeq("YES☑  NO□", "YES□ NO☑"))
     }
 
     sheet.getRow(56).getCell(1).setCellValue(form.getComment(0))
@@ -1600,34 +1620,34 @@ object ExcelUtility {
     sheet.getRow(28).getCell(5).setCellValue(usrName)
     sheet.getRow(55).getCell(4).setCellValue(usrName)
 
-    sheet.getRow(3).getCell(4).setCellValue(form.getBoolSeq("☑", "□"))
+    sheet.getRow(3).getCell(4).setCellValue(form.getBoolSeq("YES☑  NO□", "YES□ NO☑"))
 
     for (row <- 5 to 7) {
-      sheet.getRow(row).getCell(4).setCellValue(form.getBoolSeq("☑", "□"))
+      sheet.getRow(row).getCell(4).setCellValue(form.getBoolSeq("YES☑  NO□", "YES□ NO☑"))
     }
 
     for (row <- 9 to 11) {
-      sheet.getRow(row).getCell(4).setCellValue(form.getBoolSeq("☑", "□"))
+      sheet.getRow(row).getCell(4).setCellValue(form.getBoolSeq("YES☑  NO□", "YES□ NO☑"))
     }
 
     for (row <- 13 to 14) {
-      sheet.getRow(row).getCell(4).setCellValue(form.getBoolSeq("☑", "□"))
+      sheet.getRow(row).getCell(4).setCellValue(form.getBoolSeq("YES☑  NO□", "YES□ NO☑"))
     }
     for (row <- 16 to 17) {
-      sheet.getRow(row).getCell(4).setCellValue(form.getBoolSeq("☑", "□"))
+      sheet.getRow(row).getCell(4).setCellValue(form.getBoolSeq("YES☑  NO□", "YES□ NO☑"))
     }
     for (row <- 19 to 22) {
-      sheet.getRow(row).getCell(4).setCellValue(form.getBoolSeq("☑", "□"))
+      sheet.getRow(row).getCell(4).setCellValue(form.getBoolSeq("YES☑  NO□", "YES□ NO☑"))
     }
 
     for (row <- 30 to 33) {
-      sheet.getRow(row).getCell(4).setCellValue(form.getBoolSeq("☑", "□"))
+      sheet.getRow(row).getCell(4).setCellValue(form.getBoolSeq("YES☑  NO□", "YES□ NO☑"))
     }
     for (row <- 35 to 37) {
-      sheet.getRow(row).getCell(4).setCellValue(form.getBoolSeq("☑", "□"))
+      sheet.getRow(row).getCell(4).setCellValue(form.getBoolSeq("YES☑  NO□", "YES□ NO☑"))
     }
     for (row <- 39 to 45) {
-      sheet.getRow(row).getCell(4).setCellValue(form.getBoolSeq("☑", "□"))
+      sheet.getRow(row).getCell(4).setCellValue(form.getBoolSeq("YES☑  NO□", "YES□ NO☑"))
     }
 
     sheet.getRow(47).getCell(1).setCellValue(form.getComment(0))
@@ -1654,32 +1674,32 @@ object ExcelUtility {
     sheet.getRow(28).getCell(5).setCellValue(usrName)
     sheet.getRow(42).getCell(4).setCellValue(usrName)
 
-    sheet.getRow(3).getCell(4).setCellValue(form.getBoolSeq("☑", "□"))
-    sheet.getRow(5).getCell(4).setCellValue(form.getBoolSeq("☑", "□"))
+    sheet.getRow(3).getCell(4).setCellValue(form.getBoolSeq("YES☑  NO□", "YES□ NO☑"))
+    sheet.getRow(5).getCell(4).setCellValue(form.getBoolSeq("YES☑  NO□", "YES□ NO☑"))
 
     for (row <- 7 to 9) {
-      sheet.getRow(row).getCell(4).setCellValue(form.getBoolSeq("☑", "□"))
+      sheet.getRow(row).getCell(4).setCellValue(form.getBoolSeq("YES☑  NO□", "YES□ NO☑"))
     }
 
     for (row <- 11 to 13) {
-      sheet.getRow(row).getCell(4).setCellValue(form.getBoolSeq("☑", "□"))
+      sheet.getRow(row).getCell(4).setCellValue(form.getBoolSeq("YES☑  NO□", "YES□ NO☑"))
     }
 
     for (row <- 15 to 16) {
-      sheet.getRow(row).getCell(4).setCellValue(form.getBoolSeq("☑", "□"))
+      sheet.getRow(row).getCell(4).setCellValue(form.getBoolSeq("YES☑  NO□", "YES□ NO☑"))
     }
     for (row <- 18 to 20) {
-      sheet.getRow(row).getCell(4).setCellValue(form.getBoolSeq("☑", "□"))
+      sheet.getRow(row).getCell(4).setCellValue(form.getBoolSeq("YES☑  NO□", "YES□ NO☑"))
     }
     for (row <- 22 to 24) {
-      sheet.getRow(row).getCell(4).setCellValue(form.getBoolSeq("☑", "□"))
+      sheet.getRow(row).getCell(4).setCellValue(form.getBoolSeq("YES☑  NO□", "YES□ NO☑"))
     }
 
     for (row <- 26 to 28) {
-      sheet.getRow(row).getCell(4).setCellValue(form.getBoolSeq("☑", "□"))
+      sheet.getRow(row).getCell(4).setCellValue(form.getBoolSeq("YES☑  NO□", "YES□ NO☑"))
     }
     for (row <- 30 to 32) {
-      sheet.getRow(row).getCell(4).setCellValue(form.getBoolSeq("☑", "□"))
+      sheet.getRow(row).getCell(4).setCellValue(form.getBoolSeq("YES☑  NO□", "YES□ NO☑"))
     }
 
     sheet.getRow(34).getCell(1).setCellValue(form.getComment(0))

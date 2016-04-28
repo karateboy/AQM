@@ -48,7 +48,8 @@ case class FormData(start: String, end: String, boolValues: Seq[Boolean], strVal
     strIdx += 1
     ret
   }
-  
+
+
   def getComment(idx:Int) = {
     if(idx >= comments.length)
       ""
@@ -271,6 +272,15 @@ object Ticket {
       Select *
       From Ticket
       Where id = ${ID}
+      """.map {ticketMapper}.single().apply()
+  }
+  
+  def getPreviousTicket(ticket: Ticket)(implicit session: DBSession = AutoSession) = {    
+    sql"""
+      Select Top 1 *
+      From Ticket
+      Where ticketType=${ticket.ticketType.id} and monitor=${ticket.monitor.toString()} and execute_date < ${ticket.executeDate.toDate()}
+      Order by execute_date desc
       """.map {ticketMapper}.single().apply()
   }
 

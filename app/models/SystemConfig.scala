@@ -41,7 +41,20 @@ object SystemConfig{
     val path = SystemConfig.getConfig(DownloadLink + n, "")
     new File(path)
   }
-    
+  
+  val dtPattern = "YYYY-MM-dd HH:mm"
+  val AlarmCheckPointKey = "AlarmCheckPoint"
+  def getAlarmCheckPoint()={
+        
+    val checkPoint = SystemConfig.getConfig(AlarmCheckPointKey, DateTime.now().toString(dtPattern))
+    DateTime.parse(checkPoint, DateTimeFormat.forPattern(dtPattern))    
+  }
+  
+  def setAlarmCheckPoint(time:DateTime)={
+    val checkPoint = time.toString(dtPattern)
+    SystemConfig.setConfig(AlarmCheckPointKey, checkPoint)
+  }
+  
   var map = {
     val configPair =
       DB readOnly {
