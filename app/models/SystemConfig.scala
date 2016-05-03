@@ -45,7 +45,7 @@ object SystemConfig{
   val dtPattern = "YYYY-MM-dd HH:mm"
   val AlarmCheckPointKey = "AlarmCheckPoint"
   def getAlarmCheckPoint()={        
-    val checkPoint = SystemConfig.getConfig(AlarmCheckPointKey, "2016-04-29 00:00")
+    val checkPoint = SystemConfig.getConfig(AlarmCheckPointKey, "2016-05-03 00:00")
     DateTime.parse(checkPoint, DateTimeFormat.forPattern(dtPattern))    
   }
   
