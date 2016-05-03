@@ -7,6 +7,7 @@ import models._
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
 import play.api.libs.json.Json
+import scala.concurrent.ExecutionContext.Implicits.global
 
 case class FormData(start: String, end: String, boolValues: Seq[Boolean], strValues: Seq[String], comments: Seq[String]) {
   def getBool(idx: Int) = {
@@ -198,42 +199,46 @@ object Ticket {
         """.update.apply
 
       if (ticket.ticketType == TicketType.repair) {
-        import controllers.ExcelUtility
-        val excel = ExcelUtility.epbNotification(List(ticket))
-        val title = s"環保局通報單_${Monitor.map(ticket.monitor).name}${ticket.submit_date.toString("MMdd_HHmm")}"
+        import scala.concurrent._
+        Future {
+          blocking {
+            import controllers.ExcelUtility
+            val excel = ExcelUtility.epbNotification(List(ticket))
+            val title = s"環保局通報單_${Monitor.map(ticket.monitor).name}${ticket.submit_date.toString("MMdd_HHmm")}"
 
-        import play.api.Play.current
-        import java.nio.file.StandardCopyOption._
-        import java.nio.file.Paths
-        import java.nio.file.Files
+            import play.api.Play.current
+            import java.nio.file.StandardCopyOption._
+            import java.nio.file.Paths
+            import java.nio.file.Files
 
-        val targetPath = Paths.get(current.path.getAbsolutePath + s"/notification/${title}.xlsx")
-        Files.move(excel.toPath, targetPath, REPLACE_EXISTING)
+            val targetPath = Paths.get(current.path.getAbsolutePath + s"/notification/${title}.xlsx")
+            Files.move(excel.toPath, targetPath, REPLACE_EXISTING)
 
-        import play.api.libs.mailer._
-        import play.api.Play.current
-        val userOpt = User.getUserById(ticket.owner_id)
-        if (userOpt.isDefined) {
-          val user = userOpt.get
-          val ticketTypeStr = TicketType.map(ticket.ticketType)
-          val mtType = ticket.monitorType.map(MonitorType.map(_).desp)
-          val msg = s"維修案件 $ret : ${Monitor.map(ticket.monitor).name}-${ModelHelper.formatOptStr(mtType)}"
-          val htmlMsg = s"<html><body><p><b>$msg</b></p></body></html>"
-          
-          val email = Email(
-            s"維修案件: ${Monitor.map(ticket.monitor).name}-${ModelHelper.formatOptStr(mtType)}",
-            "案件通報 <karateboy.huang@gmail.com>",
-            List(user.email),
-            // adds attachment
-            attachments = Seq(),
-            // sends text, HTML or both...
-            bodyText = Some(msg),
-            bodyHtml = Some(htmlMsg))
+            import play.api.libs.mailer._
+            import play.api.Play.current
+            val userOpt = User.getUserById(ticket.owner_id)
+            if (userOpt.isDefined) {
+              val user = userOpt.get
+              val ticketTypeStr = TicketType.map(ticket.ticketType)
+              val mtType = ticket.monitorType.map(MonitorType.map(_).desp)
+              val msg = s"維修案件  : ${Monitor.map(ticket.monitor).name}-${ModelHelper.formatOptStr(mtType)}"
+              val htmlMsg = s"<html><body><p><b>$msg</b></p></body></html>"
 
-          MailerPlugin.send(email)
-          SmsSender.send(List(user), msg)
+              val email = Email(
+                s"維修案件: ${Monitor.map(ticket.monitor).name}-${ModelHelper.formatOptStr(mtType)}",
+                "案件通報 <karateboy.huang@gmail.com>",
+                List(user.email),
+                // adds attachment
+                attachments = Seq(),
+                // sends text, HTML or both...
+                bodyText = Some(msg),
+                bodyHtml = Some(htmlMsg))
+
+              MailerPlugin.send(email)
+              SmsSender.send(List(user), msg)
+            }
+          }
         }
-
       }
 
       ret
@@ -325,6 +330,17 @@ object Ticket {
       """.map { ticketMapper }.single().apply()
   }
 
+  case class TicketPhoto(photos: List[Option[java.sql.Blob]])
+  def getTicketPhoto(ID: Int)(implicit session: DBSession = AutoSession) = {
+    sql"""
+      Select Photo1, Photo2
+      From Ticket
+      Where id = ${ID}
+      """.map { rs =>
+      TicketPhoto(List(rs.blobOpt(1), rs.blobOpt(2)))
+    }.single().apply()
+  }
+
   def getPreviousTicket(ticket: Ticket)(implicit session: DBSession = AutoSession) = {
     sql"""
       Select Top 1 *
@@ -344,6 +360,24 @@ object Ticket {
         Where ID = ${ticket.id}
         """.update.apply
     }
+  }
+
+  import java.io.File
+  def attachPhoto(id: Int, photo: File)(implicit session: DBSession = AutoSession) = {
+    import java.io.InputStream
+    import java.io.FileInputStream
+    import java.sql._
+
+    val inputStream = new FileInputStream(photo)
+    val bytesBinder = ParameterBinder[InputStream](
+      inputStream,
+      binder = (stmt: PreparedStatement, idx: Int) => stmt.setBinaryStream(idx, inputStream, photo.length))
+
+    sql"""
+      Update Ticket
+      Set photo1 = ${bytesBinder}
+      Where ID = $id
+      """.update.apply
   }
 
   def transferTickets(old_id: Int, new_id: Int) = {

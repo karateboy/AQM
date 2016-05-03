@@ -178,18 +178,37 @@ object Maintance extends Controller {
 
   def attachTicketPhoto(id:Int) = Security.Authenticated(parse.multipartFormData)  {
     implicit request =>
+      Logger.debug("attachTicketPhoto")
     request.body.file("photo").map { picture =>
       import java.io.File
       val filename = picture.filename
       val contentType = picture.contentType
-      //picture.ref.moveTo(new File(s"/tmp/picture/$filename"))
-      Logger.info(s"$filename is uploaded")
-      Ok("File uploaded")
+      Ticket.attachPhoto(id, picture.ref.file)
+      
+      Ok(Json.obj("ok" -> true))
     }.getOrElse {
-      Redirect(routes.Application.index).flashing(
-        "error" -> "Missing file")
+      Ok(Json.obj("ok" -> false))
     }
   }
+  
+  def getTicketPhoto(id:Int, idx:Int) = Security.Authenticated {
+    implicit request =>
+    import org.apache.commons.io._
+    val ticketPhotoOpt = Ticket.getTicketPhoto(id)
+    if(ticketPhotoOpt.isDefined){
+      val ticketPhoto = ticketPhotoOpt.get
+      val byte1 = 
+        ticketPhoto.photos(idx).map { blob => IOUtils.toByteArray(blob.getBinaryStream) }
+        
+      if(byte1.isDefined){
+        Ok(byte1.get).as("image/jpeg")
+      }else{
+        Ok(Array.emptyByteArray).as("image/jpeg")  
+      }
+    }else
+      Ok(Array.emptyByteArray).as("image/jpeg")
+  }
+
   def updateForm(ID: Int) = Security.Authenticated(BodyParsers.parse.json) {
     import Ticket._
     implicit request =>

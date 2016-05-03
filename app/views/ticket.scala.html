@@ -104,6 +104,14 @@
             </div>
         </div>
         <div class="panel panel-success" id="reportPanel">
+        	<div class="row">
+        		<div class="col-lg-6">
+        			<img class="img-responsive" src="/AttachTicketPhoto/@ticket.id/0" alt="照片1"/>        			
+        		</div>
+        		<div class="col-lg-6">
+        			<img class="img-responsive" src="/AttachTicketPhoto/@ticket.id/1" alt="照片2"/>        			
+        		</div> 
+        	</div>
         	<div class="panel-heading panel-title" >
             	<a data-toggle="collapse" data-parent="#accordion" href="#ticketForm">附加照片</a>	
             </div>
@@ -113,7 +121,7 @@
     					<input class="btn btn-primary" type="file" name="photo" id="photoFile">
     				</div>
     				<div class="form-group">
-    					<button type="submit" class="btn btn-primary" id="attachPhoto">上傳</button>
+    					<button type="button" class="btn btn-primary" id="attachPhoto">上傳</button>
     				</div>
 				</form>
             </div>
@@ -238,25 +246,27 @@ $( document ).ready(function() {
 		
 	});
 
-	$('#attachPhotoform').submit(function ( e ) {
+	$('#attachPhoto').click(function () {
 	    var data;
 	
 	    data = new FormData();
-	    data.append('photo', $('#photoFile')[0].files[0] );
-
-	    console.log("#attachPhotoform");
+	    var $photoFile = $('#photoFile');
+	    console.log($photoFile);
+	    data.append('photo', $('#photoFile')[0].files[0]);
 	    
 	    $.ajax({
 	        url: "/AttachTicketPhoto/" + ticketId,
 	        data: data,
+	        cache: false,
+	        dataType: 'json',
+	        contentType: false,
 	        processData: false,
 	        type: 'POST',
 	        success: function ( data ) {
-	            alert( data );
+		        if(data.ok)
+	            	alert("上傳成功");
 	        }
 	    });
-
-	    e.preventDefault();
 	});
 	//Fire change event
 	$("input[name='ticketType']:checked").change();	
