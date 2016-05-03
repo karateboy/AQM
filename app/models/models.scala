@@ -38,6 +38,24 @@ object ModelHelper {
     val timestamp = DateTime.parse("2015-04-01")
     println(timestamp.toString())
   }
+  
+  def formatOptStr(strOpt : Option[String])={
+    if(strOpt.isDefined)
+      strOpt.get
+    else
+      "-"
+  }
+  
+  def formatOptBool(boolOpt : Option[Boolean])={
+    if(boolOpt.isDefined){
+      if(boolOpt.get)
+        "是"
+      else
+        "否"
+    }else
+      "否"
+  }
+
 }
 
 object EnumUtils {

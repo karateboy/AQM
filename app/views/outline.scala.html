@@ -44,9 +44,9 @@
 	<script src='@routes.Assets.at("js/plugins/slimscroll/jquery.slimscroll.min.js")'></script>
 
     <!-- Data Tables -->
-    <script src='@routes.Assets.at("js/plugins/dataTables/jquery.dataTables.min.js")'></script>
+    <script src='@routes.Assets.at("js/plugins/dataTables/jquery.dataTables.js")'></script>
     <script src='@routes.Assets.at("js/plugins/dataTables/dataTables.bootstrap.js")'></script>
-    <script src='@routes.Assets.at("js/plugins/dataTables/dataTables.responsive.min.js")'></script>
+    <script src='@routes.Assets.at("js/plugins/dataTables/dataTables.responsive.js")'></script>
     <script src='@routes.Assets.at("js/plugins/dataTables/dataTables.tableTools.min.js")'></script>
     
     <script src='@routes.Assets.at("js/plugins/datepicker/bootstrap-datepicker.min.js")'></script>
@@ -208,6 +208,23 @@
             <li>
                 <a href="#"><i class="fa fa-desktop"></i> <span class="nav-label">系統管理</span></a>
                 <ul class="nav nav-second-level">
+                	<li>
+                    	<a href="#">警報案件<span class="fa arrow"></span></a>
+                            <ul class="nav nav-third-level">                            	
+                                <li>
+                                    <a href="#" onClick="loadPage('/AlarmNoTicketList','警報案件','待立案')">待立案</a>
+                                </li>
+                                <li>
+                                    <a href="#" onClick="loadPage('/ManualAlarmTicket','警報案件','人工立案')">人工立案</a>
+                                </li>
+                                <li>
+                                    <a href="#" onClick="loadPage('/ReparingAlarmTicket','警報案件','維修中案件')">維修中案件</a>
+                                </li>
+                                <li>
+                                    <a href="#" onClick="loadPage('/CloseTicket','警報案件','簽結案件')">簽結案件</a>
+                                </li>
+                            </ul>
+                    </li>
                 	<li><a href="#" onClick="loadPage('/MonitorStatusConfig','系統管理','狀態碼管理')">狀態碼管理</a></li>                    
                     <li><a href="#" onClick="loadPage('/MonitorTypeConfig','系統管理','測項參數')">測項參數</a></li>
                     <li><a href="#" onClick="loadPage('/Monitor','系統管理','測站管理')">測站管理</a></li>
@@ -215,7 +232,7 @@
                     <li><a href="#" onClick="loadPage('/AuditConfig','系統管理','資料檢核設定')">資料檢核設定</a></li>
                     <li><a href="#" onClick="loadPage('/ManualAudit','系統管理','人工資料註記')">人工資料註記</a></li>
                     <li><a href="#" onClick="loadPage('/ManualAuditQuery','系統管理','人工註記查詢')">人工註記查詢</a></li>
-                    <li><a href="#" onClick="loadPage('/GroupManagement','系統管理','管理權限')">管理權限</a></li>                   
+                    <li><a href="#" onClick="loadPage('/GroupManagement','系統管理','群組權限')">群組權限</a></li>                   
                     <li><a href="#" onClick="loadPage('/UserManagement','系統管理','使用者管理')">使用者管理</a></li>
                     <li><a href="#" onClick="loadPage('/RecordValidation','系統管理','資料傳輸狀況')">資料傳輸狀況</a></li>
                     <li><a href="#" onClick="loadPage('/RealtimeEpaRecord','系統管理','環保署及時資料')">環保署及時資料</a></li>
@@ -229,19 +246,19 @@
             	<ul class="nav nav-second-level">
             		<li>
                     	<a href="#">案件管理<span class="fa arrow"></span></a>
-                            <ul class="nav nav-third-level">
+                            <ul class="nav nav-third-level">                            	
                                 <li>
                                     <a href="#" onClick="loadPage('/NewTicket','維修保養','新增案件')">新增案件</a>
                                 </li>
                                 <li>
                                     <a href="#" onClick="loadPage('/QueryTicket','維修保養','案件查詢')">案件查詢</a>
                                 </li>
+                                <li><a href="#" onClick="loadPage('/MyTicket','維修保養','我的案件')">我的案件</a></li>
                                 <li>
-                                    <a href="#" onClick="loadPage('/CloseTicket','維修保養','結束案件')">結束案件</a>
+                                    <a href="#" onClick="loadPage('/CloseTicket','維修保養','簽結案件')">簽結案件</a>
                                 </li>
                             </ul>
-                        </li>
-            		<li><a href="#" onClick="loadPage('/MyTicket','維修保養','我的案件')">我的案件</a></li>
+                    </li>
             		<li><a href="#" onClick="loadPage('/EquipmentHistory','維修保養','儀器保養履歷')">儀器保養履歷</a></li>
             		<li><a href="#" onClick="loadPage('/MonitorJournal','維修保養','測站工作日誌')">測站工作日誌</a></li>
             		<li><a href="#" onClick="loadPage('/EquipmentManagement','維修保養','設備管理')">設備管理</a></li>
@@ -275,14 +292,23 @@
                 </a>
                 <ul id="alert_list" class="dropdown-menu dropdown-alerts">
                     <li class="divider"></li>
-                    <li id="alarmQuery">
-                        <div class="text-center link-block">
-                            <a href="#" onClick="loadPage('/Alarm','數據查詢','警報記錄查詢')">
-                                <strong>警報記錄查詢</strong>
-                                <i class="fa fa-angle-right"></i>
-                            </a>
-                        </div>
-                    </li>
+                    <div id="alarmLinks">
+						<li id="alarmQuery">
+                    		<a class="text-left link-block" href="#" onClick="loadPage('/Alarm','數據查詢','警報記錄查詢')"><strong>警報記錄查詢</strong></a>
+                    	</li>
+                    	<li id="alarmTicket1">
+                    		<a class="text-left link-block" href="#" onClick="loadPage('/AlarmNoTicketList','警報案件','待立案')"><strong>待立案</strong></a>
+                    	</li>
+                    	<li id="alarmTicket2">
+                    		<a class="text-left link-block" href="#" onClick="loadPage('/ManualAlarmTicket','警報案件','人工立案')"><strong>人工立案</strong></a>
+                    	</li>
+                    	<li id="alarmTicket3">
+                    		<a class="text-left link-block" href="#" onClick="loadPage('/ReparingAlarmTicket','警報案件','維修中案件')"><strong>維修中案件</strong></a>
+                    	</li>
+                    	<li id="alarmTicket4">
+                    		<a class="text-left link-block" href="#" onClick="loadPage('/CloseTicket','警報案件','簽結案件')"><strong>簽結案件</strong></a>
+                    	</li>						                    
+                    </div>
                 </ul>
             </li>
 
@@ -331,12 +357,15 @@
 		else
 			$alert_count.text(nAlert);
 	}
+
+	var audio = new Audio('/assets/sound/beep4.wav');
 	
 	nSocket = new WebSocket(n_url);
 	nSocket.onmessage = function(evt){
 		var cmd = evt.data.split("!");
 		if(cmd[0] == "alert"){	
 			nAlert++;
+			audio.play();
 			var $firstItem = $('#alert_list li:first');
 			var item = "<li style='Color:Blue'>" + cmd[1] + "</li>";
 			$firstItem.before(item);
@@ -361,7 +390,8 @@
 		nAlert = 0;
 		updateAlertCount();
 	})
-	var $alarmQueryLi = $('#alarmQuery').html();
+	var $alarmLinks = $("#alarmLinks").html();
+	
 	$('#alertButton').on('hidden.bs.dropdown', function () {
 		var $alertList = $('#alert_list');		
 		$alertList.empty();
@@ -371,8 +401,7 @@
 		}
 		
 		$alertList.append('<li class="divider"></li>');
-		$alertList.append($alarmQueryLi);
-		//onClick="loadPage("/Alarm","數據查詢","警報記錄查詢")"
+		$alertList.append($alarmLinks);
 	})
 		 
 	updateAlertCount();

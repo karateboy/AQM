@@ -4,10 +4,58 @@
    	<div class="col-lg-12">
    		<div class="panel panel-success">
         	<div class="panel-body">
- 				<div id="reportDiv">
- 					@ticketReport(tickets, userMap)
-            	</div>
+ 				@ticketReport(tickets, userMap, true)
+ 				<div class="alert alert-info">
+ 					<p>呈報結案: 案件呈報建立者, 等待建立者結案</p>					
+ 				</div>
+ 				
+				<div class="col-lg-1 col-lg-offset-1">
+					<button type="button" class="btn btn-primary" id="closeTicket">呈報結案</button>							
+				</div>
             </div>
         </div>
 	</div>
 </div>
+
+<script>
+$(document ).ready(function() {
+	function handler(url_head){
+		return function(){
+			var $ids = $("#ticketReport :checked");
+			if($ids.length ==0)
+				return;
+			
+			var ticketId = [];
+			for(var i=0;i<$ids.length;i++){
+				var $check = $ids.eq(i);
+				ticketId.push(parseInt($check.val()));
+			}
+
+			var url = url_head + ticketId.join(":"); 
+			
+			$.ajax({
+				url : url,
+				data : JSON.stringify(ticketId),
+				contentType : "application/json; charset=utf-8",
+				type : "POST",
+				dataType : "json",
+				success : function(result) {
+					if(result.ok){
+						alert("成功更新");
+						loadPage('/MyTicket','維修保養','我的案件');
+					}				
+				},
+				error : function(xhr, status, errorThrown) {
+					console.log("錯誤訊息:" + status + "-" + errorThrown);
+				},
+
+				complete : function(xhr, status) {
+					$("body").css("cursor", "default");
+				}
+			});
+		};
+	}
+	
+	$("#closeTicket").click(handler("/CloseTicket/"));
+});
+</script>

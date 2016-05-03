@@ -103,6 +103,21 @@
  				
             </div>
         </div>
+        <div class="panel panel-success" id="reportPanel">
+        	<div class="panel-heading panel-title" >
+            	<a data-toggle="collapse" data-parent="#accordion" href="#ticketForm">附加照片</a>	
+            </div>
+        	<div class="panel-body panel-collapse">
+ 				<form action="/AttachTicketPhoto/@ticket.id" method="post" enctype="multipart/form-data" id="attachPhotoForm">
+ 					<div class="form-group">
+    					<input class="btn btn-primary" type="file" name="photo" id="photoFile">
+    				</div>
+    				<div class="form-group">
+    					<button type="submit" class="btn btn-primary" id="attachPhoto">上傳</button>
+    				</div>
+				</form>
+            </div>
+        </div>
 	</div>
 </div>
 <script>
@@ -223,6 +238,26 @@ $( document ).ready(function() {
 		
 	});
 
+	$('#attachPhotoform').submit(function ( e ) {
+	    var data;
+	
+	    data = new FormData();
+	    data.append('photo', $('#photoFile')[0].files[0] );
+
+	    console.log("#attachPhotoform");
+	    
+	    $.ajax({
+	        url: "/AttachTicketPhoto/" + ticketId,
+	        data: data,
+	        processData: false,
+	        type: 'POST',
+	        success: function ( data ) {
+	            alert( data );
+	        }
+	    });
+
+	    e.preventDefault();
+	});
 	//Fire change event
 	$("input[name='ticketType']:checked").change();	
 });

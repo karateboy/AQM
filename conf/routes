@@ -166,11 +166,13 @@ POST	/NewTicket/:id		controllers.Maintance.newTicketAction(id)
 GET		/QueryTicket		controllers.Maintance.queryTicket
 GET		/TicketReport/:ticketTypes/:monitors/:start/:end	controllers.Maintance.ticketReport(ticketTypes, monitors, start, end)
 GET		/Ticket/:ID			controllers.Maintance.ticket(ID:Int)
+POST	/AttachTicketPhoto/:id controllers.Maintance.attachTicketPhoto(id:Int)
 POST	/UpdateTicket/:ID	controllers.Maintance.updateTicket(ID:Int)
 POST	/UpdateForm/:ID		controllers.Maintance.updateForm(ID:Int)
 POST	/UpdateRepairForm/:ID	controllers.Maintance.updateRepairForm(ID: Int)
 GET		/CloseTicket		controllers.Maintance.closeTicket
 POST	/CloseTicket/:ids	controllers.Maintance.closeTicketAction(ids)
+POST	/ResumeTicket/:ids	controllers.Maintance.resumeTicketAction(ids)
 GET		/DownloadForm/:ID	controllers.Maintance.downloadForm(ID:Int)
 
 GET		/Form/:ID	controllers.Maintance.getForm(ID:Int)
@@ -198,6 +200,13 @@ GET		/DutySchedule		controllers.Maintance.dutySchedule
 GET		/DownloadNotification	controllers.Maintance.downloadNotification
 GET		/DownloadNotificationForm/:start/:end	controllers.Maintance.downloadNotificationForm(start, end)
 GET		/MaintanceSchedule		controllers.Maintance.maintanceSchedule
+
+#Alarm Ticket
+GET		/AlarmNoTicketList		controllers.Maintance.alarmNoTicketList
+POST	/AlarmToTicket			controllers.Maintance.alarmToTicket
+GET		/ManualAlarmTicket		controllers.Maintance.manualAlarmTicket
+GET		/ReparingAlarmTicket	controllers.Maintance.repairingAlarmTicket
+
 # websockets
 GET		/MinMonthlyReportSocket		controllers.Report.getMinMonthlySocket
 GET		/DownloadMinMonthlyReport/:n	controllers.Report.downloadMinMontlyReport(n: Int)

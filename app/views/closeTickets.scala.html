@@ -6,48 +6,60 @@
    		<div class="panel panel-success">
         	<div class="panel-body">
  				@ticketReport(tickets, userMap, true)
+ 				<div class="alert alert-info">
+ 					<p>結束案件: 使用者如果是案件建立者, 可以結束案件. 如果使用者是案件負責人, 則案件切換至「待結案」等待建立者結案</p> 
+ 					<p>駁回案件: 將案件發還給負責人處理</p>
+ 				</div>
             	<div class="col-lg-1 col-lg-offset-1">
 					<button type="button" class="btn btn-primary" id="closeTicket">結束案件</button>							
-				</div>            	
+				</div>
+				<div class="col-lg-1 col-lg-offset-1">
+					<button type="button" class="btn btn-primary" id="resumeTicket">駁回案件</button>							
+				</div>				            	
             </div>
         </div>
 	</div>
 </div>
 <script>
 $(document ).ready(function() {
-	$("#closeTicket").click(function(){
-		var $ids = $("#ticketReport :checked");
-		if($ids.length ==0)
-			return;
-		
-		var ticketId = [];
-		for(var i=0;i<$ids.length;i++){
-			var $check = $ids.eq(i);
-			ticketId.push(parseInt($check.val()));
-		}
-
-		var url = "/CloseTicket/" + ticketId.join(":"); 
-		
-		$.ajax({
-			url : url,
-			data : JSON.stringify(ticketId),
-			contentType : "application/json; charset=utf-8",
-			type : "POST",
-			dataType : "json",
-			success : function(result) {
-				if(result.ok){
-					alert("成功更新");
-					loadPage('/CloseTicket','維修保養','結束案件');
-				}				
-			},
-			error : function(xhr, status, errorThrown) {
-				console.log("錯誤訊息:" + status + "-" + errorThrown);
-			},
-
-			complete : function(xhr, status) {
-				$("body").css("cursor", "default");
+	function handler(url_head){
+		return function(){
+			var $ids = $("#ticketReport :checked");
+			if($ids.length ==0)
+				return;
+			
+			var ticketId = [];
+			for(var i=0;i<$ids.length;i++){
+				var $check = $ids.eq(i);
+				ticketId.push(parseInt($check.val()));
 			}
-		});
-	});
+
+			var url = url_head + ticketId.join(":"); 
+			
+			$.ajax({
+				url : url,
+				data : JSON.stringify(ticketId),
+				contentType : "application/json; charset=utf-8",
+				type : "POST",
+				dataType : "json",
+				success : function(result) {
+					if(result.ok){
+						alert("成功更新");
+						loadPage('/CloseTicket','維修保養','簽結案件');
+					}				
+				},
+				error : function(xhr, status, errorThrown) {
+					console.log("錯誤訊息:" + status + "-" + errorThrown);
+				},
+
+				complete : function(xhr, status) {
+					$("body").css("cursor", "default");
+				}
+			});
+		};
+	}
+	
+	$("#closeTicket").click(handler("/CloseTicket/"));
+	$("#resumeTicket").click(handler("/ResumeTicket/"));
 });
 </script>

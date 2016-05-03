@@ -50,6 +50,60 @@ object Alarm {
 
   }
 
+  def getAlarmOpt(monitor: Monitor.Value, mItem: String, time: DateTime)(implicit session: DBSession = AutoSession) = {
+    val tab = getTabName(time.getYear)
+    val timeT : Timestamp = time
+    sql"""
+        Select *
+        From ${tab}
+        Where DP_NO = ${monitor.toString} and M_DateTime=${timeT} and M_ITEM = ${mItem}
+        """.map {
+      rs =>
+        Alarm(Monitor.withName(rs.string(1)), rs.string(2), rs.timestamp(3), rs.float(4),
+          MonitorStatus.getTagInfo(rs.string(5).trim()).toString, rs.stringOpt(6))
+    }.single.apply
+  }
+
+  def getAlarmNoTicketList(start: DateTime)(implicit session: DBSession = AutoSession) = {
+    val tab = getTabName(start.getYear)
+    val startT: Timestamp = start
+    sql"""
+        Select *
+        From ${tab}
+        Where M_DateTime>=${startT} and CHK is NULL
+        ORDER BY M_DateTime ASC
+        """.map {
+      rs =>
+        Alarm(Monitor.withName(rs.string(1)), rs.string(2), rs.timestamp(3), rs.float(4),
+          MonitorStatus.getTagInfo(rs.string(5).trim()).toString, rs.stringOpt(6))
+    }.list.apply
+  }
+
+  def getFirstAlarmNoTicket(start: DateTime)(implicit session: DBSession = AutoSession) = {
+    val tab = getTabName(start.getYear)
+    val startT: Timestamp = start
+    sql"""
+        Select Top 1 *
+        From ${tab}
+        Where M_DateTime>=${startT} and CHK is NULL
+        ORDER BY M_DateTime ASC
+        """.map {
+      rs =>
+        Alarm(Monitor.withName(rs.string(1)), rs.string(2), rs.timestamp(3), rs.float(4),
+          MonitorStatus.getTagInfo(rs.string(5).trim()).toString, rs.stringOpt(6))
+    }.single.apply
+  }
+
+  def updateAlarmTicketState(monitor: Monitor.Value, mItem: String, time: DateTime, state: String)(implicit session: DBSession = AutoSession) = {
+    val tab = getTabName(time.getYear)
+    val timeT: Timestamp = time
+    sql"""
+        Update ${tab}
+        Set CHK = $state
+        Where DP_NO = ${monitor.toString()} and M_DateTime = ${timeT} and M_ITEM = ${mItem}
+        """.update.apply
+  }
+
   def insertAlarm(ar: Alarm) = {
     val tab = getTabName(ar.time.getYear)
     def checkExist() = {

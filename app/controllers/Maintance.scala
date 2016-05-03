@@ -27,12 +27,13 @@ object Maintance extends Controller {
       val userInfo = Security.getUserinfo(request).get
       val group = Group.getGroup(userInfo.groupID).get
       val adminUsers = User.getAdminUsers()
-
-      Ok(views.html.newTicket(userInfo, group.privilege, adminUsers))
+      val ticketTypes = TicketType.values.toList.sorted
+      Ok(views.html.newTicket(userInfo, group.privilege, adminUsers, ticketTypes))
   }
 
   case class TicketParam(ticketType: TicketType.Value, monitors: Seq[Monitor.Value],
-                         monitorTypes: Seq[MonitorType.Value], reason: String, owner: Int, executeDate: Seq[String])
+                         monitorTypes: Seq[MonitorType.Value], reason: String, owner: Int, executeDate: Seq[String],
+                         repairType: Option[String], repairSubType: Option[String])
 
   implicit val newTicketParamRead = Json.reads[TicketParam]
 
@@ -54,7 +55,8 @@ object Maintance extends Controller {
                 date <- ticketParam.executeDate
               } yield {
                 Ticket(0, DateTime.now, true, ticketParam.ticketType, submiterId,
-                  ticketParam.owner, m, None, ticketParam.reason, DateTime.parse(date), Json.toJson(Ticket.defaultFormData).toString)
+                  ticketParam.owner, m, None, ticketParam.reason, DateTime.parse(date), Json.toJson(Ticket.defaultFormData).toString,
+                  None, None, Some(false))
               }
             } else {
               for {
@@ -63,23 +65,13 @@ object Maintance extends Controller {
                 date <- ticketParam.executeDate
               } yield {
                 Ticket(0, DateTime.now, true, ticketParam.ticketType, submiterId,
-                  ticketParam.owner, m, Some(mt), ticketParam.reason, DateTime.parse(date), Json.toJson(Ticket.defaultRepairFormData).toString)
+                  ticketParam.owner, m, Some(mt), ticketParam.reason, DateTime.parse(date), Json.toJson(Ticket.defaultRepairFormData).toString,
+                  ticketParam.repairType, ticketParam.repairSubType, Some(false))
               }
             }
-          var epbNotification = false
-          for (t <- tickets){
+          for (t <- tickets)
             Ticket.newTicket(t)
-            if(t.ticketType == TicketType.repair && !epbNotification){
-              val excel = ExcelUtility.epbNotification(List(t))
-              val title = s"環保局通報單_${Monitor.map(t.monitor).name}${t.submit_date.toString("MMdd_HHmm")}"
-              
-              import java.nio.file.StandardCopyOption._
-              import java.nio.file.Paths
-              val targetPath = Paths.get(current.path.getAbsolutePath + s"/notification/${title}.xlsx")
-              Files.move(excel.toPath, targetPath, REPLACE_EXISTING)
-              epbNotification = true
-            }
-          }
+
           Ok(Json.obj("ok" -> true, "nNewCase" -> tickets.length))
         })
   }
@@ -169,14 +161,14 @@ object Maintance extends Controller {
               mt,
               param.reason,
               executeDate,
-              if (t.ticketType == param.ticketType){
+              if (t.ticketType == param.ticketType) {
                 t.formJson
-              }else{
-                 if(param.ticketType == TicketType.repair)
-                   Json.toJson(defaultRepairFormData).toString
-                 else
-                   Json.toJson(Ticket.defaultFormData).toString
-              })
+              } else {
+                if (param.ticketType == TicketType.repair)
+                  Json.toJson(defaultRepairFormData).toString
+                else
+                  Json.toJson(Ticket.defaultFormData).toString
+              }, t.repairType, t.repairSubType, t.readyToClose)
 
             Ticket.updateTicket(newT)
             Ok(Json.obj("ok" -> true))
@@ -184,6 +176,20 @@ object Maintance extends Controller {
         })
   }
 
+  def attachTicketPhoto(id:Int) = Security.Authenticated(parse.multipartFormData)  {
+    implicit request =>
+    request.body.file("photo").map { picture =>
+      import java.io.File
+      val filename = picture.filename
+      val contentType = picture.contentType
+      //picture.ref.moveTo(new File(s"/tmp/picture/$filename"))
+      Logger.info(s"$filename is uploaded")
+      Ok("File uploaded")
+    }.getOrElse {
+      Redirect(routes.Application.index).flashing(
+        "error" -> "Missing file")
+    }
+  }
   def updateForm(ID: Int) = Security.Authenticated(BodyParsers.parse.json) {
     import Ticket._
     implicit request =>
@@ -266,10 +272,53 @@ object Maintance extends Controller {
   }
 
   def closeTicketAction(idStr: String) = Security.Authenticated {
-    val ids = idStr.split(":").toList
-    val idInt = ids.map { Integer.parseInt }
-    Ticket.closeTicket(idInt)
-    Ok(Json.obj("ok" -> true))
+    implicit request =>
+      val myself = request.user.id
+      val ids = idStr.split(":").toList
+      val idList = ids.map { Integer.parseInt }
+      Ticket.readyToCloseOwnerTicket(idList, myself, true)
+      Ticket.closeTicket(idList, myself)
+      Ok(Json.obj("ok" -> true))
+  }
+
+  def resumeTicketAction(idStr: String) = Security.Authenticated {
+    implicit request =>
+      val myself = request.user.id
+      val ids = idStr.split(":").toList
+      val idList = ids.map { Integer.parseInt }
+      Ticket.readyToCloseSubmitterTicket(idList, myself, false)
+      for (id <- idList) {
+        val ticketOpt = Ticket.getTicket(id)
+        ticketOpt.map {
+          ticket =>
+            if (ticket.ticketType == TicketType.repair) {
+              import play.api.libs.mailer._
+              import play.api.Play.current
+              val userOpt = User.getUserById(ticket.owner_id)
+              if (userOpt.isDefined) {
+                val user = userOpt.get
+                val ticketTypeStr = TicketType.map(ticket.ticketType)
+                val mtType = ticket.monitorType.map(MonitorType.map(_).desp)
+                val msg = s"駁回維修案件 $id : ${Monitor.map(ticket.monitor).name}-${ModelHelper.formatOptStr(mtType)}"
+                val htmlMsg = s"<html><body><p><b>$msg</b></p></body></html>"
+
+                val email = Email(
+                  s"駁回維修案件: ${Monitor.map(ticket.monitor).name}-${ModelHelper.formatOptStr(mtType)}",
+                  "案件通報 <karateboy.huang@gmail.com>",
+                  List(user.email),
+                  // adds attachment
+                  attachments = Seq(),
+                  // sends text, HTML or both...
+                  bodyText = Some(msg),
+                  bodyHtml = Some(htmlMsg))
+
+                MailerPlugin.send(email)
+                SmsSender.send(List(user), msg)
+              }
+            }
+        }
+      }
+      Ok(Json.obj("ok" -> true))
   }
 
   def downloadForm(Id: Int) = Security.Authenticated {
@@ -287,7 +336,7 @@ object Maintance extends Controller {
       val title = TicketType.map(ticket.ticketType) + ticket.id
       val excelFile =
         ticket.ticketType match {
-          case TicketType.maintance_week =>{
+          case TicketType.maintance_week => {
             val previousTicketOpt = Ticket.getPreviousTicket(ticket)
             ExcelUtility.exportWeekForm(ticket, usrMap, previousTicketOpt)
           }
@@ -320,30 +369,31 @@ object Maintance extends Controller {
       Ok(views.html.equipmentHistory(userInfo, group.privilege, adminUsers))
   }
 
-  def equipmentHistoryReport(monitorStr: String, monitorTypeStr:String, startStr: String, endStr: String, outputTypeStr:String) = Security.Authenticated {
-      val monitors = monitorStr.split(":").map { Monitor.withName }
-      val monitorType = MonitorType.withName(monitorTypeStr)
-      val start = DateTime.parse(startStr)
-      val end = DateTime.parse(endStr) + 1.day
-      val outputType = OutputType.withName(outputTypeStr)
+  def equipmentHistoryReport(monitorStr: String, monitorTypeStr: String, startStr: String, endStr: String, outputTypeStr: String) = Security.Authenticated {
+    val monitors = monitorStr.split(":").map { Monitor.withName }
+    val monitorType = MonitorType.withName(monitorTypeStr)
+    val start = DateTime.parse(startStr)
+    val end = DateTime.parse(endStr) + 1.day
+    val outputType = OutputType.withName(outputTypeStr)
 
-      val tickets = Ticket.queryTickets(start, end)
-      val filterTicket = tickets.filter { t => 
-        monitors.contains(t.monitor) && 
-        t.ticketType == TicketType.repair && 
-        t.monitorType.isDefined && 
-        t.monitorType.get == monitorType }
-      val adminUsers = User.getAdminUsers()
-      val usrMap = Map(adminUsers.map { u => (u.id.get -> u) }: _*)
+    val tickets = Ticket.queryTickets(start, end)
+    val filterTicket = tickets.filter { t =>
+      monitors.contains(t.monitor) &&
+        t.ticketType == TicketType.repair &&
+        t.monitorType.isDefined &&
+        t.monitorType.get == monitorType
+    }
+    val adminUsers = User.getAdminUsers()
+    val usrMap = Map(adminUsers.map { u => (u.id.get -> u) }: _*)
 
-    if(outputType == OutputType.html)
+    if (outputType == OutputType.html)
       Ok(views.html.equipmentHistoryReport(filterTicket, usrMap))
-    else{
+    else {
       val excelFile = ExcelUtility.equipmentHistoryReport(filterTicket, start, end)
       Ok.sendFile(excelFile, fileName = _ =>
-            play.utils.UriEncoding.encodePathSegment("儀器保養履歷" + start.toString("YYMMdd")+"_"+
-                end.toString("YYMMdd") + ".xlsx", "UTF-8"),
-            onClose = () => { Files.deleteIfExists(excelFile.toPath()) })
+        play.utils.UriEncoding.encodePathSegment("儀器保養履歷" + start.toString("YYMMdd") + "_" +
+          end.toString("YYMMdd") + ".xlsx", "UTF-8"),
+        onClose = () => { Files.deleteIfExists(excelFile.toPath()) })
     }
   }
 
@@ -354,8 +404,8 @@ object Maintance extends Controller {
 
       Ok(views.html.monitorJournal(group.privilege))
   }
-  
-  def monitorJournalReport(monitorStr:String, dateStr:String, outputTypeStr: String) = Security.Authenticated {
+
+  def monitorJournalReport(monitorStr: String, dateStr: String, outputTypeStr: String) = Security.Authenticated {
     implicit request =>
       import java.sql.Time
       val monitor = Monitor.withName(monitorStr)
@@ -365,15 +415,15 @@ object Maintance extends Controller {
       val report =
         if (reportOpt.isEmpty) {
           MonitorJournal.newReport(monitor, date)
-          val enter_time:java.sql.Time = DateTime.parse("9:00", DateTimeFormat.forPattern("HH:mm"))
-          val out_time:java.sql.Time = DateTime.parse("17:00", DateTimeFormat.forPattern("HH:mm"))
+          val enter_time: java.sql.Time = DateTime.parse("9:00", DateTimeFormat.forPattern("HH:mm"))
+          val out_time: java.sql.Time = DateTime.parse("17:00", DateTimeFormat.forPattern("HH:mm"))
 
           MonitorJournal(date, monitor, "", "", "", None, enter_time, out_time)
         } else
           reportOpt.get
 
       val invalidHourList = MonitorJournal.getInvalidHourList(monitor, date)
-      
+
       val outputType = OutputType.withName(outputTypeStr)
 
       val title = "測站工作日誌"
@@ -393,8 +443,8 @@ object Maintance extends Controller {
             onClose = () => { Files.deleteIfExists(excelFile.toPath()) })
       }
   }
-  
-  def saveMonitorJournalReport(monitorStr:String, dateStr:String) = Security.Authenticated(BodyParsers.parse.json) {
+
+  def saveMonitorJournalReport(monitorStr: String, dateStr: String) = Security.Authenticated(BodyParsers.parse.json) {
     import MonitorJournal._
     implicit request =>
       val monitor = Monitor.withName(monitorStr)
@@ -479,46 +529,43 @@ object Maintance extends Controller {
   }
 
   def testAlarmMail = Security.Authenticated {
-    implicit request =>      
-    val userInfoOpt = Security.getUserinfo(request)
-    val userInfo = userInfoOpt.get
-    val user = User.getUserById(userInfo.id).get
-    
-    val email = Email(
-      "測試警告信",
-      s"麥寮AQMS <aqm6812646@gmail.com>",
-      Seq(s"${user.name} <${user.email}>"),
-      // adds attachment
-      attachments = Seq(),
-      // sends text, HTML or both...
-      bodyText = Some("測試信"),
-      bodyHtml = Some("<html><body><p>測試信</p></body></html>")
-    )
-    
-    try{
-      MailerPlugin.send(email)
-      EventLog.create(EventLog(DateTime.now, EventLog.evtTypeInformAlarm, "送測試信!"))
-      Ok(s"已經送信到${user.email}")
-    }catch{
-      case ex:Exception 
-        =>
+    implicit request =>
+      val userInfoOpt = Security.getUserinfo(request)
+      val userInfo = userInfoOpt.get
+      val user = User.getUserById(userInfo.id).get
+
+      val email = Email(
+        "測試警告信",
+        s"麥寮AQMS <aqm6812646@gmail.com>",
+        Seq(s"${user.name} <${user.email}>"),
+        // adds attachment
+        attachments = Seq(),
+        // sends text, HTML or both...
+        bodyText = Some("測試信"),
+        bodyHtml = Some("<html><body><p>測試信</p></body></html>"))
+
+      try {
+        MailerPlugin.send(email)
+        EventLog.create(EventLog(DateTime.now, EventLog.evtTypeInformAlarm, "送測試信!"))
+        Ok(s"已經送信到${user.email}")
+      } catch {
+        case ex: Exception =>
           Console.print(ex.getCause)
           EventLog.create(EventLog(DateTime.now, EventLog.evtTypeInformAlarm, "送測試信失敗!"))
           Ok(s"無法送信到${user.email}: ${ex.getCause}")
-    }
-    
-    
+      }
+
   }
-  
+
   def dutySchedule = Security.Authenticated {
     Ok(views.html.dutySchedule(""))
   }
-  
-  def eventLog = Security.Authenticated {    
+
+  def eventLog = Security.Authenticated {
     Ok(views.html.eventLog())
   }
-  
-  def eventLogReport(startStr:String, endStr:String)= Security.Authenticated { 
+
+  def eventLogReport(startStr: String, endStr: String) = Security.Authenticated {
     val start = DateTime.parse(startStr)
     val end = DateTime.parse(endStr) + 1.day
     val logs = EventLog.getList(start, end)
@@ -533,57 +580,57 @@ object Maintance extends Controller {
 
     val start = DateTime.parse(startStr)
     val end = DateTime.parse(endStr) + 1.day
-    
+
     val tickets = Ticket.queryActiveTickets(start, end)
 
     if (tickets.length != 0) {
       val excelFile = ExcelUtility.epbNotification(tickets)
       val title = s"環保局通報單${start.toString("MMdd")}_${end.toString("MMdd")}"
-      
+
       Ok.sendFile(excelFile, fileName = _ =>
         play.utils.UriEncoding.encodePathSegment(title + ".xlsx", "UTF-8"),
         onClose = () => { Files.deleteIfExists(excelFile.toPath()) })
 
-    }else{
+    } else {
       val output = views.html.notificationPage(tickets)
       val title = s"查詢區間無定保案件"
       Ok.sendFile(creatPdfWithReportHeaderP(title, output),
         fileName = _ =>
           play.utils.UriEncoding.encodePathSegment(title + ".pdf", "UTF-8"))
     }
-    
+
   }
 
-  case class MaintanceWeekEntry(start:DateTime, end:DateTime, offset:Int, map:Map[Monitor.Value, Map[TicketType.Value, List[Ticket]]])
+  case class MaintanceWeekEntry(start: DateTime, end: DateTime, offset: Int, map: Map[Monitor.Value, Map[TicketType.Value, List[Ticket]]])
   def maintanceSchedule = Security.Authenticated {
     implicit request =>
       val userInfoOpt = Security.getUserinfo(request)
       val userInfo = userInfoOpt.get
 
-    val today = DateTime.now.toLocalDate().toDateTimeAtStartOfDay()
-    val first_day = today - today.getDayOfWeek.day
+      val today = DateTime.now.toLocalDate().toDateTimeAtStartOfDay()
+      val first_day = today - today.getDayOfWeek.day
 
-    def weekTicketMap(offset: Int) = {
-      val begin = first_day + offset.week
-      val tickets = queryAllMaintanceTickets(begin, begin + 1.week)
+      def weekTicketMap(offset: Int) = {
+        val begin = first_day + offset.week
+        val tickets = queryAllMaintanceTickets(begin, begin + 1.week)
 
-      val mPairs =
-        for {
-          monitor <- Monitor.mvList
-          pairs = tickets.map(t => t.monitor -> t)
-          monitorTickets = tickets.filter { t => t.monitor == monitor }
-          ttPair = TicketType.values.toList.map { tt => tt -> monitorTickets.filter { t => t.ticketType == tt } }
-          ttMap = Map(ttPair: _*)
-        } yield monitor -> ttMap
+        val mPairs =
+          for {
+            monitor <- Monitor.mvList
+            pairs = tickets.map(t => t.monitor -> t)
+            monitorTickets = tickets.filter { t => t.monitor == monitor }
+            ttPair = TicketType.values.toList.map { tt => tt -> monitorTickets.filter { t => t.ticketType == tt } }
+            ttMap = Map(ttPair: _*)
+          } yield monitor -> ttMap
 
-      Map(mPairs: _*)
-    }
-    
-    val weekEntries =
-      for( offset <- -4 to 4)
-        yield MaintanceWeekEntry(first_day+offset.week, first_day+offset.week+6.day, offset, weekTicketMap(offset))
+        Map(mPairs: _*)
+      }
 
-    Ok(views.html.maintanceSchedule(weekEntries.toList))
+      val weekEntries =
+        for (offset <- -4 to 4)
+          yield MaintanceWeekEntry(first_day + offset.week, first_day + offset.week + 6.day, offset, weekTicketMap(offset))
+
+      Ok(views.html.maintanceSchedule(weekEntries.toList))
   }
 
   def getMaintanceStr(map: Map[TicketType.Value, List[Ticket]]) = {
@@ -599,11 +646,11 @@ object Maintance extends Controller {
       import scala.collection.mutable.ListBuffer
       val buff = ListBuffer.empty[String]
       for (tt <- maintanceType) {
-        if (map(tt).length != 0){
-          val ticketDates = map(tt).map{ t=>
+        if (map(tt).length != 0) {
+          val ticketDates = map(tt).map { t =>
             val dateStr = t.executeDate.toString("MM/dd")
-            if(t.executeDate < today && t.active)
-             s"""
+            if (t.executeDate < today && t.active)
+              s"""
                <a href="#" onClick="loadPage('/Ticket/${t.id}','維修保養','案件細節')"><font color="red">${dateStr}</font></a>                              
                """
             else
@@ -618,12 +665,89 @@ object Maintance extends Controller {
                 maintance_month -> "月", maintance_quarter -> "季", maintance_half_year -> "半年", maintance_year -> "年")
             }
 
-          buff.append(s"<strong>${ttMap(tt)}</strong>:${ticketDates.mkString(",")}")          
+          buff.append(s"<strong>${ttMap(tt)}</strong>:${ticketDates.mkString(",")}")
         }
       }
 
       buff.mkString("<br/>")
 
     }
+  }
+
+  def alarmNoTicketList() = Security.Authenticated {
+    implicit request =>
+      val start = SystemConfig.getAlarmCheckPoint()
+      val list = Alarm.getAlarmNoTicketList(start)
+
+      Ok(views.html.alarmNoTicketList(list))
+  }
+
+  case class AlarmId(monitor: Monitor.Value, mItem: String, time: Long)
+  case class AlarmToTicketParam(status: String, alarmToTicketList: Seq[AlarmId])
+  def alarmToTicket() = Security.Authenticated(BodyParsers.parse.json) {
+    implicit request =>
+      val user = request.user
+      implicit val idReads = Json.reads[AlarmId]
+      implicit val paramReads = Json.reads[AlarmToTicketParam]
+      val alarmToTicketParam = request.body.validate[AlarmToTicketParam]
+      alarmToTicketParam.fold(
+        error => {
+          Logger.error(JsError.toFlatJson(error).toString())
+          BadRequest(Json.obj("ok" -> false, "msg" -> JsError.toFlatJson(error)))
+        },
+        param => {
+          val defaultTicketOwner = SystemConfig.getAlarmTicketDefaultUserId()
+          for (alarmId <- param.alarmToTicketList) {
+            Alarm.updateAlarmTicketState(alarmId.monitor, alarmId.mItem, new DateTime(alarmId.time), param.status)
+            val arOpt = Alarm.getAlarmOpt(alarmId.monitor, alarmId.mItem, new DateTime(alarmId.time))
+            if (arOpt.isDefined) {
+              val ar = arOpt.get
+              val ar_state =
+                if (ar.mVal == 0)
+                  "恢復正常"
+                else
+                  "觸發"
+
+              val reason = s"${ar.time.toString("YYYY/MM/dd HH:mm")} ${Monitor.map(ar.monitor).name}:${Alarm.map(alarmId.mItem)}-${MonitorStatus.map(ar.code).desp}:${ar_state}"
+              val mtOpt = try {
+                Some(MonitorType.withName(ar.mItem))
+              } catch {
+                case ex: Throwable =>
+                  None
+              }
+              val (repairType, repairSubType) = if (mtOpt.isDefined) {
+                (Some("數據"), Some(MonitorType.map(mtOpt.get).desp))
+              } else
+                (None, None)
+
+              val ticket = Ticket(0, DateTime.now, true, TicketType.repair, user.id,
+                SystemConfig.getAlarmTicketDefaultUserId(), alarmId.monitor, mtOpt, reason,
+                ar.time, Json.toJson(Ticket.defaultRepairFormData).toString, repairType, repairSubType, Some(false))
+              Ticket.newTicket(ticket)
+            }
+          }
+
+          Ok(Json.obj("ok" -> true, "count" -> param.alarmToTicketList.length))
+        })
+
+  }
+  def manualAlarmTicket() = Security.Authenticated {
+    implicit request =>
+      val userInfo = Security.getUserinfo(request).get
+      val group = Group.getGroup(userInfo.groupID).get
+      val adminUsers = User.getAdminUsers()
+
+      Ok(views.html.newTicket(userInfo, group.privilege, adminUsers, List(TicketType.repair)))
+  }
+
+  def repairingAlarmTicket() = Security.Authenticated {
+    implicit request =>
+      val userInfo = request.user
+      val group = Group.getGroup(userInfo.groupID).get
+      val tickets = Ticket.ticketSubmittedByMe(userInfo.id, false)
+      val allUsers = User.getAllUsers()
+      val usrMap = Map(allUsers.map { u => (u.id.get -> u) }: _*)
+
+      Ok(views.html.repairingTickets(tickets, usrMap))
   }
 }

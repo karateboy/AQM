@@ -44,9 +44,8 @@ object SystemConfig{
   
   val dtPattern = "YYYY-MM-dd HH:mm"
   val AlarmCheckPointKey = "AlarmCheckPoint"
-  def getAlarmCheckPoint()={
-        
-    val checkPoint = SystemConfig.getConfig(AlarmCheckPointKey, DateTime.now().toString(dtPattern))
+  def getAlarmCheckPoint()={        
+    val checkPoint = SystemConfig.getConfig(AlarmCheckPointKey, "2016-04-29 00:00")
     DateTime.parse(checkPoint, DateTimeFormat.forPattern(dtPattern))    
   }
   
@@ -54,6 +53,17 @@ object SystemConfig{
     val checkPoint = time.toString(dtPattern)
     SystemConfig.setConfig(AlarmCheckPointKey, checkPoint)
   }
+  
+  val AlarmTicketDefaultUserIdKey = "AlarmTicketDefaultUserId"
+  def getAlarmTicketDefaultUserId()={        
+    val userId = SystemConfig.getConfig(AlarmTicketDefaultUserIdKey, "5")
+    userId.toInt
+  }
+  
+  def setAlarmTicketDefaultUserId(id:Int)={
+    SystemConfig.setConfig(AlarmTicketDefaultUserIdKey, id.toString)
+  }
+  
   
   var map = {
     val configPair =
