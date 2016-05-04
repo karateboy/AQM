@@ -118,7 +118,8 @@
         	<div class="panel-body panel-collapse">
  				<form action="/AttachTicketPhoto/@ticket.id" method="post" enctype="multipart/form-data" id="attachPhotoForm">
  					<div class="form-group">
-    					<input class="btn btn-primary" type="file" name="photo" id="photoFile">
+    					<input class="btn btn-info" type="file" name="photo1" id="photoFile1">
+    					<input class="btn btn-info" type="file" name="photo2" id="photoFile2">
     				</div>
     				<div class="form-group">
     					<button type="button" class="btn btn-primary" id="attachPhoto">上傳</button>
@@ -252,7 +253,8 @@ $( document ).ready(function() {
 	    data = new FormData();
 	    var $photoFile = $('#photoFile');
 	    console.log($photoFile);
-	    data.append('photo', $('#photoFile')[0].files[0]);
+	    data.append('photo1', $('#photoFile1')[0].files[0]);
+	    data.append('photo2', $('#photoFile2')[0].files[0]);
 	    
 	    $.ajax({
 	        url: "/AttachTicketPhoto/" + ticketId,

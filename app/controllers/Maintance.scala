@@ -176,37 +176,52 @@ object Maintance extends Controller {
         })
   }
 
-  def attachTicketPhoto(id:Int) = Security.Authenticated(parse.multipartFormData)  {
+  def attachTicketPhoto(id: Int) = Security.Authenticated(parse.multipartFormData) {
     implicit request =>
-      Logger.debug("attachTicketPhoto")
-    request.body.file("photo").map { picture =>
-      import java.io.File
-      val filename = picture.filename
-      val contentType = picture.contentType
-      Ticket.attachPhoto(id, picture.ref.file)
-      
-      Ok(Json.obj("ok" -> true))
-    }.getOrElse {
-      Ok(Json.obj("ok" -> false))
-    }
-  }
-  
-  def getTicketPhoto(id:Int, idx:Int) = Security.Authenticated {
-    implicit request =>
-    import org.apache.commons.io._
-    val ticketPhotoOpt = Ticket.getTicketPhoto(id)
-    if(ticketPhotoOpt.isDefined){
-      val ticketPhoto = ticketPhotoOpt.get
-      val byte1 = 
-        ticketPhoto.photos(idx).map { blob => IOUtils.toByteArray(blob.getBinaryStream) }
-        
-      if(byte1.isDefined){
-        Ok(byte1.get).as("image/jpeg")
-      }else{
-        Ok(Array.emptyByteArray).as("image/jpeg")  
+      request.body.file("photo1").map { picture =>
+        import java.io.File
+        val filename = picture.filename
+        val contentType = picture.contentType
+        Logger.debug("attach photo1")
+        Ticket.attachPhoto1(id, picture.ref.file)
       }
-    }else
-      Ok(Array.emptyByteArray).as("image/jpeg")
+
+      request.body.file("photo2").map { picture =>
+        import java.io.File
+        val filename = picture.filename
+        val contentType = picture.contentType
+        Logger.debug("attach photo2")
+        Ticket.attachPhoto2(id, picture.ref.file)
+      }
+
+      Ok(Json.obj("ok" -> true))
+  }
+
+  def getNoPhotoByteArray = {
+    import java.io.FileInputStream
+    val is = new FileInputStream(current.path.getAbsolutePath + "/public/images/no_photo.png")
+    import org.apache.commons.io._
+    val ba = IOUtils.toByteArray(is)
+    is.close()
+    ba
+  }
+
+  def getTicketPhoto(id: Int, idx: Int) = Security.Authenticated {
+    implicit request =>
+      import org.apache.commons.io._
+      val ticketPhotoOpt = Ticket.getTicketPhoto(id)
+      if (ticketPhotoOpt.isDefined) {
+        val ticketPhoto = ticketPhotoOpt.get
+        val byte1 =
+          ticketPhoto.photos(idx).map { blob => IOUtils.toByteArray(blob.getBinaryStream) }
+
+        if (byte1.isDefined) {
+          Ok(byte1.get).as("image/jpeg")
+        } else {
+          Ok(getNoPhotoByteArray).as("image/png")
+        }
+      } else
+        Ok(getNoPhotoByteArray).as("image/png")
   }
 
   def updateForm(ID: Int) = Security.Authenticated(BodyParsers.parse.json) {

@@ -363,7 +363,7 @@ object Ticket {
   }
 
   import java.io.File
-  def attachPhoto(id: Int, photo: File)(implicit session: DBSession = AutoSession) = {
+  def attachPhoto1(id: Int, photo: File)(implicit session: DBSession = AutoSession) = {
     import java.io.InputStream
     import java.io.FileInputStream
     import java.sql._
@@ -376,6 +376,23 @@ object Ticket {
     sql"""
       Update Ticket
       Set photo1 = ${bytesBinder}
+      Where ID = $id
+      """.update.apply
+  }
+
+  def attachPhoto2(id: Int, photo: File)(implicit session: DBSession = AutoSession) = {
+    import java.io.InputStream
+    import java.io.FileInputStream
+    import java.sql._
+
+    val inputStream = new FileInputStream(photo)
+    val bytesBinder = ParameterBinder[InputStream](
+      inputStream,
+      binder = (stmt: PreparedStatement, idx: Int) => stmt.setBinaryStream(idx, inputStream, photo.length))
+
+    sql"""
+      Update Ticket
+      Set photo2 = ${bytesBinder}
       Where ID = $id
       """.update.apply
   }

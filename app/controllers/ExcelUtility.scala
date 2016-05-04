@@ -180,7 +180,7 @@ object ExcelUtility {
       dailyReport = Record.getDailyReport(monitor, reportDate)
     } {
       wb.setSheetName(sheetIdx, Monitor.map(monitor).name)
-      fillMonitorDailyReport(monitor, dailyReport, sheetIdx)      
+      fillMonitorDailyReport(monitor, dailyReport, sheetIdx)
     }
     wb.setActiveSheet(0)
     finishExcel(reportFilePath, pkg, wb)
@@ -293,11 +293,11 @@ object ExcelUtility {
       for {
         col <- 1 to data.typeArray.length
         mtRecord = data.typeArray(col - 1)
-      }{
-        if(!Monitor.map(monitor).monitorTypes.contains(mtRecord.monitorType))
-          sheet.setColumnHidden(col, true)          
+      } {
+        if (!Monitor.map(monitor).monitorTypes.contains(mtRecord.monitorType))
+          sheet.setColumnHidden(col, true)
       }
-      
+
       for {
         col <- 1 to data.typeArray.length
         mtRecord = data.typeArray(col - 1)
@@ -363,7 +363,7 @@ object ExcelUtility {
         mtRecord = data.typeArray(col - 1)
       } {
         val stat = mtRecord.stat
-        
+
         if (stat.count >= 1) {
           sheet.getRow(36).getCell(col).setCellValue(stat.avg.get)
           sheet.getRow(37).getCell(col).setCellValue(stat.max.get)
@@ -374,7 +374,7 @@ object ExcelUtility {
           sheet.getRow(38).getCell(col).setCellValue("-")
         }
         evaluator.evaluateFormulaCell(sheet.getRow(39).getCell(col))
-        
+
       }
 
       //Hide col not in use
@@ -694,11 +694,11 @@ object ExcelUtility {
       m <- Monitor.mvList.zipWithIndex
       stat = statMap(m._1)
     } {
-      if(stat.count >0){
+      if (stat.count > 0) {
         sheet.getRow(16).getCell(m._2 + 1).setCellValue(stat.min.get * 100)
         sheet.getRow(17).getCell(m._2 + 1).setCellValue(stat.max.get * 100)
         sheet.getRow(18).getCell(m._2 + 1).setCellValue(stat.avg.get * 100)
-      }else{
+      } else {
         sheet.getRow(16).getCell(m._2 + 1).setCellValue("-")
         sheet.getRow(17).getCell(m._2 + 1).setCellValue("-")
         sheet.getRow(18).getCell(m._2 + 1).setCellValue("-")
@@ -1298,13 +1298,13 @@ object ExcelUtility {
     finishExcel(reportFilePath, pkg, wb)
   }
 
-  def exportWeekForm(ticket: Ticket, usrMap: Map[Int, User], oldTicketOpt: Option[Ticket]=None) = {
+  def exportWeekForm(ticket: Ticket, usrMap: Map[Int, User], oldTicketOpt: Option[Ticket] = None) = {
     val (reportFilePath, pkg, wb) = prepareTemplate("weekMaintance.xlsx")
     val evaluator = wb.getCreationHelper().createFormulaEvaluator()
     val format = wb.createDataFormat();
 
     val form = ticket.getForm
-    val oldForm = oldTicketOpt.map{t=>t.getForm}
+    val oldForm = oldTicketOpt.map { t => t.getForm }
     val sheet = wb.getSheetAt(0)
     val monitorName = Monitor.map(ticket.monitor).name
     sheet.getRow(1).getCell(1).setCellValue(monitorName)
@@ -1317,41 +1317,40 @@ object ExcelUtility {
     sheet.getRow(42).getCell(5).setCellValue(dateStr)
     sheet.getRow(75).getCell(5).setCellValue(dateStr)
     sheet.getRow(113).getCell(5).setCellValue(dateStr)
-    oldTicketOpt.map{
-      old=>
+    oldTicketOpt.map {
+      old =>
         val dateStr = old.executeDate.toString("YY/MM/d")
         sheet.getRow(1).getCell(3).setCellValue(dateStr)
     }
-    
+
     val usrName = usrMap(ticket.owner_id).name
     sheet.getRow(2).getCell(5).setCellValue(usrName)
     sheet.getRow(43).getCell(5).setCellValue(usrName)
     sheet.getRow(76).getCell(5).setCellValue(usrName)
     sheet.getRow(114).getCell(5).setCellValue(usrName)
 
-    
     sheet.getRow(3).getCell(4).setCellValue(form.getBoolSeq("YES☑  NO□", "YES□ NO☑"))
     sheet.getRow(4).getCell(4).setCellValue(form.getBoolSeq("YES☑  NO□", "YES□ NO☑"))
     sheet.getRow(6).getCell(4).setCellValue(form.getBoolSeq("YES☑  NO□", "YES□ NO☑"))
     sheet.getRow(7).getCell(4).setCellValue(form.getBoolSeq("YES☑  NO□", "YES□ NO☑"))
-    
+
     oldForm.map { old => old.strIdx = form.strIdx }
     sheet.getRow(8).getCell(2).setCellValue(form.getStrSeq)
-    oldForm.map{old=>sheet.getRow(8).getCell(5).setCellValue(old.getStrSeq)}
-    
+    oldForm.map { old => sheet.getRow(8).getCell(5).setCellValue(old.getStrSeq) }
+
     sheet.getRow(8).getCell(4).setCellValue(form.getBoolSeq("YES☑  NO□", "YES□ NO☑"))
     sheet.getRow(10).getCell(4).setCellValue(form.getBoolSeq("YES☑  NO□", "YES□ NO☑"))
-    
+
     for (row <- 12 to 22) {
       sheet.getRow(row).getCell(2).setCellValue(form.getStrSeq)
-      oldForm.map{old=>sheet.getRow(row).getCell(5).setCellValue(old.getStrSeq)}
+      oldForm.map { old => sheet.getRow(row).getCell(5).setCellValue(old.getStrSeq) }
       sheet.getRow(row).getCell(4).setCellValue(form.getBoolSeq("YES☑  NO□", "YES□ NO☑"))
     }
     sheet.getRow(23).getCell(4).setCellValue(form.getBoolSeq("YES☑  NO□", "YES□ NO☑"))
     sheet.getRow(25).getCell(4).setCellValue(form.getBoolSeq("YES☑  NO□", "YES□ NO☑"))
     for (row <- 27 to 36) {
       sheet.getRow(row).getCell(2).setCellValue(form.getStrSeq)
-      oldForm.map{old=>sheet.getRow(row).getCell(5).setCellValue(old.getStrSeq)}
+      oldForm.map { old => sheet.getRow(row).getCell(5).setCellValue(old.getStrSeq) }
       sheet.getRow(row).getCell(4).setCellValue(form.getBoolSeq("YES☑  NO□", "YES□ NO☑"))
     }
     sheet.getRow(37).getCell(4).setCellValue(form.getBoolSeq("YES☑  NO□", "YES□ NO☑"))
@@ -1360,21 +1359,21 @@ object ExcelUtility {
     sheet.getRow(44).getCell(4).setCellValue(form.getBoolSeq("YES☑  NO□", "YES□ NO☑"))
     for (row <- 46 to 51) {
       sheet.getRow(row).getCell(2).setCellValue(form.getStrSeq)
-      oldForm.map{old=>sheet.getRow(row).getCell(5).setCellValue(old.getStrSeq)}
+      oldForm.map { old => sheet.getRow(row).getCell(5).setCellValue(old.getStrSeq) }
       sheet.getRow(row).getCell(4).setCellValue(form.getBoolSeq("YES☑  NO□", "YES□ NO☑"))
     }
     sheet.getRow(52).getCell(4).setCellValue(form.getBoolSeq("YES☑  NO□", "YES□ NO☑"))
     sheet.getRow(54).getCell(4).setCellValue(form.getBoolSeq("YES☑  NO□", "YES□ NO☑"))
     for (row <- 56 to 59) {
       sheet.getRow(row).getCell(2).setCellValue(form.getStrSeq)
-      oldForm.map{old=>sheet.getRow(row).getCell(5).setCellValue(old.getStrSeq)}
+      oldForm.map { old => sheet.getRow(row).getCell(5).setCellValue(old.getStrSeq) }
       sheet.getRow(row).getCell(4).setCellValue(form.getBoolSeq("YES☑  NO□", "YES□ NO☑"))
     }
     sheet.getRow(60).getCell(4).setCellValue(form.getBoolSeq("YES☑  NO□", "YES□ NO☑"))
     sheet.getRow(62).getCell(4).setCellValue(form.getBoolSeq("YES☑  NO□", "YES□ NO☑"))
     for (row <- 64 to 67) {
       sheet.getRow(row).getCell(2).setCellValue(form.getStrSeq)
-      oldForm.map{old=>sheet.getRow(row).getCell(5).setCellValue(old.getStrSeq)}
+      oldForm.map { old => sheet.getRow(row).getCell(5).setCellValue(old.getStrSeq) }
       sheet.getRow(row).getCell(4).setCellValue(form.getBoolSeq("YES☑  NO□", "YES□ NO☑"))
     }
     sheet.getRow(68).getCell(4).setCellValue(form.getBoolSeq("YES☑  NO□", "YES□ NO☑"))
@@ -1384,7 +1383,7 @@ object ExcelUtility {
     sheet.getRow(77).getCell(4).setCellValue(form.getBoolSeq("YES☑  NO□", "YES□ NO☑"))
     for (row <- 78 to 78) {
       sheet.getRow(row).getCell(2).setCellValue(form.getStrSeq)
-      oldForm.map{old=>sheet.getRow(row).getCell(5).setCellValue(old.getStrSeq)}
+      oldForm.map { old => sheet.getRow(row).getCell(5).setCellValue(old.getStrSeq) }
       sheet.getRow(row).getCell(4).setCellValue(form.getBoolSeq("☑", "□"))
     }
     sheet.getRow(79).getCell(4).setCellValue(form.getBoolSeq("YES☑  NO□", "YES□ NO☑"))
@@ -1393,16 +1392,16 @@ object ExcelUtility {
     sheet.getRow(83).getCell(4).setCellValue(form.getBoolSeq("YES☑  NO□", "YES□ NO☑"))
     sheet.getRow(84).getCell(2).setCellValue("溫度：" + form.getStrSeq)
     sheet.getRow(84).getCell(3).setCellValue("濕度：" + form.getStrSeq)
-    oldForm.map{old=>sheet.getRow(84).getCell(5).setCellValue(old.getStrSeq + "/" + old.getStrSeq)}
+    oldForm.map { old => sheet.getRow(84).getCell(5).setCellValue(old.getStrSeq + "/" + old.getStrSeq) }
     sheet.getRow(84).getCell(4).setCellValue(form.getBoolSeq("YES☑  NO□", "YES□ NO☑"))
     sheet.getRow(85).getCell(4).setCellValue(form.getBoolSeq("YES☑  NO□", "YES□ NO☑"))
     sheet.getRow(86).getCell(4).setCellValue(form.getBoolSeq("YES☑  NO□", "YES□ NO☑"))
     sheet.getRow(89).getCell(2).setCellValue(form.getStrSeq)
-    oldForm.map{old=>sheet.getRow(89).getCell(5).setCellValue(old.getStrSeq)}
+    oldForm.map { old => sheet.getRow(89).getCell(5).setCellValue(old.getStrSeq) }
     sheet.getRow(89).getCell(4).setCellValue(form.getBoolSeq("YES☑  NO□", "YES□ NO☑"))
     sheet.getRow(90).getCell(4).setCellValue(form.getBoolSeq("YES☑  NO□", "YES□ NO☑"))
     sheet.getRow(91).getCell(2).setCellValue("用電量：" + form.getStrSeq)
-    oldForm.map{old=>sheet.getRow(91).getCell(5).setCellValue(old.getStrSeq)}
+    oldForm.map { old => sheet.getRow(91).getCell(5).setCellValue(old.getStrSeq) }
     sheet.getRow(91).getCell(4).setCellValue(form.getBoolSeq("YES☑  NO□", "YES□ NO☑"))
     for (row <- 92 to 96) {
       sheet.getRow(row).getCell(4).setCellValue(form.getBoolSeq("YES☑  NO□", "YES□ NO☑"))
@@ -1410,7 +1409,7 @@ object ExcelUtility {
     sheet.getRow(98).getCell(4).setCellValue(form.getBoolSeq("YES☑  NO□", "YES□ NO☑"))
     for (row <- 104 to 105) {
       sheet.getRow(row).getCell(2).setCellValue(form.getStrSeq)
-      oldForm.map{old=>sheet.getRow(row).getCell(5).setCellValue(old.getStrSeq)}
+      oldForm.map { old => sheet.getRow(row).getCell(5).setCellValue(old.getStrSeq) }
       sheet.getRow(row).getCell(4).setCellValue(form.getBoolSeq("YES☑  NO□", "YES□ NO☑"))
     }
     for (row <- 106 to 108) {
@@ -1768,6 +1767,36 @@ object ExcelUtility {
     sheet.getRow(20).getCell(6).setCellValue(form.getBoolStr(3, "☑", "□") + "已修好")
     sheet.getRow(20).getCell(7).setCellValue(form.getBoolStr(4, "☑", "□") + "未修好")
     sheet.getRow(20).getCell(8).setCellValue(form.getBoolStr(5, "☑", "□") + "待料")
+
+    //Attach photo
+    val helper = wb.getCreationHelper();
+    val anchor = helper.createClientAnchor();
+    anchor.setCol1(1);
+    anchor.setRow1(2);
+
+    Ticket.getTicketPhoto(ticket.id).map { params =>
+      for {
+        photo_idx <- params.photos.zipWithIndex
+        blobOpt = photo_idx._1 if blobOpt.isDefined
+        idx = photo_idx._2
+        blob = blobOpt.get
+        photoSheet = wb.createSheet(s"照片$idx")
+      } {
+        import org.apache.commons.io._
+        val is = blob.getBinaryStream
+        val bytes = IOUtils.toByteArray(is)
+        is.close
+        val pictureIdx =
+          if(bytes(0) == 0x89.toByte)
+            wb.addPicture(bytes, Workbook.PICTURE_TYPE_PNG);
+          else
+            wb.addPicture(bytes, Workbook.PICTURE_TYPE_JPEG);
+        
+        val drawing = photoSheet.createDrawingPatriarch();
+        val pict = drawing.createPicture(anchor, pictureIdx);
+        pict.resize()
+      }
+    }
 
     finishExcel(reportFilePath, pkg, wb)
   }
