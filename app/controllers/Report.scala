@@ -262,13 +262,13 @@ object Report extends Controller {
       for {
         (monitorType, pos) <- includeTypes.zipWithIndex
         typeStat = getTypeStat(pos)
-        validData = typeStat.filter { _.count != 0 }
+        validData = typeStat.filter { _.count >= 20 }
         count = validData.length
         total = dailyReports.length
         overCount = validData.map(_.overCount).sum
       } yield {
         val overallStat =
-          if (count != 0) {
+          if (count >= 20) {
             val avg = if (MonitorType.windDirList.contains(monitorType)) {
               val windDir = validData
               val (windSpeedMt, windSpeedPos) = includeTypes.zipWithIndex.find(t => t._1 == MonitorType.C211).get

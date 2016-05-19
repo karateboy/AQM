@@ -277,17 +277,25 @@ object ExcelUtility {
       sheet.getRow(1).getCell(17).setCellValue("查詢日期:" + DateTime.now.toString("YYYY/MM/dd"))
       titleRow.getCell(17).setCellValue("資料日期:" + reportDate.toString("YYYY年MM月"))
 
+      import org.apache.poi.hssf.util.HSSFColor
+      def createInvalidStyle(mt: MonitorType.Value)={
+        val style = createStyle(mt)
+        style.setFillForegroundColor(HSSFColor.RED.index)
+        style.setFillPattern(FillPatternType.SOLID_FOREGROUND)
+        style
+      }
+
       for {
         col <- 1 to data.typeArray.length
         row <- 5 to (5 + nDay - 1)
         mtRecord = data.typeArray(col - 1)
         cell = sheet.getRow(row).getCell(col)
         cellData = mtRecord.dataList(row - 5)
+        invalidStyle = createInvalidStyle(mtRecord.monitorType)
       } {
-        if (cellData.count == 0)
-          cell.setCellValue("-")
-        else
-          cell.setCellValue(cellData.count)
+        cell.setCellValue(cellData.count)
+        if (cellData.count < 16)
+          cell.setCellStyle(invalidStyle)
       }
       //Hide unused Monitor Type
       for {
@@ -347,15 +355,15 @@ object ExcelUtility {
         cell = sheet.getRow(row).getCell(col)
         cellData = mtRecord.dataList(row - 5)
       } {
-        if (cellData.count == 0)
-          cell.setCellValue("-")
-        else {
+        if (cellData.avg.isDefined)
           cell.setCellValue(cellData.avg.get)
-          if (cellData.effectPercent.isDefined && cellData.effectPercent.get >= 0.75)
-            cell.setCellStyle(normalStyle)
-          else
-            cell.setCellStyle(abnormalStyles(0))
-        }
+        else
+          cell.setCellValue("-")
+
+        if (cellData.count >= 16)
+          cell.setCellStyle(normalStyle)
+        else
+          cell.setCellStyle(abnormalStyles(0))
       }
 
       for {
@@ -457,19 +465,25 @@ object ExcelUtility {
         dayRecord = report.dailyReports(row - 4)
         stat = dayRecord.typeList(sheetIndex - 2).stat
       } {
-        if (stat.count != 0) {
+
+        if (stat.avg.isDefined) {
           sheet.getRow(row).getCell(25).setCellValue(stat.avg.get)
-          sheet.getRow(row).getCell(26).setCellValue(stat.count)
-          sheet.getRow(row).getCell(27).setCellValue(stat.max.get)
-          sheet.getRow(row).getCell(28).setCellValue(stat.min.get)
           sheet.getRow(row).getCell(29).setCellValue(stat.avg.get * stat.count)
         } else {
           sheet.getRow(row).getCell(25).setCellValue("-")
-          sheet.getRow(row).getCell(26).setCellValue(0)
-          sheet.getRow(row).getCell(27).setCellValue("-")
-          sheet.getRow(row).getCell(28).setCellValue("-")
-          sheet.getRow(row).getCell(29).setCellValue(0)
+          sheet.getRow(row).getCell(29).setCellValue("-")
         }
+        sheet.getRow(row).getCell(26).setCellValue(stat.count)
+
+        if (stat.max.isDefined)
+          sheet.getRow(row).getCell(27).setCellValue(stat.max.get)
+        else
+          sheet.getRow(row).getCell(27).setCellValue("-")
+
+        if (stat.min.isDefined)
+          sheet.getRow(row).getCell(28).setCellValue(stat.min.get)
+        else
+          sheet.getRow(row).getCell(28).setCellValue("-")
       }
 
       //Day Stat
@@ -480,7 +494,7 @@ object ExcelUtility {
         row <- 4 to (4 + nDay - 1)
         stat = report.hourStatArray(col - 1)
       } {
-        if (stat.count != 0) {
+        if (stat.count >= 20) {
           evaluator.evaluateFormulaCell(sheet.getRow(35).getCell(col))
           sheet.getRow(36).getCell(col).setCellValue(stat.count)
           evaluator.evaluateFormulaCell(sheet.getRow(37).getCell(col))
@@ -1787,11 +1801,11 @@ object ExcelUtility {
         val bytes = IOUtils.toByteArray(is)
         is.close
         val pictureIdx =
-          if(bytes(0) == 0x89.toByte)
+          if (bytes(0) == 0x89.toByte)
             wb.addPicture(bytes, Workbook.PICTURE_TYPE_PNG);
           else
             wb.addPicture(bytes, Workbook.PICTURE_TYPE_JPEG);
-        
+
         val drawing = photoSheet.createDrawingPatriarch();
         val pict = drawing.createPicture(anchor, pictureIdx);
         pict.resize()

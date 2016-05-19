@@ -57,7 +57,7 @@
 			<tr>
 			<th>@(i+1)</th>
 			@for(t<-report.typeArray if Monitor.map(monitor).monitorTypes.contains(t.monitorType)){
-					@if(t.dataList(i).effectPercent.isDefined && t.dataList(i).effectPercent.get >= 0.75){
+					@if(t.dataList(i).count >= 16){
 						<td>@MonitorType.format(t.monitorType, t.dataList(i).avg)</td>
 					}else{
 						<td style="color:black;background-color:red">@MonitorType.format(t.monitorType, t.dataList(i).avg)</td>
