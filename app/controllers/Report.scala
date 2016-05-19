@@ -262,7 +262,7 @@ object Report extends Controller {
       for {
         (monitorType, pos) <- includeTypes.zipWithIndex
         typeStat = getTypeStat(pos)
-        validData = typeStat.filter { _.count >= 20 }
+        validData = typeStat.filter { _.count >= 16 }
         count = validData.length
         total = dailyReports.length
         overCount = validData.map(_.overCount).sum
