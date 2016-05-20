@@ -151,17 +151,10 @@ object ExcelUtility {
         col <- 1 to data.typeList.length
       } {
         val stat = data.typeList(col - 1).stat
-        if (stat.count != 0) {
-          sheet.getRow(28).getCell(col).setCellValue(stat.avg.get)
-          sheet.getRow(29).getCell(col).setCellValue(stat.max.get)
-          sheet.getRow(30).getCell(col).setCellValue(stat.min.get)
-          sheet.getRow(31).getCell(col).setCellValue(stat.effectPercent.get)
-        } else {
-          sheet.getRow(28).getCell(col).setCellValue("-")
-          sheet.getRow(29).getCell(col).setCellValue("-")
-          sheet.getRow(30).getCell(col).setCellValue("-")
-          sheet.getRow(31).getCell(col).setCellValue("-")
-        }
+        stat.avg.fold(sheet.getRow(28).getCell(col).setCellValue("-"))(avg => sheet.getRow(28).getCell(col).setCellValue(avg))
+        stat.max.fold(sheet.getRow(29).getCell(col).setCellValue("-"))(max => sheet.getRow(29).getCell(col).setCellValue(max))
+        stat.min.fold(sheet.getRow(30).getCell(col).setCellValue("-"))(min => sheet.getRow(30).getCell(col).setCellValue(min))
+        stat.effectPercent.fold(sheet.getRow(31).getCell(col).setCellValue("-"))(ef => sheet.getRow(31).getCell(col).setCellValue(ef))
       }
 
       //Hide col not in use
@@ -232,17 +225,14 @@ object ExcelUtility {
       col <- 1 to data.typeList.length
     } {
       val stat = data.typeList(col - 1).stat
-      if (stat.count != 0) {
-        sheet.getRow(28).getCell(col).setCellValue(stat.avg.get)
-        sheet.getRow(29).getCell(col).setCellValue(stat.max.get)
-        sheet.getRow(30).getCell(col).setCellValue(stat.min.get)
-        sheet.getRow(31).getCell(col).setCellValue(stat.effectPercent.get * 100)
-      } else {
-        sheet.getRow(28).getCell(col).setCellValue("-")
-        sheet.getRow(29).getCell(col).setCellValue("-")
-        sheet.getRow(30).getCell(col).setCellValue("-")
-        sheet.getRow(31).getCell(col).setCellValue("-")
+      def fillOpt(vOpt: Option[Float], row: Int) {
+        vOpt.fold(sheet.getRow(row).getCell(col).setCellValue("-"))(v => sheet.getRow(row).getCell(col).setCellValue(v))
       }
+
+      fillOpt(stat.avg, 28)
+      fillOpt(stat.max, 29)
+      fillOpt(stat.min, 30)
+      fillOpt(stat.effectPercent.map { _*100 }, 31)
     }
 
     //Hide col not in use
@@ -278,7 +268,7 @@ object ExcelUtility {
       titleRow.getCell(17).setCellValue("資料日期:" + reportDate.toString("YYYY年MM月"))
 
       import org.apache.poi.hssf.util.HSSFColor
-      def createInvalidStyle(mt: MonitorType.Value)={
+      def createInvalidStyle(mt: MonitorType.Value) = {
         val style = createStyle(mt)
         style.setFillForegroundColor(HSSFColor.RED.index)
         style.setFillPattern(FillPatternType.SOLID_FOREGROUND)
@@ -372,15 +362,9 @@ object ExcelUtility {
       } {
         val stat = mtRecord.stat
 
-        if (stat.count >= 1) {
-          sheet.getRow(36).getCell(col).setCellValue(stat.avg.get)
-          sheet.getRow(37).getCell(col).setCellValue(stat.max.get)
-          sheet.getRow(38).getCell(col).setCellValue(stat.min.get)
-        } else {
-          sheet.getRow(36).getCell(col).setCellValue("-")
-          sheet.getRow(37).getCell(col).setCellValue("-")
-          sheet.getRow(38).getCell(col).setCellValue("-")
-        }
+        stat.avg.fold(sheet.getRow(36).getCell(col).setCellValue("-"))(avg => sheet.getRow(36).getCell(col).setCellValue(avg))
+        stat.max.fold(sheet.getRow(37).getCell(col).setCellValue("-"))(max => sheet.getRow(37).getCell(col).setCellValue(max))
+        stat.min.fold(sheet.getRow(38).getCell(col).setCellValue("-"))(min => sheet.getRow(38).getCell(col).setCellValue(min))
         evaluator.evaluateFormulaCell(sheet.getRow(39).getCell(col))
 
       }
@@ -620,31 +604,27 @@ object ExcelUtility {
         data = report.typeArray(col - 1).dataList(row - 4)
       } {
         val cell = sheet.getRow(row).getCell(col)
-        if (data.count != 0) {
-          cell.setCellValue(data.avg.get)
-          if (data.effectPercent.isDefined && data.effectPercent.get >= 0.75)
-            cell.setCellStyle(normalStyle)
-          else
-            cell.setCellStyle(abnormalStyles(0))
-        } else
-          sheet.getRow(row).getCell(col).setCellValue("-")
+        data.avg.fold(cell.setCellValue("_"))(avg => cell.setCellValue(avg))
+        if (data.count >= 20)
+          cell.setCellStyle(normalStyle)
+        else
+          cell.setCellStyle(abnormalStyles(0))
       }
       val stat = report.typeArray(col - 1).stat
-      if (stat.count != 0) {
-        sheet.getRow(16).getCell(col).setCellValue(stat.avg.get)
-        sheet.getRow(16).getCell(col).setCellStyle(normalStyle)
-        sheet.getRow(17).getCell(col).setCellValue(stat.max.get)
-        sheet.getRow(17).getCell(col).setCellStyle(normalStyle)
-        sheet.getRow(18).getCell(col).setCellValue(stat.min.get)
-        sheet.getRow(18).getCell(col).setCellStyle(normalStyle)
-        sheet.getRow(19).getCell(col).setCellValue(stat.effectPercent.get)
-        sheet.getRow(19).getCell(col).setCellStyle(normalStyle)
-      } else {
-        sheet.getRow(16).getCell(col).setCellValue("-")
-        sheet.getRow(17).getCell(col).setCellValue("-")
-        sheet.getRow(18).getCell(col).setCellValue("-")
-        sheet.getRow(19).getCell(col).setCellValue(0)
+      def fillOpt(vOpt: Option[Float], idx: Int) {
+        vOpt.fold({
+          sheet.getRow(idx).getCell(col).setCellValue("-")
+          sheet.getRow(idx).getCell(col).setCellStyle(abnormalStyles(0))
+        })({ v =>
+          sheet.getRow(idx).getCell(col).setCellStyle(normalStyle)
+          sheet.getRow(idx).getCell(col).setCellValue(v)
+        })
       }
+
+      fillOpt(stat.avg, 16)
+      fillOpt(stat.max, 17)
+      fillOpt(stat.min, 18)
+      fillOpt(stat.effectPercent, 19)
     }
 
     finishExcel(reportFilePath, pkg, wb)
@@ -708,15 +688,13 @@ object ExcelUtility {
       m <- Monitor.mvList.zipWithIndex
       stat = statMap(m._1)
     } {
-      if (stat.count > 0) {
-        sheet.getRow(16).getCell(m._2 + 1).setCellValue(stat.min.get * 100)
-        sheet.getRow(17).getCell(m._2 + 1).setCellValue(stat.max.get * 100)
-        sheet.getRow(18).getCell(m._2 + 1).setCellValue(stat.avg.get * 100)
-      } else {
-        sheet.getRow(16).getCell(m._2 + 1).setCellValue("-")
-        sheet.getRow(17).getCell(m._2 + 1).setCellValue("-")
-        sheet.getRow(18).getCell(m._2 + 1).setCellValue("-")
+      def fillOpt(vOpt: Option[Float], idx: Int) {
+        vOpt.fold(sheet.getRow(idx).getCell(m._2 + 1).setCellValue("-"))(v => sheet.getRow(idx).getCell(m._2 + 1).setCellValue(v * 100))
       }
+
+      fillOpt(stat.min, 16)
+      fillOpt(stat.max, 17)
+      fillOpt(stat.avg, 18)
     }
 
     finishExcel(reportFilePath, pkg, wb)
@@ -908,21 +886,20 @@ object ExcelUtility {
         }
       }
 
-      if (myMap(mt._1)._2.count != 0) {
+      def fillOpt(r: Int, vOpt: Option[Float], idx: Int) {
+        vOpt.fold({
+          sheet.getRow(r).getCell(idx).setCellValue("-")
+          sheet.getRow(r + 2).getCell(idx).setCellValue("-")
+        })(v => {
+          sheet.getRow(r).getCell(idx).setCellValue(v)
+          sheet.getRow(r + 2).getCell(idx).setCellValue(covertDegToDir(v))
+        })
+      }
+      {
         val stat = myMap(mt._1)._2
-        sheet.getRow(row).getCell(26).setCellValue(stat.min.get)
-        sheet.getRow(row + 2).getCell(26).setCellValue(covertDegToDir(stat.min.get))
-        sheet.getRow(row).getCell(27).setCellValue(stat.max.get)
-        sheet.getRow(row + 2).getCell(27).setCellValue(covertDegToDir(stat.max.get))
-        sheet.getRow(row).getCell(28).setCellValue(stat.avg.get)
-        sheet.getRow(row + 2).getCell(28).setCellValue(covertDegToDir(stat.avg.get))
-      } else {
-        sheet.getRow(row).getCell(26).setCellValue("-")
-        sheet.getRow(row).getCell(27).setCellValue("-")
-        sheet.getRow(row).getCell(28).setCellValue("-")
-        sheet.getRow(row + 2).getCell(26).setCellValue("-")
-        sheet.getRow(row + 2).getCell(27).setCellValue("-")
-        sheet.getRow(row + 2).getCell(28).setCellValue("-")
+        fillOpt(row, stat.min, 26)
+        fillOpt(row, stat.max, 27)
+        fillOpt(row, stat.avg, 28)
       }
 
       for {
@@ -946,21 +923,11 @@ object ExcelUtility {
         }
       }
 
-      if (epaMap(mt._1)._2.count != 0) {
+      {
         val stat = epaMap(mt._1)._2
-        sheet.getRow(row + 1).getCell(26).setCellValue(stat.min.get)
-        sheet.getRow(row + 1).getCell(27).setCellValue(stat.max.get)
-        sheet.getRow(row + 1).getCell(28).setCellValue(stat.avg.get)
-        sheet.getRow(row + 3).getCell(26).setCellValue(covertDegToDir(stat.min.get))
-        sheet.getRow(row + 3).getCell(27).setCellValue(covertDegToDir(stat.max.get))
-        sheet.getRow(row + 3).getCell(28).setCellValue(covertDegToDir(stat.avg.get))
-      } else {
-        sheet.getRow(row + 1).getCell(26).setCellValue("-")
-        sheet.getRow(row + 1).getCell(27).setCellValue("-")
-        sheet.getRow(row + 1).getCell(28).setCellValue("-")
-        sheet.getRow(row + 3).getCell(26).setCellValue("-")
-        sheet.getRow(row + 3).getCell(27).setCellValue("-")
-        sheet.getRow(row + 3).getCell(28).setCellValue("-")
+        fillOpt(row + 1, stat.min, 26)
+        fillOpt(row + 1, stat.max, 27)
+        fillOpt(row + 1, stat.avg, 28)
       }
 
       if (mt._1 == MonitorType.C212)
