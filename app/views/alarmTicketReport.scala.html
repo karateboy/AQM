@@ -1,54 +1,53 @@
 @* ticketReport Template File *@
-@(tickets: List[Ticket], userMap:Map[Int, User], showSelect:Boolean=false)
+@import Alarm._
+@(tickets: List[(Ticket, Option[Alarm])], userMap:Map[Int, User], showSelect:Boolean=false)
 <table id="ticketReport" class="table">
 <thead>
 	<tr>
 	@if(showSelect){
 		<th>選擇</th>		
-	}
+	}	
 		<th>編號</th>
+		<th>警報時間</th>
+		<th>警報項目</th>
+		<th>測站</th>
+		<th>測項</th>		
 		<th>立案時間</th>
 		<th>立案人</th>
-		<th>種類</th>		
-		<th>測站</th>
-		<th>測項</th>
-		<th>原因</th>
+		<th>原因</th>		
 		<th>分類</th>
 		<th>細分類</th>
 		<th>負責人</th>
-		<th>執行日期</th>
-		<th>待結案</th>
-		<th>已結案</th>
 		<th>下載表單</th>
 	</tr>
 </thead>
 <tbody>
-@for(t <- tickets){
+@for((t,arOpt) <- tickets){
 	<tr>
 	@if(showSelect){
 		<td><input type="checkbox" value="@t.id"></td>		
 	}	
+	
 		<td><a href="#" onClick="loadPage('/Ticket/'+'@t.id','維修保養','案件細節')">@t.id</a></td>
-		<td>@t.submit_date.toString("YYYY-MM-d HH:mm")</td>
-		<td>@userMap(t.submiter_id).name</td>
-		<td>@TicketType.map(t.ticketType)</td>
+		@if(arOpt.isDefined){
+			<td>@arOpt.get.time.toString("YYYY/MM/dd HH:mm")</td>
+			<td>@MonitorStatus.map(arOpt.get.code).desp</td>
+		}else{
+			<td>-</td>
+			<td>-</td>			
+		}
 		<td>@Monitor.map(t.monitor).name</td>
 		@if(t.monitorType.isEmpty){
 			<td>-</td>
 		}else{
 			<td>@MonitorType.map(t.monitorType.get).desp</td>
-		}
+		}		
+		<td>@t.submit_date.toString("YYYY-MM-d HH:mm")</td>
+		<td>@userMap(t.submiter_id).name</td>
 		<td>@t.reason</td>
 		<td>@t.repairType</td>
 		<td>@ModelHelper.formatOptStr(t.repairSubType)</td>
 		<td>@userMap(t.owner_id).name</td>
-		<td>@t.executeDate.toString("YYYY-MM-d")</td>
-		<td>@ModelHelper.formatOptBool(t.readyToClose)</td>
-		@if(t.active){
-			<td>否</td>
-		}else{
-			<td>是</td>
-		}
 		<td><a href="/DownloadForm/@t.id"><i class="fa fa-file-excel-o fa-2x"></i></td>
 	</tr>
 }
@@ -61,7 +60,8 @@ $(document ).ready(function() {
 		language: {
 			url: '@routes.Assets.at("localization/zh_tw.json")',							
 		},
-		paging: false
+		paging: false,
+		searching: false
 	} );
 });
 </script>

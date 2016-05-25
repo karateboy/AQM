@@ -81,8 +81,9 @@ object Maintance extends Controller {
       val userInfo = Security.getUserinfo(request).get
       val group = Group.getGroup(userInfo.groupID).get
       val adminUsers = User.getAdminUsers()
+      val ticketTypeList = TicketType.values.toList.sorted
 
-      Ok(views.html.queryTicket(userInfo, group.privilege, adminUsers))
+      Ok(views.html.queryTicket(userInfo, group.privilege, adminUsers, ticketTypeList))
   }
 
   def ticketReport(ticketTypeStr: String, monitorStr: String, startStr: String, endStr: String) = Security.Authenticated {
@@ -182,7 +183,6 @@ object Maintance extends Controller {
         import java.io.File
         val filename = picture.filename
         val contentType = picture.contentType
-        Logger.debug("attach photo1")
         Ticket.attachPhoto1(id, picture.ref.file)
       }
 
@@ -190,7 +190,6 @@ object Maintance extends Controller {
         import java.io.File
         val filename = picture.filename
         val contentType = picture.contentType
-        Logger.debug("attach photo2")
         Ticket.attachPhoto2(id, picture.ref.file)
       }
 
@@ -352,6 +351,15 @@ object Maintance extends Controller {
             }
         }
       }
+      Ok(Json.obj("ok" -> true))
+  }
+
+  def takeOverTicketAction(idStr: String) = Security.Authenticated {
+    implicit request =>
+      val myself = request.user.id
+      val ids = idStr.split(":").toList
+      val idList = ids.map { Integer.parseInt }
+      Ticket.takeOverTicket(idList, myself)
       Ok(Json.obj("ok" -> true))
   }
 
@@ -713,7 +721,7 @@ object Maintance extends Controller {
       val start = SystemConfig.getAlarmCheckPoint()
       val list = Alarm.getAlarmNoTicketList(start)
 
-      Ok(views.html.alarmNoTicketList(list))
+      Ok(views.html.alarmNoTicket(list))
   }
 
   case class AlarmId(monitor: Monitor.Value, mItem: String, time: Long)
@@ -753,10 +761,10 @@ object Maintance extends Controller {
                 (Some("數據"), Some(MonitorType.map(mtOpt.get).desp))
               } else
                 (None, None)
-
+  
               val ticket = Ticket(0, DateTime.now, true, TicketType.repair, user.id,
                 SystemConfig.getAlarmTicketDefaultUserId(), alarmId.monitor, mtOpt, reason,
-                ar.time, Json.toJson(Ticket.defaultRepairFormData).toString, repairType, repairSubType, Some(false))
+                DateTime.now, Json.toJson(Ticket.defaultAlarmTicketForm(ar)).toString, repairType, repairSubType, Some(false))
               Ticket.newTicket(ticket)
             }
           }
@@ -771,17 +779,52 @@ object Maintance extends Controller {
       val group = Group.getGroup(userInfo.groupID).get
       val adminUsers = User.getAdminUsers()
 
-      Ok(views.html.newTicket(userInfo, group.privilege, adminUsers, List(TicketType.repair)))
+      Ok(views.html.newTicket(userInfo, group.privilege, adminUsers, List(TicketType.repair), false))
   }
 
   def repairingAlarmTicket() = Security.Authenticated {
     implicit request =>
       val userInfo = request.user
       val group = Group.getGroup(userInfo.groupID).get
-      val tickets = Ticket.ticketSubmittedByMe(userInfo.id, false)
+      val tickets = queryActiveRepairTickets
+
+      val ticketWithAlarm =
+        for {
+          t <- tickets
+          arOpt = t.getRepairForm.alarm
+        } yield (t, arOpt)
       val allUsers = User.getAllUsers()
       val usrMap = Map(allUsers.map { u => (u.id.get -> u) }: _*)
-
-      Ok(views.html.repairingTickets(tickets, usrMap))
+      val canChangeOwner = userInfo.groupID == 5
+      
+      Ok(views.html.repairingTickets(ticketWithAlarm, usrMap, canChangeOwner))
   }
+
+  def queryClosedRepairTicket = Security.Authenticated {
+    implicit request =>
+      val userInfo = Security.getUserinfo(request).get
+      val group = Group.getGroup(userInfo.groupID).get
+      val adminUsers = User.getAdminUsers()
+
+      Ok(views.html.queryClosedRepairTicket(userInfo, group.privilege, adminUsers, List(TicketType.repair)))
+  }
+
+  def closedRepairTicketReport(monitorStr: String, startStr: String, endStr: String) = Security.Authenticated {
+    val monitors = monitorStr.split(":").map { Monitor.withName }
+    val start = DateTime.parse(startStr)
+    val end = DateTime.parse(endStr) + 1.day
+
+    val tickets = Ticket.queryClosedRepairTickets(start, end)
+    val filterTicket = tickets.filter { t => monitors.contains(t.monitor) }
+    val ticketWithRepairForm =
+        for {
+          t <- filterTicket
+        } yield (t, t.getRepairForm)
+
+    val allUsers = User.getAllUsers()
+    val usrMap = Map(allUsers.map { u => (u.id.get -> u) }: _*)
+
+    Ok(views.html.closedAlarmTicketReport(ticketWithRepairForm, usrMap))
+  }
+
 }

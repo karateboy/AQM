@@ -6,10 +6,14 @@ import play.api._
 import com.github.nscala_time.time.Imports._
 import models.ModelHelper._
 import models._
+import play.api.libs.json.Json
 
 object Alarm {
 
   case class Alarm(monitor: Monitor.Value, mItem: String, time: DateTime, mVal: Float, code: String, ticket: Option[String] = None)
+  implicit val alarmWrite = Json.writes[Alarm]
+  implicit val alarmRead = Json.reads[Alarm]
+
   def getAlarm(monitors: Seq[Monitor.Value], statusFilter: Option[Seq[String]], start: DateTime, end: DateTime)(implicit session: DBSession = AutoSession): List[Alarm] = {
     val mStr = SQLSyntax.createUnsafely(monitors.mkString("('", "','", "')"))
     val startT: Timestamp = start

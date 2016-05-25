@@ -8,6 +8,7 @@ import play.api.libs.json._
 import play.api.libs.functional.syntax._
 import play.api.libs.json.Json
 import scala.concurrent.ExecutionContext.Implicits.global
+import Alarm._
 
 case class FormData(start: String, end: String, boolValues: Seq[Boolean], strValues: Seq[String], comments: Seq[String]) {
   def getBool(idx: Int) = {
@@ -59,7 +60,7 @@ case class FormData(start: String, end: String, boolValues: Seq[Boolean], strVal
 }
 
 case class PartFormData(id: String, source: String, charged: Boolean, unit_price: String, amount: String, total: String)
-case class RepairFormData(start: String, end: String, equipmentId: String, parts: Seq[PartFormData],
+case class RepairFormData(start: String, end: String, equipmentId: String, parts: Seq[PartFormData], alarm: Option[Alarm],
                           explain: String, result: String, comment: String, boolValues: Seq[Boolean], strValues: Seq[String]) {
   def getBool(idx: Int) = {
     if (idx >= boolValues.length)
@@ -170,10 +171,6 @@ object Ticket {
     DB localTx { implicit session =>
       val submit_tt: java.sql.Timestamp = ticket.submit_date
       val execute_date: java.sql.Date = ticket.executeDate
-      val formJson = if (ticket.ticketType == TicketType.repair)
-        Json.toJson(defaultRepairFormData).toString
-      else
-        Json.toJson(defaultFormData).toString
 
       val ret = sql"""
         Insert into Ticket(
@@ -192,7 +189,7 @@ object Ticket {
         ,[readyToClose])
         values(${submit_tt}, ${ticket.active}, ${ticket.ticketType.id}, ${ticket.submiter_id}, ${ticket.owner_id}, ${ticket.monitor.toString},
           ${ticket.monitorType.map { _.toString }}, ${ticket.reason}, ${execute_date}, 
-          ${formJson},
+          ${ticket.formJson},
           ${ticket.repairType},
           ${ticket.repairSubType},
           ${ticket.readyToClose})
@@ -276,6 +273,15 @@ object Ticket {
       """.map { ticketMapper }.list().apply()
   }
 
+  def queryClosedRepairTickets(start: DateTime, end: DateTime)(implicit session: DBSession = AutoSession) = {
+    sql"""
+      Select *
+      From Ticket
+      Where execute_date between ${start} and ${end} and ticketType = ${TicketType.repair.id} and active = 0
+      Order by submit_date      
+      """.map { ticketMapper }.list().apply()
+  }
+
   def queryActiveTickets(start: DateTime, end: DateTime)(implicit session: DBSession = AutoSession) = {
     sql"""
       Select *
@@ -299,6 +305,15 @@ object Ticket {
       Select *
       From Ticket
       Where execute_date between ${start} and ${end} and ticketType != ${TicketType.repair.id}
+      Order by execute_date      
+      """.map { ticketMapper }.list().apply()
+  }
+
+  def queryActiveRepairTickets()(implicit session: DBSession = AutoSession) = {
+    sql"""
+      Select *
+      From Ticket
+      Where ticketType = ${TicketType.repair.id} and active = 1
       Order by execute_date      
       """.map { ticketMapper }.list().apply()
   }
@@ -417,6 +432,16 @@ object Ticket {
     }
   }
 
+  def takeOverTicket(id: List[Int], userId: Int)(implicit session: DBSession = AutoSession) = {
+    DB localTx { implicit session =>
+      sql"""
+        Update Ticket
+        Set owner_id = ${userId}
+        Where ID in (${id})
+        """.update.apply
+    }
+  }
+
   def readyToCloseOwnerTicket(id: List[Int], userId: Int, value: Boolean = true)(implicit session: DBSession = AutoSession) = {
     DB localTx { implicit session =>
       val bit = if (value) 1 else 0
@@ -440,7 +465,8 @@ object Ticket {
   }
 
   val defaultFormData = FormData("", "", Seq.empty[Boolean], Seq.empty[String], Seq.empty[String])
-  val defaultRepairFormData = RepairFormData("", "", "", Seq.empty[PartFormData], "", "", "", Seq.empty[Boolean], Seq.empty[String])
+  val defaultRepairFormData = RepairFormData("", "", "", Seq.empty[PartFormData], None, "", "", "", Seq.empty[Boolean], Seq.empty[String])
+  def defaultAlarmTicketForm(alarm:Alarm) = RepairFormData("", "", "", Seq.empty[PartFormData], Some(alarm), "", "", "", Seq.empty[Boolean], Seq.empty[String])
 
   def updateTicketFormData(ID: Int, form: FormData)(implicit session: DBSession = AutoSession) = {
     DB localTx { implicit session =>

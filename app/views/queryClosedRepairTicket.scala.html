@@ -64,7 +64,7 @@
 		</div>
         <div class="panel panel-success" style="display:none" id="reportPanel">
         	<div class="panel-body panel-collapse" id="monitorReport">
- 				<div id="reportDiv" style="overflow-x:auto">
+ 				<div id="reportDiv">
             	</div>
             </div>
         </div>
@@ -152,10 +152,8 @@ $( document ).ready(function() {
 				monitorParam += ':' + monitors[i].id;
 		}	
 
-		var url = "/TicketReport/" + ticketTypeParam + "/" + monitorParam + "/" + reportStart + "/" + reportEnd; 
+		var url = "/ClosedRepairTicketReport/" + monitorParam + "/" + reportStart + "/" + reportEnd; 
 
-		console.log(url);
-		
 		$.ajax({
 			url : url,
 			data : "",
