@@ -318,6 +318,18 @@ object Ticket {
       """.map { ticketMapper }.list().apply()
   }
 
+  def getActiveRepairTicketsByGroup(groupId:Int)(implicit session: DBSession = AutoSession) = {
+    val users = User.getUserByGroup(groupId)
+    val userIdList = users.map { _.id.get }
+    val userIdStr = SQLSyntax.createUnsafely(userIdList.mkString("('", "','", "')"))
+    sql"""
+      Select *
+      From Ticket
+      Where ticketType = ${TicketType.repair.id} and active = 1 and submiter_id in $userIdStr
+      Order by execute_date      
+      """.map { ticketMapper }.list().apply()
+  }
+
   def myTickets(ID: Int)(implicit session: DBSession = AutoSession) = {
     sql"""
       Select *

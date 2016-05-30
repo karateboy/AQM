@@ -718,7 +718,7 @@ object Maintance extends Controller {
 
   def alarmNoTicketList() = Security.Authenticated {
     implicit request =>
-      val start = SystemConfig.getAlarmCheckPoint()
+      val start = DateTime.now() - 3.day
       val list = Alarm.getAlarmNoTicketList(start)
 
       Ok(views.html.alarmNoTicket(list))
@@ -786,7 +786,7 @@ object Maintance extends Controller {
     implicit request =>
       val userInfo = request.user
       val group = Group.getGroup(userInfo.groupID).get
-      val tickets = queryActiveRepairTickets
+      val tickets = getActiveRepairTicketsByGroup(4)
 
       val ticketWithAlarm =
         for {

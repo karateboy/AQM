@@ -5,7 +5,66 @@
 <div class="col-lg-12">
 <div class="panel panel-success">
 <div class="panel-body">
-	@alarmTicketReport(tickets, userMap, canChangeOwner)
+<table id="ticketReport" class="table">
+<thead>
+	<tr>
+	@if(canChangeOwner){
+		<th>選擇</th>		
+	}	
+		<th>案件編號</th>
+		<th>警報時間</th>
+		<th>警報項目</th>
+		<th>測站</th>
+		<th>測項</th>		
+		<th>立案時間</th>
+		<th>立案人</th>
+		<th>立案原因</th>		
+		<th>負責人</th>
+	</tr>
+</thead>
+<tbody>
+@for((t,arOpt) <- tickets){
+	<tr>
+	@if(canChangeOwner){
+		<td><input type="checkbox" value="@t.id"></td>		
+	}	
+	
+		<td><a href="#" onClick="loadPage('/Ticket/'+'@t.id','維修保養','案件細節')">@t.id</a></td>
+		@if(arOpt.isDefined){
+			<td>@arOpt.get.time.toString("YYYY/MM/dd HH:mm")</td>
+			<td>@MonitorStatus.map(arOpt.get.code).desp</td>
+		}else{
+			<td>-</td>
+			<td>-</td>			
+		}
+		<td>@Monitor.map(t.monitor).name</td>
+		@if(t.monitorType.isEmpty){
+			<td>-</td>
+		}else{
+			<td>@MonitorType.map(t.monitorType.get).desp</td>
+		}		
+		<td>@t.submit_date.toString("YYYY-MM-d HH:mm")</td>
+		<td>@userMap(t.submiter_id).name</td>
+		<td>@t.reason</td>
+		<td>@userMap(t.owner_id).name</td>
+	</tr>
+}
+</tbody>
+</table>
+<script>
+$(document ).ready(function() {
+	$('#ticketReport').dataTable( {
+		responsive: true,
+		language: {
+			url: '@routes.Assets.at("localization/zh_tw.json")',							
+		},
+		paging: false,
+		searching: false
+	} );
+});
+</script>
+
+
 @if(canChangeOwner){	
 	<div class="alert alert-info">
  		<p>接手案件: 將維修中案件的負責人改成自己</p>

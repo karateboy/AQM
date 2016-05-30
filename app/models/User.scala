@@ -96,6 +96,14 @@ object User {
       Where email=${email}
       """.map { userMapper}.single.apply()
   }
+  
+  def getUserByGroup(id:Int)(implicit session: DBSession = AutoSession) = {
+    sql"""
+      Select *
+      From Users
+      Where groupId = $id
+      """.map {userMapper}.list.apply()
+  }
 
   def getAllUsers()(implicit session: DBSession = AutoSession) = {
     sql"""
