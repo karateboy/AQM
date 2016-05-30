@@ -98,6 +98,19 @@ object Alarm {
     }.single.apply
   }
 
+  def findSameAlarm(monitor: Monitor.Value, mItem: String, code: String)(start:DateTime, end:DateTime)(implicit session: DBSession = AutoSession) = {
+    val tab = getTabName(start.getYear)
+    val startT: Timestamp = start
+    val endT: Timestamp = end
+    
+    sql"""
+        Select Count(*)
+        From $tab
+        Where DP_NO = ${monitor.toString()} and M_ITEM = ${mItem} and 
+        CODE2 = ${code} and M_DateTime >= $startT and M_DateTime < $endT and (CHK = 'YES' or CHK = 'NO' or CHK is NULL)        
+        """.map { rs => rs.int(1) }.single.apply()
+  }
+  
   def updateAlarmTicketState(monitor: Monitor.Value, mItem: String, time: DateTime, state: String)(implicit session: DBSession = AutoSession) = {
     val tab = getTabName(time.getYear)
     val timeT: Timestamp = time
