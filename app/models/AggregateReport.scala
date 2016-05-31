@@ -59,7 +59,7 @@ object AggregateReport {
       val dailyReport = Record.getDailyReport(m, date)
       def getDesc = {
         val windSpeed = dailyReport.typeList.find(t => t.monitorType == MonitorType.C211).get
-        val windDir = dailyReport.typeList.find(t => t.monitorType == MonitorType.C212).get
+        val windDirOpt = dailyReport.typeList.find(t => t.monitorType == MonitorType.C212)
         val dirMap =
           Map(
             (0 -> "北"), (1 -> "北北東"), (2 -> "東北"), (3 -> "東北東"), (4 -> "東"),
@@ -121,7 +121,13 @@ object AggregateReport {
               } else
                 ",未超過法規值"
 
-            val dir = dirMap(Math.ceil((windDir.stat.avg.get - 22.5 / 2) / 22.5).toInt % 16)
+            val dir = windDirOpt.map{ windDir => 
+                if(windDir.stat.avg.isDefined)
+                  dirMap(Math.ceil((windDir.stat.avg.get - 22.5 / 2) / 22.5).toInt % 16)
+                else
+                  "無資料"
+              }.getOrElse("無資料")
+              
             val summary = s"(最大風速${windSpeed.stat.max.getOrElse("")}m/s, 平均風向${dir}, 濃度${t.stat.min.getOrElse("")}~${t.stat.max.getOrElse("")} ${mCase.unit})"
 
             header + overLaw + summary
