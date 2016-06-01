@@ -83,6 +83,7 @@ object Alarm {
     }.list.apply
   }
 
+/*
   def getFirstAlarmNoTicket(start: DateTime)(implicit session: DBSession = AutoSession) = {
     val tab = getTabName(start.getYear)
     val startT: Timestamp = start
@@ -97,7 +98,8 @@ object Alarm {
           MonitorStatus.getTagInfo(rs.string(5).trim()).toString, rs.stringOpt(6))
     }.single.apply
   }
-
+*/
+  
   def findSameAlarm(monitor: Monitor.Value, mItem: String, code: String)(start:DateTime, end:DateTime)(implicit session: DBSession = AutoSession) = {
     val tab = getTabName(start.getYear)
     val startT: Timestamp = start

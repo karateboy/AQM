@@ -34,10 +34,9 @@ class AlarmTicketFilter extends Actor {
   }
 
   def alarmFilter(checkPoint: DateTime) = {
-    val now = DateTime.now
     val alarms = Alarm.getAlarmNoTicketList(checkPoint)
     for(ar <- alarms){
-      if(ar.code == MonitorStatus.REPAIR || ar.code == MonitorStatus.MAINTANCE_STAT)
+      if(ar.code == MonitorStatus.REPAIR || ar.code == MonitorStatus.MAINTANCE_STAT || ar.code == "053")
         Alarm.updateAlarmTicketState(ar.monitor, ar.mItem, ar.time, "PAS")
       else{
         val countOpt = findSameAlarm(ar.monitor, ar.mItem, ar.code)(ar.time - 30.minute, ar.time)
@@ -46,8 +45,11 @@ class AlarmTicketFilter extends Actor {
         }
       }
     }
+    if(!alarms.isEmpty){
+      val lastAlarmTime = alarms.last.time
+      context become handler(Some(lastAlarmTime))  
+    }
     
-    context become handler(Some(now))
     timer = Akka.system.scheduler.scheduleOnce(scala.concurrent.duration.Duration(5, scala.concurrent.duration.MINUTES), self, Check)
   }
 

@@ -720,8 +720,10 @@ object Maintance extends Controller {
     implicit request =>
       val start = DateTime.now() - 3.day
       val list = Alarm.getAlarmNoTicketList(start)
-
-      Ok(views.html.alarmNoTicket(list))
+      val excludedList = list.filter { ar => 
+        ar.code != MonitorStatus.MAINTANCE_STAT || ar.code != MonitorStatus.REPAIR || ar.code != "053"} 
+      
+      Ok(views.html.alarmNoTicket(excludedList))
   }
 
   case class AlarmId(monitor: Monitor.Value, mItem: String, time: Long)
