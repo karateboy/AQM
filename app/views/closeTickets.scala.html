@@ -7,7 +7,7 @@
         	<div class="panel-body">
  				@ticketReport(tickets, userMap, true)
  				<div class="alert alert-info">
- 					<p>結束案件: 使用者如果是案件建立者, 可以結束案件. 如果使用者是案件負責人, 則案件切換至「待結案」等待建立者結案</p> 
+ 					<p>結束案件: 使用者可以結束自己建立的案件</p> 
  					<p>駁回案件: 將案件發還給負責人處理</p>
  				</div>
             	<div class="col-lg-1 col-lg-offset-1">
@@ -15,18 +15,24 @@
 				</div>
 				<div class="col-lg-1 col-lg-offset-1">
 					<button type="button" class="btn btn-primary" id="resumeTicket">駁回案件</button>							
-				</div>				            	
+				</div>
+				<label class="col-lg-1 control-label">駁回理由</label>	
+	    		<textarea id="rejectReason" class="col-lg-2" row=3></textarea>	
+	        </div>
+		</div>				            	
             </div>
         </div>
 	</div>
 </div>
 <script>
 $(document ).ready(function() {
-	function handler(url_head){
+	function handler(url_head, attachReason){
 		return function(){
 			var $ids = $("#ticketReport :checked");
-			if($ids.length ==0)
+			if($ids.length ==0){
+				alert("請勾選案件");
 				return;
+			}
 			
 			var ticketId = [];
 			for(var i=0;i<$ids.length;i++){
@@ -35,6 +41,15 @@ $(document ).ready(function() {
 			}
 
 			var url = url_head + ticketId.join(":"); 
+
+			if(attachReason){
+				var rejectReason = $('#rejectReason').val();
+				if(rejectReason.length == 0){
+					alert('請填寫駁回理由!');
+					return;
+				}
+				url += "/" + rejectReason;				
+			}
 			
 			$.ajax({
 				url : url,
@@ -59,7 +74,7 @@ $(document ).ready(function() {
 		};
 	}
 	
-	$("#closeTicket").click(handler("/CloseTicket/"));
-	$("#resumeTicket").click(handler("/ResumeTicket/"));
+	$("#closeTicket").click(handler("/CloseTicket/", false));
+	$("#resumeTicket").click(handler("/ResumeTicket/", true));
 });
 </script>

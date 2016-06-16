@@ -130,7 +130,8 @@ object TicketType extends Enumeration {
 
 case class Ticket(id: Int, submit_date: DateTime, active: Boolean, ticketType: TicketType.Value, submiter_id: Int, owner_id: Int, monitor: Monitor.Value,
                   monitorType: Option[MonitorType.Value], reason: String, executeDate: DateTime, formJson: String,
-                  repairType: Option[String], repairSubType: Option[String], readyToClose: Option[Boolean]) {
+                  repairType: Option[String], repairSubType: Option[String], readyToClose: Option[Boolean],
+                  rejectReason: Option[String] = None) {
 
   implicit val formDataRead = Json.reads[FormData]
   implicit val formDataWrite = Json.writes[FormData]
@@ -261,7 +262,8 @@ object Ticket {
           r.stringOpt(11).get,
         r.stringOpt(12),
         r.stringOpt(13),
-        r.booleanOpt(14))
+        r.booleanOpt(14),
+        r.stringOpt(17))
     }
 
   def queryTickets(start: DateTime, end: DateTime)(implicit session: DBSession = AutoSession) = {
@@ -471,6 +473,16 @@ object Ticket {
       sql"""
         Update Ticket
         Set readyToClose = $bit
+        Where ID in (${id}) and submiter_id = $userId
+        """.update.apply
+    }
+  }
+
+  def resumeTicket(id: List[Int], userId: Int, reason: String)(implicit session: DBSession = AutoSession) = {
+    DB localTx { implicit session =>
+      sql"""
+        Update Ticket
+        Set readyToClose = 0, rejectReason = $reason
         Where ID in (${id}) and submiter_id = $userId
         """.update.apply
     }

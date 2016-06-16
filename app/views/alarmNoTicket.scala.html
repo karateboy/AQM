@@ -38,6 +38,13 @@
 		<div class="col-lg-1 col-lg-offset-1">
 			<button type="button" class="btn btn-primary" id="AlarmToNoTicket">不立案</button>
 		</div>
+		<label class="col-lg-1 control-label">預定完成日期</label>	
+	    	<div class="col-lg-5">
+	        	<div class="input-group date">
+  					<span class="input-group-addon"><i class="fa fa-calendar"></i></span><input type="text" class="form-control" id="executeDate">
+  				</div>
+	        </div>
+		</div>
 	</div>	
 </form>
 </div>
@@ -68,7 +75,8 @@ $( document ).ready(function() {
 
 	function handler(state){
 		return 	function(){	
-			var $inputs=$("#alarmReport :input:checked");		
+			var $inputs=$("#alarmReport :input:checked");
+			var executeDate = $('#executeDate').val();		
 			var obj={};			
 			var alarmToTicketList=[];
 			for(var i=0;i<$inputs.length;i++){
@@ -79,6 +87,7 @@ $( document ).ready(function() {
 				alarm.monitor=param[0];
 				alarm.mItem=param[1];
 				alarm.time=parseInt(param[2]);
+				alarm.executeDate=executeDate;
 				alarmToTicketList.push(alarm);
 			}
 			
@@ -109,6 +118,12 @@ $( document ).ready(function() {
 		};	
 	};
 
+	$('#executeDate').datetimepicker({
+		format: 'YYYY-MM-D',
+		defaultDate: moment().add(2, 'days'),
+    	locale: "zh-TW"
+	});
+	
 	$('#AlarmToTicket').click(handler("YES"));
 	$('#AlarmToNoTicket').click(handler("NO"));
 });

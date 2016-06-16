@@ -60,7 +60,7 @@ function updatefourHourForm(){
 			if(fourHour != null){
 				$input.prop('checked', true);
 				var $abs = $input.parent().next().children();
-				$abs.val(fourHour.abs);
+				$abs.val(fourHour.abs.toFixed(2));
 			}else{
 				$input.prop('checked', false);
 				var $abs = $input.parent().next().children();

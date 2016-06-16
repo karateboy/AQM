@@ -118,13 +118,12 @@ object ExcelUtility {
 
     def fillMonitorDailyReport(monitor: Monitor.Value, data: DailyReport, sheetIdx: Int) = {
       val sheet = wb.getSheetAt(sheetIdx)
-      val titleRow = sheet.getRow(2)
-      val titleCell = titleRow.getCell(0)
+      
+      sheet.getRow(1).getCell(0).setCellValue("監測站:" + Monitor.map(monitor).name)
+      sheet.getRow(1).getCell(30).setCellValue("查詢日期:" + DateTime.now.toString("YYYY/MM/dd"))
+      sheet.getRow(2).getCell(30).setCellValue("資料日期:" + reportDate.toString("YYYY/MM/dd"))
 
-      titleCell.setCellValue("監測站:" + Monitor.map(monitor).name)
-      sheet.getRow(1).getCell(27).setCellValue("查詢日期:" + DateTime.now.toString("YYYY/MM/dd"))
-      titleRow.getCell(27).setCellValue("資料日期:" + reportDate.toString("YYYY/MM/dd"))
-
+      
       for {
         col <- 1 to data.typeList.length
         mtRecord = data.typeList(col - 1)
@@ -147,6 +146,7 @@ object ExcelUtility {
         }
       }
 
+      
       for {
         col <- 1 to data.typeList.length
       } {
@@ -166,13 +166,12 @@ object ExcelUtility {
           sheet.setColumnHidden(col, true)
         }
       }
-
     }
     for {
       (monitor, sheetIdx) <- Monitor.mvList.zipWithIndex
       dailyReport = Record.getDailyReport(monitor, reportDate)
     } {
-      wb.setSheetName(sheetIdx, Monitor.map(monitor).name)
+      //wb.setSheetName(sheetIdx, Monitor.map(monitor).name)
       fillMonitorDailyReport(monitor, dailyReport, sheetIdx)
     }
     wb.setActiveSheet(0)
@@ -232,7 +231,7 @@ object ExcelUtility {
       fillOpt(stat.avg, 28)
       fillOpt(stat.max, 29)
       fillOpt(stat.min, 30)
-      fillOpt(stat.effectPercent.map { _*100 }, 31)
+      fillOpt(stat.effectPercent.map { _ * 100 }, 31)
     }
 
     //Hide col not in use

@@ -46,7 +46,7 @@ function updateDifferenceForm(){
 	var $enabled = $('#differenceForm :input[name="enabled"]');
 	$enabled.prop('checked', config.enabled);
 	var $multiplier = $('#differenceForm :input[name="multiplier"]')
-	$multiplier.val(config.multiplier);
+	$multiplier.val(config.multiplier.toFixed(2));
 	$multiplier.prop("disabled", !config.enabled);
 	var $inputs = $('#differenceForm :input[name="monitorType"]');
 	for(var i=0;i<$inputs.length;i++){

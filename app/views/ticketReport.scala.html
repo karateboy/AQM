@@ -45,7 +45,11 @@
 		<td>@t.executeDate.toString("YYYY-MM-d")</td>
 		<td>@ModelHelper.formatOptBool(t.readyToClose)</td>
 		@if(t.active){
-			<td>否</td>
+			@if(t.rejectReason.isDefined){
+				<td>駁回(@t.rejectReason.get)<td>
+			}else{
+				<td>否</td>
+			}
 		}else{
 			<td>是</td>
 		}
