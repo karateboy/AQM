@@ -118,12 +118,11 @@ object ExcelUtility {
 
     def fillMonitorDailyReport(monitor: Monitor.Value, data: DailyReport, sheetIdx: Int) = {
       val sheet = wb.getSheetAt(sheetIdx)
-      
+
       sheet.getRow(1).getCell(0).setCellValue("監測站:" + Monitor.map(monitor).name)
       sheet.getRow(1).getCell(30).setCellValue("查詢日期:" + DateTime.now.toString("YYYY/MM/dd"))
       sheet.getRow(2).getCell(30).setCellValue("資料日期:" + reportDate.toString("YYYY/MM/dd"))
 
-      
       for {
         col <- 1 to data.typeList.length
         mtRecord = data.typeList(col - 1)
@@ -146,7 +145,6 @@ object ExcelUtility {
         }
       }
 
-      
       for {
         col <- 1 to data.typeList.length
       } {
@@ -1275,6 +1273,77 @@ object ExcelUtility {
       }
     }
 
+    finishExcel(reportFilePath, pkg, wb)
+  }
+
+  def exportWindRose(chart: HighchartData, monitorTypes: Array[MonitorType.Value]): File = {
+    val precArray = monitorTypes.map { mt => MonitorType.map(mt).prec }
+
+    val (reportFilePath, pkg, wb) = prepareTemplate("chart_export.xlsx")
+    val evaluator = wb.getCreationHelper().createFormulaEvaluator()
+    val format = wb.createDataFormat();
+
+    val sheet = wb.getSheetAt(0)
+    val headerRow = sheet.createRow(0)
+    headerRow.createCell(0).setCellValue("風向")
+
+    var pos = 0
+    for {
+      col <- 1 to chart.series.length
+      series = chart.series(col - 1)
+    } {
+      headerRow.createCell(pos + 1).setCellValue(series.name)
+      pos += 1
+    }
+    headerRow.createCell(pos + 1).setCellValue("總和")
+
+    val style = {
+      val format_str = "0.00" + "%"
+      val style = wb.createCellStyle();
+      style.setDataFormat(format.getFormat(format_str))
+      style
+    }
+
+    // Categories data
+    val windDirList = chart.xAxis.categories.get
+    for (row <- windDirList.zipWithIndex) {
+      val rowNo = row._2 + 1
+      val thisRow = sheet.createRow(rowNo)
+      thisRow.createCell(0).setCellValue(row._1)
+
+      for {
+        col <- 1 to chart.series.length
+        series = chart.series(col - 1)
+      } {
+        val cell = thisRow.createCell(col)
+        cell.setCellStyle(style)
+
+        val pair = series.data(rowNo - 1)
+        if (pair.length == 2 && pair(1).isDefined) {
+          cell.setCellValue(pair(1).get / 100)
+        }
+      }
+      val totalCell = thisRow.createCell(chart.series.length + 1)
+      totalCell.setCellStyle(style)
+      val total = chart.series.map { _.data(rowNo - 1)(1).get }.sum
+      totalCell.setCellValue(total / 100)
+    }
+    val totalRow = sheet.createRow(windDirList.length + 1)
+    totalRow.createCell(0).setCellValue("總和")
+    for {
+      col <- 1 to chart.series.length
+      series = chart.series(col - 1)
+    } {
+      val cell = totalRow.createCell(col)
+      cell.setCellStyle(style)
+
+      val total = series.data.map { _(1).get }.sum
+      cell.setCellValue(total / 100)
+    }
+    val allTotalCell = totalRow.createCell(chart.series.length + 1)
+    allTotalCell.setCellStyle(style)
+    allTotalCell.setCellValue(1)
+    
     finishExcel(reportFilePath, pkg, wb)
   }
 
