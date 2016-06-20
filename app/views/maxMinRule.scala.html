@@ -23,7 +23,7 @@
         		@for(mt<-MonitorType.mtvList){
         			<tr>
         				<th><input type="checkbox" name="monitorType" id='@mt' disabled>@MonitorType.map(mt).desp</th>
-        				<td><input name="maxValue" id='@mt' value='@MonitorType.map(mt).std_internal_default' disabled></td>
+        				<td><input name="maxValue" id='@mt' value='@MonitorType.format(mt, MonitorType.map(mt).std_internal_default)' disabled></td>
         				<td><input name="minValue" id='@mt' value='0' disabled></td>
         			</tr>
         		}
@@ -65,9 +65,9 @@ function updateMinMaxForm (){
 			if(mt != null){
 				$input.prop('checked', true);
 				var $max = $input.parent().next().children();
-				$max.val(mt.max);
+				$max.val(mt.max.toFixed(2));
 				var $min = $max.parent().next().children();
-				$min.val(mt.min);
+				$min.val(mt.min.toFixed(2));
 			}else{
 				$input.prop('checked', false);
 				var $max = $input.parent().next().children();

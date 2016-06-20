@@ -173,7 +173,7 @@ POST	/UpdateForm/:ID		controllers.Maintance.updateForm(ID:Int)
 POST	/UpdateRepairForm/:ID	controllers.Maintance.updateRepairForm(ID: Int)
 GET		/CloseTicket		controllers.Maintance.closeTicket
 POST	/CloseTicket/:ids	controllers.Maintance.closeTicketAction(ids)
-POST	/ResumeTicket/:ids	controllers.Maintance.resumeTicketAction(ids)
+POST	/ResumeTicket/:ids/:reason	controllers.Maintance.resumeTicketAction(ids, reason)
 POST	/TakeOverTicket/:ids	controllers.Maintance.takeOverTicketAction(ids)
 GET		/DownloadForm/:ID	controllers.Maintance.downloadForm(ID:Int)
 

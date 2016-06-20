@@ -1,5 +1,6 @@
 @* repairingTickets Template File *@
 @import Alarm._
+@import com.github.nscala_time.time.Imports._
 @(tickets: List[(Ticket, Option[Alarm])], userMap:Map[Int, User], canChangeOwner:Boolean = false)
 <div class="row">
 <div class="col-lg-12">
@@ -20,6 +21,8 @@
 		<th>立案人</th>
 		<th>立案原因</th>		
 		<th>負責人</th>
+		<th>預定完成日期</th>
+		<th>逾期</th>
 	</tr>
 </thead>
 <tbody>
@@ -43,10 +46,16 @@
 		}else{
 			<td>@MonitorType.map(t.monitorType.get).desp</td>
 		}		
-		<td>@t.submit_date.toString("YYYY-MM-d HH:mm")</td>
+		<td>@t.submit_date.toString("MM-d HH:mm")</td>
 		<td>@userMap(t.submiter_id).name</td>
 		<td>@t.reason</td>
 		<td>@userMap(t.owner_id).name</td>
+		<td>@t.executeDate.toString("MM-d")</td>
+		@if(t.executeDate.isBefore(DateTime.yesterday)){
+			<td class="text-danger">是</td>
+		}else{
+			<td>否</td>
+		}
 	</tr>
 }
 </tbody>

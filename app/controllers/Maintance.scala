@@ -53,9 +53,10 @@ object Maintance extends Controller {
               for {
                 m <- ticketParam.monitors
                 date <- ticketParam.executeDate
-              } yield {
+                executeDate = DateTime.parse(date)
+              } yield { 
                 Ticket(0, DateTime.now, true, ticketParam.ticketType, submiterId,
-                  ticketParam.owner, m, None, ticketParam.reason, DateTime.parse(date), Json.toJson(Ticket.defaultFormData).toString,
+                  ticketParam.owner, m, None, ticketParam.reason, executeDate, Json.toJson(Ticket.defaultFormData).toString,
                   None, None, Some(false))
               }
             } else {
@@ -63,9 +64,10 @@ object Maintance extends Controller {
                 m <- ticketParam.monitors
                 mt <- ticketParam.monitorTypes
                 date <- ticketParam.executeDate
-              } yield {
+                executeDate = DateTime.parse(date)
+              } yield { 
                 Ticket(0, DateTime.now, true, ticketParam.ticketType, submiterId,
-                  ticketParam.owner, m, Some(mt), ticketParam.reason, DateTime.parse(date), Json.toJson(Ticket.defaultRepairFormData).toString,
+                  ticketParam.owner, m, Some(mt), ticketParam.reason, executeDate, Json.toJson(Ticket.defaultRepairFormData).toString,
                   ticketParam.repairType, ticketParam.repairSubType, Some(false))
               }
             }
@@ -297,7 +299,8 @@ object Maintance extends Controller {
         val userInfo = userInfoOpt.get
         val group = Group.getGroup(userInfo.groupID).get
         val tickets = Ticket.ticketSubmittedByMe(userInfo.id)
-        val adminUsers = User.getAdminUsers()
+        //val ticketsOwnedByMe = 
+        val adminUsers = User.getAllUsers()
         val usrMap = Map(adminUsers.map { u => (u.id.get -> u) }: _*)
 
         Ok(views.html.closeTickets(tickets, usrMap))
@@ -314,12 +317,12 @@ object Maintance extends Controller {
       Ok(Json.obj("ok" -> true))
   }
 
-  def resumeTicketAction(idStr: String) = Security.Authenticated {
+  def resumeTicketAction(idStr: String, reason:String) = Security.Authenticated {
     implicit request =>
       val myself = request.user.id
       val ids = idStr.split(":").toList
       val idList = ids.map { Integer.parseInt }
-      Ticket.readyToCloseSubmitterTicket(idList, myself, false)
+      Ticket.resumeTicket(idList, myself, reason)
       for (id <- idList) {
         val ticketOpt = Ticket.getTicket(id)
         ticketOpt.map {
@@ -333,7 +336,7 @@ object Maintance extends Controller {
                 val ticketTypeStr = TicketType.map(ticket.ticketType)
                 val mtType = ticket.monitorType.map(MonitorType.map(_).desp)
                 val msg = s"駁回維修案件 $id : ${Monitor.map(ticket.monitor).name}-${ModelHelper.formatOptStr(mtType)}"
-                val htmlMsg = s"<html><body><p><b>$msg</b></p></body></html>"
+                val htmlMsg = s"<html><body><p><b>$msg 理由: $reason</b></p></body></html>"
 
                 val email = Email(
                   s"駁回維修案件: ${Monitor.map(ticket.monitor).name}-${ModelHelper.formatOptStr(mtType)}",
@@ -718,20 +721,21 @@ object Maintance extends Controller {
 
   def alarmNoTicketList() = Security.Authenticated {
     implicit request =>
-      val start = DateTime.now() - 3.day
+      //FIXME
+      val start = DateTime.now() - 21.day
       val list = Alarm.getAlarmNoTicketList(start)
       val excludedList = list.filter { ar => 
-        ar.code != MonitorStatus.MAINTANCE_STAT || ar.code != MonitorStatus.REPAIR || ar.code != "053"} 
+        ar.code != MonitorStatus.MAINTANCE_STAT && ar.code != MonitorStatus.REPAIR && ar.code != "053"} 
       
       Ok(views.html.alarmNoTicket(excludedList))
   }
 
-  case class AlarmId(monitor: Monitor.Value, mItem: String, time: Long)
-  case class AlarmToTicketParam(status: String, alarmToTicketList: Seq[AlarmId])
+  case class AlarmTicketParam(monitor: Monitor.Value, mItem: String, time: Long, executeDate:String)
+  case class AlarmToTicketParam(status: String, alarmToTicketList: Seq[AlarmTicketParam])
   def alarmToTicket() = Security.Authenticated(BodyParsers.parse.json) {
     implicit request =>
       val user = request.user
-      implicit val idReads = Json.reads[AlarmId]
+      implicit val idReads = Json.reads[AlarmTicketParam]
       implicit val paramReads = Json.reads[AlarmToTicketParam]
       val alarmToTicketParam = request.body.validate[AlarmToTicketParam]
       alarmToTicketParam.fold(
@@ -764,9 +768,10 @@ object Maintance extends Controller {
               } else
                 (None, None)
   
+              val executeDate = DateTime.parse(alarmId.executeDate)
               val ticket = Ticket(0, DateTime.now, true, TicketType.repair, user.id,
                 SystemConfig.getAlarmTicketDefaultUserId(), alarmId.monitor, mtOpt, reason,
-                DateTime.now, Json.toJson(Ticket.defaultAlarmTicketForm(ar)).toString, repairType, repairSubType, Some(false))
+                executeDate, Json.toJson(Ticket.defaultAlarmTicketForm(ar)).toString, repairType, repairSubType, Some(false))
               Ticket.newTicket(ticket)
             }
           }
@@ -781,7 +786,7 @@ object Maintance extends Controller {
       val group = Group.getGroup(userInfo.groupID).get
       val adminUsers = User.getAdminUsers()
 
-      Ok(views.html.newTicket(userInfo, group.privilege, adminUsers, List(TicketType.repair), false))
+      Ok(views.html.manualAlarmTicket(userInfo, group.privilege, adminUsers, List(TicketType.repair)))
   }
 
   def repairingAlarmTicket() = Security.Authenticated {
