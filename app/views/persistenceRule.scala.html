@@ -10,11 +10,27 @@
             	<input type="checkbox" name="enabled" class="form-control">
             </div>
         </div>
-		<div id='persistenceParameter' class="form-group">
+		<div id='persistenceParameter'>
         	<label class="col-lg-1 control-label">連續筆數</label>
             <div class="col-lg-10">
             	<input name='same' type="number" class="form-control" value='3' disabled>
             </div>
+            <div>
+            	<table class="table">
+        		<thead>
+        			<tr>
+        				<th>測項</th>
+        			</tr>
+        		</thead>
+        		<tbody>
+        			@for(mt<-MonitorType.mtvList){
+        				<tr>
+        					<th><input type="checkbox" name="monitorType" id='@mt' disabled>@MonitorType.map(mt).desp</th>
+        				</tr>
+        			}
+        		</tbody>
+        		</table>
+        	</div>            
         </div>
 	
 		<div class="form-group">
@@ -27,11 +43,25 @@
 <script>
 function updatePersistenceForm(){
 	var config = auditConfig.persistenceRule;
+	//convert from old config
+	if(!config.monitorTypes)
+		config.monitorTypes = [];
+	
 	var $enabled = $('#persistenceForm :input[name="enabled"]');
 	$enabled.prop('checked', config.enabled);
 	var $same = $('#persistenceForm :input[name="same"]');
 	$same.val(config.same);
 	$same.prop('disabled', !config.enabled);
+	var $inputs = $('#persistenceForm :input[name="monitorType"]');
+	for(var i=0;i<$inputs.length;i++){
+		var $check = $inputs.eq(i);
+		if(config.monitorTypes.indexOf($check.prop('id')) != -1)
+			$check.prop('checked', true);
+		else
+			$check.prop('checked', false);
+		
+		$check.prop("disabled", !config.enabled);
+	}
 }
 
 $('#persistenceForm :input[name="enabled"]').click(function(){
@@ -47,8 +77,17 @@ $('#persistenceForm').submit(function(){
 	var param={};
 	var $enabled = $('#persistenceForm :input[name="enabled"]');
 	var $same = $('#persistenceForm :input[name="same"]');
+	var $inputs = $('#persistenceForm :input[name="monitorType"]');
 	param.enabled = $enabled.prop("checked");
-	param.same = parseInt($same.val()); 
+	param.same = parseInt($same.val());
+	
+	param.monitorTypes=[];
+	for(var i=0;i<$inputs.length;i++){
+		var $check = $inputs.eq(i);
+		if($check.prop("checked")){				
+			param.monitorTypes.push($check.prop('id'));
+		}
+	}
 	
 	auditConfig.persistenceRule = param;
 	postAuditCfg();

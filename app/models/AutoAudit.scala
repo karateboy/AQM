@@ -261,7 +261,8 @@ object SpikeRule {
 
 case class PersistenceRule(
     enabled: Boolean,
-    same: Int) extends Rule('e') {
+    same: Int,
+    monitorTypes: Option[Seq[MonitorType.Value]]) extends Rule('e') {
   def checkInvalid(record: HourRecord, targetStat: AuditStat, monitor: Monitor.Value, start: DateTime): Boolean = {
     if (!enabled)
       return false
@@ -269,7 +270,9 @@ case class PersistenceRule(
     var invalid = false
     val pre_records = getHourRecords(monitor, start - (same - 1).hour, start).toArray
 
-    for (mt <- MonitorType.mtvAllList) {
+    val mtList = monitorTypes.getOrElse(Seq.empty[MonitorType.Value])
+    
+    for (mt <- mtList) {
       val mt_rec = Record.monitorTypeProject2(mt)(record)
       if (isOk(mt_rec)) {
         val pre_mt_rec = pre_records.map(Record.monitorTypeProject2(mt)).filter(isOk).filter(r => r._1.get == mt_rec._1.get)
@@ -296,7 +299,7 @@ object PersistenceRule {
   implicit val persistenceRuleRead = Json.reads[PersistenceRule]
   implicit val persistenceRuleWrite = Json.writes[PersistenceRule]
 
-  val default = PersistenceRule(false, 3)
+  val default = PersistenceRule(false, 3, Some(Seq.empty[MonitorType.Value]))
 }
 
 case class MonoCfg(
