@@ -252,7 +252,10 @@ object Maintance extends Controller {
           BadRequest(Json.obj("ok" -> false, "msg" -> JsError.toFlatJson(error)))
         },
         form => {
-          Ticket.updateRepairFormData(ID, form)
+          val ticket = Ticket.getTicket(ID).get
+          val oldRepairForm = ticket.getRepairForm
+          val newForm = form.replaceAlarm(oldRepairForm.alarm) 
+          Ticket.updateRepairFormData(ID, newForm)
           Ok(Json.obj("ok" -> true))
         })
   }

@@ -91,6 +91,10 @@ case class RepairFormData(start: String, end: String, equipmentId: String, parts
     else
       strValues(idx)
   }
+  
+  def replaceAlarm(alarmOpt:Option[Alarm])=
+    RepairFormData(start, end, equipmentId, parts, alarmOpt, explain, result, comment, boolValues, strValues)
+
 }
 
 object TicketType extends Enumeration {
