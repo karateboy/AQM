@@ -101,6 +101,89 @@ object ExcelUtility {
     }
   }
 
+  def historyReport(monitors: Seq[Monitor.Value], epaMonitors: Seq[EpaMonitor.Value], monitorType: MonitorType.Value, start: DateTime, end: DateTime, timeSeq: Seq[DateTime], recordMap: Map[Monitor.Value, Map[DateTime, (Option[Float], Option[String])]], epaRecordMap: Map[EpaMonitor.Value, Map[DateTime, Float]], showSec: Boolean = false, recordType: String = "Hour") = {
+    implicit val (reportFilePath, pkg, wb) = prepareTemplate("historyReport.xlsx")
+    val format = wb.createDataFormat();
+    val sheet = wb.getSheetAt(0)
+    val titleRow = sheet.getRow(2)
+    val titleCell = titleRow.getCell(0)
+
+    val fgColors =
+      {
+        val seqColors =
+          for (col <- 1 to 5)
+            yield sheet.getRow(3).getCell(col).getCellStyle.getFillForegroundXSSFColor
+        seqColors.toArray
+      }
+
+    sheet.getRow(1).createCell(1).setCellValue(s"${start.toString("YYYY-MM-dd HH:mm")}~${end.toString("YYYY-MM-dd HH:mm")}")
+    sheet.getRow(2).createCell(1).setCellValue(s"${MonitorType.map(monitorType).desp} (${MonitorType.map(monitorType).unit})")
+
+    var col = 1
+    for { m <- monitors } {
+      sheet.getRow(4).createCell(col).setCellValue(s"${Monitor.map(m).name}")
+      col += 1
+    }
+
+    for (epa <- epaMonitors) {
+      sheet.getRow(4).createCell(col).setCellValue(s"${EpaMonitor.map(epa).name}")
+      col += 1
+    }
+
+    var row = 5
+    for (t <- timeSeq) {
+
+      val timeStr =
+        if (!showSec) {
+          t.toString("YYYY-MM-dd HH:mm")
+        } else {
+          t.toString("YYYY-MM-dd HH:mm:ss")
+        }
+
+      val thisRow = sheet.createRow(row) 
+      thisRow.createCell(0).setCellValue(timeStr)
+
+      var col = 1
+      val normalStyle = createStyle(monitorType)
+      val abnormalStyles = createColorStyle(fgColors, monitorType)
+      for {
+        m <- monitors
+      } {
+        val (valueOpt, statusOpt) = recordMap(m).getOrElse(t, (None, None))
+        val cell = thisRow.createCell(col)
+        if (valueOpt.isEmpty || statusOpt.isEmpty) {
+          cell.setCellValue("-")
+        } else {
+          val value = valueOpt.get
+          val status = statusOpt.get
+          cell.setCellValue(value)
+
+          val cellStyle = getStyle(status, normalStyle, abnormalStyles)
+          cell.setCellStyle(cellStyle)
+        }
+        col += 1
+      }
+
+      for {
+        epa<-epaMonitors
+        valueOpt = epaRecordMap(epa).get(t)
+        cell = thisRow.createCell(col)
+      } {
+        if (valueOpt.isEmpty) {
+          cell.setCellValue("-")
+        } else {
+          val value = valueOpt.get
+          cell.setCellValue(value)
+          cell.setCellStyle(normalStyle)
+        }
+        col += 1
+      }
+      row += 1
+    }
+
+    finishExcel(reportFilePath, pkg, wb)
+  }
+  
   def createAllDailyReport(reportDate: DateTime) = {
     implicit val (reportFilePath, pkg, wb) = prepareTemplate("all_daily_report.xlsx")
     val format = wb.createDataFormat();
@@ -1100,7 +1183,7 @@ object ExcelUtility {
       }
       sheet.getRow(36).getCell(0).setCellValue(s"${Monitor.map(monitor).name} (${MonitorType.map(monitorType).desp})零點校正趨勢圖")
       sheet.getRow(37).getCell(0).setCellValue(s"${Monitor.map(monitor).name} (${MonitorType.map(monitorType).desp})全幅校正趨勢圖")
-      //sheet.getRow(38).getCell(0).setCellValue(s"${Monitor.map(monitor).name} (${MonitorType.map(monitorType).desp})全幅讀值趨勢圖")
+      sheet.getRow(38).getCell(0).setCellValue(s"${Monitor.map(monitor).name} (${MonitorType.map(monitorType).desp})全幅讀值趨勢圖")
     }
 
     var first_mtidx = -1
@@ -1343,7 +1426,7 @@ object ExcelUtility {
     val allTotalCell = totalRow.createCell(chart.series.length + 1)
     allTotalCell.setCellStyle(style)
     allTotalCell.setCellValue(1)
-    
+
     finishExcel(reportFilePath, pkg, wb)
   }
 
@@ -1361,7 +1444,7 @@ object ExcelUtility {
     sheet.getRow(75).getCell(1).setCellValue(monitorName)
     sheet.getRow(113).getCell(1).setCellValue(monitorName)
 
-    val dateStr = ticket.executeDate.toString("YY/MM/d")
+    val dateStr = ticket.executeDate.toString("YYYY/MM/d")
     sheet.getRow(1).getCell(5).setCellValue(dateStr)
     sheet.getRow(42).getCell(5).setCellValue(dateStr)
     sheet.getRow(75).getCell(5).setCellValue(dateStr)
@@ -1494,7 +1577,7 @@ object ExcelUtility {
     val monitorName = Monitor.map(ticket.monitor).name
     sheet.getRow(1).getCell(1).setCellValue(monitorName)
 
-    val dateStr = ticket.executeDate.toString("YY/MM/d")
+    val dateStr = ticket.executeDate.toString("YYYY/MM/d")
     sheet.getRow(1).getCell(11).setCellValue(dateStr)
 
     val usrName = usrMap(ticket.owner_id).name
@@ -1537,7 +1620,7 @@ object ExcelUtility {
     sheet.getRow(1).getCell(1).setCellValue(monitorName)
     sheet.getRow(35).getCell(1).setCellValue(monitorName)
 
-    val dateStr = ticket.executeDate.toString("YY/MM/d")
+    val dateStr = ticket.executeDate.toString("YYYY/MM/d")
     sheet.getRow(1).getCell(5).setCellValue(dateStr)
     sheet.getRow(35).getCell(5).setCellValue(dateStr)
 
@@ -1600,7 +1683,7 @@ object ExcelUtility {
     sheet.getRow(1).getCell(1).setCellValue(monitorName)
     sheet.getRow(40).getCell(1).setCellValue(monitorName)
 
-    val dateStr = ticket.executeDate.toString("YY/MM/d")
+    val dateStr = ticket.executeDate.toString("YYYY/MM/d")
     sheet.getRow(1).getCell(5).setCellValue(dateStr)
     sheet.getRow(40).getCell(5).setCellValue(dateStr)
 
@@ -1659,7 +1742,7 @@ object ExcelUtility {
     sheet.getRow(1).getCell(1).setCellValue(monitorName)
     sheet.getRow(27).getCell(1).setCellValue(monitorName)
 
-    val dateStr = ticket.executeDate.toString("YY/MM/d")
+    val dateStr = ticket.executeDate.toString("YYYY/MM/d")
     sheet.getRow(1).getCell(5).setCellValue(dateStr)
     sheet.getRow(27).getCell(5).setCellValue(dateStr)
 
@@ -1714,7 +1797,7 @@ object ExcelUtility {
     val monitorName = Monitor.map(ticket.monitor).name
     sheet.getRow(1).getCell(1).setCellValue(monitorName)
 
-    val dateStr = ticket.executeDate.toString("YY/MM/d")
+    val dateStr = ticket.executeDate.toString("YYYY/MM/d")
     sheet.getRow(1).getCell(5).setCellValue(dateStr)
 
     val usrName = usrMap(ticket.owner_id).name

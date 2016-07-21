@@ -54,6 +54,31 @@ object Alarm {
 
   }
 
+  def getNotRepairAlarm(monitors: Seq[Monitor.Value], start: DateTime, end: DateTime)(implicit session: DBSession = AutoSession): List[Alarm] = {
+    val mStr = SQLSyntax.createUnsafely(monitors.mkString("('", "','", "')"))
+    val startT: Timestamp = start
+    val endT: Timestamp = end
+    val tab = getTabName(start.getYear)
+    assert(start <= end)
+    val result =
+        sql"""
+        Select *
+        From ${tab}
+        Where DP_NO in ${mStr} and M_DateTime>=${startT} and M_DateTime<${end} and CHK = 'NO'
+        ORDER BY M_DateTime ASC
+        """.map {
+          rs =>
+            Alarm(Monitor.withName(rs.string(1)), rs.string(2), rs.timestamp(3), rs.float(4),
+              MonitorStatus.getTagInfo(rs.string(5).trim()).toString, rs.stringOpt(6))
+        }.list.apply
+
+    if (start.getYear == end.getYear)
+      result
+    else
+      result ++ getNotRepairAlarm(monitors, DateTime.parse(s"${start.getYear + 1}-1-1"), end)
+
+  }
+
   def getAlarmOpt(monitor: Monitor.Value, mItem: String, time: DateTime)(implicit session: DBSession = AutoSession) = {
     val tab = getTabName(time.getYear)
     val timeT : Timestamp = time

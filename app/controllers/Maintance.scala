@@ -627,7 +627,7 @@ object Maintance extends Controller {
   def downloadNotificationForm(startStr: String, endStr: String) = Security.Authenticated {
 
     val start = DateTime.parse(startStr)
-    val end = DateTime.parse(endStr) + 1.day
+    val end = DateTime.parse(endStr)
 
     val tickets = Ticket.queryActiveTickets(start, end)
 
@@ -818,6 +818,16 @@ object Maintance extends Controller {
 
       Ok(views.html.queryClosedRepairTicket(userInfo, group.privilege, adminUsers, List(TicketType.repair)))
   }
+  
+  def queryNoRepairTicketAlarm = Security.Authenticated {
+    implicit request =>
+      val userInfo = Security.getUserinfo(request).get
+      val group = Group.getGroup(userInfo.groupID).get
+      val adminUsers = User.getAdminUsers()
+
+      Ok(views.html.alarmNoRepair(group.privilege))
+  }
+  
 
   def closedRepairTicketReport(monitorStr: String, startStr: String, endStr: String) = Security.Authenticated {
     val monitors = monitorStr.split(":").map { Monitor.withName }

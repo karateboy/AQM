@@ -153,6 +153,7 @@ object Query extends Controller {
           views.html.historyReport(edit, monitors, epaMonitors, monitorType, start, end, timeSet.toList.sorted, recordMap, epaRecordMap, true, tableType.toString)
         else
           views.html.historyReport(edit, monitors, epaMonitors, monitorType, start, end, timeSet.toList.sorted, recordMap, epaRecordMap, false, tableType.toString)
+          
       outputType match {
         case OutputType.html =>
           Ok(output)
@@ -160,6 +161,11 @@ object Query extends Controller {
           Ok.sendFile(creatPdfWithReportHeader(title, output),
             fileName = _ =>
               play.utils.UriEncoding.encodePathSegment(title + start.toString("YYMMdd") + "_" + end.toString("MMdd") + ".pdf", "UTF-8"))
+        case OutputType.excel =>
+          val excelFile = ExcelUtility.historyReport(monitors, epaMonitors, monitorType, start, end, timeSet.toList.sorted, recordMap, epaRecordMap, tableType == TableType.SixSec)
+          Ok.sendFile(excelFile,
+            fileName = _ =>
+              play.utils.UriEncoding.encodePathSegment(title + start.toString("YYMMdd") + "_" + end.toString("MMdd") + ".xlsx", "UTF-8"))          
       }
   }
 
@@ -720,6 +726,8 @@ object Query extends Controller {
   def alarmReport(monitorStr: String, statusStr: String, startStr: String, endStr: String, outputTypeStr: String) = Security.Authenticated {
     val monitorStrArray = monitorStr.split(':')
     val monitors = monitorStrArray.map { Monitor.withName }
+    val notRepair = statusStr.equalsIgnoreCase("NotRepair")
+    
     val statusFilter = if (statusStr.equalsIgnoreCase("none")) {
       None
     } else {
@@ -729,7 +737,11 @@ object Query extends Controller {
     val end = DateTime.parse(endStr) + 1.day
     val outputType = OutputType.withName(outputTypeStr)
 
-    val records = Alarm.getAlarm(monitors, statusFilter, start, end)
+    val records =
+      if(notRepair)
+        Alarm.getNotRepairAlarm(monitors, start, end)
+      else
+        Alarm.getAlarm(monitors, statusFilter, start, end)
 
     val output = views.html.alarmReport(start, end, records)
     val title = "警告報表"

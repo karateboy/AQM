@@ -62,7 +62,8 @@ POST	/SaveMonitorAggregateReport/:date		controllers.Report.saveMonitorAggregateR
 
 GET		/HistoryQuery			controllers.Query.history
 GET		/HistoryQueryReport/:edit/:monitor/:epaMonitor/:monitorType/:recordType/:start/:end	controllers.Query.historyReport(edit:Boolean, monitor, epaMonitor, monitorType, recordType, start, end, outputType="html")
-GET		/PDF/HistoryQueryReport/:edit/:monitor/:monitorType/:recordType/:start/:end	controllers.Query.historyReport(edit:Boolean, monitor, epaMonitor, monitorType, recordType, start, end, outputType="pdf")
+GET		/PDF/HistoryQueryReport/:edit/:monitor/:epaMonitor/:monitorType/:recordType/:start/:end	controllers.Query.historyReport(edit:Boolean, monitor, epaMonitor, monitorType, recordType, start, end, outputType="pdf")
+GET		/Excel/HistoryQueryReport/:edit/:monitor/:epaMonitor/:monitorType/:recordType/:start/:end controllers.Query.historyReport(edit:Boolean, monitor, epaMonitor, monitorType, recordType, start, end, outputType="excel")
 
 GET		/HistoryTrend			controllers.Query.historyTrend
 GET		/JSON/HistoryTrend/:monitor/:epaMonitor/:monitorType/:reportUnit/:msf/:start/:end	controllers.Query.historyTrendChart(monitor, epaMonitor, monitorType, reportUnit, msf, start, end, outputTypeStr="html")
@@ -210,6 +211,7 @@ GET		/ManualAlarmTicket		controllers.Maintance.manualAlarmTicket
 GET		/ReparingAlarmTicket	controllers.Maintance.repairingAlarmTicket
 GET		/ClosedRepairTicket		controllers.Maintance.queryClosedRepairTicket
 GET		/ClosedRepairTicketReport/:monitors/:start/:end	controllers.Maintance.closedRepairTicketReport(monitors, start, end)
+GET		/NoRepairAlarm			controllers.Maintance.queryNoRepairTicketAlarm
 
 # websockets
 GET		/MinMonthlyReportSocket		controllers.Report.getMinMonthlySocket
