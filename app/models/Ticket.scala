@@ -331,7 +331,7 @@ object Ticket {
     sql"""
       Select *
       From Ticket
-      Where ticketType = ${TicketType.repair.id} and active = 1 and owner_id in $userIdStr 
+      Where ticketType = ${TicketType.repair.id} and active = 1 and submiter_id in $userIdStr and readyToClose = 0
       Order by execute_date      
       """.map { ticketMapper }.list().apply()
   }
