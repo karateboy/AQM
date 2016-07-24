@@ -46,7 +46,7 @@
 		<td>@ModelHelper.formatOptBool(t.readyToClose)</td>
 		@if(t.active){
 			@if(t.rejectReason.isDefined){
-				<td>駁回(@t.rejectReason.get)<td>
+				<td>駁回(@t.rejectReason.get)</td>
 			}else{
 				<td>否</td>
 			}
@@ -58,3 +58,14 @@
 }
 </tbody>
 </table>
+<script>
+$(document ).ready(function() {
+	$('#ticketReport').dataTable( {
+		responsive: true,
+		language: {
+			url: '@routes.Assets.at("localization/zh_tw.json")',							
+		},
+		paging: false
+	} );
+});
+</script>

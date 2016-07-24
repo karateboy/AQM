@@ -631,6 +631,7 @@ object ExcelUtility {
           }
 
           val idxOpt = graph_idx.find(p => p._1 == dayReport.typeList(mt_i).monitorType)
+          /*
           if (idxOpt.isDefined) {
             val graph_idx = idxOpt.get
             val std_internal = Monitor.map(monitor).getStdInternal(graph_idx._1)
@@ -638,6 +639,8 @@ object ExcelUtility {
               sheet.getRow(row_start + idx).createCell(22 + graph_idx._2).setCellValue(std_internal.get)
             }
           }
+          * /
+          */
         }
         row_start += dayReport.typeList(0).dataList.length
       }
@@ -1451,7 +1454,7 @@ object ExcelUtility {
     sheet.getRow(113).getCell(5).setCellValue(dateStr)
     oldTicketOpt.map {
       old =>
-        val dateStr = old.executeDate.toString("YY/MM/d")
+        val dateStr = old.executeDate.toString("YYYY/MM/d")
         sheet.getRow(1).getCell(3).setCellValue(dateStr)
     }
 
@@ -1516,7 +1519,7 @@ object ExcelUtility {
     for (row <- 78 to 78) {
       sheet.getRow(row).getCell(2).setCellValue(form.getStrSeq)
       oldForm.map { old => sheet.getRow(row).getCell(5).setCellValue(old.getStrSeq) }
-      sheet.getRow(row).getCell(4).setCellValue(form.getBoolSeq("☑", "□"))
+      sheet.getRow(row).getCell(4).setCellValue(form.getBoolSeq("YES☑  NO□", "YES□ NO☑"))
     }
     sheet.getRow(79).getCell(4).setCellValue(form.getBoolSeq("YES☑  NO□", "YES□ NO☑"))
     sheet.getRow(80).getCell(4).setCellValue(form.getBoolSeq("YES☑  NO□", "YES□ NO☑"))
@@ -1538,7 +1541,10 @@ object ExcelUtility {
     for (row <- 92 to 96) {
       sheet.getRow(row).getCell(4).setCellValue(form.getBoolSeq("YES☑  NO□", "YES□ NO☑"))
     }
-    sheet.getRow(98).getCell(4).setCellValue(form.getBoolSeq("YES☑  NO□", "YES□ NO☑"))
+    
+    for(row <- 98 to 102)
+      sheet.getRow(row).getCell(4).setCellValue(form.getBoolSeq("YES☑  NO□", "YES□ NO☑"))
+    
     for (row <- 104 to 105) {
       sheet.getRow(row).getCell(2).setCellValue(form.getStrSeq)
       oldForm.map { old => sheet.getRow(row).getCell(5).setCellValue(old.getStrSeq) }

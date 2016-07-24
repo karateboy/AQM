@@ -496,11 +496,22 @@ object Report extends Controller {
                   val windSpeed = getTypeStat(windSpeed_pos)
                   val windDir = typeStat
                   val wind = windSpeed.zip(windDir).filter(t => t._1.count != 0 && t._2.count != 0)
-                  val wind_sin = wind.map(v => v._1.avg.get * Math.sin(Math.toRadians(v._2.avg.get))).sum
-                  val wind_cos = wind.map(v => v._1.avg.get * Math.cos(Math.toRadians(v._2.avg.get))).sum
+                  val wind_sin = wind.flatMap(v => 
+                    for{
+                      a <- v._1.avg
+                      b <- v._2.avg
+                    } yield a * Math.sin(Math.toRadians(b))).sum
+                  
+                    //v._1.avg.get * Math.sin(Math.toRadians(v._2.avg.get))).sum
+                  val wind_cos = wind.flatMap(v =>
+                    for{
+                      a <- v._1.avg
+                      b <- v._2.avg
+                    }yield a*Math.cos(Math.toRadians(b))).sum
                   windAvg(wind_sin, wind_cos)
                 } else
                   validData.flatMap { _.avg }.sum / count
+                  
                 val max = validData.map(_.avg).max
                 val min = validData.map(_.avg).min
 

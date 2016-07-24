@@ -561,6 +561,8 @@ object Application extends Controller {
     outputType match {
       case OutputType.html =>
         Ok(output)
+      //case OutputType.excel =>
+        
       case OutputType.pdf =>
         Ok.sendFile(creatPdfWithReportHeader(title, output),
           fileName = _ =>
