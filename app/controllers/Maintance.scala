@@ -130,7 +130,7 @@ object Maintance extends Controller {
         val group = Group.getGroup(userInfo.groupID).get
         val adminUsers = User.getAdminUsers()
 
-        Ok(views.html.ticket(ticketOpt.get, group.privilege, adminUsers))
+        Ok(views.html.ticket(ticketOpt.get, group.privilege, adminUsers, userInfo.id))
       }
   }
 
