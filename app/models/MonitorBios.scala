@@ -164,13 +164,13 @@ object MonitorBios {
   )
   
   val A012 = MonitorBios(
-    location="-",
+    location="廣興國小(雲林縣)",
     monitor_type="一般測站",
-    address="-",
+    address="雲林縣西螺鎮648廣興里59號",
     town="西螺鎮",
     area="49.7985(平方公里)",
     density="629.7071(人/平方公里)",
-    founded="-",
+    founded="104年10月",
     height="7.2公尺",
     angle="360度",
     sample_height="11.4公尺",
