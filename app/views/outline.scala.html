@@ -206,7 +206,7 @@
             }
             @if(privilege.allowedMenuRights.contains(MenuRight.AlarmManagement)){
             <li>
-            	<a href="#"><i class="fa fa-bell"></i>警報案件管理<span class="fa arrow"></span></a>
+            	<a href="#"><i class="fa fa-bell"></i><span class="nav-label">警報案件管理</span><span class="fa arrow"></span></a>
                 <ul class="nav nav-second-level">                            	
                 	<li>
                     	<a href="#" onClick="loadPage('/AlarmNoTicketList','警報案件管理','待立案')">待立案</a>
@@ -300,16 +300,18 @@
         	</li>
         @if(privilege.allowedMenuRights.contains(MenuRight.AlarmManagement)){
         	<li>
-            	<a class="text-left link-block" href="#" onClick="loadPage('/AlarmNoTicketList','警報案件管理','待立案')"><strong>待立案</strong></a>
+            	<a class="text-left link-block" href="#" onClick="nPreticket=0;updateAlarmTicketCount();loadPage('/AlarmNoTicketList','警報案件管理','待立案')"><strong>待立案</strong><span id="preticket_count" class="label label-danger"></span></a>
             </li>
             <li>
             	<a class="text-left link-block" href="#" onClick="loadPage('/ManualAlarmTicket','警報案件管理','人工立案')"><strong>人工立案</strong></a>
             </li>
             <li>
-            	<a class="text-left link-block" href="#" onClick="loadPage('/ReparingAlarmTicket','警報案件管理','維修中案件')"><strong>維修中案件</strong></a>
+            	<a class="text-left link-block" href="#" onClick="nRepairing=0;updateAlarmTicketCount();loadPage('/ReparingAlarmTicket','警報案件管理','維修中案件')"><strong>維修中案件</strong>
+            	<span id="repairing_count" class="label label-danger"></span></a>
             </li>
             <li>
-            	<a class="text-left link-block" href="#" onClick="loadPage('/CloseTicket','警報案件管理','等待簽結案件')"><strong>等待簽結案件</strong></a>
+            	<a class="text-left link-block" href="#" onClick="nClosePending=0;updateAlarmTicketCount();loadPage('/CloseTicket','警報案件管理','等待簽結案件')"><strong>等待簽結案件</strong>
+            	<span id="closePending_count" class="label label-danger"></a>
             </li>
 		}
             <li id="alertButton" class="dropdown">
@@ -357,6 +359,10 @@
 </script>
 <script>
 	var nAlert = 0;
+	var nPreticket = 0;
+	var nRepairing =0;
+	var nClosePending =0;
+	
 	var nSocket;
 	var alertBuffer = [];
 	function removeOldAlerts(){
@@ -373,6 +379,26 @@
 			$alert_count.text(nAlert);
 	}
 
+	function updateAlarmTicketCount(){
+		$preticket_count = $('#preticket_count');
+		if(nPreticket == 0)
+			$preticket_count.text('');
+		else
+			$preticket_count.text(nPreticket);
+
+		$repairing_count = $('#repairing_count');
+		if(nRepairing == 0)
+			$repairing_count.text('');
+		else
+			$repairing_count.text(nRepairing);
+
+		$closePending_count = $('#closePending_count');
+		if(nClosePending == 0)
+			$closePending_count.text('');
+		else
+			$closePending_count.text(nClosePending);				
+	}
+	
 	var bSound = false;
 	var audio = new Audio('/assets/sound/beep4.wav');
 	function toggleAlertSound() {
@@ -402,7 +428,20 @@
 			$firstItem.before(item);
 			alertBuffer.push(item);		
 			updateAlertCount();
-		}
+		}else if(cmd[0] == "notification"){
+			if(cmd[1] == "preticket"){
+				nPreticket++;
+			}else if(cmd[1] == "repairing"){
+				nRepairing++;
+			}else if(cmd[1] == "closePending"){
+				nClosePending++;
+			}
+
+			updateAlarmTicketCount();
+			 
+			if(bSound)
+				audio.play();			
+		} 
 	}
 	
 	nSocket.onopen = function(evt){

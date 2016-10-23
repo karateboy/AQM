@@ -8,7 +8,16 @@ import play.api.libs.json._
 import play.api.libs.functional.syntax._
 import play.api.libs.json.Json
 import Privilege._
-case class UserSetting(widgets:Option[Seq[MonitorType.Value]], smsNotification:Option[Boolean])
+case class UserSetting(widgets:Option[Seq[MonitorType.Value]], 
+    smsNotification:Option[Boolean], alarmTicketNotification:Option[Seq[AlarmTicketNotification.Value]]){
+  def getAlarmTicketNotifiction = {
+    if(alarmTicketNotification.isEmpty)
+      Seq.empty[AlarmTicketNotification.Value]
+    else
+      alarmTicketNotification.get
+  }
+}
+
 case class User(id: Option[Int], email: String, password: String, name: String, 
     phone: String, isAdmin: Boolean, groupID: Int, alarmConfig:Option[AlarmConfig], setting:Option[UserSetting]){
   val myWidget={
@@ -20,10 +29,18 @@ case class User(id: Option[Int], email: String, password: String, name: String,
        group.privilege.allowedMonitorTypes.filter { widgets.contains }
     }
   }
+  
+  val myAlarmTicketNotification = {
+    if(setting.isEmpty)
+      Seq.empty[AlarmTicketNotification.Value]
+    else
+      setting.get.getAlarmTicketNotifiction
+  }
 }
 
 object User {
-  val defaultUserSetting = UserSetting(Some(Seq.empty[MonitorType.Value]), Some(false))
+  val defaultUserSetting = UserSetting(Some(Seq.empty[MonitorType.Value]), Some(false), 
+      Some(Seq.empty[AlarmTicketNotification.Value]))
   implicit val settingRead = Json.reads[UserSetting]
   implicit val settingWrite = Json.writes[UserSetting]
   
@@ -73,9 +90,11 @@ object User {
 
     val userSetting = if (r.stringOpt("setting").isEmpty)
       defaultUserSetting
-    else
-      Json.parse(r.string("setting")).validate[UserSetting].get
-
+    else{
+      val ret = Json.parse(r.string("setting")).validate[UserSetting]
+      ret.fold(error=>defaultUserSetting, valid=>valid)
+    }
+    
     User(Some(r.int("ID")), r.string("Email"),
       r.string("Password"), r.string("Name"), r.string("Phone"), r.boolean("isAdmin"),
       r.int("GroupID"), Some(alarmConfig), Some(userSetting))

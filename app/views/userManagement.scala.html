@@ -214,11 +214,28 @@
 	            </div>	            			            		
 	        </div>
 	        <div class="form-group">
+	        	<label class="col-lg-2 control-label">警報案件通知</label>
+	            <div class="col-lg-10">
+	            <div id="alarmTicketNotification" class="btn-group" data-toggle="buttons">	            					            				
+	            	@for(a<-AlarmTicketNotification.values.toList){
+	            		@if(user.myAlarmTicketNotification.contains(a)){
+	            			<label class="btn btn-outline btn-primary dim active">
+	            			<input type="checkbox" name="alarmTicketNotification" id="@a" checked>@AlarmTicketNotification.map(a)</label>
+	            		}else{
+            				<label class="btn btn-outline btn-primary dim">
+            				<input type="checkbox" name="alarmTicketNotification" id="@a">@AlarmTicketNotification.map(a)</label>
+            			}								
+            		}
+	            </div>
+	            </div>	            			            		
+	        </div>
+	        
+	        <div class="form-group">
 	        	<label class="col-lg-2 control-label">即時畫面控制項</label>
 	            <div class="col-lg-10">
 	            <div id="widgets" class="btn-group" data-toggle="buttons">	            					            				
 	            	@for(mt<-MonitorType.mtvList){
-	            		@if(user.setting.get.widgets.get.contains(mt)){
+	            		@if(user.myWidget.contains(mt)){
 	            			<label class="btn btn-outline btn-primary dim active">
 	            			<input type="checkbox" name="widget" id="@mt" checked>@MonitorType.map(mt).desp</label>
 	            		}else{
@@ -308,10 +325,12 @@ $( document ).ready(function(){
 	$('#userToBeUpdated').change(function(){
 		var id = $(this).val();
 		var user = userInfos[id];
-
+		console.log(user);
+		
 		$('#updateUser :input[name="id"]').val(user.id);
 		$('#updateUser :input[name="email"]').val(user.email);
 		$('#updateUser :input[name="name"]').val(user.name);
+		$('#updateUser :input[name="password"]').val(user.password);
 		$('#updateUser :input[name="phone"]').val(user.phone);
 		$("#updateUser :input[name='admin']").prop("checked", user.isAdmin);
 		$("#updateUser :input[name='groupID']").val(user.groupID);
@@ -344,6 +363,19 @@ $( document ).ready(function(){
 			}
 		}
 
+		var $alarmTicketNotifications = $('#alarmTicketNotification').children();
+		for (var i = 0; i < $alarmTicketNotifications.length; i++) {
+			var $label = $alarmTicketNotifications.eq(i);
+			var $checkbox = $label.children();
+			if (!user.setting.alarmTicketNotification || user.setting.alarmTicketNotification.indexOf($checkbox.prop('id')) == -1) {
+				$checkbox.prop('checked', false);
+				$label.removeClass('active');
+			} else {
+				$checkbox.prop('checked', true);
+				$label.addClass('active');
+			}
+		}
+		
 		var $widgets = $('#widgets').children();
 		for (var i = 0; i < $widgets.length; i++) {
 			var $label = $widgets.eq(i);
@@ -410,6 +442,12 @@ $( document ).ready(function(){
 			statusFilter.push($statuss[i].id);
 		}
 
+		var $alarmTicketNotification = $("#alarmTicketNotification :input[name='alarmTicketNotification']:checked");
+		var alarmTicketNotification = [];
+		for (var i = 0; i < $alarmTicketNotification.length; i++) {
+			alarmTicketNotification.push($alarmTicketNotification[i].id);
+		}
+
 		var $widgets = $("#widgets :input[name='widget']:checked");
 		var widgets = [];
 		for (var i = 0; i < $widgets.length; i++) {
@@ -426,7 +464,8 @@ $( document ).ready(function(){
 
 		values['setting'] = {
 			widgets: widgets,
-			smsNotification: smsNotification
+			smsNotification: smsNotification,
+			alarmTicketNotification:alarmTicketNotification
 		};
 	
 	    
@@ -453,7 +492,6 @@ $( document ).ready(function(){
 	
 	$('#deleteUser').submit(function(event) {
 	    var user = $("#userToBeDeleted option:selected");
-	    console.log(user);
 	    if(user.length==0){
 		    alert("請選擇要刪除的使用者");
 		    event.preventDefault();

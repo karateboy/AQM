@@ -180,8 +180,8 @@ GET		/DownloadForm/:ID	controllers.Maintance.downloadForm(ID:Int)
 
 GET		/Form/:ID	controllers.Maintance.getForm(ID:Int)
 GET		/EquipmentHistory	controllers.Maintance.equipmentHistory
-GET		/EquipmentHistoryReport/:monitors/:monitorType/:start/:end controllers.Maintance.equipmentHistoryReport(monitors, monitorType, start, end, outputTypeStr="html")
-GET		/Excel/EquipmentHistoryReport/:monitors/:monitorType/:start/:end controllers.Maintance.equipmentHistoryReport(monitors, monitorType, start, end, outputTypeStr="excel")
+GET		/EquipmentHistoryReport/:monitors/:monitorType/:partFilter/:start/:end controllers.Maintance.equipmentHistoryReport(monitors, monitorType, partFilter, start, end, outputTypeStr="html")
+GET		/Excel/EquipmentHistoryReport/:monitors/:monitorType/:partFilter/:start/:end controllers.Maintance.equipmentHistoryReport(monitors, monitorType, partFilter, start, end, outputTypeStr="excel")
 
 GET		/MonitorJournal		controllers.Maintance.monitorJournal
 GET		/MonitorJournalReport/:monitor/:date		controllers.Maintance.monitorJournalReport(monitor, date, outputTypeStr="html")

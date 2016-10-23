@@ -99,7 +99,7 @@ object Alarm {
     sql"""
         Select *
         From ${tab}
-        Where M_DateTime>=${startT} and CHK is NULL
+        Where M_DateTime>${startT} and CHK is NULL
         ORDER BY M_DateTime ASC
         """.map {
       rs =>

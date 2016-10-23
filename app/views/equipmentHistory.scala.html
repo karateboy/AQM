@@ -41,6 +41,20 @@
 	            			</div>            		
 	                </div>
 	                <div class="form-group">
+	            			<label class="col-lg-1 control-label">零件</label>						
+	            			<div class="col-lg-11 btn-group" data-toggle="buttons">
+	            			@for(pf<-PartReplaceFilter.values.toList){
+	            				@if(pf == PartReplaceFilter.values.toList.head){
+	            					<label class="btn btn-outline btn-primary dim active">
+									<input type="radio" name="partFilter" id="@pf" checked>@PartReplaceFilter.map(pf)</label>
+	            				}else{
+	            					<label class="btn btn-outline btn-primary dim">
+									<input type="radio" name="partFilter" id="@pf">@PartReplaceFilter.map(pf)</label>
+	            				}	            						
+	            			}
+	            			</div>            		
+	                </div>
+	                <div class="form-group">
 	            			<label class="col-lg-1 control-label">查詢區間</label>	
 	            			<div class="col-lg-5">
 	            				<div class="input-daterange input-group" id="datepicker">
@@ -96,7 +110,7 @@ $( document ).ready(function() {
     });
     
 
-	var monitors, monitorType, reportStart, reportEnd;
+	var monitors, monitorType, partFilter, reportStart, reportEnd;
 	
 	function validate(){		
 		monitors = $("input[name='monitor']:checked");
@@ -112,6 +126,9 @@ $( document ).ready(function() {
 			alert('請選擇測項');
 			return false;
 		}
+
+		partFilter = $("input[name='partFilter']:checked").attr('id');
+		
 		reportStart = $('#reportStart').val();
 		if(reportStart.length === 0){
 			alert('請選擇開始日期');
@@ -143,7 +160,7 @@ $( document ).ready(function() {
 				monitorParam += ':' + monitors[i].id;
 		}	
 
-		var url = "/EquipmentHistoryReport/" + monitorParam + "/" + monitorType + "/" + reportStart + "/" + reportEnd; 
+		var url = "/EquipmentHistoryReport/" + monitorParam + "/" + monitorType + "/" + partFilter + "/" + reportStart + "/" + reportEnd; 
 
 		$.ajax({
 			url : url,

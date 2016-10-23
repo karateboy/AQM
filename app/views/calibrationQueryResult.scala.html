@@ -40,7 +40,7 @@
 				@if(item.endTime.getDayOfYear != item.startTime.getDayOfYear){
 					<td>@item.endTime.toString("YYYY-MM-dd HH:mm")</td>
 				}else{
-					<td>@item.endTime.toString("hh:mm")</td>
+					<td>@item.endTime.toString("HH:mm")</td>
 				}
 				@if(MonitorType.map(item.monitorType).zd_law.isDefined && 
 					(item.z_val > MonitorType.map(item.monitorType).zd_law.get)){

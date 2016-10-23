@@ -18,6 +18,13 @@ import play.api.libs.functional.syntax._
 import Ticket._
 import java.nio.file.Files
 
+object PartReplaceFilter extends Enumeration{
+  val replaced = Value
+  val noReplaced = Value
+  val all = Value
+  val map = Map( replaced->"更換零件", noReplaced->"未更換零件", all->"全部")
+}
+
 /**
  * @author user
  */
@@ -417,9 +424,10 @@ object Maintance extends Controller {
       Ok(views.html.equipmentHistory(userInfo, group.privilege, adminUsers))
   }
 
-  def equipmentHistoryReport(monitorStr: String, monitorTypeStr: String, startStr: String, endStr: String, outputTypeStr: String) = Security.Authenticated {
+  def equipmentHistoryReport(monitorStr: String, monitorTypeStr: String, partFilterStr:String, startStr: String, endStr: String, outputTypeStr: String) = Security.Authenticated {
     val monitors = monitorStr.split(":").map { Monitor.withName }
     val monitorType = MonitorType.withName(monitorTypeStr)
+    val partFilter = PartReplaceFilter.withName(partFilterStr)
     val start = DateTime.parse(startStr)
     val end = DateTime.parse(endStr) + 1.day
     val outputType = OutputType.withName(outputTypeStr)
@@ -429,7 +437,17 @@ object Maintance extends Controller {
       monitors.contains(t.monitor) &&
         t.ticketType == TicketType.repair &&
         t.monitorType.isDefined &&
-        t.monitorType.get == monitorType
+        t.monitorType.get == monitorType &&
+        {
+          partFilter match{
+            case PartReplaceFilter.all=>
+              true
+            case PartReplaceFilter.noReplaced=>
+              t.getRepairForm.parts.length == 0
+            case PartReplaceFilter.replaced =>
+              t.getRepairForm.parts.length != 0
+          }
+        }
     }
     val adminUsers = User.getAdminUsers()
     val usrMap = Map(adminUsers.map { u => (u.id.get -> u) }: _*)
