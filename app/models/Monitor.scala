@@ -134,6 +134,10 @@ object MonitorType extends Enumeration{
   implicit val mtReads: Reads[MonitorType.Value] = EnumUtils.enumReads(MonitorType)
   implicit val mtWrites: Writes[MonitorType.Value] = EnumUtils.enumWrites
   
+  val Other = Value("Oth")
+  val OtherCase = MonitorType("Oth", "其他", "", None, None, None, None, None,
+      None, None, None, None, None, 0, 0)
+
   private def mtList:List[MonitorType] =
     DB readOnly{ implicit session =>
       sql"""
@@ -157,7 +161,7 @@ object MonitorType extends Enumeration{
           )}.list.apply
     }
   
-  var map:Map[Value, MonitorType] = Map(mtList.map{e=>Value(e.id)->e}:_*) - MonitorType.withName("A325")
+  var map:Map[Value, MonitorType] = Map(mtList.map{e=>Value(e.id)->e}:_*) ++ Map(Other->OtherCase) - MonitorType.withName("A325")
   val mtvAllList = mtList.map(mt=>MonitorType.withName(mt.id)).filter { !List(MonitorType.withName("A325")).contains(_) }
   
   def mtvList = {
@@ -173,6 +177,8 @@ object MonitorType extends Enumeration{
     mtvList.filter { p.allowedMonitorTypes.contains }.sortBy { map(_).order }
   }
   
+  def maintainMonitorTypeList = (Other::mtvList.reverse).reverse 
+    
   def realtimeList = {
     var mtSet = Set.empty[MonitorType.Value]
     for(m<-Monitor.mvList){

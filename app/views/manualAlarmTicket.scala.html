@@ -45,7 +45,7 @@
 	                <div class="form-group" id="monitorType">
 	            		<label class="col-lg-1 control-label">測項</label>						
 	            		<div class="col-lg-11 btn-group" data-toggle="buttons">
-	            		@for(mt<-MonitorType.myMtvList(privilege)){
+	            		@for(mt<-MonitorType.maintainMonitorTypeList){
 	            			<label class="btn btn-outline btn-primary dim">
 							<input type="checkbox" name="monitorType" id="@mt">@MonitorType.map(mt).desp</label>
 	            		}
