@@ -434,6 +434,7 @@ object Maintance extends Controller {
     val tickets = Ticket.queryMonitorTickets(monitor, start, end)
     val filterTicket = tickets.filter { t =>
       t.ticketType == TicketType.repair &&
+      t.monitorType.isDefined &&
         {
           val equipmentOpt = Equipment.map(monitor).get(equipmentName)
           if (equipmentOpt.isEmpty) {
