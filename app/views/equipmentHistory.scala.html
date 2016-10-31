@@ -12,30 +12,29 @@
 	            	<div class="form-group" id="monitor">
 	            		<label class="col-lg-1 control-label">測站</label>
 	            		<div class="col-lg-11">
-	            			<button id="select-all-monitors" class="btn btn-info" type="button">全選</button>
 	            			<div class="btn-group" data-toggle="buttons">	            					            				
 	            				@for(m<-Monitor.myMvList(privilege)){
 	            					@if(m == Monitor.myMvList(privilege).head){
 	            						<label class="btn btn-outline btn-primary dim active">
-										<input type="checkbox" name="monitor" id="@m" checked>@Monitor.getDisplayName(m)</label>
+										<input type="radio" name="monitor" id="@m" checked>@Monitor.getDisplayName(m)</label>
 	            					}else{
 	            						<label class="btn btn-outline btn-primary dim">
-										<input type="checkbox" name="monitor" id="@m">@Monitor.getDisplayName(m)</label>
+										<input type="radio" name="monitor" id="@m">@Monitor.getDisplayName(m)</label>
 	            					}	            								
 	            				}
 	            			</div>
 	            		</div>	            			            		
 	                </div>
 	                <div class="form-group">
-	            			<label class="col-lg-1 control-label">測項</label>						
+	            			<label class="col-lg-1 control-label">儀器</label>						
 	            			<div class="col-lg-11 btn-group" data-toggle="buttons">
-	            			@for(mt<-MonitorType.myMtvList(privilege)){
-	            				@if(mt == MonitorType.myMtvList(privilege).head){
+	            			@for(equip<-Equipment.equipmentNameList){
+	            				@if(equip == Equipment.equipmentNameList.head){
 	            					<label class="btn btn-outline btn-primary dim active">
-									<input type="radio" name="monitorType" id="@mt" checked>@MonitorType.map(mt).desp</label>
+									<input type="radio" name="equipmentName" id="@equip" checked>@equip</label>
 	            				}else{
 	            					<label class="btn btn-outline btn-primary dim">
-									<input type="radio" name="monitorType" id="@mt">@MonitorType.map(mt).desp</label>
+									<input type="radio" name="equipmentName" id="@equip">@equip</label>
 	            				}	            						
 	            			}
 	            			</div>            		
@@ -110,7 +109,7 @@ $( document ).ready(function() {
     });
     
 
-	var monitors, monitorType, partFilter, reportStart, reportEnd;
+	var monitors, equipmentName, partFilter, reportStart, reportEnd;
 	
 	function validate(){		
 		monitors = $("input[name='monitor']:checked");
@@ -120,10 +119,10 @@ $( document ).ready(function() {
 			return false;
 		}
 
-		monitorType = $("input[name='monitorType']:checked").attr('id');
+		equipmentName = $("input[name='equipmentName']:checked").attr('id');
 		
-		if(!monitorType) {
-			alert('請選擇測項');
+		if(!equipmentName) {
+			alert('請選擇儀器');
 			return false;
 		}
 
@@ -160,7 +159,7 @@ $( document ).ready(function() {
 				monitorParam += ':' + monitors[i].id;
 		}	
 
-		var url = "/EquipmentHistoryReport/" + monitorParam + "/" + monitorType + "/" + partFilter + "/" + reportStart + "/" + reportEnd; 
+		var url = "/EquipmentHistoryReport/" + monitorParam + "/" +  encodeURIComponent(equipmentName) + "/" + partFilter + "/" + reportStart + "/" + reportEnd; 
 
 		$.ajax({
 			url : url,

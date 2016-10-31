@@ -279,6 +279,15 @@ object Ticket {
       """.map { ticketMapper }.list().apply()
   }
 
+  def queryMonitorTickets(m:Monitor.Value, start: DateTime, end: DateTime)(implicit session: DBSession = AutoSession) = {
+    sql"""
+      Select *
+      From Ticket
+      Where execute_date between ${start} and ${end} and monitor = ${m.toString}
+      Order by submit_date      
+      """.map { ticketMapper }.list().apply()
+  }
+    
   def queryClosedRepairTickets(start: DateTime, end: DateTime)(implicit session: DBSession = AutoSession) = {
     sql"""
       Select *

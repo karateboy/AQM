@@ -28,15 +28,25 @@ object Equipment {
   def generateMap()={
     import scala.collection.mutable.Map
     val equipments = getList
-    val map = Map.empty[Monitor.Value, List[Equipment]]
+    val map = Map.empty[Monitor.Value, Map[String, Equipment]]
     for(e <- equipments){
-      val list = map.getOrElse(e.monitor, List.empty[Equipment])
-      
-      map.put(e.monitor, e::list)
+      val monitorMap = map.getOrElseUpdate(e.monitor, Map.empty[String, Equipment])
+      monitorMap.put(e.name, e)
     }
     map
   }
-  var map = generateMap
+  val map = generateMap
+  
+  def getEquipmentNameSet = {
+    val nameSetIterable = map.values map {
+      m =>
+        m.keySet
+    }
+    
+    nameSetIterable.fold(Set.empty[String])((s1, s2)=> s1 ++ s2)
+  }
+  var equipmentNameList = getEquipmentNameSet.toList.sorted
+  
   
   def create(newEquip:Equipment)={
     DB localTx { implicit session =>
@@ -46,11 +56,10 @@ object Equipment {
         """.update.apply
     }
     
+    import scala.collection.mutable.Map
     val monitor = newEquip.monitor
-    val equipList = map.getOrElse(monitor, List.empty[Equipment])
-    val newList = newEquip::equipList
-    
-    map = map + (monitor->newList)
+    val equipNameMap = map.getOrElseUpdate(monitor, Map.empty[String, Equipment])
+    equipNameMap.put(newEquip.name, newEquip)
   }
   
   def update(ids:Array[String], newValue:String) = {
@@ -67,16 +76,20 @@ object Equipment {
         Where DP_NO=${m.toString} and id=${equip_id}  
         """.update.apply
 
-      val newList =
+      val updatedEquipmentOpt =
         sql"""
           Select *
           From Equipment
-          Where DP_NO=${m.toString}
+          Where DP_NO=${m.toString} and id=${equip_id}
         """.map { r =>
         Equipment(Monitor.withName(r.string(1)), r.string(2), r.string(3), r.string(4), r.string(5), r.string(6), r.string(7))
-      }.list.apply
+      }.single.apply
       
-      map = (map + (m -> newList))
+      updatedEquipmentOpt map {
+        equip =>
+          val equipNameMap = map(equip.monitor)
+          equipNameMap.put(equip.name, equip)
+      }
     }
   }
   
@@ -88,9 +101,18 @@ object Equipment {
         """.update.apply
     }
     
-    val oldList = map.getOrElse(monitor, List.empty)
-    val newList = oldList.filter { equip => !(equip.monitor == monitor && equip.id == id) }
-    map = (map + (monitor -> newList))
+    val equipNameMap = map(monitor)
+    val matchedNamePairOpt = equipNameMap.find{
+      p=>
+        val name = p._1
+        val equipment = p._2
+        equipment.id == id
+    }
+    
+    matchedNamePairOpt map {
+      pair =>
+        equipNameMap.remove(pair._1)
+    }
   }
 
   def getEquipment(id: String) = {

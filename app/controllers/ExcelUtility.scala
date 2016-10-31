@@ -2155,14 +2155,16 @@ object ExcelUtility {
     finishExcel(reportFilePath, pkg, wb)
   }
 
-  def equipmentHistoryReport(tickets: List[Ticket], start: DateTime, end: DateTime) = {
+  def equipmentHistoryReport(equipment:Equipment, tickets: List[Ticket], start: DateTime, end: DateTime) = {
     val (reportFilePath, pkg, wb) = prepareTemplate("equipHistory.xlsx")
     val evaluator = wb.getCreationHelper().createFormulaEvaluator()
     val sheet = wb.getSheetAt(0)
 
     sheet.getRow(1).getCell(6).setCellValue("起始日期:" + start.toString("YYYY/MM/dd"))
     sheet.getRow(2).getCell(6).setCellValue("結束日期:" + end.toString("YYYY/MM/dd"))
-
+    sheet.getRow(2).getCell(1).setCellValue(equipment.id)
+    sheet.getRow(2).getCell(3).setCellValue(equipment.bought)
+    sheet.getRow(2).getCell(4).setCellValue(s"品牌:${equipment.brand} 機型:${equipment.model} 序號:${equipment.serial}")
     for (tz <- tickets.zipWithIndex) {
       val t = tz._1
       val rowN = tz._2 + 4

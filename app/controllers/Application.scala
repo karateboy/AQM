@@ -49,7 +49,12 @@ object Application extends Controller {
   def getMonitorInfo(monitorStr: String) = Security.Authenticated {
     implicit request =>
       val m = Monitor.withName(monitorStr)
-      val info = MonitorInfo(Monitor.map(m).monitorTypes, Monitor.map(m).url, Equipment.map.getOrElse(m, List.empty))
+      import scala.collection.mutable.Map
+
+      val equipNameMap = Equipment.map.getOrElseUpdate(m, Map.empty[String, Equipment])
+
+      val equipmentList = equipNameMap.values.toList  
+      val info = MonitorInfo(Monitor.map(m).monitorTypes, Monitor.map(m).url, equipmentList)
 
       Ok(Json.toJson(info))
   }
