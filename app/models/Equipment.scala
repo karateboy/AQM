@@ -45,7 +45,7 @@ object Equipment {
     
     nameSetIterable.fold(Set.empty[String])((s1, s2)=> s1 ++ s2)
   }
-  var equipmentNameList = getEquipmentNameSet.toList.sorted
+  def equipmentNameList = getEquipmentNameSet.toList.sorted
   
   
   def create(newEquip:Equipment)={

@@ -1,5 +1,5 @@
 @* repairForm Template File *@
-@(ID:Int, f:RepairFormData, equips:List[Equipment], partNameMap:Map[String, String], partList:List[Part])
+@(ID:Int, f:RepairFormData, equips:List[Equipment], partNameMap:Map[String, String], partList:List[Part], submittedByMe:Boolean)
 <form class="form-horizontal" id="repairForm">
 <div class="form-group">
 	<label class="col-lg-1 control-label">儀器設備</label>
@@ -49,8 +49,8 @@
 	<label class="col-lg-1 control-label">結果</label>
 	<div class="col-lg-4">
 		<ul class="list-group">
-			<li class="list-group-item"><input type="checkbox" @f.getChecked(3) id="chk3">已修好</li>
-			<li class="list-group-item"><input type="checkbox" @f.getChecked(4) id="chk4">未修好</li>
+			<li class="list-group-item"><input type="checkbox" @f.getChecked(3) id="chk3">儀器異常</li>
+			<li class="list-group-item"><input type="checkbox" @f.getChecked(4) id="chk4">儀器無異常</li>
 			<li class="list-group-item"><input type="checkbox" @f.getChecked(5) id="chk5">待料</li>
 		</ul>
 	</div>
@@ -137,6 +137,16 @@
 	<div class="col-lg-1 col-lg-offset-1">
 		<button type="button" class="btn btn-primary" id="updateForm">更新</button>
 	</div>
+	@if(submittedByMe){
+		<div class="col-lg-1 col-lg-offset-1">
+			<button type="button" class="btn btn-primary" id="closeTicket">結束案件</button>							
+		</div>
+		<div class="col-lg-1 col-lg-offset-1">
+			<button type="button" class="btn btn-primary" id="resumeTicket">駁回案件</button>							
+		</div>
+		<label class="col-lg-1 control-label">駁回理由</label>	
+	    <textarea id="rejectReason" class="col-lg-2" row=3></textarea>
+	}	
 </div>
 </form>
 <script>
@@ -246,6 +256,47 @@ $( document ).ready(function() {
 	$("#equipment").change(function(){
 		updateAndReload(false, false);	
 	});
+
+	function handler(url_head, attachReason){
+		return function(){			
+			var ticketIds = [];
+			ticketIds.push(ticketId);
+
+			var url = url_head + ticketIds.join(":"); 
+
+			if(attachReason){
+				var rejectReason = $('#rejectReason').val();
+				if(rejectReason.length == 0){
+					alert('請填寫駁回理由!');
+					return;
+				}
+				url += "/" + rejectReason;				
+			}
+			
+			$.ajax({
+				url : url,
+				data : JSON.stringify(ticketIds),
+				contentType : "application/json; charset=utf-8",
+				type : "POST",
+				dataType : "json",
+				success : function(result) {
+					if(result.ok){
+						alert("成功更新");
+						loadPage('/CloseTicket','維修保養','簽結案件');
+					}				
+				},
+				error : function(xhr, status, errorThrown) {
+					console.log("錯誤訊息:" + status + "-" + errorThrown);
+				},
+
+				complete : function(xhr, status) {
+					$("body").css("cursor", "default");
+				}
+			});
+		};
+	}
 	
+	$("#closeTicket").click(handler("/CloseTicket/", false));
+	$("#resumeTicket").click(handler("/ResumeTicket/", true));
 });	
 </script>

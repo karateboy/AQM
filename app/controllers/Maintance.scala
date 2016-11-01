@@ -267,37 +267,46 @@ object Maintance extends Controller {
         })
   }
   def getForm(ID: Int) = Security.Authenticated {
-    val ticketOpt = Ticket.getTicket(ID)
-    if (ticketOpt.isEmpty)
-      BadRequest(Json.obj("ok" -> false, "msg" -> "無此案件"))
-    else {
-      val t = ticketOpt.get
-      t.ticketType match {
-        case TicketType.maintance_week =>
-          Ok(views.html.weekMaintanceForm(ID, t.getForm))
-        case TicketType.maintance_biweek =>
-          Ok(views.html.biweekForm(ID, t.getForm))
-        case TicketType.maintance_month =>
-          Ok(views.html.monthForm(ID, t.getForm))
-        case TicketType.maintance_quarter =>
-          Ok(views.html.quarterForm(ID, t.getForm))
-        case TicketType.maintance_half_year =>
-          Ok(views.html.halfYearForm(ID, t.getForm))
-        case TicketType.maintance_year =>
-          Ok(views.html.yearForm(ID, t.getForm))
-        case TicketType.repair =>
-          val equipList = Equipment.map(t.monitor).values.toList
-          val partIdNameMap = Part.getIdNameMap()
-          val partEquipMap = Part.getEquipPartMap()
-          if (t.getRepairForm.equipmentId.length() != 0) {
-            val equipment = Equipment.getEquipment(t.getRepairForm.equipmentId).get
-            val partList = partEquipMap.getOrElse(equipment.name, List.empty[Part])
-            Ok(views.html.repairForm(ID, t.getRepairForm, equipList, partIdNameMap, partList))
-          } else {
-            Ok(views.html.repairForm(ID, t.getRepairForm, equipList, partIdNameMap, List.empty[Part]))
+    implicit request =>
+      val userInfoOpt = Security.getUserinfo(request)
+      if (userInfoOpt.isEmpty) {
+        Forbidden("Invalid access!")
+      } else {
+        val userInfo = userInfoOpt.get
+
+        val ticketOpt = Ticket.getTicket(ID)
+        if (ticketOpt.isEmpty)
+          BadRequest(Json.obj("ok" -> false, "msg" -> "無此案件"))
+        else {
+          val t = ticketOpt.get
+          t.ticketType match {
+            case TicketType.maintance_week =>
+              Ok(views.html.weekMaintanceForm(ID, t.getForm))
+            case TicketType.maintance_biweek =>
+              Ok(views.html.biweekForm(ID, t.getForm))
+            case TicketType.maintance_month =>
+              Ok(views.html.monthForm(ID, t.getForm))
+            case TicketType.maintance_quarter =>
+              Ok(views.html.quarterForm(ID, t.getForm))
+            case TicketType.maintance_half_year =>
+              Ok(views.html.halfYearForm(ID, t.getForm))
+            case TicketType.maintance_year =>
+              Ok(views.html.yearForm(ID, t.getForm))
+            case TicketType.repair =>
+              val submittedByMe = t.submiter_id == userInfo.id
+              val equipList = Equipment.map(t.monitor).values.toList
+              val partIdNameMap = Part.getIdNameMap()
+              val partEquipMap = Part.getEquipPartMap()
+              if (t.getRepairForm.equipmentId.length() != 0) {
+                val equipment = Equipment.getEquipment(t.getRepairForm.equipmentId).get
+                val partList = partEquipMap.getOrElse(equipment.name, List.empty[Part])
+                Ok(views.html.repairForm(ID, t.getRepairForm, equipList, partIdNameMap, partList, submittedByMe))
+              } else {
+                Ok(views.html.repairForm(ID, t.getRepairForm, equipList, partIdNameMap, List.empty[Part], submittedByMe))
+              }
           }
+        }
       }
-    }
   }
 
   def closeTicket = Security.Authenticated {
@@ -434,7 +443,7 @@ object Maintance extends Controller {
     val tickets = Ticket.queryMonitorTickets(monitor, start, end)
     val filterTicket = tickets.filter { t =>
       t.ticketType == TicketType.repair &&
-      t.monitorType.isDefined &&
+        t.monitorType.isDefined &&
         {
           val equipmentOpt = Equipment.map(monitor).get(equipmentName)
           if (equipmentOpt.isEmpty) {
@@ -468,7 +477,7 @@ object Maintance extends Controller {
           play.utils.UriEncoding.encodePathSegment("儀器保養履歷" + start.toString("YYMMdd") + "_" +
             end.toString("YYMMdd") + ".xlsx", "UTF-8"),
           onClose = () => { Files.deleteIfExists(excelFile.toPath()) })
-      }else
+      } else
         Ok("儀器不存在!")
     }
   }
