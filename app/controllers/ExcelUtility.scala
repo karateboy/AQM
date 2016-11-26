@@ -80,7 +80,7 @@ object ExcelUtility {
     info.statusType match {
       case StatusType.Internal =>
         {
-          if (isNormalStat(tag))
+          if (isValid(tag))
             normalStyle
           else if (isCalbration(tag))
             abnormalStyles(0)
@@ -616,7 +616,7 @@ object ExcelUtility {
           dataI <- dayReport.typeList(mt_i).dataList.zipWithIndex
         } {
           val (data, idx) = dataI
-          if (data._2.isDefined && data._3.isDefined && MonitorStatus.isNormal(data._3.get)) {
+          if (data._2.isDefined && data._3.isDefined && MonitorStatus.isValid(data._3.get)) {
             if (sheet.getRow(row_start + idx) == null)
               sheet.createRow(row_start + idx).createCell(mt_i + 1).setCellValue(data._2.get)
             else

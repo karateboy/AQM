@@ -301,7 +301,7 @@ object Ticket {
     sql"""
       Select *
       From Ticket
-      Where execute_date between ${start} and ${end} and active = 1
+      Where execute_date between ${start} and ${end} and active = 1 and submiter_id != 19
       Order by execute_date      
       """.map { ticketMapper }.list().apply()
   }

@@ -855,7 +855,7 @@ object Record {
         mtMap = Map(mtRecord: _*)
       } yield {
         val data = mtRecord.filter(
-          r => r._2._1.isDefined && r._2._2.isDefined && MonitorStatus.isNormal(r._2._2.get)).map(_._2._1.get)
+          r => r._2._1.isDefined && r._2._2.isDefined && MonitorStatus.isValid(r._2._2.get)).map(_._2._1.get)
         val count = data.length
         val stat =
           if (count != 0) {
