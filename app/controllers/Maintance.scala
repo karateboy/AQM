@@ -51,8 +51,8 @@ object Maintance extends Controller {
 
       newTicketJson.fold(
         error => {
-          Logger.error(JsError.toFlatJson(error).toString())
-          BadRequest(Json.obj("ok" -> false, "msg" -> JsError.toFlatJson(error)))
+          Logger.error(JsError.toJson(error).toString())
+          BadRequest(Json.obj("ok" -> false, "msg" -> JsError.toJson(error)))
         },
         ticketParam => {
           val tickets =
@@ -147,8 +147,8 @@ object Maintance extends Controller {
 
       ticketResult.fold(
         error => {
-          Logger.error(JsError.toFlatJson(error).toString())
-          BadRequest(Json.obj("ok" -> false, "msg" -> JsError.toFlatJson(error)))
+          Logger.error(JsError.toJson(error).toString())
+          BadRequest(Json.obj("ok" -> false, "msg" -> JsError.toJson(error)))
         },
         param => {
           val ticketOpt = Ticket.getTicket(ID)
@@ -239,8 +239,8 @@ object Maintance extends Controller {
 
       formResult.fold(
         error => {
-          Logger.error(JsError.toFlatJson(error).toString())
-          BadRequest(Json.obj("ok" -> false, "msg" -> JsError.toFlatJson(error)))
+          Logger.error(JsError.toJson(error).toString())
+          BadRequest(Json.obj("ok" -> false, "msg" -> JsError.toJson(error)))
         },
         form => {
           Ticket.updateTicketFormData(ID, form)
@@ -255,8 +255,8 @@ object Maintance extends Controller {
 
       formResult.fold(
         error => {
-          Logger.error(JsError.toFlatJson(error).toString())
-          BadRequest(Json.obj("ok" -> false, "msg" -> JsError.toFlatJson(error)))
+          Logger.error(JsError.toJson(error).toString())
+          BadRequest(Json.obj("ok" -> false, "msg" -> JsError.toJson(error)))
         },
         form => {
           val ticket = Ticket.getTicket(ID).get
@@ -539,8 +539,8 @@ object Maintance extends Controller {
 
       reportJsonResult.fold(
         error => {
-          Logger.error(JsError.toFlatJson(error).toString())
-          BadRequest(Json.obj("ok" -> false, "msg" -> JsError.toFlatJson(error)))
+          Logger.error(JsError.toJson(error).toString())
+          BadRequest(Json.obj("ok" -> false, "msg" -> JsError.toJson(error)))
         },
         report => {
           MonitorJournal.updateReport(report)
@@ -592,8 +592,8 @@ object Maintance extends Controller {
 
       newPartResult.fold(
         error => {
-          Logger.error(JsError.toFlatJson(error).toString())
-          BadRequest(Json.obj("ok" -> false, "msg" -> JsError.toFlatJson(error)))
+          Logger.error(JsError.toJson(error).toString())
+          BadRequest(Json.obj("ok" -> false, "msg" -> JsError.toJson(error)))
         },
         param => {
           try {
@@ -781,8 +781,8 @@ object Maintance extends Controller {
       val alarmToTicketParam = request.body.validate[AlarmToTicketParam]
       alarmToTicketParam.fold(
         error => {
-          Logger.error(JsError.toFlatJson(error).toString())
-          BadRequest(Json.obj("ok" -> false, "msg" -> JsError.toFlatJson(error)))
+          Logger.error(JsError.toJson(error).toString())
+          BadRequest(Json.obj("ok" -> false, "msg" -> JsError.toJson(error)))
         },
         param => {
           val defaultTicketOwner = SystemConfig.getAlarmTicketDefaultUserId()

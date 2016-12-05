@@ -19,7 +19,7 @@ object Login extends Controller {
       val credentail = request.body.validate[Credential]      
       credentail.fold(
           error=>{
-            BadRequest(Json.obj("ok"->false, "msg"->JsError.toFlatJson(error)))
+            BadRequest(Json.obj("ok"->false, "msg"->JsError.toJson(error)))
           }, 
           crd=>{
             val optUser = User.getUserByEmail(crd.account)

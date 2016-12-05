@@ -249,26 +249,26 @@ object Auditor {
       if(auditConfig.compareRule.checkInvalid(record, targetStat))
         invalid = true
 
-      if(auditConfig.differenceRule.checkInvalid(record, targetStat, monitor, start))
+      if(auditConfig.differenceRule.checkInvalid(record, targetStat, monitor, record.date))
         invalid = true
 
-      if(auditConfig.persistenceRule.checkInvalid(record, targetStat, monitor, start))
+      if(auditConfig.persistenceRule.checkInvalid(record, targetStat, monitor, record.date))
         invalid = true
       
 
-      if(auditConfig.spikeRule.checkInvalid(record, targetStat, monitor, start))
+      if(auditConfig.spikeRule.checkInvalid(record, targetStat, monitor, record.date))
         invalid = true
 
-      if(auditConfig.twoHourRule.checkInvalid(record, targetStat, monitor, start))
+      if(auditConfig.twoHourRule.checkInvalid(record, targetStat, monitor, record.date))
         invalid = true
         
-      if(auditConfig.threeHourRule.checkInvalid(record, targetStat, monitor, start))
+      if(auditConfig.threeHourRule.checkInvalid(record, targetStat, monitor, record.date))
         invalid = true
         
-      if(auditConfig.fourHourRule.checkInvalid(record, targetStat, monitor, start))
+      if(auditConfig.fourHourRule.checkInvalid(record, targetStat, monitor, record.date))
         invalid = true
         
-      if(auditConfig.monoRule.checkInvalid(record, targetStat, monitor, start))
+      if(auditConfig.monoRule.checkInvalid(record, targetStat, monitor, record.date))
         invalid = true
         
       //Save

@@ -74,8 +74,8 @@ object Application extends Controller {
 
       monitorTypes.fold(
         error => {
-          Logger.error(JsError.toFlatJson(error).toString())
-          BadRequest(Json.obj("ok" -> false, "msg" -> JsError.toFlatJson(error)))
+          Logger.error(JsError.toJson(error).toString())
+          BadRequest(Json.obj("ok" -> false, "msg" -> JsError.toJson(error)))
         },
         mt => {
           Monitor.updateMonitorTypes(monitor, mt)
@@ -124,8 +124,8 @@ object Application extends Controller {
 
       imgUrlResult.fold(
         error => {
-          Logger.error(JsError.toFlatJson(error).toString())
-          BadRequest(Json.obj("ok" -> false, "msg" -> JsError.toFlatJson(error)))
+          Logger.error(JsError.toJson(error).toString())
+          BadRequest(Json.obj("ok" -> false, "msg" -> JsError.toJson(error)))
         },
         imgUrl => {
            Monitor.updateImgUrl(monitor, imgUrl)
@@ -205,8 +205,8 @@ object Application extends Controller {
 
       newEquipmentResult.fold(
         error => {
-          Logger.error(JsError.toFlatJson(error).toString())
-          BadRequest(Json.obj("ok" -> false, "msg" -> JsError.toFlatJson(error)))
+          Logger.error(JsError.toJson(error).toString())
+          BadRequest(Json.obj("ok" -> false, "msg" -> JsError.toJson(error)))
         },
         param => {
           Logger.debug(param.toString())
@@ -338,7 +338,7 @@ object Application extends Controller {
             val epaData = response.json.validate[Seq[EpaRealtimeData]]
             epaData.fold(
               error => {
-                Logger.error(JsError.toFlatJson(error).toString())
+                Logger.error(JsError.toJson(error).toString())
                 Ok(views.html.epaRealtimeData(url, Seq.empty[EpaRealtimeData]))
               },
               data => {
@@ -380,8 +380,8 @@ object Application extends Controller {
 
       newUserParam.fold(
         error => {
-          Logger.error(JsError.toFlatJson(error).toString())
-          BadRequest(Json.obj("ok" -> false, "msg" -> JsError.toFlatJson(error)))
+          Logger.error(JsError.toJson(error).toString())
+          BadRequest(Json.obj("ok" -> false, "msg" -> JsError.toJson(error)))
         },
         param => {
           User.newUser(param)
@@ -409,8 +409,8 @@ object Application extends Controller {
 
       userParam.fold(
         error => {
-          Logger.error(JsError.toFlatJson(error).toString())
-          BadRequest(Json.obj("ok" -> false, "msg" -> JsError.toFlatJson(error)))
+          Logger.error(JsError.toJson(error).toString())
+          BadRequest(Json.obj("ok" -> false, "msg" -> JsError.toJson(error)))
         },
         param => {
           User.updateUser(param)
@@ -451,8 +451,8 @@ object Application extends Controller {
 
       newGroupParam.fold(
         error => {
-          Logger.error(JsError.toFlatJson(error).toString())
-          BadRequest(Json.obj("ok" -> false, "msg" -> JsError.toFlatJson(error)))
+          Logger.error(JsError.toJson(error).toString())
+          BadRequest(Json.obj("ok" -> false, "msg" -> JsError.toJson(error)))
         },
         param => {
           Group.newGroup(param)
@@ -477,8 +477,8 @@ object Application extends Controller {
 
       groupParam.fold(
         error => {
-          Logger.error(JsError.toFlatJson(error).toString())
-          BadRequest(Json.obj("ok" -> false, "msg" -> JsError.toFlatJson(error)))
+          Logger.error(JsError.toJson(error).toString())
+          BadRequest(Json.obj("ok" -> false, "msg" -> JsError.toJson(error)))
         },
         param => {
           Group.updateGroup(param)
@@ -512,8 +512,8 @@ object Application extends Controller {
       val manualAuditList = request.body.validate[ManualAuditList]
       manualAuditList.fold(
         error => {
-          Logger.error(JsError.toFlatJson(error).toString())
-          BadRequest(Json.obj("ok" -> false, "msg" -> JsError.toFlatJson(error)))
+          Logger.error(JsError.toJson(error).toString())
+          BadRequest(Json.obj("ok" -> false, "msg" -> JsError.toJson(error)))
         },
         manualAuditList => {
           for (ma <- manualAuditList.list.reverse) {
@@ -603,8 +603,8 @@ object Application extends Controller {
 
       autoAuditResult.fold(
         error => {
-          Logger.error(JsError.toFlatJson(error).toString())
-          BadRequest(Json.obj("ok" -> false, "msg" -> JsError.toFlatJson(error)))
+          Logger.error(JsError.toJson(error).toString())
+          BadRequest(Json.obj("ok" -> false, "msg" -> JsError.toJson(error)))
         },
         autoAudit => {
           Monitor.updateMonitorAutoAudit(monitor, autoAudit)
