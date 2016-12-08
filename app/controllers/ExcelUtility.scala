@@ -340,12 +340,12 @@ object ExcelUtility {
         seqColors.toArray
       }
 
-    def fillEffectSheet(sheet: XSSFSheet) = {
+    def fillEffectSheet(sheet: XSSFSheet, monthHourReport: MonthHourReport) = {
       val titleRow = sheet.getRow(2)
       val titleCell = titleRow.getCell(0)
       titleCell.setCellValue("監測站:" + Monitor.map(monitor).name)
-      sheet.getRow(1).getCell(17).setCellValue("查詢日期:" + DateTime.now.toString("YYYY/MM/dd"))
-      titleRow.getCell(17).setCellValue("資料日期:" + reportDate.toString("YYYY年MM月"))
+      sheet.getRow(1).getCell(30).setCellValue(reportDate.getYear)
+      sheet.getRow(2).getCell(30).setCellValue(reportDate.getMonthOfYear)
 
       import org.apache.poi.hssf.util.HSSFColor
       def createInvalidStyle(mt: MonitorType.Value) = {
@@ -383,7 +383,33 @@ object ExcelUtility {
         val sum = mtRecord.dataList.map(_.count).sum
         sheet.getRow(36).getCell(col).setCellValue(sum)
         sheet.getRow(37).getCell(col).setCellValue(nDay * 24)
+        val data = monthHourReport.dailyReports flatMap {dr => 
+          dr.typeList(col-1).dataList
+          } map { _._3}
+        
+        import MonitorStatus._
+        val manualAuditList = data.filter { p => p.isDefined && {
+          val tagInfo = getTagInfo(p.get)
+          tagInfo.statusType == StatusType.Manual && tagInfo.id == "10"
+          }
+        }
+        val invalidList = data.filter { p => p.isDefined && 
+          !isValid(p.get)
+        }
+        val repairList = data.filter { p => p.isDefined && 
+          isRepairing(p.get)
+        }
+        sheet.getRow(39).getCell(col).setCellValue(manualAuditList.length)
+        sheet.getRow(40).getCell(col).setCellValue(invalidList.length)
+        sheet.getRow(42).getCell(col).setCellValue(repairList.length)        
+        sheet.getRow(44).getCell(col).setCellValue(nDay * 24)
+        
+        evaluator.evaluateFormulaCell(sheet.getRow(36).getCell(col))
         evaluator.evaluateFormulaCell(sheet.getRow(38).getCell(col))
+        evaluator.evaluateFormulaCell(sheet.getRow(41).getCell(col))
+        evaluator.evaluateFormulaCell(sheet.getRow(43).getCell(col))
+        evaluator.evaluateFormulaCell(sheet.getRow(45).getCell(col))
+        
       }
 
       //Hide col not in use
@@ -647,9 +673,9 @@ object ExcelUtility {
     }
 
     // 有效率月報
-    fillEffectSheet(wb.getSheetAt(0))
     fillMonthlySheet(wb.getSheetAt(1))
     val monthlyHourReport = monthlyHourReportHelper(monitor, reportDate)
+    fillEffectSheet(wb.getSheetAt(0), monthlyHourReport)
     fillMonthlyHourSheet(monthlyHourReport)
     fillGraphHourSheet(monthlyHourReport, 2 + monthlyHourReport.dailyReports(0).typeList.length)
 
