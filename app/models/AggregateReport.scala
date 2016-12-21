@@ -104,8 +104,12 @@ object AggregateReport {
                 if (t.monitorType == MonitorType.A214 || t.monitorType == MonitorType.A213) {
                   if (t.stat.avg.isDefined && t.stat.avg.get > mCase.std_law.get)
                     s",日均值${t.stat.avg.get}超過法規值(${mCase.std_law.get}${mCase.unit})"
-                  else
-                    s",日均值${t.stat.avg.get}未超過法規值"
+                  else{
+                    if(t.stat.avg.isDefined)
+                      s",日均值${t.stat.avg.get}未超過法規值"
+                    else
+                      s",日均值無效, 未超過法規值"
+                  }
                 } else {
                   val overLawHr = over_hrs.filter(_._2.get >= mCase.std_law.get).map{
                     hr=>
