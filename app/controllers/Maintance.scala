@@ -810,10 +810,14 @@ object Maintance extends Controller {
                 (None, None)
 
               val executeDate = DateTime.parse(alarmId.executeDate)
-              val ticket = Ticket(0, DateTime.now, true, TicketType.repair, user.id,
-                SystemConfig.getAlarmTicketDefaultUserId(), alarmId.monitor, mtOpt, reason,
-                executeDate, Json.toJson(Ticket.defaultAlarmTicketForm(ar)).toString, repairType, repairSubType, Some(false))
-              Ticket.newTicket(ticket)
+              if (param.status == "YES") {
+                val ticket =
+                  Ticket(0, DateTime.now, true, TicketType.repair, user.id,
+                    SystemConfig.getAlarmTicketDefaultUserId(), alarmId.monitor, mtOpt, reason,
+                    executeDate, Json.toJson(Ticket.defaultAlarmTicketForm(ar)).toString,
+                    repairType, repairSubType, Some(false))
+                Ticket.newTicket(ticket)
+              }
             }
           }
 

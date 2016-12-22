@@ -69,7 +69,11 @@ $(document ).ready(function() {
 		},
 		paging: false,
 		searching: false,
-		"order": [[ 0, 'desc' ]]
+		@if(canChangeOwner){
+			"order": [[ 1, 'desc' ]]
+		}else{
+			"order": [[ 0, 'desc' ]]
+		}
 	} );
 });
 </script>
