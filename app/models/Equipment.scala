@@ -126,5 +126,16 @@ object Equipment {
       }.single.apply
     }
   }
+  
+  def getDistinctModel() = {
+    DB readOnly { implicit session =>
+      sql"""
+        SELECT distinct model
+        FROM Equipment
+        """.map { r =>
+        r.string(1)
+      }.list.apply
+    }
+  }
 }
 

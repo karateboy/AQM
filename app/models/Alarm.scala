@@ -195,7 +195,7 @@ object Alarm {
   }
 
   case class AlarmItem(id: String, desp: String)
-  private val arList: List[AlarmItem] =
+  private def arList: List[AlarmItem] =
     DB readOnly { implicit session =>
       sql"""
         SELECT *
@@ -203,10 +203,50 @@ object Alarm {
       """.map { r => AlarmItem(r.string(1), r.string(2))
       }.list.apply
     }
-  private val _map: Map[String, String] = Map(arList.map { r => (r.id -> r.desp) }: _*)
+  private var _map: Map[String, String] = Map(arList.map { r => (r.id -> r.desp) }: _*)
 
+  private def insertAlarmCode(ar:AlarmItem)={
+    DB localTx {
+      implicit session=>
+        sql"""
+          INSERT INTO [dbo].[alarmCode]
+           ([ITEM]
+           ,[DESP])
+     VALUES
+           ( ${ar.id}, ${ar.desp})
+          """.update.apply
+    }
+  }
+  
+  def updateMap(ar:AlarmItem)={
+    if(!_map.contains(ar.id)){
+      insertAlarmCode(ar)
+      _map = _map + (ar.id->ar.desp)
+    }
+  }
+  
+  private def deletePartAlarmCode(id:String)={
+    val pattern = s"${id}_%"
+    DB localTx {
+      implicit session=>
+        sql"""
+          DELETE FROM [dbo].[alarmCode]
+          WHERE ITEM like ${pattern}
+          """.update.apply
+    }
+  }
+  
+  def removePartFromMap(id:String) = {
+    deletePartAlarmCode(id)
+    _map = _map flatMap {
+      kv=> if(kv._1.startsWith(id))
+        None
+      else
+        Some(kv._1->kv._2)
+    }
+  }
+  
   def map(key: String) = {
     _map.getOrElse(key, "未知的警告代碼:" + key)
   }
-
 }

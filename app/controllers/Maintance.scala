@@ -294,15 +294,15 @@ object Maintance extends Controller {
               Ok(views.html.yearForm(ID, t.getForm))
             case TicketType.repair =>
               val submittedByMe = t.submiter_id == userInfo.id
-              val equipList = Equipment.map(t.monitor).values.toList
+              val equipList = Equipment.map.getOrElse(t.monitor, Map.empty[String, Equipment]).values.toList
               val partIdNameMap = Part.getIdNameMap()
-              val partEquipMap = Part.getEquipPartMap()
+              val partEquipModelMap = Part.getEquipModelPartMap()
               if (t.getRepairForm.equipmentId.length() != 0) {
                 val equipment = Equipment.getEquipment(t.getRepairForm.equipmentId).get
-                val partList = partEquipMap.getOrElse(equipment.name, List.empty[Part])
+                val partList = partEquipModelMap.getOrElse(equipment.model, List.empty[Part2])
                 Ok(views.html.repairForm(ID, t.getRepairForm, equipList, partIdNameMap, partList, submittedByMe))
               } else {
-                Ok(views.html.repairForm(ID, t.getRepairForm, equipList, partIdNameMap, List.empty[Part], submittedByMe))
+                Ok(views.html.repairForm(ID, t.getRepairForm, equipList, partIdNameMap, List.empty[Part2], submittedByMe))
               }
           }
         }
@@ -586,9 +586,17 @@ object Maintance extends Controller {
       }
   }
 
+  def getPartList = Security.Authenticated {
+    import Part._
+    Ok(Json.toJson(Part.getList))
+  }
+
+  case class NewPartParam(part: Part2, monitors: List[Monitor.Value], startDate: String, freqType: String, days: Int, usage: Int, alarm: Boolean)
   def newPart = Security.Authenticated(BodyParsers.parse.json) {
+    import Part._
     implicit request =>
-      val newPartResult = request.body.validate[Part]
+      implicit val read = Json.reads[NewPartParam]
+      val newPartResult = request.body.validate[NewPartParam]
 
       newPartResult.fold(
         error => {
@@ -597,20 +605,84 @@ object Maintance extends Controller {
         },
         param => {
           try {
-            Part.create(param)
+            Part.create(param.part)
+            val startDate = DateTime.parse(param.startDate)
+            for {
+              monitor <- param.monitors
+              monitorModelList = Equipment.map.getOrElse(monitor, Map.empty[String, Equipment]).values.toList.map { e => e.model }
+              model <- param.part.models.split(",") if monitorModelList.contains(model)
+            } {
+              val id = s"${param.part.id}_${model}_${monitor}"
+              val partUsage = PartUsage(id, param.usage, monitor.toString, model, startDate,
+                param.freqType, param.days, param.alarm)
+
+              PartUsage.create(partUsage)
+
+              Alarm.updateMap(Alarm.AlarmItem(partUsage.getAlarmCode, s"${model}更換${param.part.name} (${param.part.chineseName} ${param.part.id})"))
+            }
+
+            Ok(Json.obj("ok" -> true))
           } catch {
             case e: Exception =>
               Logger.error(e.toString())
               BadRequest(Json.obj("ok" -> false, "msg" -> e.toString()))
           }
-
-          Ok(Json.obj("ok" -> true))
         })
   }
 
   def deletePart(id: String) = Security.Authenticated {
     Part.delete(id)
+    PartUsage.deletePart(id)
+    Alarm.removePartFromMap(id)
     Ok(Json.obj("ok" -> true))
+  }
+
+  def partUsage = Security.Authenticated {
+    val parUsages = PartUsage.getList()
+    Ok(views.html.partUsage(PartUsage.getList(), Part.getIdMap()))
+  }
+
+  def deletePartUsage(id: String) = Security.Authenticated {
+    PartUsage.delete(id)    
+    Ok(Json.obj("ok" -> true))
+  }
+
+  case class NewPartUsageParam(partClassId: String, monitors: List[Monitor.Value], startDate: String, freqType: String, days: Int, usage: Int, alarm: Boolean)
+  def newPartUsage = Security.Authenticated(BodyParsers.parse.json) {
+    import Part._
+    implicit request =>
+      implicit val read = Json.reads[NewPartUsageParam]
+      val newPartResult = request.body.validate[NewPartUsageParam]
+
+      newPartResult.fold(
+        error => {
+          Logger.error(JsError.toJson(error).toString())
+          BadRequest(Json.obj("ok" -> false, "msg" -> JsError.toJson(error)))
+        },
+        param => {
+          try {
+            val partOpt = Part.getPart(param.partClassId)
+            val startDate = DateTime.parse(param.startDate)
+            for {
+              part <- partOpt
+              monitor <- param.monitors
+              monitorModelList = Equipment.map.getOrElse(monitor, Map.empty[String, Equipment]).values.toList.map { e => e.model }
+              model <- part.models.split(",") if monitorModelList.contains(model)
+            } {
+              val id = s"${part.id}_${model}_${monitor}"
+              val partUsage = PartUsage(id, param.usage, monitor.toString, model, startDate,
+                param.freqType, param.days, param.alarm)
+
+              PartUsage.create(partUsage)
+              Alarm.updateMap(Alarm.AlarmItem(partUsage.getAlarmCode, s"${model}更換(${part.id}) (${part.name}/${part.chineseName})"))
+            }
+            Ok(Json.obj("ok" -> true))
+          } catch {
+            case e: Exception =>
+              Logger.error(e.toString())
+              BadRequest(Json.obj("ok" -> false, "msg" -> e.toString()))
+          }
+        })
   }
 
   def testAlarmMail = Security.Authenticated {
@@ -886,6 +958,39 @@ object Maintance extends Controller {
     val usrMap = Map(allUsers.map { u => (u.id.get -> u) }: _*)
 
     Ok(views.html.closedAlarmTicketReport(ticketWithRepairForm, usrMap))
+  }
+
+  def modelList = Security.Authenticated {
+    val modelList = Equipment.getDistinctModel()
+    Ok(Json.toJson(modelList))
+  }
+
+  def freqTypeList = Security.Authenticated {
+    Ok(Json.toJson(FrequencyType.getList))
+  }
+
+  case class PartInventory(id: String, inventory: Int, usage: Int)
+  def partInventoryAlarm = Security.Authenticated {
+    val partUsageList = PartUsage.getList()
+    import scala.collection.mutable.Map
+    val partUsageMap = Map.empty[String, Int]
+
+    for (partUsage <- partUsageList) {
+      val usage = partUsageMap.getOrElse(partUsage.getPartId, 0)
+      partUsageMap.put(partUsage.getPartId, usage + partUsage.getUsageBefore(DateTime.now() + 30.day))
+    }
+
+    val partIdMap = Part.getIdMap()
+    val partInventoryShortage = partUsageMap flatMap {
+      kv =>
+        val part = partIdMap(kv._1)
+        if (part.quantity >= kv._2)
+          None
+        else
+          Some(PartInventory(kv._1, part.quantity, kv._2))
+    }
+
+    Ok(views.html.partInventoryAlarm(partInventoryShortage.toList, partIdMap))
   }
 
 }

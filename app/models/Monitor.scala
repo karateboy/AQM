@@ -39,6 +39,8 @@ object Monitor extends Enumeration{
   implicit val mWrites: Writes[Monitor.Value] = EnumUtils.enumWrites
   implicit val mtStdRead = Json.reads[MonitorTypeStandard]
   implicit val mtStdWrite = Json.writes[MonitorTypeStandard]
+  implicit val reads = Json.reads[Monitor]
+  implicit val writes = Json.writes[Monitor]
   
   lazy val monitorList:List[Monitor] =
     DB readOnly{ implicit session =>

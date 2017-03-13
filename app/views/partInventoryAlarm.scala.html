@@ -1,0 +1,73 @@
+@* monitorTypeConfig Template File *@
+@import Maintance.PartInventory
+@(parts:List[PartInventory], idMap:Map[String, Part2])
+<div class="row">
+    <div class="col-lg-12">
+        <div class="panel panel-primary">
+        <div class="panel-heading panel-title"" >
+        	物料庫存預警	
+        </div>
+        <div class="panel-body panel-collapse">
+ 			<div align="center">
+				<br>
+            	<table id="partTable" class="table" cellspacing="0" width="100%">
+            		<thead>
+            			<tr>
+            				<th>物料類別代碼</th>
+            				<th>英文名稱</th>
+            				<th>中文名稱</th>
+            				<th>庫存</th>
+            				<th>30天內用量</th>
+            			</tr>
+            		</thead>
+            		<tbody>
+            			@for(p<-parts){
+            				<tr id="@p.id">
+            					<th>@p.id</th>
+            					<td col="name">@idMap(p.id).name</td>
+            					<td col="chineseName">@idMap(p.id).chineseName</td>
+            					<td col="quantity">@p.inventory</td>
+            					<td col="quantity">@p.usage</td>
+            				</tr>
+            			}
+            		</tbody>
+            	</table>          		
+            </div>
+       </div>
+       </div>
+	</div>
+</div>
+<script>
+	var partModalCanHide = true;
+	var oTable;	
+</script>
+
+<script>
+var dataTableL10N = '@routes.Assets.at("localization/zh_tw.json")';
+</script>
+<script>
+$(document).ready(function() {
+        /* Init DataTables */
+        
+        oTable = $("#partTable").dataTable( {
+			language: {
+				url: dataTableL10N,							
+			},
+			paging:   false,
+			info: false,
+			searching: false,
+			responsive: true
+		} );
+
+    	$('#partTable tbody').on('click', 'tr',
+    			function() {
+            		if ( $(this).hasClass('selected') ) {
+                		$(this).removeClass('selected');
+            		}
+            		else {
+            			oTable.$('tr.selected').removeClass('selected');
+                		$(this).addClass('selected');
+            		}
+    			});    		
+});	
+</script>

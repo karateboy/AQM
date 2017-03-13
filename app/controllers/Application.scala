@@ -42,10 +42,15 @@ object Application extends Controller {
       Ok(views.html.monitor(m))
   }
 
-  case class MonitorInfo(mt:Seq[MonitorType.Value], imgUrl:String, equipments:List[Equipment])
+  def monitorList = Security.Authenticated {
+    implicit request =>
+      Ok(Json.toJson(Monitor.monitorList))
+  }
+
+  case class MonitorInfo(mt: Seq[MonitorType.Value], imgUrl: String, equipments: List[Equipment])
   implicit val equipmentWrite = Json.writes[Equipment]
   implicit val mInfoWrite = Json.writes[MonitorInfo]
-  
+
   def getMonitorInfo(monitorStr: String) = Security.Authenticated {
     implicit request =>
       val m = Monitor.withName(monitorStr)
@@ -53,7 +58,7 @@ object Application extends Controller {
 
       val equipNameMap = Equipment.map.getOrElseUpdate(m, Map.empty[String, Equipment])
 
-      val equipmentList = equipNameMap.values.toList  
+      val equipmentList = equipNameMap.values.toList
       val info = MonitorInfo(Monitor.map(m).monitorTypes, Monitor.map(m).url, equipmentList)
 
       Ok(Json.toJson(info))
@@ -116,7 +121,7 @@ object Application extends Controller {
 
       Ok(Json.obj("ok" -> true))
   }
-  
+
   def setMonitorImgUrl(monitorStr: String) = Security.Authenticated(BodyParsers.parse.json) {
     implicit request =>
       val monitor = Monitor.withName(monitorStr)
@@ -128,11 +133,11 @@ object Application extends Controller {
           BadRequest(Json.obj("ok" -> false, "msg" -> JsError.toJson(error)))
         },
         imgUrl => {
-           Monitor.updateImgUrl(monitor, imgUrl)
+          Monitor.updateImgUrl(monitor, imgUrl)
           Ok(Json.obj("ok" -> true))
         })
   }
-  
+
   def monitorTypeConfig = Security.Authenticated {
     implicit request =>
       val autoAuditNormal = SystemConfig.getConfig(SystemConfig.AutoAuditAsNormal, "False").toBoolean
@@ -172,7 +177,7 @@ object Application extends Controller {
   }
 
   def setInstrumentThreshold() = Security.Authenticated {
-    implicit request =>      
+    implicit request =>
       try {
         val mtForm = Form(
           mapping(
@@ -182,13 +187,13 @@ object Application extends Controller {
         val threshold = mtForm.bindFromRequest.get
 
         val v =
-          if(threshold.data.length() == 0 || threshold.data == "-")
+          if (threshold.data.length() == 0 || threshold.data == "-")
             None
           else
             Some(threshold.data.toFloat)
 
         InstrumentThreshold.setValue(threshold.id, v)
-        
+
         Ok(threshold.data)
       } catch {
         case e: Exception =>
@@ -222,7 +227,7 @@ object Application extends Controller {
         })
   }
 
-  def updateEquipment() = Security.Authenticated{
+  def updateEquipment() = Security.Authenticated {
     implicit request =>
       try {
         val mtForm = Form(
@@ -232,8 +237,8 @@ object Application extends Controller {
 
         val mtData = mtForm.bindFromRequest.get
         val ids = mtData.id.split(":")
-       
-        Equipment.update(ids, mtData.data)        
+
+        Equipment.update(ids, mtData.data)
 
         Ok(mtData.data)
       } catch {
@@ -243,22 +248,22 @@ object Application extends Controller {
         case e: Throwable =>
           Logger.error(e.toString)
           BadRequest(e.toString)
-      }    
+      }
   }
 
-  def deleteEquipment(idStr:String) = Security.Authenticated{
+  def deleteEquipment(idStr: String) = Security.Authenticated {
     val ids = idStr.split(":")
     Equipment.delete(Monitor.withName(ids(0)), ids(1))
     Ok(Json.obj("ok" -> true))
   }
-  
+
   def monitorStatusConfig = Security.Authenticated {
     implicit request =>
       Ok(views.html.monitorStatusConfig())
   }
 
   def saveMonitorStatusConfig() = Security.Authenticated {
-   implicit request =>
+    implicit request =>
       try {
         val mtForm = Form(
           mapping(
@@ -393,7 +398,7 @@ object Application extends Controller {
     implicit request =>
       val userInfoOpt = Security.getUserinfo(request)
       val userInfo = userInfoOpt.get
-      
+
       Ticket.transferTickets(id, userInfo.id)
       User.deleteUser(id)
       Ok(Json.obj("ok" -> true))
@@ -500,9 +505,9 @@ object Application extends Controller {
       Ok(views.html.history("/HistoryQueryReport/true/", group.privilege, true))
   }
 
-  case class ManualAudit(monitor: Monitor.Value, monitorType: MonitorType.Value, time: Long, status: String, reason:Option[String])
+  case class ManualAudit(monitor: Monitor.Value, monitorType: MonitorType.Value, time: Long, status: String, reason: Option[String])
   case class ManualAuditList(list: Seq[ManualAudit])
-  def manualAuditApply(recordTypeStr:String) = Security.Authenticated(BodyParsers.parse.json) {
+  def manualAuditApply(recordTypeStr: String) = Security.Authenticated(BodyParsers.parse.json) {
     implicit request =>
       val userInfo = Security.getUserinfo(request).get
       val user = User.getUserById(userInfo.id).get
@@ -519,24 +524,24 @@ object Application extends Controller {
           for (ma <- manualAuditList.list.reverse) {
             val now = DateTime.now
             val tagInfo = MonitorStatus.getTagInfo(ma.status)
-            EventLog.create(EventLog(now, EventLog.evtTypeManualAudit, 
-                s"${user.name} 進行人工註記 :${new DateTime(ma.time).toString("YYYY/MM/dd HH:mm")}:${Monitor.map(ma.monitor).name}:${MonitorType.map(ma.monitorType).desp}-${MonitorStatus.map(ma.status).desp}"))
-            if(tagInfo.statusType == StatusType.Manual){
+            EventLog.create(EventLog(now, EventLog.evtTypeManualAudit,
+              s"${user.name} 進行人工註記 :${new DateTime(ma.time).toString("YYYY/MM/dd HH:mm")}:${Monitor.map(ma.monitor).name}:${MonitorType.map(ma.monitorType).desp}-${MonitorStatus.map(ma.status).desp}"))
+            if (tagInfo.statusType == StatusType.Manual) {
               val log = ManualAuditLog(tabType, ma.monitor, new DateTime(ma.time), ma.monitorType, now, ma.status, user.name, ma.reason)
-              try{
+              try {
                 val logOpt = ManualAuditLog.getLog(tabType, ma.monitor, new DateTime(ma.time), ma.monitorType)
-                if(logOpt.isEmpty)
+                if (logOpt.isEmpty)
                   ManualAuditLog.newLog(log)
                 else
                   ManualAuditLog.updateLog(log)
-              }catch{
-                case ex:Exception=>
-                  
+              } catch {
+                case ex: Exception =>
+
               }
-            }else if(tagInfo.statusType == StatusType.Internal){
+            } else if (tagInfo.statusType == StatusType.Internal) {
               ManualAuditLog.deleteLog(tabType, ma.monitor, new DateTime(ma.time), ma.monitorType)
             }
-            
+
             Record.updateRecordStatus(tabType, ma.monitor, ma.monitorType, ma.time, ma.status)
           }
 
@@ -550,8 +555,8 @@ object Application extends Controller {
       val group = Group.getGroup(userInfo.groupID).get
 
       Ok(views.html.manualAuditQuery(group.privilege))
-  }  
-  
+  }
+
   def manualAuditQueryReport(monitorStr: String, startStr: String, endStr: String, outputTypeStr: String) = Security.Authenticated {
     val monitorStrArray = monitorStr.split(':')
     val monitors = monitorStrArray.map { Monitor.withName }
@@ -567,7 +572,7 @@ object Application extends Controller {
       case OutputType.html =>
         Ok(output)
       //case OutputType.excel =>
-        
+
       case OutputType.pdf =>
         Ok.sendFile(creatPdfWithReportHeader(title, output),
           fileName = _ =>
@@ -575,7 +580,6 @@ object Application extends Controller {
     }
 
   }
-
 
   def auditConfig() = Security.Authenticated {
     implicit request =>
@@ -661,5 +665,25 @@ object Application extends Controller {
           fileName = _ =>
             play.utils.UriEncoding.encodePathSegment(Monitor.map(monitor).name + title + start.toString("YYYYMMdd") + "_" + end.toString("MMdd") + ".pdf", "UTF-8"))
     }
+  }
+
+  def getPm25Threshold = Security.Authenticated {
+    Ok(SystemConfig.getPM25Threshold().toString())
+  }
+
+  case class Threshold(v:Double)
+  def setPm25Threshold = Security.Authenticated(BodyParsers.parse.json) {
+    implicit request =>
+      implicit val read = Json.reads[Threshold]
+      val result = request.body.validate[Threshold]
+
+      result.fold(error => {
+        Logger.error(JsError.toJson(error).toString())
+        BadRequest(Json.obj("ok" -> false, "msg" -> JsError.toJson(error)))
+      },
+        threshold => {
+          SystemConfig.setPM25Threshold(threshold.v)
+          Ok(Json.obj("ok" -> true))
+        })
   }
 }

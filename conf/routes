@@ -3,217 +3,228 @@
 # ~~~~
 
 # Home page
-GET     /                           controllers.Application.index
+GET      /                                                                                           controllers.Application.index
 
 # Map static resources from the /public folder to the /assets URL path
-GET     /assets/*file               controllers.Assets.at(path="/public", file)
+GET      /assets/*file                                                                               controllers.Assets.at(path="/public", file)
 
-GET		/login						controllers.Login.prompt
-GET		/logout						controllers.Login.logout
-POST	/authenticate				controllers.Login.authenticate
+GET      /login                                                                                      controllers.Login.prompt
+GET      /logout                                                                                     controllers.Login.logout
+POST     /authenticate                                                                               controllers.Login.authenticate
 
-GET		/monitorMonthlyHourReport/:monitor/:monitorType/:startDate	controllers.Report.monthlyHourReport(monitor, monitorType, startDate, outputTypeStr="html")
-GET		/PDF/monitorMonthlyHourReport/:monitor/:monitorType/:startDate	controllers.Report.monthlyHourReport(monitor, monitorType, startDate, outputTypeStr="pdf")
-GET		/Excel/monitorMonthlyHourReport/:monitor/:monitorType/:startDate	controllers.Report.monthlyHourReport(monitor, monitorType, startDate, outputTypeStr="excel")
+GET      /monitorMonthlyHourReport/:monitor/:monitorType/:startDate                                  controllers.Report.monthlyHourReport(monitor, monitorType, startDate, outputTypeStr="html")
+GET      /PDF/monitorMonthlyHourReport/:monitor/:monitorType/:startDate                              controllers.Report.monthlyHourReport(monitor, monitorType, startDate, outputTypeStr="pdf")
+GET      /Excel/monitorMonthlyHourReport/:monitor/:monitorType/:startDate                            controllers.Report.monthlyHourReport(monitor, monitorType, startDate, outputTypeStr="excel")
 
-GET		/CalibrationReportForm		controllers.Report.calibration
-GET		/CalibrationReport/:monitor/:monitorType/:reportType/:reportDate		controllers.Report.calibrationReport(monitor, monitorType, reportType, reportDate, outputTypeStr="html")
-GET		/PDF/CalibrationReport/:monitor/:monitorType/:reportType/:reportDate		controllers.Report.calibrationReport(monitor, monitorType, reportType, reportDate, outputTypeStr="pdf")
-GET		/Excel/CalibrationReport/:monitor/:monitorType/:reportType/:reportDate		controllers.Report.calibrationReport(monitor, monitorType, reportType, reportDate, outputTypeStr="excel")
-
-
-GET		/realtimeStatus				controllers.Realtime.realtimeStat(outputTypeStr = "html")
-GET		/PDF/realtimeStatus			controllers.Realtime.realtimeStat(outputTypeStr = "pdf")
-GET		/realtimeImage				controllers.Realtime.realtimeImg
-GET		/realtimeTrend				controllers.Realtime.realtimeTrend
-GET		/realtimeMinTrend			controllers.Realtime.realtimeMinTrend
-GET		/JSON/realtime/map			controllers.Realtime.realtimeMap
-GET		/JSON/realtimeTrend/:monitor/:monitorType			controllers.Realtime.realtimeHourTrendChart(monitor, monitorType)
-GET		/JSON/realtimeMinTrend/:monitor/:monitorType		controllers.Realtime.realtimeMinTrendChart(monitor, monitorType)
-GET 	/JSON/realtimeHighchart/:monitorType controllers.Realtime.highchartJson(monitorType)	
-
-GET		/report/*reportType			controllers.Report.getReport(reportType)
-GET		/monitorReport/:reportType/:monitor/:startDate	controllers.Report.monitorReport(monitor, reportType, startDate, outputTypeStr="html")
-GET		/PDF/monitorReport/:reportType/:monitor/:startDate	controllers.Report.monitorReport(monitor, reportType, startDate, outputTypeStr="pdf")
-GET		/Excel/monitorReport/:reportType/:monitor/:startDate	controllers.Report.monitorReport(monitor, reportType, startDate, outputTypeStr="excel")
-
-GET		/PsiQuery					controllers.Report.psiReportPrompt
-GET		/PsiQueryReport/:monitor/:reportType/:start	controllers.Report.psiReportReport(monitor, reportType, start, outputTypeStr="html")
-GET		/PDF/PsiQueryReport/:monitor/:reportType/:start	controllers.Report.psiReportReport(monitor, reportType, start, outputTypeStr="pdf")
-GET		/Excel/PsiQueryReport/:monitor/:reportType/:start	controllers.Report.psiReportReport(monitor, reportType, start, outputTypeStr="excel")
-
-GET		/EffectiveQuery			controllers.Report.effectiveQuery
-GET		/EffectiveAnnualReport/:reportType/:start/:param	controllers.Report.effectiveAnnualReport(reportType, start, param, outputTypeStr="html")
-GET		/PDF/EffectiveAnnualReport/:reportType/:start/:param	controllers.Report.effectiveAnnualReport(reportType, start, param, outputTypeStr="pdf")
-GET		/Excel/EffectiveAnnualReport/:reportType/:start/:param	controllers.Report.effectiveAnnualReport(reportType, start, param, outputTypeStr="excel")
-
-GET		/MonitorAbnormal		controllers.Report.monitorAbnormal
-GET		/MonitorAbnormalReport/:date		controllers.Report.monitorAbnormalReport(date, outputTypeStr="html")
-GET		/PDF/MonitorAbnormalReport/:date		controllers.Report.monitorAbnormalReport(date, outputTypeStr="pdf")
-GET		/Excel/MonitorAbnormalReport/:date		controllers.Report.monitorAbnormalReport(date, outputTypeStr="excel")
-POST	/SaveAbnormalReport/:date	controllers.Report.saveMonitorAbnormalReport(date)
-
-GET		/MonitorAggregate						controllers.Report.monitorAggregate
-GET		/MonitorAggregateReport/:date			controllers.Report.monitorAggregateReport(date, outputTypeStr="html")
-GET		/PDF/MonitorAggregateReport/:date		controllers.Report.monitorAggregateReport(date, outputTypeStr="pdf")
-GET		/Excel/MonitorAggregateReport/:date		controllers.Report.monitorAggregateReport(date, outputTypeStr="excel")
-POST	/SaveMonitorAggregateReport/:date		controllers.Report.saveMonitorAggregateReport(date)
+GET      /CalibrationReportForm                                                                      controllers.Report.calibration
+GET      /CalibrationReport/:monitor/:monitorType/:reportType/:reportDate                            controllers.Report.calibrationReport(monitor, monitorType, reportType, reportDate, outputTypeStr="html")
+GET      /PDF/CalibrationReport/:monitor/:monitorType/:reportType/:reportDate                        controllers.Report.calibrationReport(monitor, monitorType, reportType, reportDate, outputTypeStr="pdf")
+GET      /Excel/CalibrationReport/:monitor/:monitorType/:reportType/:reportDate                      controllers.Report.calibrationReport(monitor, monitorType, reportType, reportDate, outputTypeStr="excel")
 
 
-GET		/HistoryQuery			controllers.Query.history
-GET		/HistoryQueryReport/:edit/:monitor/:epaMonitor/:monitorType/:recordType/:start/:end	controllers.Query.historyReport(edit:Boolean, monitor, epaMonitor, monitorType, recordType, start, end, outputType="html")
-GET		/PDF/HistoryQueryReport/:edit/:monitor/:epaMonitor/:monitorType/:recordType/:start/:end	controllers.Query.historyReport(edit:Boolean, monitor, epaMonitor, monitorType, recordType, start, end, outputType="pdf")
-GET		/Excel/HistoryQueryReport/:edit/:monitor/:epaMonitor/:monitorType/:recordType/:start/:end controllers.Query.historyReport(edit:Boolean, monitor, epaMonitor, monitorType, recordType, start, end, outputType="excel")
+GET      /realtimeStatus                                                                             controllers.Realtime.realtimeStat(outputTypeStr = "html")
+GET      /PDF/realtimeStatus                                                                         controllers.Realtime.realtimeStat(outputTypeStr = "pdf")
+GET      /realtimeImage                                                                              controllers.Realtime.realtimeImg
+GET      /realtimeTrend                                                                              controllers.Realtime.realtimeTrend
+GET      /realtimeMinTrend                                                                           controllers.Realtime.realtimeMinTrend
+GET      /JSON/realtime/map                                                                          controllers.Realtime.realtimeMap
+GET      /JSON/realtimeTrend/:monitor/:monitorType                                                   controllers.Realtime.realtimeHourTrendChart(monitor, monitorType)
+GET      /JSON/realtimeMinTrend/:monitor/:monitorType                                                controllers.Realtime.realtimeMinTrendChart(monitor, monitorType)
+GET      /JSON/realtimeHighchart/:monitorType                                                        controllers.Realtime.highchartJson(monitorType)	
 
-GET		/HistoryTrend			controllers.Query.historyTrend
-GET		/JSON/HistoryTrend/:monitor/:epaMonitor/:monitorType/:reportUnit/:msf/:start/:end	controllers.Query.historyTrendChart(monitor, epaMonitor, monitorType, reportUnit, msf, start, end, outputTypeStr="html")
-GET		/Excel/HistoryTrend/:monitor/:epaMonitor/:monitorType/:reportUnit/:msf/:start/:end	controllers.Query.historyTrendChart(monitor, epaMonitor, monitorType, reportUnit, msf, start, end, outputTypeStr="excel")
+GET      /report/*reportType                                                                         controllers.Report.getReport(reportType)
+GET      /monitorReport/:reportType/:monitor/:startDate                                              controllers.Report.monitorReport(monitor, reportType, startDate, outputTypeStr="html")
+GET      /PDF/monitorReport/:reportType/:monitor/:startDate                                          controllers.Report.monitorReport(monitor, reportType, startDate, outputTypeStr="pdf")
+GET      /Excel/monitorReport/:reportType/:monitor/:startDate                                        controllers.Report.monitorReport(monitor, reportType, startDate, outputTypeStr="excel")
 
-GET		/PsiTrend				controllers.Query.psiTrend
-GET		/JSON/PsiTrend/:monitor/:start/:end/:dailyPsi		controllers.Query.psiTrendChart(monitor, start, end, dailyPsi:Boolean, outputType="html")
-GET		/Excel/PsiTrend/:monitor/:start/:end/:dailyPsi		controllers.Query.psiTrendChart(monitor, start, end, dailyPsi:Boolean, outputType="excel")
+GET      /PsiQuery                                                                                   controllers.Report.psiReportPrompt
+GET      /PsiQueryReport/:monitor/:reportType/:start                                                 controllers.Report.psiReportReport(monitor, reportType, start, outputTypeStr="html")
+GET      /PDF/PsiQueryReport/:monitor/:reportType/:start                                             controllers.Report.psiReportReport(monitor, reportType, start, outputTypeStr="pdf")
+GET      /Excel/PsiQueryReport/:monitor/:reportType/:start                                           controllers.Report.psiReportReport(monitor, reportType, start, outputTypeStr="excel")
 
-GET		/OverLawStd				controllers.Query.overLawStd
-GET		/OverLawStdReport/:monitor/:monitorType/:start/:end	controllers.Query.overLawStdReport(monitor, monitorType, start, end, outputTypeStr="html")
-GET		/PDF/OverLawStdReport/:monitor/:monitorType/:start/:end	controllers.Query.overLawStdReport(monitor, monitorType, start, end, outputTypeStr="pdf")
+GET      /EffectiveQuery                                                                             controllers.Report.effectiveQuery
+GET      /EffectiveAnnualReport/:reportType/:start/:param                                            controllers.Report.effectiveAnnualReport(reportType, start, param, outputTypeStr="html")
+GET      /PDF/EffectiveAnnualReport/:reportType/:start/:param                                        controllers.Report.effectiveAnnualReport(reportType, start, param, outputTypeStr="pdf")
+GET      /Excel/EffectiveAnnualReport/:reportType/:start/:param                                      controllers.Report.effectiveAnnualReport(reportType, start, param, outputTypeStr="excel")
 
-GET		/EffectivePercentage	controllers.Query.effectivePercentage
-GET		/EffectivePercentage/:start/:end	controllers.Query.effectivePercentageReport(start, end, outputTypeStr="html")
-GET		/PDF/EffectivePercentage/:start/:end	controllers.Query.effectivePercentageReport(start, end, outputTypeStr="pdf")
+GET      /MonitorAbnormal                                                                            controllers.Report.monitorAbnormal
+GET      /MonitorAbnormalReport/:date                                                                controllers.Report.monitorAbnormalReport(date, outputTypeStr="html")
+GET      /PDF/MonitorAbnormalReport/:date                                                            controllers.Report.monitorAbnormalReport(date, outputTypeStr="pdf")
+GET      /Excel/MonitorAbnormalReport/:date                                                          controllers.Report.monitorAbnormalReport(date, outputTypeStr="excel")
+POST     /SaveAbnormalReport/:date                                                                   controllers.Report.saveMonitorAbnormalReport(date)
 
-GET		/Alarm					controllers.Query.alarm
-GET		/AlarmReport/:monitor/:status/:start/:end	controllers.Query.alarmReport(monitor, status, start, end, outputTypeStr="html")
-GET		/PDF/AlarmReport/:monitor/:status/:start/:end	controllers.Query.alarmReport(monitor, status, start, end, outputTypeStr="pdf")
+GET      /MonitorAggregate                                                                           controllers.Report.monitorAggregate
+GET      /MonitorAggregateReport/:date                                                               controllers.Report.monitorAggregateReport(date, outputTypeStr="html")
+GET      /PDF/MonitorAggregateReport/:date                                                           controllers.Report.monitorAggregateReport(date, outputTypeStr="pdf")
+GET      /Excel/MonitorAggregateReport/:date                                                         controllers.Report.monitorAggregateReport(date, outputTypeStr="excel")
+POST     /SaveMonitorAggregateReport/:date                                                           controllers.Report.saveMonitorAggregateReport(date)
 
-GET		/WindRose				controllers.Query.windRose
-GET		/WindRoseReport/:monitor/:monitorType/:nWays/:start/:end	controllers.Query.windRoseReport(monitor, monitorType, nWays:Int, start, end, outputType="html")
-GET		/Excel/WindRoseReport/:monitor/:monitorType/:nWays/:start/:end	controllers.Query.windRoseReport(monitor, monitorType, nWays:Int, start, end, outputType="excel")
 
-GET		/CompareLastYear		controllers.Query.compareLastYear
-GET		/JSON/CompareLastYearChart/:monitor/:monitorType/:start/:end	controllers.Query.compareLastYearChart(monitor, monitorType, start, end)
-GET		/CalculateStat			controllers.Query.calculateStat
-GET		/CalculateStatReport/:monitor/:monitorType/:start/:end	controllers.Query.calculateStatReport(monitor, monitorType, start, end, outputTypeStr="html")
-GET		/PDF/CalculateStatReport/:monitor/:monitorType/:start/:end	controllers.Query.calculateStatReport(monitor, monitorType, start, end, outputTypeStr="pdf")
+GET      /HistoryQuery                                                                               controllers.Query.history
+GET      /HistoryQueryReport/:edit/:monitor/:epaMonitor/:monitorType/:recordType/:start/:end         controllers.Query.historyReport(edit:Boolean, monitor, epaMonitor, monitorType, recordType, start, end, outputType="html")
+GET      /PDF/HistoryQueryReport/:edit/:monitor/:epaMonitor/:monitorType/:recordType/:start/:end     controllers.Query.historyReport(edit:Boolean, monitor, epaMonitor, monitorType, recordType, start, end, outputType="pdf")
+GET      /Excel/HistoryQueryReport/:edit/:monitor/:epaMonitor/:monitorType/:recordType/:start/:end   controllers.Query.historyReport(edit:Boolean, monitor, epaMonitor, monitorType, recordType, start, end, outputType="excel")
 
-GET		/Regression				controllers.Query.regression
-GET		/JSON/RegressionChart/:monitor/:monitorType/:start/:end	controllers.Query.regressionChart(monitor, monitorType, start, end)
+GET      /HistoryTrend                                                                               controllers.Query.historyTrend
+GET      /JSON/HistoryTrend/:monitor/:epaMonitor/:monitorType/:reportUnit/:msf/:start/:end           controllers.Query.historyTrendChart(monitor, epaMonitor, monitorType, reportUnit, msf, start, end, outputTypeStr="html")
+GET      /Excel/HistoryTrend/:monitor/:epaMonitor/:monitorType/:reportUnit/:msf/:start/:end          controllers.Query.historyTrendChart(monitor, epaMonitor, monitorType, reportUnit, msf, start, end, outputTypeStr="excel")
 
-GET		/CalibrationQuery			controllers.Query.calibrationQuery
-GET		/CalibrationQueryReport/:monitor/:start/:end controllers.Query.calibrationQueryReport(monitor, start, end, outputTypeStr="html")
-GET		/PDF/CalibrationQueryReport/:monitor/:start/:end controllers.Query.calibrationQueryReport(monitor, start, end, outputTypeStr="pdf")
-GET		/Excel/CalibrationQueryReport/:monitor/:start/:end controllers.Query.calibrationQueryReport(monitor, start, end, outputTypeStr="excel")
+GET      /PsiTrend                                                                                   controllers.Query.psiTrend
+GET      /JSON/PsiTrend/:monitor/:start/:end/:dailyPsi                                               controllers.Query.psiTrendChart(monitor, start, end, dailyPsi:Boolean, outputType="html")
+GET      /Excel/PsiTrend/:monitor/:start/:end/:dailyPsi                                              controllers.Query.psiTrendChart(monitor, start, end, dailyPsi:Boolean, outputType="excel")
 
-GET		/Monitor					controllers.Application.monitor(monitor = "A001")
-GET		/Monitor/:monitor			controllers.Application.monitor(monitor)
-GET		/MonitorInfo/:monitor	controllers.Application.getMonitorInfo(monitor)
-GET		/MonitorBios/:monitor   controllers.Application.getMonitorBios(monitor)
-POST	/MonitorTypes/:monitor	controllers.Application.setMonitorTypes(monitor)
-GET		/InternalStd/:monitor/:mt	controllers.Application.getInternalStd(monitor, mt)
-POST	/InternalStd/:monitor/:mt/:std	controllers.Application.setInternalStd(monitor, mt, std)
-POST	/MonitorImgUrl/:monitor	controllers.Application.setMonitorImgUrl(monitor)
-GET		/MonitorTypeConfig			controllers.Application.monitorTypeConfig
-POST	/SaveMonitorTypeConfig		controllers.Application.saveMonitorTypeConfig
-POST	/SetInstrumentThreshold		controllers.Application.setInstrumentThreshold
-GET		/MonitorStatusConfig		controllers.Application.monitorStatusConfig
-POST	/SaveMonitorStatusConfig		controllers.Application.saveMonitorStatusConfig
-GET 	/RecordValidation			controllers.Application.recordValidation
-GET		/HTML/RecordValidation/:start	controllers.Application.recordValidationHtml(start)
-GET		/RealtimeEpaRecord			controllers.Application.realtimeEpaRecord
-PUT		/Equipment					controllers.Application.newEquipment 
-POST	/Equipment					controllers.Application.updateEquipment
-DELETE  /Equipment/:id				controllers.Application.deleteEquipment(id)
+GET      /OverLawStd                                                                                 controllers.Query.overLawStd
+GET      /OverLawStdReport/:monitor/:monitorType/:start/:end                                         controllers.Query.overLawStdReport(monitor, monitorType, start, end, outputTypeStr="html")
+GET      /PDF/OverLawStdReport/:monitor/:monitorType/:start/:end                                     controllers.Query.overLawStdReport(monitor, monitorType, start, end, outputTypeStr="pdf")
 
-GET		/epaCompare			controllers.Report.epaCompare
-GET		/epaCompareReport/:monitor/:epaMonitor/:reportDate controllers.Report.epaCompareReport(monitor, epaMonitor, reportDate, outputType="html")
-GET		/PDF/epaCompareReport/:monitor/:epaMonitor/:reportDate controllers.Report.epaCompareReport(monitor, epaMonitor, reportDate, outputType="pdf")
-GET		/Excel/epaCompareReport/:monitor/:epaMonitor/:reportDate controllers.Report.epaCompareReport(monitor, epaMonitor, reportDate, outputType="excel")
+GET      /EffectivePercentage                                                                        controllers.Query.effectivePercentage
+GET      /EffectivePercentage/:start/:end                                                            controllers.Query.effectivePercentageReport(start, end, outputTypeStr="html")
+GET      /PDF/EffectivePercentage/:start/:end                                                        controllers.Query.effectivePercentageReport(start, end, outputTypeStr="pdf")
 
-GET		/UserManagement		controllers.Application.userManagement
-PUT		/User				controllers.Application.newUser
-GET		/User				controllers.Application.getAllUsers
-POST	/User/:id			controllers.Application.updateUser(id:Int)
-GET		/User/:id			controllers.Application.getUser(id:Int)
-DELETE  /User/:id			controllers.Application.deleteUser(id:Int)	
+GET      /Alarm                                                                                      controllers.Query.alarm
+GET      /AlarmReport/:monitor/:status/:start/:end                                                   controllers.Query.alarmReport(monitor, status, start, end, outputTypeStr="html")
+GET      /PDF/AlarmReport/:monitor/:status/:start/:end                                               controllers.Query.alarmReport(monitor, status, start, end, outputTypeStr="pdf")
 
-GET		/GroupManagement	controllers.Application.groupManagement
-PUT		/Group				controllers.Application.newGroup
-GET		/Group				controllers.Application.getAllGroups
-POST	/Group/:id			controllers.Application.updateGroup(id: Int)
-DELETE	/Group/:id			controllers.Application.deleteGroup(id: Int)
+GET      /WindRose                                                                                   controllers.Query.windRose
+GET      /WindRoseReport/:monitor/:monitorType/:nWays/:start/:end                                    controllers.Query.windRoseReport(monitor, monitorType, nWays:Int, start, end, outputType="html")
+GET      /Excel/WindRoseReport/:monitor/:monitorType/:nWays/:start/:end                              controllers.Query.windRoseReport(monitor, monitorType, nWays:Int, start, end, outputType="excel")
 
-GET		/ManualAudit		controllers.Application.manualAudit
-POST	/ManualAudit/:recordType		controllers.Application.manualAuditApply(recordType)
-GET		/ManualAuditQuery				controllers.Application.manualAuditQuery
-GET		/ManualAuditQueryReport/:monitor/:start/:end	controllers.Application.manualAuditQueryReport(monitor, start, end, outputType="html")
-GET		/PDF/ManualAuditQueryReport/:monitor/:start/:end	controllers.Application.manualAuditQueryReport(monitor, start, end, outputType="pdf")
-GET		/Excel/ManualAuditQueryReport/:monitor/:start/:end	controllers.Application.manualAuditQueryReport(monitor, start, end, outputType="excel")
+GET      /CompareLastYear                                                                            controllers.Query.compareLastYear
+GET      /JSON/CompareLastYearChart/:monitor/:monitorType/:start/:end                                controllers.Query.compareLastYearChart(monitor, monitorType, start, end)
+GET      /CalculateStat                                                                              controllers.Query.calculateStat
+GET      /CalculateStatReport/:monitor/:monitorType/:start/:end                                      controllers.Query.calculateStatReport(monitor, monitorType, start, end, outputTypeStr="html")
+GET      /PDF/CalculateStatReport/:monitor/:monitorType/:start/:end                                  controllers.Query.calculateStatReport(monitor, monitorType, start, end, outputTypeStr="pdf")
 
-GET		/AuditConfig			controllers.Application.auditConfig
-GET		/AuditConfig/:monitor	controllers.Application.getMonitorAuditConfig(monitor)
-POST	/AuditConfig/:monitor	controllers.Application.setMonitorAuditConfig(monitor)
+GET      /Regression                                                                                 controllers.Query.regression
+GET      /JSON/RegressionChart/:monitor/:monitorType/:start/:end                                     controllers.Query.regressionChart(monitor, monitorType, start, end)
 
-GET		/AuditedQuery		controllers.Query.auditedQuery
-GET		/AuditedReport/:monitor/:monitorType/:recordType/:start/:end/:reaudit	controllers.Query.auditReport(monitor, monitorType, recordType, start, end, outputType="html", reaudit:Boolean)
-GET		/PDF/AuditedReport/:monitor/:monitorType/:recordType/:start/:end/:reaudit	controllers.Query.auditReport(monitor, monitorType, recordType, start, end, outputType="pdf", reaudit:Boolean)
+GET      /CalibrationQuery                                                                           controllers.Query.calibrationQuery
+GET      /CalibrationQueryReport/:monitor/:start/:end                                                controllers.Query.calibrationQueryReport(monitor, start, end, outputTypeStr="html")
+GET      /PDF/CalibrationQueryReport/:monitor/:start/:end                                            controllers.Query.calibrationQueryReport(monitor, start, end, outputTypeStr="pdf")
+GET      /Excel/CalibrationQueryReport/:monitor/:start/:end                                          controllers.Query.calibrationQueryReport(monitor, start, end, outputTypeStr="excel")
 
-GET		/Instrument			controllers.Application.instrument
-GET		/InstrumentReport/:monitor/:instrument/:start/:end controllers.Application.instrumentReport(monitor, instrument, start, end, outputTypeStr="html")
-GET		/PDF/InstrumentReport/:monitor/:instrument/:start/:end controllers.Application.instrumentReport(monitor, instrument, start, end, outputTypeStr="pdf")
+GET      /Monitor                                                                                    controllers.Application.monitor(monitor = "A001")
+GET      /Monitor/:monitor                                                                           controllers.Application.monitor(monitor)
+GET      /MonitorList                                                                                controllers.Application.monitorList
+GET      /MonitorInfo/:monitor                                                                       controllers.Application.getMonitorInfo(monitor)
+GET      /MonitorBios/:monitor                                                                       controllers.Application.getMonitorBios(monitor)
+POST     /MonitorTypes/:monitor                                                                      controllers.Application.setMonitorTypes(monitor)
+GET      /InternalStd/:monitor/:mt                                                                   controllers.Application.getInternalStd(monitor, mt)
+POST     /InternalStd/:monitor/:mt/:std                                                              controllers.Application.setInternalStd(monitor, mt, std)
+POST     /MonitorImgUrl/:monitor                                                                     controllers.Application.setMonitorImgUrl(monitor)
+GET      /MonitorTypeConfig                                                                          controllers.Application.monitorTypeConfig
+POST     /SaveMonitorTypeConfig                                                                      controllers.Application.saveMonitorTypeConfig
+POST     /SetInstrumentThreshold                                                                     controllers.Application.setInstrumentThreshold
+GET      /MonitorStatusConfig                                                                        controllers.Application.monitorStatusConfig
+POST     /SaveMonitorStatusConfig                                                                    controllers.Application.saveMonitorStatusConfig
+GET      /RecordValidation                                                                           controllers.Application.recordValidation
+GET      /HTML/RecordValidation/:start                                                               controllers.Application.recordValidationHtml(start)
+GET      /RealtimeEpaRecord                                                                          controllers.Application.realtimeEpaRecord
+PUT      /Equipment                                                                                  controllers.Application.newEquipment 
+POST     /Equipment                                                                                  controllers.Application.updateEquipment
+DELETE   /Equipment/:id                                                                              controllers.Application.deleteEquipment(id)
+GET      /ModelList                                                                                  controllers.Maintance.modelList
+GET      /FreqType                                                                                   controllers.Maintance.freqTypeList
 
-POST	/AutoAuditNormal/:boolStr	controllers.Application.setAutoAuditNormal(boolStr)
-GET		/MyTicket			controllers.Maintance.myTicket
-GET		/NewTicket			controllers.Maintance.newTicket
-POST	/NewTicket/:id		controllers.Maintance.newTicketAction(id)
-GET		/QueryTicket		controllers.Maintance.queryTicket
-GET		/TicketReport/:ticketTypes/:monitors/:start/:end	controllers.Maintance.ticketReport(ticketTypes, monitors, start, end)
-GET		/Ticket/:ID			controllers.Maintance.ticket(ID:Int)
-POST	/AttachTicketPhoto/:id controllers.Maintance.attachTicketPhoto(id:Int)
-GET		/AttachTicketPhoto/:id/:idx	controllers.Maintance.getTicketPhoto(id: Int, idx:Int)
-POST	/UpdateTicket/:ID	controllers.Maintance.updateTicket(ID:Int)
-POST	/UpdateForm/:ID		controllers.Maintance.updateForm(ID:Int)
-POST	/UpdateRepairForm/:ID	controllers.Maintance.updateRepairForm(ID: Int)
-GET		/CloseTicket		controllers.Maintance.closeTicket
-POST	/CloseTicket/:ids	controllers.Maintance.closeTicketAction(ids)
-POST	/ResumeTicket/:ids/:reason	controllers.Maintance.resumeTicketAction(ids, reason)
-POST	/TakeOverTicket/:ids	controllers.Maintance.takeOverTicketAction(ids)
-GET		/DownloadForm/:ID	controllers.Maintance.downloadForm(ID:Int)
+GET      /epaCompare                                                                                 controllers.Report.epaCompare
+GET      /epaCompareReport/:monitor/:epaMonitor/:reportDate                                          controllers.Report.epaCompareReport(monitor, epaMonitor, reportDate, outputType="html")
+GET      /PDF/epaCompareReport/:monitor/:epaMonitor/:reportDate                                      controllers.Report.epaCompareReport(monitor, epaMonitor, reportDate, outputType="pdf")
+GET      /Excel/epaCompareReport/:monitor/:epaMonitor/:reportDate                                    controllers.Report.epaCompareReport(monitor, epaMonitor, reportDate, outputType="excel")
 
-GET		/Form/:ID	controllers.Maintance.getForm(ID:Int)
-GET		/EquipmentHistory	controllers.Maintance.equipmentHistory
-GET		/EquipmentHistoryReport/:monitors/:monitorType/:partFilter/:start/:end controllers.Maintance.equipmentHistoryReport(monitors, monitorType, partFilter, start, end, outputTypeStr="html")
-GET		/Excel/EquipmentHistoryReport/:monitors/:monitorType/:partFilter/:start/:end controllers.Maintance.equipmentHistoryReport(monitors, monitorType, partFilter, start, end, outputTypeStr="excel")
+GET      /UserManagement                                                                             controllers.Application.userManagement
+PUT      /User                                                                                       controllers.Application.newUser
+GET      /User                                                                                       controllers.Application.getAllUsers
+POST     /User/:id                                                                                   controllers.Application.updateUser(id:Int)
+GET      /User/:id                                                                                   controllers.Application.getUser(id:Int)
+DELETE   /User/:id                                                                                   controllers.Application.deleteUser(id:Int)	
 
-GET		/MonitorJournal		controllers.Maintance.monitorJournal
-GET		/MonitorJournalReport/:monitor/:date		controllers.Maintance.monitorJournalReport(monitor, date, outputTypeStr="html")
-GET		/PDF/MonitorJournalReport/:monitor/:date	controllers.Maintance.monitorJournalReport(monitor, date, outputTypeStr="pdf")
-GET		/Excel/MonitorJournalReport/:monitor/:date		controllers.Maintance.monitorJournalReport(monitor, date, outputTypeStr="excel")
-POST	/SaveMonitorJournalReport/:monitor/:date 	controllers.Maintance.saveMonitorJournalReport(monitor, date)
+GET      /GroupManagement                                                                            controllers.Application.groupManagement
+PUT      /Group                                                                                      controllers.Application.newGroup
+GET      /Group                                                                                      controllers.Application.getAllGroups
+POST     /Group/:id                                                                                  controllers.Application.updateGroup(id: Int)
+DELETE   /Group/:id                                                                                  controllers.Application.deleteGroup(id: Int)
 
-GET		/EquipmentManagement	controllers.Maintance.equipmentManagement
-GET		/PartManagement		controllers.Maintance.partManagement
-POST	/Part				controllers.Maintance.updatePart
-PUT		/Part				controllers.Maintance.newPart 
-DELETE  /Part/:id			controllers.Maintance.deletePart(id)
-GET		/EventLog			controllers.Maintance.eventLog
-GET		/EventLogReport/:start/:end	controllers.Maintance.eventLogReport(start, end)
+GET      /ManualAudit                                                                                controllers.Application.manualAudit
+POST     /ManualAudit/:recordType                                                                    controllers.Application.manualAuditApply(recordType)
+GET      /ManualAuditQuery                                                                           controllers.Application.manualAuditQuery
+GET      /ManualAuditQueryReport/:monitor/:start/:end                                                controllers.Application.manualAuditQueryReport(monitor, start, end, outputType="html")
+GET      /PDF/ManualAuditQueryReport/:monitor/:start/:end                                            controllers.Application.manualAuditQueryReport(monitor, start, end, outputType="pdf")
+GET      /Excel/ManualAuditQueryReport/:monitor/:start/:end                                          controllers.Application.manualAuditQueryReport(monitor, start, end, outputType="excel")
 
-GET		/TestAlarmMail		controllers.Maintance.testAlarmMail
-GET		/DutySchedule		controllers.Maintance.dutySchedule
+GET      /AuditConfig                                                                                controllers.Application.auditConfig
+GET      /AuditConfig/:monitor                                                                       controllers.Application.getMonitorAuditConfig(monitor)
+POST     /AuditConfig/:monitor                                                                       controllers.Application.setMonitorAuditConfig(monitor)
 
-GET		/DownloadNotification	controllers.Maintance.downloadNotification
-GET		/DownloadNotificationForm/:start/:end	controllers.Maintance.downloadNotificationForm(start, end)
-GET		/MaintanceSchedule		controllers.Maintance.maintanceSchedule
+GET      /AuditedQuery                                                                               controllers.Query.auditedQuery
+GET      /AuditedReport/:monitor/:monitorType/:recordType/:start/:end/:reaudit                       controllers.Query.auditReport(monitor, monitorType, recordType, start, end, outputType="html", reaudit:Boolean)
+GET      /PDF/AuditedReport/:monitor/:monitorType/:recordType/:start/:end/:reaudit                   controllers.Query.auditReport(monitor, monitorType, recordType, start, end, outputType="pdf", reaudit:Boolean)
 
+GET      /Instrument                                                                                 controllers.Application.instrument
+GET      /InstrumentReport/:monitor/:instrument/:start/:end                                          controllers.Application.instrumentReport(monitor, instrument, start, end, outputTypeStr="html")
+GET      /PDF/InstrumentReport/:monitor/:instrument/:start/:end                                      controllers.Application.instrumentReport(monitor, instrument, start, end, outputTypeStr="pdf")
+
+POST     /AutoAuditNormal/:boolStr                                                                   controllers.Application.setAutoAuditNormal(boolStr)
+GET      /MyTicket                                                                                   controllers.Maintance.myTicket
+GET      /NewTicket                                                                                  controllers.Maintance.newTicket
+POST     /NewTicket/:id                                                                              controllers.Maintance.newTicketAction(id)
+GET      /QueryTicket                                                                                controllers.Maintance.queryTicket
+GET      /TicketReport/:ticketTypes/:monitors/:start/:end                                            controllers.Maintance.ticketReport(ticketTypes, monitors, start, end)
+GET      /Ticket/:ID                                                                                 controllers.Maintance.ticket(ID:Int)
+POST     /AttachTicketPhoto/:id                                                                      controllers.Maintance.attachTicketPhoto(id:Int)
+GET      /AttachTicketPhoto/:id/:idx                                                                 controllers.Maintance.getTicketPhoto(id: Int, idx:Int)
+POST     /UpdateTicket/:ID                                                                           controllers.Maintance.updateTicket(ID:Int)
+POST     /UpdateForm/:ID                                                                             controllers.Maintance.updateForm(ID:Int)
+POST     /UpdateRepairForm/:ID                                                                       controllers.Maintance.updateRepairForm(ID: Int)
+GET      /CloseTicket                                                                                controllers.Maintance.closeTicket
+POST     /CloseTicket/:ids                                                                           controllers.Maintance.closeTicketAction(ids)
+POST     /ResumeTicket/:ids/:reason                                                                  controllers.Maintance.resumeTicketAction(ids, reason)
+POST     /TakeOverTicket/:ids                                                                        controllers.Maintance.takeOverTicketAction(ids)
+GET      /DownloadForm/:ID                                                                           controllers.Maintance.downloadForm(ID:Int)
+
+GET      /Form/:ID                                                                                   controllers.Maintance.getForm(ID:Int)
+GET      /EquipmentHistory                                                                           controllers.Maintance.equipmentHistory
+GET      /EquipmentHistoryReport/:monitors/:monitorType/:partFilter/:start/:end                      controllers.Maintance.equipmentHistoryReport(monitors, monitorType, partFilter, start, end, outputTypeStr="html")
+GET      /Excel/EquipmentHistoryReport/:monitors/:monitorType/:partFilter/:start/:end                controllers.Maintance.equipmentHistoryReport(monitors, monitorType, partFilter, start, end, outputTypeStr="excel")
+
+GET      /MonitorJournal                                                                             controllers.Maintance.monitorJournal
+GET      /MonitorJournalReport/:monitor/:date                                                        controllers.Maintance.monitorJournalReport(monitor, date, outputTypeStr="html")
+GET      /PDF/MonitorJournalReport/:monitor/:date                                                    controllers.Maintance.monitorJournalReport(monitor, date, outputTypeStr="pdf")
+GET      /Excel/MonitorJournalReport/:monitor/:date                                                  controllers.Maintance.monitorJournalReport(monitor, date, outputTypeStr="excel")
+POST     /SaveMonitorJournalReport/:monitor/:date                                                    controllers.Maintance.saveMonitorJournalReport(monitor, date)
+
+GET      /EquipmentManagement                                                                        controllers.Maintance.equipmentManagement
+GET      /PartManagement                                                                             controllers.Maintance.partManagement
+POST     /Part                                                                                       controllers.Maintance.updatePart
+GET      /Part                                                                                       controllers.Maintance.getPartList
+PUT      /Part                                                                                       controllers.Maintance.newPart 
+DELETE   /Part/:id                                                                                   controllers.Maintance.deletePart(id)
+GET      /PartUsage                                                                                  controllers.Maintance.partUsage
+DELETE   /PartUsage/:id                                                                              controllers.Maintance.deletePartUsage(id)
+PUT      /PartUsage                                                                                  controllers.Maintance.newPartUsage
+GET      /PartInventoryAlarm                                                                         controllers.Maintance.partInventoryAlarm
+
+GET      /EventLog                                                                                   controllers.Maintance.eventLog
+GET      /EventLogReport/:start/:end                                                                 controllers.Maintance.eventLogReport(start, end)
+
+GET      /TestAlarmMail                                                                              controllers.Maintance.testAlarmMail
+GET      /DutySchedule                                                                               controllers.Maintance.dutySchedule
+
+GET      /DownloadNotification                                                                       controllers.Maintance.downloadNotification
+GET      /DownloadNotificationForm/:start/:end                                                       controllers.Maintance.downloadNotificationForm(start, end)
+GET      /MaintanceSchedule                                                                          controllers.Maintance.maintanceSchedule
+
+GET      /PM25Threshold                                                                              controllers.Application.getPm25Threshold
+PUT      /PM25Threshold                                                                              controllers.Application.setPm25Threshold
 #Alarm Ticket
-GET		/AlarmNoTicketList		controllers.Maintance.alarmNoTicketList
-POST	/AlarmToTicket			controllers.Maintance.alarmToTicket
-GET		/ManualAlarmTicket		controllers.Maintance.manualAlarmTicket
-GET		/ReparingAlarmTicket	controllers.Maintance.repairingAlarmTicket
-GET		/ClosedRepairTicket		controllers.Maintance.queryClosedRepairTicket
-GET		/ClosedRepairTicketReport/:monitors/:start/:end	controllers.Maintance.closedRepairTicketReport(monitors, start, end)
-GET		/NoRepairAlarm			controllers.Maintance.queryNoRepairTicketAlarm
+GET      /AlarmNoTicketList                                                                          controllers.Maintance.alarmNoTicketList
+POST     /AlarmToTicket                                                                              controllers.Maintance.alarmToTicket
+GET      /ManualAlarmTicket                                                                          controllers.Maintance.manualAlarmTicket
+GET      /ReparingAlarmTicket                                                                        controllers.Maintance.repairingAlarmTicket
+GET      /ClosedRepairTicket                                                                         controllers.Maintance.queryClosedRepairTicket
+GET      /ClosedRepairTicketReport/:monitors/:start/:end                                             controllers.Maintance.closedRepairTicketReport(monitors, start, end)
+GET      /NoRepairAlarm                                                                              controllers.Maintance.queryNoRepairTicketAlarm
 
 # websockets
-GET		/MinMonthlyReportSocket		controllers.Report.getMinMonthlySocket
-GET		/DownloadMinMonthlyReport/:n	controllers.Report.downloadMinMontlyReport(n: Int)
-GET		/AlarmNotificationSocket	controllers.Realtime.alarmNofificationSocket
+GET      /MinMonthlyReportSocket                                                                     controllers.Report.getMinMonthlySocket
+GET      /DownloadMinMonthlyReport/:n                                                                controllers.Report.downloadMinMontlyReport(n: Int)
+GET      /AlarmNotificationSocket                                                                    controllers.Realtime.alarmNofificationSocket

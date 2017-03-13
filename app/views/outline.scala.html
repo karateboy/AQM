@@ -73,7 +73,11 @@
         <script src="https://oss.maxcdn.com/libs/respond.js/1.4.2/respond.min.js"></script>
     <![endif]-->
     
-            
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/vue/2.1.10/vue.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/axios/0.15.3/axios.min.js">
+    	axios.defaults.withCredentials = true
+    </script>
+          
     <script type="text/javascript"
       src="http://maps.googleapis.com/maps/api/js?key=AIzaSyCFuSnApEhdYSANwfU4OZ4tH902Tu3vjFI">
     </script>
@@ -267,10 +271,17 @@
                                 </li>
                             </ul>
                     </li>
+                    <li>
+                    	<a href="#">物料管理<span class="fa arrow"></span></a>
+                            <ul class="nav nav-third-level">
+                            	<li><a href="#" onClick="loadPage('/PartManagement','維修保養','物料類別')">物料類別</a></li>
+                            	<li><a href="#" onClick="loadPage('/PartUsage','維修保養','物料使用紀錄表')">物料使用紀錄表</a></li>
+                            	<li><a href="#" onClick="loadPage('/PartInventoryAlarm','維修保養','物料庫存預警')">物料庫存預警</a></li>
+                            </ul>
+                    </li>                    
             		<li><a href="#" onClick="loadPage('/EquipmentHistory','維修保養','儀器保養履歷')">儀器保養履歷</a></li>
             		<li><a href="#" onClick="loadPage('/MonitorJournal','維修保養','測站工作日誌')">測站工作日誌</a></li>
-            		<li><a href="#" onClick="loadPage('/EquipmentManagement','維修保養','設備管理')">設備管理</a></li>
-            		<li><a href="#" onClick="loadPage('/PartManagement','維修保養','料件管理')">料件管理</a></li>
+            		<li><a href="#" onClick="loadPage('/EquipmentManagement','維修保養','設備管理')">設備管理</a></li>            		
             		<li><a href="#" onClick="loadPage('/DutySchedule','維修保養','值日排班表')">值日排班表</a></li>
 					<li><a href="#" onClick="loadPage('/DownloadNotification','維修保養','環保局通報單')">環保局通報單</a></li>
 					<li><a href="#" onClick="loadPage('/MaintanceSchedule','維修保養','測站定保排程表')">測站定保排程表</a></li>					            		             		           		
@@ -299,6 +310,10 @@
         		<li><a id="alarmSoundSwitch" class="text-left link-block" href="#"></a></li>
         	</li>
         @if(privilege.allowedMenuRights.contains(MenuRight.AlarmManagement)){
+            <li>
+            	<a class="text-left link-block" href="#" onClick="loadPage('/PartInventoryAlarm','物料管理','物料庫存預警')"><strong>物料庫存預警</strong></a>
+            </li>
+            
         	<li>
             	<a class="text-left link-block" href="#" onClick="nPreticket=0;updateAlarmTicketCount();loadPage('/AlarmNoTicketList','警報案件管理','待立案')"><strong>待立案</strong><span id="preticket_count" class="label label-danger"></span></a>
             </li>

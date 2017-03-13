@@ -11,60 +11,58 @@ import models._
 
 import EnumUtils._
 
-object SystemConfig{
+object SystemConfig {
   val AutoAuditAsNormal = "AutoAuditAsNormal"
   val DownloadLink = "DownloadLink"
-  
+
   private val MaxFileLink = 10
-  def getFreeDownloadLink():Int = {
-    for(i <- 0 to MaxFileLink){
+  def getFreeDownloadLink(): Int = {
+    for (i <- 0 to MaxFileLink) {
       val link = SystemConfig.getConfig(DownloadLink + i, "")
-      if(link.length() == 0)
+      if (link.length() == 0)
         return i
     }
-    
+
     return 0
   }
-  
+
   import java.io.File
-  def setDownloadLink(n:Int, file:File){
+  def setDownloadLink(n: Int, file: File) {
     assert(n <= MaxFileLink)
-    SystemConfig.setConfig(DownloadLink+n, file.getAbsolutePath)
+    SystemConfig.setConfig(DownloadLink + n, file.getAbsolutePath)
   }
-  def cleanDownloadLink(n:Int){
+  def cleanDownloadLink(n: Int) {
     assert(n <= MaxFileLink)
-    SystemConfig.setConfig(DownloadLink+n, "")
+    SystemConfig.setConfig(DownloadLink + n, "")
   }
-  
-  def getDownloadLink(n:Int) = {
+
+  def getDownloadLink(n: Int) = {
     assert(n <= MaxFileLink)
     val path = SystemConfig.getConfig(DownloadLink + n, "")
     new File(path)
   }
-  
+
   val dtPattern = "YYYY-MM-dd HH:mm"
   val AlarmCheckPointKey = "AlarmCheckPoint"
-  def getAlarmCheckPoint()={        
+  def getAlarmCheckPoint() = {
     val checkPoint = SystemConfig.getConfig(AlarmCheckPointKey, "2016-05-03 00:00")
-    DateTime.parse(checkPoint, DateTimeFormat.forPattern(dtPattern))    
+    DateTime.parse(checkPoint, DateTimeFormat.forPattern(dtPattern))
   }
-  
-  def setAlarmCheckPoint(time:DateTime)={
+
+  def setAlarmCheckPoint(time: DateTime) = {
     val checkPoint = time.toString(dtPattern)
     SystemConfig.setConfig(AlarmCheckPointKey, checkPoint)
   }
-  
+
   val AlarmTicketDefaultUserIdKey = "AlarmTicketDefaultUserId"
-  def getAlarmTicketDefaultUserId()={        
-    val userId = SystemConfig.getConfig(AlarmTicketDefaultUserIdKey, "5")
-    userId.toInt
-  }
-  
-  def setAlarmTicketDefaultUserId(id:Int)={
+  def getAlarmTicketDefaultUserId() = SystemConfig.getConfig(AlarmTicketDefaultUserIdKey, "5").toInt
+  def setAlarmTicketDefaultUserId(id: Int) =
     SystemConfig.setConfig(AlarmTicketDefaultUserIdKey, id.toString)
-  }
-  
-  
+
+  val PM25ThresholdKey = "PM25Threshold"
+  def getPM25Threshold() = SystemConfig.getConfig(PM25ThresholdKey, "950").toDouble
+  def setPM25Threshold(v: Double) = SystemConfig.setConfig(PM25ThresholdKey, v.toString())
+
   var map = {
     val configPair =
       DB readOnly {
@@ -78,19 +76,18 @@ object SystemConfig{
     Map(configPair: _*)
   }
 
-  def getConfig(key:String, defaultValue:String)={
+  def getConfig(key: String, defaultValue: String) = {
     val opt = map.get(key)
-    if(opt.isDefined)
+    if (opt.isDefined)
       opt.get
-    else{
+    else {
       newConfig(key, defaultValue)
       defaultValue
-    }      
+    }
   }
-  
-  
-  def setConfig(key:String, value:String)={
-    map = (map - key) + (key->value)
+
+  def setConfig(key: String, value: String) = {
+    map = (map - key) + (key -> value)
     DB localTx {
       implicit session =>
         sql"""
@@ -100,15 +97,15 @@ object SystemConfig{
           """.update.apply
     }
   }
-  
-  def newConfig(key:String, value:String)={
-    DB localTx{
+
+  def newConfig(key: String, value: String) = {
+    DB localTx {
       implicit session =>
         sql"""
           INSERT INTO SystemConfig([configKey],[value])
           VALUES (${key}, ${value})
           """.update.apply
     }
-    map += (key->value)
+    map += (key -> value)
   }
 }

@@ -1,79 +1,40 @@
-@* monitorTypeConfig Template File *@
-@(parts:List[Part2])
+@(partUsageList:List[PartUsage], partMap:Map[String, Part2])
 <div class="row">
     <div class="col-lg-12">
         <div class="panel panel-primary">
         <div class="panel-heading panel-title"" >
-        	<a data-toggle="collapse" data-parent="#accordion" href="#monitorType">點擊料件加以編輯</a>	
+        	物料使用紀錄表	
         </div>
         <div class="panel-body panel-collapse">
         	<div class="col-lg-1 col-lg-offset-1">
-				<button type="button" class="btn btn-primary" data-toggle="modal" data-target="#newPartModal">新增物料類別</button>							
+				<button type="button" class="btn btn-primary" data-toggle="modal" data-target="#newPartModal">新增物料使用</button>							
 			</div>
 			<div class="col-lg-1">							
-				<button type="button" class="btn btn-primary" id="deletePart">刪除物料類別</button>
+				<button type="button" class="btn btn-primary" id="deletePart">刪除物料使用</button>
 			</div>
   			<div class="modal fade" id="newPartModal" role="dialog">
     			<div class="modal-dialog modal-lg">
       			<div class="modal-content">
         		<div class="modal-header">
           			<button type="button" class="close" data-dismiss="modal">&times;</button>
-          			<h4 class="modal-title">新增物料類別</h4>
+          			<h4 class="modal-title">新增物料使用</h4>
         		</div>        						
         		<div class="modal-body">
           			<form class="form-horizontal">
-          				<div class="form-group">
-							<label class="col-lg-2 control-label">物料類別代碼:</label>
-							<div class="col-lg-4">
-								<input type="text" class="form-control" v-model="id" >
-							</div>																												
-						</div>
 						<div class="form-group">
-							<label class="col-lg-2 control-label">英文名稱:</label>
-							<div class="col-lg-4">
-								<input type="text" class="form-control" v-model="name">
-							</div>																		
-						</div>
-						<div class="form-group">
-							<label class="col-lg-2 control-label">中文名稱:</label>
-							<div class="col-lg-4">
-								<input type="text" class="form-control" v-model="chineseName">
-							</div>																		
-						</div>
-						<div class="form-group">
-							<label class="col-lg-2 control-label">廠牌:</label>
-							<div class="col-lg-4">
-								<input type="text" class="form-control" v-model="brand">
-							</div>																						
-						</div>
-						
-						<div class="form-group">
-							<label class="col-lg-2 control-label" >型號:</label>
+							<label class="col-lg-2 control-label" >物料類別代碼:</label>
 							<div class="col-lg-10">
 								<div class="btn-group" data-toggle="buttons">
                         		<label class="btn btn-outline btn-primary"
-                               		v-for="model in modelList" :for="model" @@click="toggle(models, model)">
-                            		<input type="checkbox" :id="model" :value="model" v-model="models">{{ model }} &nbsp;</label>
+                               		v-for="part in partList" :for="part.id" @@click="partClass=part">
+                            		<input type="radio" name="partType">{{ part.id }} &nbsp;</label>
                             	</div>                    			
 							</div>																													
-						</div>
-						
+						</div>						
 						<div class="form-group">
-							<label class="col-lg-2 control-label">設備:</label>
+							<label class="col-lg-2 control-label">中文名稱:</label>
 							<div class="col-lg-4">
-								<input type="text" class="form-control" v-model="equipment">
-							</div>																		
-						</div>
-						<div class="form-group">
-							<label class="col-lg-2 control-label">單位:</label>
-							<div class="col-lg-4">
-								<input type="text" class="form-control" v-model="unit">
-							</div>																		
-						</div>
-						<div class="form-group">
-							<label class="col-lg-2 control-label">庫存:</label>
-							<div class="col-lg-4">
-								<input type="number" class="form-control" v-model="quantity">
+								<label class="col-lg-2 control-label">{{partClass.chineseName}}</label>
 							</div>																		
 						</div>
 						<div class="form-group">
@@ -135,27 +96,33 @@
             	<table id="partTable" class="table" cellspacing="0" width="100%">
             		<thead>
             			<tr>
-            				<th>物料類別代碼</th>
+            				<th>料號</th>
             				<th>英文名稱</th>
             				<th>中文名稱</th>
-            				<th>廠牌</th>
-            				<th>型號</th>
-            				<th>設備</th>
-            				<th>單位</th>
-            				<th>庫存</th>
+            				<th>測站</th>
+            				<th>基本用量</th>
+            				<th>使用週期</th>
+            				<th>更換日期</th>
+            				<th>下次更換日期</th>
+            				<th>預警</th>
+            				<th>不更換理由</th>
+            				<th>備註</th>
             			</tr>
             		</thead>
             		<tbody>
-            			@for(p<-parts){
+            			@for(p<-partUsageList){
             				<tr id="@p.id">
             					<th>@p.id</th>
-            					<td col="name">@p.name</td>
-            					<td col="chineseName">@p.chineseName</td>
-            					<td col="brand">@p.brand</td>
-            					<td col="models">@p.models</td>
-            					<td col="equipment">@p.equipment</td>
-            					<td col="unit">@p.unit</td>
-            					<td col="quantity">@p.quantity</td>
+            					<td>@partMap(p.getPartId).name</td>
+            					<td>@partMap(p.getPartId).chineseName</td>
+            					<td>@Monitor.map(Monitor.withName(p.monitor)).name</td>
+            					<td>@p.usage</td>
+            					<td>@p.getFreqDesc</td>
+            					<td>@p.startDate.toString("YYYY-MM-dd")</td>
+            					<td>@p.getNextReplaceDate.toString("YYYY-MM-dd")</td>
+            					<td>@ModelHelper.formatOptBool(Some(p.alarm))</td>
+            					<td>@ModelHelper.formatOptStr(p.nochange_reason)</td>
+            					<td>@ModelHelper.formatOptStr(p.remark)</td>
             				</tr>
             			}
             		</tbody>
@@ -173,15 +140,12 @@
 		  el: '#newPartModal',
 		  data: {
 		    monitorList_: [],
-		    id:"",
-		    name:"",
-		    chineseName:"", 
-		    brand:"", 
-		    models:[], 
-		    equipment:"", 
-		    unit:"", 
-		    quantity:0,
-		    modelList_:[],
+		    partList_:[],
+		    partClass:{
+			    id:"",
+			    name:"",
+			    chineseName:""				    
+			    },
 		    monitors:[],
 		    startDate:"",
 		    freqType:"",
@@ -205,19 +169,18 @@
 				  }
 				  return this.monitorList_;
 			  },
-			  modelList(){				  
-				  if(this.modelList_.length == 0){
-					  axios.get("/ModelList").then((resp)=>{
+			  partList(){				  
+				  if(this.partList_.length == 0){
+					  axios.get("/Part").then((resp)=>{
 						  const ret = resp.data
-						  this.modelList_.splice(0, this.modelList_.length)
-						  for(let model of ret){
-							  this.modelList_.push(model)
+						  for(let part of ret){
+							  this.partList_.push(part)
 						  }  
 					  }).catch((err)=>{
 						  alert(err)
 					  })
 				  }
-				  return this.modelList_;
+				  return this.partList_;
 			  },
 			  freqTypeList(){				  
 				  if(this.freqTypeList_.length == 0){
@@ -245,38 +208,8 @@
 			  },
 			  checkNewPartParam(){
 				  partModalCanHide = false
-				  if(this.id === ""){
+				  if(this.partClass.id === ""){
 					  alert("物料類別代碼是空的!")
-					  return false
-				  }
-
-				  if(this.name === ""){
-					  alert("英文名稱是空的!")
-					  return false
-				  }
-
-				  if(this.chineseName === ""){
-					  alert("中文名稱是空的!")
-					  return false
-				  }
-				  
-				  if(this.brand === ""){
-					  alert("廠牌是空的!")
-					  return false
-				  }
-
-				  if(this.models.length == 0){
-					  alert("型號未選擇!")
-					  return false
-				  }
-
-				  if(this.equipment === ""){
-					  alert("設備未填!")
-					  return false
-				  }
-
-				  if(this.quantity === 0){
-					  alert("數量為0!")
 					  return false
 				  }
 
@@ -298,23 +231,14 @@
 					  return;
 				  	
 				  let param = {}
-				  param.part = {
-					id:this.id,
-					name: this.name,
-				    chineseName:this.chineseName, 
-				    brand:this.brand, 
-				    models:this.models.join(), 
-				    equipment:this.equipment, 
-				    unit:this.unit, 
-				    quantity:this.quantity,
-				  } 
+				  param.partClassId = this.partClass.id
 				  param.monitors=this.monitors
 				  param.usage=this.usage
 				  param.startDate=this.startDate
 				  param.freqType=this.freqType
 				  param.days=this.days
 				  param.alarm=this.alarm
-				  axios.put("/Part", param).then((resp)=>{					  
+				  axios.put("/PartUsage", param).then((resp)=>{					  
 					  if(resp.status != 200){
 						  alert(resp.statusText)
 					  } else{
@@ -322,7 +246,7 @@
 						  if(ret.ok){
 							  alert("成功")
 							  setTimeout(()=>{
-								  loadPage('/PartManagement','維修保養','物料類別')}, 200)							  
+								  loadPage('/PartUsage','維修保養','物料使用紀錄表')}, 200)							  
 						  }
 					  }
 				  }).catch(err=>alert(err))			    
@@ -359,29 +283,6 @@ $(document).ready(function() {
             		}
     			});
     		
-        /* Apply the jEditable handlers to the table */
-        oTable.$('td').editable( '/Part', {
-        	indicator : '儲存中...',
-            tooltip   : '點擊項目加以編輯...',
-            cancel    : '取消',
-            submit    : '確認',            
-            name : 'data', 
-            callback: function( sValue, y ) {
-                console.log("callback");
-                console.log(sValue);
-                console.log(y);
-            },           
-            submitdata: function ( value, settings ) {
-                var $me = $(this);
-                return {                    
-                    id: $me.parent().attr("id") + ":" + $me.attr("col")
-                };
-            },
-
-            "width": "90%",
-            "height": "100%"
-        } );
-
     	$("#newPartModal").on('hide.bs.modal',function(e){		   
  		   if(!partModalCanHide){			   
  		      e.preventDefault();
@@ -412,7 +313,7 @@ $(document).ready(function() {
     		    values['id']=$trs[0][0]; 
     				
     			$.ajax({
-    				url : "/Part/" + $trs[0][0],
+    				url : "/PartUsage/" + $trs[0][0],
     				data : JSON.stringify(values),
     				contentType : "application/json; charset=utf-8",
     				method : "DELETE",

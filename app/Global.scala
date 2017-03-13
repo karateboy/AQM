@@ -18,11 +18,11 @@ object Global extends GlobalSettings {
     Akka.system.scheduler.schedule(Duration(3, MINUTES), Duration(5, MINUTES), alarmActor, AlarmCheck)
     Akka.system.scheduler.schedule(Duration(3, MINUTES), Duration(10, MINUTES), alarmActor, DataCheck)
     AlarmTicketFilter.start
+    PartAlarmWorker.start
   }
 
   override def onStop(app: Application) {
     Logger.info("Application shutdown...")
-    //DBs.closeAll()
     super.onStop(app)
   }
 }
