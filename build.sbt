@@ -1,7 +1,7 @@
 
 name := """aqms"""
 
-version := "1.1.1"
+version := "1.1.3"
 
 lazy val root = (project in file(".")).enablePlugins(PlayScala)
 
@@ -21,6 +21,10 @@ libraryDependencies ++= Seq(
 mappings in Universal ++=
   (baseDirectory.value / "report_template" * "*" get) map
     (x => x -> ("report_template/" + x.getName))
+
+mappings in Universal ++=
+  (baseDirectory.value / "notification" * "*" get) map
+    (x => x -> ("notification/" + x.getName))
     
 PlayKeys.fileWatchService := play.runsupport.FileWatchService.sbt(2000)
 
