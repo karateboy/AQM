@@ -458,7 +458,8 @@ function() {
 			serial:serial,
 			bought:bought
 		};
-		
+
+		equipmentModalCanHide = true
 		$.ajax({
 			url : "/Equipment",
 			data : JSON.stringify(equip),
@@ -471,10 +472,6 @@ function() {
 			},
 			error : function(xhr,status,errorThrown) {
 				alert("失敗:"+ errorThrown);
-			},
-
-			complete : function(xhr, status) {
-				equipmentModalCanHide = true;
 			}
 		});		
 	});

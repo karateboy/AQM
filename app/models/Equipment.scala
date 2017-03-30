@@ -21,7 +21,6 @@ object Equipment {
         """.map { r =>
         Equipment(Monitor.withName(r.string(1)), r.string(2), r.string(3), r.string(4), r.string(5), r.string(6), r.string(7))
       }.list.apply
-
     }
   }
   
@@ -35,7 +34,7 @@ object Equipment {
     }
     map
   }
-  val map = generateMap
+  def map = generateMap
   
   def getEquipmentNameSet = {
     val nameSetIterable = map.values map {
@@ -54,12 +53,7 @@ object Equipment {
         Insert into Equipment(DP_NO, id, name, brand, model, serial, bought)
         Values(${newEquip.monitor.toString}, ${newEquip.id}, ${newEquip.name}, ${newEquip.brand}, ${newEquip.model}, ${newEquip.serial}, ${newEquip.bought})
         """.update.apply
-    }
-    
-    import scala.collection.mutable.Map
-    val monitor = newEquip.monitor
-    val equipNameMap = map.getOrElseUpdate(monitor, Map.empty[String, Equipment])
-    equipNameMap.put(newEquip.name, newEquip)
+    }    
   }
   
   def update(ids:Array[String], newValue:String) = {
@@ -75,21 +69,6 @@ object Equipment {
         Set ${col}=${newValue}
         Where DP_NO=${m.toString} and id=${equip_id}  
         """.update.apply
-
-      val updatedEquipmentOpt =
-        sql"""
-          Select *
-          From Equipment
-          Where DP_NO=${m.toString} and id=${equip_id}
-        """.map { r =>
-        Equipment(Monitor.withName(r.string(1)), r.string(2), r.string(3), r.string(4), r.string(5), r.string(6), r.string(7))
-      }.single.apply
-      
-      updatedEquipmentOpt map {
-        equip =>
-          val equipNameMap = map(equip.monitor)
-          equipNameMap.put(equip.name, equip)
-      }
     }
   }
   
@@ -99,19 +78,6 @@ object Equipment {
         Delete from Equipment
         Where DP_NO = ${monitor.toString} and id = ${id}
         """.update.apply
-    }
-    
-    val equipNameMap = map(monitor)
-    val matchedNamePairOpt = equipNameMap.find{
-      p=>
-        val name = p._1
-        val equipment = p._2
-        equipment.id == id
-    }
-    
-    matchedNamePairOpt map {
-      pair =>
-        equipNameMap.remove(pair._1)
     }
   }
 
