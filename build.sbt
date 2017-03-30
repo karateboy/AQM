@@ -1,7 +1,7 @@
 
 name := """aqms"""
 
-version := "1.1.3"
+version := "1.1.5"
 
 lazy val root = (project in file(".")).enablePlugins(PlayScala)
 
@@ -26,6 +26,12 @@ mappings in Universal ++=
   (baseDirectory.value / "notification" * "*" get) map
     (x => x -> ("notification/" + x.getName))
     
+mappings in Universal ++= 
+ List(file("public/css/bootstrap.min.css") -> "public/css/bootstrap.min.css",
+ 	file("public/css/aqm.css") -> "public/css/aqm.css",
+ 	file("public/images/no_photo.png") -> "public/images/no_photo.png"
+ )
+     
 PlayKeys.fileWatchService := play.runsupport.FileWatchService.sbt(2000)
 
 scalacOptions += "-feature"

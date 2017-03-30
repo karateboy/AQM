@@ -37,9 +37,9 @@
 				</form>        		
         	</div>
     	</div>
-    	<div class="panel panel-primary" id="pm25OverInvalidForm">
+    	<div class="panel panel-primary" id="pm10OverInvalidForm" v-on:submit.prevent="setThreshold">
     		<div class="panel-heading panel-title" >
-        		<a data-toggle="collapse" data-parent="#accordion">PM2.5超過臨界視為無效數據</a>	
+        		<a data-toggle="collapse" data-parent="#accordion">PM10超過臨界視為無效數據</a>	
         	</div>
         	<div class="panel-body panel-collapse">
         		<form class="form-horizontal">
@@ -47,12 +47,12 @@
 						<div class="form-group">
 							<label class="col-lg-1 control-label">臨界值:</label>
 							<div class="col-lg-1">
-								<input type="number" v-model="pm25threshold">
+								<input type="number" v-model="pm10threshold">
                 			</div>																										
 						</div>
 						<div class="form-group">
 							<div class="col-lg-offset-1">
-								<button class="btn btn-primary" @@click="setThreshold">設定</button>
+								<button class="btn btn-primary">設定</button>
 							</div>							
 						</div>						
 				</form>        		
@@ -119,34 +119,34 @@
 </div>
 <script>
 var app = new Vue({
-	  el: '#pm25OverInvalidForm',
+	  el: '#pm10OverInvalidForm',
 	  data: {
-		  pm25threshold_:0
+		  pm10threshold_:0
 	  },
 	  computed:{
-		  pm25threshold:{
+		  pm10threshold:{
 			  get:function(){
-				  if(this.pm25threshold_ == 0){
-					  axios.get("/PM25Threshold").then((resp)=>{
+				  if(this.pm10threshold_ == 0){
+					  axios.get("/PM10Threshold").then((resp)=>{
 						  const ret = resp.data
 						  if(resp.status == 200){
-							  this.pm25threshold_ = ret 							  
+							  this.pm10threshold_ = ret 							  
 						  }else
 							  alert(resp.statusText)
 					  }).catch((err)=>{
 						  alert(err)
 					  })
 				  }
-				  return this.pm25threshold_				  
+				  return this.pm10threshold_				  
 			  },
 			  set:function(v){
-				  this.pm25threshold_ = v
+				  this.pm10threshold_ = v
 			  }
 		  }
 	  },
 	  methods:{
 		  setThreshold(){
-			  axios.put("/PM25Threshold", {v:this.pm25threshold_}).then((resp)=>{
+			  axios.put("/PM10Threshold", {v:this.pm10threshold_}).then((resp)=>{
 				  const ret = resp.data
 				  if(ret.ok)
 					  alert("成功")

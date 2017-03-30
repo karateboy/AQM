@@ -59,9 +59,9 @@ object SystemConfig {
   def setAlarmTicketDefaultUserId(id: Int) =
     SystemConfig.setConfig(AlarmTicketDefaultUserIdKey, id.toString)
 
-  val PM25ThresholdKey = "PM25Threshold"
-  def getPM25Threshold() = SystemConfig.getConfig(PM25ThresholdKey, "950").toDouble
-  def setPM25Threshold(v: Double) = SystemConfig.setConfig(PM25ThresholdKey, v.toString())
+  val PM10ThresholdKey = "PM10Threshold"
+  def getPM10Threshold() = SystemConfig.getConfig(PM10ThresholdKey, "950").toDouble
+  def setPM10Threshold(v: Double) = SystemConfig.setConfig(PM10ThresholdKey, v.toString())
 
   var map = {
     val configPair =

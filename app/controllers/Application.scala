@@ -667,12 +667,12 @@ object Application extends Controller {
     }
   }
 
-  def getPm25Threshold = Security.Authenticated {
-    Ok(SystemConfig.getPM25Threshold().toString())
+  def getPm10Threshold = Security.Authenticated {
+    Ok(SystemConfig.getPM10Threshold().toString())
   }
 
   case class Threshold(v:Double)
-  def setPm25Threshold = Security.Authenticated(BodyParsers.parse.json) {
+  def setPm10Threshold = Security.Authenticated(BodyParsers.parse.json) {
     implicit request =>
       implicit val read = Json.reads[Threshold]
       val result = request.body.validate[Threshold]
@@ -682,7 +682,7 @@ object Application extends Controller {
         BadRequest(Json.obj("ok" -> false, "msg" -> JsError.toJson(error)))
       },
         threshold => {
-          SystemConfig.setPM25Threshold(threshold.v)
+          SystemConfig.setPM10Threshold(threshold.v)
           Ok(Json.obj("ok" -> true))
         })
   }

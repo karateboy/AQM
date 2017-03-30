@@ -213,8 +213,8 @@ GET      /DownloadNotification                                                  
 GET      /DownloadNotificationForm/:start/:end                                                       controllers.Maintance.downloadNotificationForm(start, end)
 GET      /MaintanceSchedule                                                                          controllers.Maintance.maintanceSchedule
 
-GET      /PM25Threshold                                                                              controllers.Application.getPm25Threshold
-PUT      /PM25Threshold                                                                              controllers.Application.setPm25Threshold
+GET      /PM10Threshold                                                                              controllers.Application.getPm10Threshold
+PUT      /PM10Threshold                                                                              controllers.Application.setPm10Threshold
 #Alarm Ticket
 GET      /AlarmNoTicketList                                                                          controllers.Maintance.alarmNoTicketList
 POST     /AlarmToTicket                                                                              controllers.Maintance.alarmToTicket

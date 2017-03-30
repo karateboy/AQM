@@ -41,7 +41,7 @@ class AuditStat(hr: HourRecord) {
   var temp_stat = hr.temp_stat
   var humid_stat = hr.temp_stat
   var air_pressure_stat = hr.air_pressure_stat
-  
+
   var h2s_stat = hr.h2s_stat
   var noy_dif_stat = hr.noy_dif_stat
   var nh3_nt_stat = hr.nh3_nt_stat
@@ -50,7 +50,7 @@ class AuditStat(hr: HourRecord) {
   var nh3_no2_stat = hr.nh3_no2_stat
   var h2s_cs_stat = hr.h2s_cs_stat
   var h2s_so2_stat = hr.h2s_so2_stat
-  
+
   def getStat(mt: MonitorType.Value) = {
     mt match {
       case A213 => tsp_stat
@@ -78,7 +78,7 @@ class AuditStat(hr: HourRecord) {
       case C214 => temp_stat
       case C215 => humid_stat
       case C216 => air_pressure_stat
-      
+
       //New MT
       case A234 => h2s_stat
       case A242 => noy_dif_stat
@@ -88,7 +88,7 @@ class AuditStat(hr: HourRecord) {
       case A239 => nh3_no2_stat
       case A244 => h2s_cs_stat
       case A245 => h2s_so2_stat
-      
+
     }
   }
 
@@ -119,7 +119,7 @@ class AuditStat(hr: HourRecord) {
       case C214 => temp_stat = Some(stat)
       case C215 => humid_stat = Some(stat)
       case C216 => air_pressure_stat = Some(stat)
-            
+
       //New MT
       case A234 => h2s_stat = Some(stat)
       case A242 => noy_dif_stat = Some(stat)
@@ -129,7 +129,7 @@ class AuditStat(hr: HourRecord) {
       case A239 => nh3_no2_stat = Some(stat)
       case A244 => h2s_cs_stat = Some(stat)
       case A245 => h2s_so2_stat = Some(stat)
-      
+
     }
   }
 
@@ -221,56 +221,67 @@ object Auditor {
     r._1.isDefined && r._2.isDefined &&
       (MonitorStatus.isNormalStat(r._2.get) || MonitorStatus.getTagInfo(r._2.get).statusType == StatusType.Auto)
   }
-      
-  def auditHourData(monitor: Monitor.Value, auditConfig: AutoAudit, start: DateTime, end: DateTime, reaudit:Boolean = false)(implicit session: DBSession = AutoSession) = {
+
+  def auditHourData(monitor: Monitor.Value, auditConfig: AutoAudit, start: DateTime, end: DateTime, reaudit: Boolean = false)(implicit session: DBSession = AutoSession) = {
     val records =
-      if(reaudit)
+      if (reaudit)
         getHourRecords(monitor, start, end).toArray
       else
         getUncheckedHourRecords(monitor, start, end).toArray
-      
 
     for {
       hr <- records.zipWithIndex
       record = hr._1
       idx = hr._2
       targetStat = {
-        if(reaudit){
+        if (reaudit) {
           val as = new AuditStat(record)
           as.clear()
           as
-        }else
-          new AuditStat(record)}
+        } else
+          new AuditStat(record)
+      }
     } {
       var invalid = false
-      if(auditConfig.minMaxRule.checkInvalid(record, targetStat))
+      if (auditConfig.minMaxRule.checkInvalid(record, targetStat))
         invalid = true
 
-      if(auditConfig.compareRule.checkInvalid(record, targetStat))
+      if (auditConfig.compareRule.checkInvalid(record, targetStat))
         invalid = true
 
-      if(auditConfig.differenceRule.checkInvalid(record, targetStat, monitor, record.date))
+      if (auditConfig.differenceRule.checkInvalid(record, targetStat, monitor, record.date))
         invalid = true
 
-      if(auditConfig.persistenceRule.checkInvalid(record, targetStat, monitor, record.date))
+      if (auditConfig.persistenceRule.checkInvalid(record, targetStat, monitor, record.date))
         invalid = true
+
+      if (auditConfig.spikeRule.checkInvalid(record, targetStat, monitor, record.date))
+        invalid = true
+
+      if (auditConfig.twoHourRule.checkInvalid(record, targetStat, monitor, record.date))
+        invalid = true
+
+      if (auditConfig.threeHourRule.checkInvalid(record, targetStat, monitor, record.date))
+        invalid = true
+
+      if (auditConfig.fourHourRule.checkInvalid(record, targetStat, monitor, record.date))
+        invalid = true
+
+      if (auditConfig.monoRule.checkInvalid(record, targetStat, monitor, record.date))
+        invalid = true
+
+      def checkPm10 = {
+        val pm10 = Record.monitorTypeProject2(A214)(record)
+        if (isOk(pm10)) {
+          if (pm10._1.get > SystemConfig.getPM10Threshold()) {
+            invalid = true
+            targetStat.setStat(A214, "032")
+          }
+        }
+      }
       
-
-      if(auditConfig.spikeRule.checkInvalid(record, targetStat, monitor, record.date))
-        invalid = true
-
-      if(auditConfig.twoHourRule.checkInvalid(record, targetStat, monitor, record.date))
-        invalid = true
-        
-      if(auditConfig.threeHourRule.checkInvalid(record, targetStat, monitor, record.date))
-        invalid = true
-        
-      if(auditConfig.fourHourRule.checkInvalid(record, targetStat, monitor, record.date))
-        invalid = true
-        
-      if(auditConfig.monoRule.checkInvalid(record, targetStat, monitor, record.date))
-        invalid = true
-        
+      checkPm10
+      
       //Save
       if (invalid)
         targetStat.chk = Some("BAD")
