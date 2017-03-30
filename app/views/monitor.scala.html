@@ -467,8 +467,12 @@ function() {
 			method : "PUT",
 			dataType : "json",
 			success : function(result) {
-				alert("成功");
-				refreshMonitorInfo(activeMonitor);
+				if(result.ok){
+					alert("成功");
+					refreshMonitorInfo(activeMonitor);
+				}else{
+					alert("失敗:" + result.msg);
+				}
 			},
 			error : function(xhr,status,errorThrown) {
 				alert("失敗:"+ errorThrown);

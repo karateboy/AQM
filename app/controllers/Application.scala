@@ -214,16 +214,14 @@ object Application extends Controller {
           BadRequest(Json.obj("ok" -> false, "msg" -> JsError.toJson(error)))
         },
         param => {
-          Logger.debug(param.toString())
           try {
             Equipment.create(param)
+            Ok(Json.obj("ok" -> true))
           } catch {
-            case e: Exception =>
-              Logger.error(e.toString())
-              BadRequest(Json.obj("ok" -> false, "msg" -> e.toString()))
+            case ex: Exception =>
+              Logger.error(ex.toString(),ex)
+              Ok(Json.obj("ok" -> false, "msg" -> ex.toString()))
           }
-
-          Ok(Json.obj("ok" -> true))
         })
   }
 
