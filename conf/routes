@@ -209,6 +209,7 @@ PUT      /PartUsage                                                             
 PUT      /UpdatePartUsage                                                                            controllers.Maintance.updatePartUsage
 GET      /PartInventoryAlarm                                                                         controllers.Maintance.partInventoryAlarm(outputTypeStr="html")
 GET      /PartInventoryAlarm/excel                                                                   controllers.Maintance.partInventoryAlarm(outputTypeStr="excel")
+GET      /SOP                                                                                        controllers.Maintance.sop
 
 GET      /EventLog                                                                                   controllers.Maintance.eventLog
 GET      /EventLogReport/:start/:end                                                                 controllers.Maintance.eventLogReport(start, end)

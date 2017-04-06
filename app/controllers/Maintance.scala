@@ -1104,7 +1104,10 @@ object Maintance extends Controller {
           onClose = () => { Files.deleteIfExists(excelFile.toPath()) })
 
     }
-
+  }
+  
+  def sop = Security.Authenticated {
+    Ok(views.html.sop())
   }
 
 }
