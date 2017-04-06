@@ -7,12 +7,16 @@
         	<a data-toggle="collapse" data-parent="#accordion" href="#monitorType">點擊料件加以編輯</a>	
         </div>
         <div class="panel-body panel-collapse">
+        	<div align="right">            			
+				<label class="btn btn-outline" data-toggle="tooltip" data-placement="bottom" title="Excel"><a href="/PartManagement/excel" id="downloadExcel"><i class="fa fa-file-excel-o fa-2x"></i></a></label>            			
+			</div>
         	<div class="col-lg-1 col-lg-offset-1">
 				<button type="button" class="btn btn-primary" data-toggle="modal" data-target="#newPartModal">新增物料類別</button>							
 			</div>
 			<div class="col-lg-1">							
 				<button type="button" class="btn btn-primary" id="deletePart">刪除物料類別</button>
 			</div>
+			<br/>
   			<div class="modal fade" id="newPartModal" role="dialog">
     			<div class="modal-dialog modal-lg">
       			<div class="modal-content">
@@ -60,9 +64,13 @@
 						
 						<div class="form-group">
 							<label class="col-lg-2 control-label">設備:</label>
-							<div class="col-lg-4">
-								<input type="text" class="form-control" v-model="equipment">
-							</div>																		
+							<div class="col-lg-10">
+								<div class="btn-group" data-toggle="buttons">
+                        		<label class="btn btn-outline btn-primary"
+                               		v-for="equip in equipmentList" :for="equip" @@click="equipment=equip">
+                            		<input type="radio" name="equipment">{{ equip }} &nbsp;</label>
+                            	</div>                    			
+							</div>
 						</div>
 						<div class="form-group">
 							<label class="col-lg-2 control-label">單位:</label>
@@ -182,6 +190,7 @@
 		    unit:"", 
 		    quantity:0,
 		    modelList_:[],
+		    equipmentList_:[],
 		    monitors:[],
 		    startDate:"",
 		    freqType:"",
@@ -218,6 +227,19 @@
 					  })
 				  }
 				  return this.modelList_;
+			  },
+			  equipmentList(){				  
+				  if(this.equipmentList_.length == 0){
+					  axios.get("/EquipmentID").then((resp)=>{
+						  const ret = resp.data
+						  for(let equipment of ret){
+							  this.equipmentList_.push(equipment)
+						  }  
+					  }).catch((err)=>{
+						  alert(err)
+					  })
+				  }
+				  return this.equipmentList_;
 			  },
 			  freqTypeList(){				  
 				  if(this.freqTypeList_.length == 0){

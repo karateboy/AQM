@@ -48,7 +48,9 @@
         	</div>
         	<div class="panel panel-success" style="display:none" id="reportPanel">
             	<div class="panel-body panel-collapse" id="monitorReport">
-            	
+            	<div align="right">            			
+					<label class="btn btn-outline" data-toggle="tooltip" data-placement="bottom" title="Excel"><a href="#" id="downloadExcel"><i class="fa fa-file-excel-o fa-2x"></i></a></label>            			
+				</div>
 					<div id="reportDiv" align="center" style="overflow-x:auto">
             		</div>
             	</div>
@@ -132,7 +134,7 @@ $( document ).ready(function() {
 			dataType: "html",
 			success: function(result){
 				$('#reportDiv').html(result);
-				$("#downloadPDF").prop("href", "/PDF" + url);
+				$("#downloadExcel").prop("href", "/Excel" + url);
 				$( document ).ready(function() {
 					$('#alarmReport').dataTable( {
 						responsive: true,

@@ -309,8 +309,9 @@ object Maintance extends Controller {
       }
   }
 
-  def closeTicket = Security.Authenticated {
+  def closeTicket(outputTypeStr: String) = Security.Authenticated {
     implicit request =>
+      val outputType = OutputType.withName(outputTypeStr)
       val userInfoOpt = Security.getUserinfo(request)
       if (userInfoOpt.isEmpty) {
         Forbidden("Invalid access!")
@@ -322,7 +323,15 @@ object Maintance extends Controller {
         val adminUsers = User.getAllUsers()
         val usrMap = Map(adminUsers.map { u => (u.id.get -> u) }: _*)
 
-        Ok(views.html.closeTickets(tickets, usrMap))
+        outputType match {
+          case OutputType.html =>
+            Ok(views.html.closeTickets(tickets, usrMap))
+          case OutputType.excel =>
+            val excelFile = ExcelUtility.tickets(tickets, "等待簽結案件", usrMap)
+            Ok.sendFile(excelFile, fileName = _ =>
+              play.utils.UriEncoding.encodePathSegment("等待簽結案件" + ".xlsx", "UTF-8"),
+              onClose = () => { Files.deleteIfExists(excelFile.toPath()) })
+        }
       }
   }
 
@@ -553,9 +562,18 @@ object Maintance extends Controller {
     Ok(views.html.monitor(m, true))
   }
 
-  def partManagement = Security.Authenticated {
+  def partManagement(outputTypeStr: String) = Security.Authenticated {
+    val outputType = OutputType.withName(outputTypeStr)
     val parts = Part.getList
-    Ok(views.html.partManagement(parts))
+    outputType match {
+      case OutputType.html =>
+        Ok(views.html.partManagement(parts))
+      case OutputType.excel =>
+        val excelFile = ExcelUtility.parts(parts, "物料類別")
+        Ok.sendFile(excelFile, fileName = _ =>
+          play.utils.UriEncoding.encodePathSegment("物料類別" + ".xlsx", "UTF-8"),
+          onClose = () => { Files.deleteIfExists(excelFile.toPath()) })
+    }
   }
 
   import play.api.data._
@@ -637,13 +655,22 @@ object Maintance extends Controller {
     Ok(Json.obj("ok" -> true))
   }
 
-  def partUsage = Security.Authenticated {
+  def partUsage(outputTypeStr: String) = Security.Authenticated {
+    val outputType = OutputType.withName(outputTypeStr)
     val parUsages = PartUsage.getList()
-    Ok(views.html.partUsage(PartUsage.getList(), Part.getIdMap()))
+    outputType match {
+      case OutputType.html =>
+        Ok(views.html.partUsage(PartUsage.getList(), Part.getIdMap()))
+      case OutputType.excel =>
+        val excelFile = ExcelUtility.partUsage(PartUsage.getList(), Part.getIdMap(), "物料使用紀錄表")
+        Ok.sendFile(excelFile, fileName = _ =>
+          play.utils.UriEncoding.encodePathSegment("物料使用紀錄表.xlsx", "UTF-8"),
+          onClose = () => { Files.deleteIfExists(excelFile.toPath()) })
+    }
   }
 
   def deletePartUsage(id: String) = Security.Authenticated {
-    PartUsage.delete(id)    
+    PartUsage.delete(id)
     Ok(Json.obj("ok" -> true))
   }
 
@@ -685,6 +712,41 @@ object Maintance extends Controller {
         })
   }
 
+  case class UpdatePartUsageParam(id:String, freqType: String, days: Int, usage: Int)
+  def updatePartUsage = Security.Authenticated(BodyParsers.parse.json) {
+    import Part._
+    implicit request =>
+      implicit val read = Json.reads[UpdatePartUsageParam]
+      val newPartResult = request.body.validate[UpdatePartUsageParam]
+
+      newPartResult.fold(
+        error => {
+          Logger.error(JsError.toJson(error).toString())
+          BadRequest(Json.obj("ok" -> false, "msg" -> JsError.toJson(error)))
+        },
+        param => {
+          try {
+            val partUsageOpt = PartUsage.getPartUsage(param.id)
+            if(partUsageOpt.isDefined){
+              val partUsage = partUsageOpt.get
+              if(partUsage.usage != param.usage){
+                PartUsage.update(param.id, "usage", param.usage.toString)
+              }
+              if(partUsage.freqType != param.freqType){
+                PartUsage.update(param.id, "freqType", param.freqType)
+              }
+              if(partUsage.freqDays != param.days){
+                PartUsage.update(param.id, "freq_days", param.days.toString())
+              }
+            }
+            Ok(Json.obj("ok" -> true))
+          } catch {
+            case e: Exception =>
+              Logger.error(e.toString())
+              BadRequest(Json.obj("ok" -> false, "msg" -> e.toString()))
+          }
+        })
+  }
   def testAlarmMail = Security.Authenticated {
     implicit request =>
       val userInfoOpt = Security.getUserinfo(request)
@@ -843,6 +905,21 @@ object Maintance extends Controller {
       Ok(views.html.alarmNoTicket(excludedList))
   }
 
+  def alarmNoTicketExcel() = Security.Authenticated {
+    implicit request =>
+      //FIXME
+      val start = DateTime.now() - 21.day
+      val list = Alarm.getAlarmNoTicketList(start)
+      val excludedList = list.filter { ar =>
+        ar.code != MonitorStatus.MAINTANCE_STAT && ar.code != MonitorStatus.REPAIR && ar.code != "053"
+      }
+
+      val excelFile = ExcelUtility.alarmList(excludedList, "待立案警報 (" + DateTime.now.toString("YYYY/MM/dd HH:mm") + ")")
+      Ok.sendFile(excelFile, fileName = _ =>
+        play.utils.UriEncoding.encodePathSegment("待立案.xlsx", "UTF-8"),
+        onClose = () => { Files.deleteIfExists(excelFile.toPath()) })
+  }
+
   case class AlarmTicketParam(monitor: Monitor.Value, mItem: String, time: Long, executeDate: String)
   case class AlarmToTicketParam(status: String, alarmToTicketList: Seq[AlarmTicketParam])
   def alarmToTicket() = Security.Authenticated(BodyParsers.parse.json) {
@@ -906,11 +983,12 @@ object Maintance extends Controller {
       Ok(views.html.manualAlarmTicket(userInfo, group.privilege, adminUsers, List(TicketType.repair)))
   }
 
-  def repairingAlarmTicket() = Security.Authenticated {
+  def repairingAlarmTicket(outputTypeStr: String) = Security.Authenticated {
     implicit request =>
       val userInfo = request.user
       val group = Group.getGroup(userInfo.groupID).get
       val tickets = getActiveRepairTicketsByGroup(4)
+      val outputType = OutputType.withName(outputTypeStr)
 
       val ticketWithAlarm =
         for {
@@ -921,7 +999,16 @@ object Maintance extends Controller {
       val usrMap = Map(allUsers.map { u => (u.id.get -> u) }: _*)
       val canChangeOwner = userInfo.groupID == 5
 
-      Ok(views.html.repairingTickets(ticketWithAlarm, usrMap, canChangeOwner))
+      outputType match {
+        case OutputType.html =>
+          Ok(views.html.repairingTickets(ticketWithAlarm, usrMap, canChangeOwner))
+        case OutputType.excel =>
+          val excel = ExcelUtility.repairingTickets(ticketWithAlarm, "維修中案件", usrMap)
+          Ok.sendFile(excel, fileName = _ =>
+            play.utils.UriEncoding.encodePathSegment("維修中案件" + ".xlsx", "UTF-8"),
+            onClose = () => { Files.deleteIfExists(excel.toPath()) })
+      }
+
   }
 
   def queryClosedRepairTicket = Security.Authenticated {
@@ -962,7 +1049,23 @@ object Maintance extends Controller {
 
   def modelList = Security.Authenticated {
     val modelList = Equipment.getDistinctModel()
-    Ok(Json.toJson(modelList))
+    Ok(Json.toJson(modelList.filter { x => !x.isEmpty() }))
+  }
+
+  def equpimentList = Security.Authenticated {
+    val idList = Equipment.getIdList
+    var equipmentSet = Set.empty[String]
+
+    for {
+      id <- idList
+      idParts = id.split("_") if idParts.length == 2
+      equipment = idParts(0)
+    } {
+      equipmentSet += equipment
+    }
+
+    val equipmentList = equipmentSet.toList.sorted
+    Ok(Json.toJson(equipmentList))
   }
 
   def freqTypeList = Security.Authenticated {
@@ -970,7 +1073,8 @@ object Maintance extends Controller {
   }
 
   case class PartInventory(id: String, inventory: Int, usage: Int)
-  def partInventoryAlarm = Security.Authenticated {
+  def partInventoryAlarm(outputTypeStr: String) = Security.Authenticated {
+    val outputType = OutputType.withName(outputTypeStr)
     val partUsageList = PartUsage.getList()
     import scala.collection.mutable.Map
     val partUsageMap = Map.empty[String, Int]
@@ -990,7 +1094,17 @@ object Maintance extends Controller {
           Some(PartInventory(kv._1, part.quantity, kv._2))
     }
 
-    Ok(views.html.partInventoryAlarm(partInventoryShortage.toList, partIdMap))
+    outputType match {
+      case OutputType.html =>
+        Ok(views.html.partInventoryAlarm(partInventoryShortage.toList, partIdMap))
+      case OutputType.excel =>
+        val excelFile = ExcelUtility.partInventoryAlarm(partInventoryShortage.toList, partIdMap, "物料庫存預警")
+        Ok.sendFile(excelFile, fileName = _ =>
+          play.utils.UriEncoding.encodePathSegment("物料庫存預警" + ".xlsx", "UTF-8"),
+          onClose = () => { Files.deleteIfExists(excelFile.toPath()) })
+
+    }
+
   }
 
 }

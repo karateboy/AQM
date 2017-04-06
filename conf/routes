@@ -84,6 +84,7 @@ GET      /PDF/EffectivePercentage/:start/:end                                   
 GET      /Alarm                                                                                      controllers.Query.alarm
 GET      /AlarmReport/:monitor/:status/:start/:end                                                   controllers.Query.alarmReport(monitor, status, start, end, outputTypeStr="html")
 GET      /PDF/AlarmReport/:monitor/:status/:start/:end                                               controllers.Query.alarmReport(monitor, status, start, end, outputTypeStr="pdf")
+GET      /Excel/AlarmReport/:monitor/:status/:start/:end                                             controllers.Query.alarmReport(monitor, status, start, end, outputTypeStr="excel")
 
 GET      /WindRose                                                                                   controllers.Query.windRose
 GET      /WindRoseReport/:monitor/:monitorType/:nWays/:start/:end                                    controllers.Query.windRoseReport(monitor, monitorType, nWays:Int, start, end, outputType="html")
@@ -124,6 +125,7 @@ PUT      /Equipment                                                             
 POST     /Equipment                                                                                  controllers.Application.updateEquipment
 DELETE   /Equipment/:id                                                                              controllers.Application.deleteEquipment(id)
 GET      /ModelList                                                                                  controllers.Maintance.modelList
+GET      /EquipmentID                                                                                controllers.Maintance.equpimentList
 GET      /FreqType                                                                                   controllers.Maintance.freqTypeList
 
 GET      /epaCompare                                                                                 controllers.Report.epaCompare
@@ -175,7 +177,8 @@ GET      /AttachTicketPhoto/:id/:idx                                            
 POST     /UpdateTicket/:ID                                                                           controllers.Maintance.updateTicket(ID:Int)
 POST     /UpdateForm/:ID                                                                             controllers.Maintance.updateForm(ID:Int)
 POST     /UpdateRepairForm/:ID                                                                       controllers.Maintance.updateRepairForm(ID: Int)
-GET      /CloseTicket                                                                                controllers.Maintance.closeTicket
+GET      /CloseTicket                                                                                controllers.Maintance.closeTicket(outputTyeStr="html")
+GET      /CloseTicket/excel                                                                          controllers.Maintance.closeTicket(outputTyeStr="excel")
 POST     /CloseTicket/:ids                                                                           controllers.Maintance.closeTicketAction(ids)
 POST     /ResumeTicket/:ids/:reason                                                                  controllers.Maintance.resumeTicketAction(ids, reason)
 POST     /TakeOverTicket/:ids                                                                        controllers.Maintance.takeOverTicketAction(ids)
@@ -193,15 +196,19 @@ GET      /Excel/MonitorJournalReport/:monitor/:date                             
 POST     /SaveMonitorJournalReport/:monitor/:date                                                    controllers.Maintance.saveMonitorJournalReport(monitor, date)
 
 GET      /EquipmentManagement                                                                        controllers.Maintance.equipmentManagement
-GET      /PartManagement                                                                             controllers.Maintance.partManagement
+GET      /PartManagement                                                                             controllers.Maintance.partManagement(outputTypeStr="html")
+GET      /PartManagement/excel                                                                       controllers.Maintance.partManagement(outputTypeStr="excel")
 POST     /Part                                                                                       controllers.Maintance.updatePart
 GET      /Part                                                                                       controllers.Maintance.getPartList
 PUT      /Part                                                                                       controllers.Maintance.newPart 
 DELETE   /Part/:id                                                                                   controllers.Maintance.deletePart(id)
-GET      /PartUsage                                                                                  controllers.Maintance.partUsage
+GET      /PartUsage                                                                                  controllers.Maintance.partUsage(outputTypeStr="html")
+GET      /PartUsage/excel                                                                            controllers.Maintance.partUsage(outputTypeStr="excel")
 DELETE   /PartUsage/:id                                                                              controllers.Maintance.deletePartUsage(id)
 PUT      /PartUsage                                                                                  controllers.Maintance.newPartUsage
-GET      /PartInventoryAlarm                                                                         controllers.Maintance.partInventoryAlarm
+PUT      /UpdatePartUsage                                                                            controllers.Maintance.updatePartUsage
+GET      /PartInventoryAlarm                                                                         controllers.Maintance.partInventoryAlarm(outputTypeStr="html")
+GET      /PartInventoryAlarm/excel                                                                   controllers.Maintance.partInventoryAlarm(outputTypeStr="excel")
 
 GET      /EventLog                                                                                   controllers.Maintance.eventLog
 GET      /EventLogReport/:start/:end                                                                 controllers.Maintance.eventLogReport(start, end)
@@ -215,11 +222,14 @@ GET      /MaintanceSchedule                                                     
 
 GET      /PM10Threshold                                                                              controllers.Application.getPm10Threshold
 PUT      /PM10Threshold                                                                              controllers.Application.setPm10Threshold
+
 #Alarm Ticket
 GET      /AlarmNoTicketList                                                                          controllers.Maintance.alarmNoTicketList
+GET      /AlarmNoTicketList/excel                                                                    controllers.Maintance.alarmNoTicketExcel
 POST     /AlarmToTicket                                                                              controllers.Maintance.alarmToTicket
 GET      /ManualAlarmTicket                                                                          controllers.Maintance.manualAlarmTicket
-GET      /ReparingAlarmTicket                                                                        controllers.Maintance.repairingAlarmTicket
+GET      /ReparingAlarmTicket                                                                        controllers.Maintance.repairingAlarmTicket(outputTypeStr="html")
+GET      /ReparingAlarmTicket/excel                                                                  controllers.Maintance.repairingAlarmTicket(outputTypeStr="excel")
 GET      /ClosedRepairTicket                                                                         controllers.Maintance.queryClosedRepairTicket
 GET      /ClosedRepairTicketReport/:monitors/:start/:end                                             controllers.Maintance.closedRepairTicketReport(monitors, start, end)
 GET      /NoRepairAlarm                                                                              controllers.Maintance.queryNoRepairTicketAlarm

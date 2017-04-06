@@ -140,7 +140,7 @@ object ExcelUtility {
           t.toString("YYYY-MM-dd HH:mm:ss")
         }
 
-      val thisRow = sheet.createRow(row) 
+      val thisRow = sheet.createRow(row)
       thisRow.createCell(0).setCellValue(timeStr)
 
       var col = 1
@@ -165,7 +165,7 @@ object ExcelUtility {
       }
 
       for {
-        epa<-epaMonitors
+        epa <- epaMonitors
         valueOpt = epaRecordMap(epa).get(t)
         cell = thisRow.createCell(col)
       } {
@@ -183,7 +183,7 @@ object ExcelUtility {
 
     finishExcel(reportFilePath, pkg, wb)
   }
-  
+
   def createAllDailyReport(reportDate: DateTime) = {
     implicit val (reportFilePath, pkg, wb) = prepareTemplate("all_daily_report.xlsx")
     val format = wb.createDataFormat();
@@ -383,33 +383,36 @@ object ExcelUtility {
         val sum = mtRecord.dataList.map(_.count).sum
         sheet.getRow(36).getCell(col).setCellValue(sum)
         sheet.getRow(37).getCell(col).setCellValue(nDay * 24)
-        val data = monthHourReport.dailyReports flatMap {dr => 
-          dr.typeList(col-1).dataList
-          } map { _._3}
-        
+        val data = monthHourReport.dailyReports flatMap { dr =>
+          dr.typeList(col - 1).dataList
+        } map { _._3 }
+
         import MonitorStatus._
-        val manualAuditList = data.filter { p => p.isDefined && {
-          val tagInfo = getTagInfo(p.get)
-          tagInfo.statusType == StatusType.Manual && tagInfo.id == "10"
+        val manualAuditList = data.filter { p =>
+          p.isDefined && {
+            val tagInfo = getTagInfo(p.get)
+            tagInfo.statusType == StatusType.Manual && tagInfo.id == "10"
           }
         }
-        val invalidList = data.filter { p => p.isDefined && 
-          !isValid(p.get)
+        val invalidList = data.filter { p =>
+          p.isDefined &&
+            !isValid(p.get)
         }
-        val repairList = data.filter { p => p.isDefined && 
-          isRepairing(p.get)
+        val repairList = data.filter { p =>
+          p.isDefined &&
+            isRepairing(p.get)
         }
         sheet.getRow(39).getCell(col).setCellValue(manualAuditList.length)
         sheet.getRow(40).getCell(col).setCellValue(invalidList.length)
-        sheet.getRow(42).getCell(col).setCellValue(repairList.length)        
+        sheet.getRow(42).getCell(col).setCellValue(repairList.length)
         sheet.getRow(44).getCell(col).setCellValue(nDay * 24)
-        
+
         evaluator.evaluateFormulaCell(sheet.getRow(36).getCell(col))
         evaluator.evaluateFormulaCell(sheet.getRow(38).getCell(col))
         evaluator.evaluateFormulaCell(sheet.getRow(41).getCell(col))
         evaluator.evaluateFormulaCell(sheet.getRow(43).getCell(col))
         evaluator.evaluateFormulaCell(sheet.getRow(45).getCell(col))
-        
+
       }
 
       //Hide col not in use
@@ -1567,10 +1570,10 @@ object ExcelUtility {
     for (row <- 92 to 96) {
       sheet.getRow(row).getCell(4).setCellValue(form.getBoolSeq("YES☑  NO□", "YES□ NO☑"))
     }
-    
-    for(row <- 98 to 102)
+
+    for (row <- 98 to 102)
       sheet.getRow(row).getCell(4).setCellValue(form.getBoolSeq("YES☑  NO□", "YES□ NO☑"))
-    
+
     for (row <- 104 to 105) {
       sheet.getRow(row).getCell(2).setCellValue(form.getStrSeq)
       oldForm.map { old => sheet.getRow(row).getCell(5).setCellValue(old.getStrSeq) }
@@ -2181,7 +2184,7 @@ object ExcelUtility {
     finishExcel(reportFilePath, pkg, wb)
   }
 
-  def equipmentHistoryReport(equipment:Equipment, tickets: List[Ticket], start: DateTime, end: DateTime) = {
+  def equipmentHistoryReport(equipment: Equipment, tickets: List[Ticket], start: DateTime, end: DateTime) = {
     val (reportFilePath, pkg, wb) = prepareTemplate("equipHistory.xlsx")
     val evaluator = wb.getCreationHelper().createFormulaEvaluator()
     val sheet = wb.getSheetAt(0)
@@ -2211,4 +2214,165 @@ object ExcelUtility {
     finishExcel(reportFilePath, pkg, wb)
   }
 
+  def alarmList(arList: List[Alarm.Alarm], title: String) = {
+    val (reportFilePath, pkg, wb) = prepareTemplate("alarm.xlsx")
+    val evaluator = wb.getCreationHelper().createFormulaEvaluator()
+    val sheet = wb.getSheetAt(0)
+
+    sheet.getRow(0).getCell(0).setCellValue(title)
+    for {
+      ar_idx <- arList.zipWithIndex
+      ar = ar_idx._1
+      rowN = ar_idx._2 + 2
+    } {
+      val row = sheet.createRow(rowN)
+      row.createCell(0).setCellValue(ar.time.toString("YYYY/MM/dd HH:mm"))
+      row.createCell(1).setCellValue(Monitor.map(ar.monitor).name)
+      row.createCell(2).setCellValue(Alarm.map(ar.mItem))
+      row.createCell(3).setCellValue(MonitorStatus.map(ar.code).desp)
+    }
+    finishExcel(reportFilePath, pkg, wb)
+  }
+
+  def repairingTickets(tickets: List[(Ticket, Option[Alarm.Alarm])], title: String, userMap: Map[Int, User]) = {
+    val (reportFilePath, pkg, wb) = prepareTemplate("repairingTicket.xlsx")
+    val evaluator = wb.getCreationHelper().createFormulaEvaluator()
+    val sheet = wb.getSheetAt(0)
+
+    sheet.getRow(0).getCell(0).setCellValue(title)
+    for {
+      tx_idx <- tickets.zipWithIndex
+      ticket_ar = tx_idx._1
+      ticket = ticket_ar._1
+      arOpt = ticket_ar._2
+      rowN = tx_idx._2 + 2
+    } {
+      val row = sheet.createRow(rowN)
+      row.createCell(0).setCellValue(ticket.id)
+      if (arOpt.isDefined) {
+        row.createCell(1).setCellValue(arOpt.get.time.toString("YYYY/MM/dd HH:mm"))
+        row.createCell(2).setCellValue(MonitorStatus.map(arOpt.get.code).desp)
+      }
+
+      row.createCell(3).setCellValue(Monitor.map(ticket.monitor).name)
+      if (ticket.monitorType.isDefined)
+        row.createCell(4).setCellValue(MonitorType.map(ticket.monitorType.get).desp)
+
+      row.createCell(5).setCellValue(ticket.submit_date.toString("MM-d HH:mm"))
+      row.createCell(6).setCellValue(userMap(ticket.submiter_id).name)
+      row.createCell(7).setCellValue(ticket.reason)
+      row.createCell(8).setCellValue(userMap(ticket.owner_id).name)
+      row.createCell(9).setCellValue(ticket.executeDate.toString("MM-d"))
+      if (ticket.executeDate.isBefore(DateTime.yesterday))
+        row.createCell(10).setCellValue("是")
+      else
+        row.createCell(10).setCellValue("否")
+    }
+
+    finishExcel(reportFilePath, pkg, wb)
+  }
+  
+  def tickets(tickets: List[Ticket], title: String, userMap: Map[Int, User]) = {
+    val (reportFilePath, pkg, wb) = prepareTemplate("ticket.xlsx")
+    val evaluator = wb.getCreationHelper().createFormulaEvaluator()
+    val sheet = wb.getSheetAt(0)
+
+    sheet.getRow(0).getCell(0).setCellValue(title)
+    for {
+      ticket_idx <- tickets.zipWithIndex
+      ticket = ticket_idx._1
+      rowN = ticket_idx._2 + 2
+    } {
+      val row = sheet.createRow(rowN)
+      row.createCell(0).setCellValue(ticket.id)
+
+      row.createCell(1).setCellValue(Monitor.map(ticket.monitor).name)
+      if (ticket.monitorType.isDefined)
+        row.createCell(2).setCellValue(MonitorType.map(ticket.monitorType.get).desp)
+
+      row.createCell(3).setCellValue(ticket.submit_date.toString("MM-d HH:mm"))
+      row.createCell(4).setCellValue(userMap(ticket.submiter_id).name)
+      row.createCell(5).setCellValue(TicketType.map(ticket.ticketType))        
+      row.createCell(6).setCellValue(ticket.reason)
+      row.createCell(7).setCellValue(ModelHelper.formatOptStr(ticket.repairType))
+      row.createCell(8).setCellValue(ModelHelper.formatOptStr(ticket.repairSubType))      
+      row.createCell(9).setCellValue(userMap(ticket.owner_id).name)
+      row.createCell(10).setCellValue(ticket.executeDate.toString("MM-d"))
+    }
+
+    finishExcel(reportFilePath, pkg, wb)
+  }
+  
+  def parts(partList: List[Part2], title:String) = {
+    val (reportFilePath, pkg, wb) = prepareTemplate("parts.xlsx")
+    val evaluator = wb.getCreationHelper().createFormulaEvaluator()
+    val sheet = wb.getSheetAt(0)
+
+    sheet.getRow(0).getCell(0).setCellValue(title)
+    for {
+      part_idx <- partList.zipWithIndex
+      p = part_idx._1
+      rowN = part_idx._2 + 2
+    } {
+      val row = sheet.createRow(rowN)
+      row.createCell(0).setCellValue(p.id)
+      row.createCell(1).setCellValue(p.name)
+      row.createCell(2).setCellValue(p.chineseName)
+      row.createCell(3).setCellValue(p.brand)
+      row.createCell(4).setCellValue(p.models)
+      row.createCell(5).setCellValue(p.equipment)
+      row.createCell(6).setCellValue(p.unit)
+      row.createCell(7).setCellValue(p.quantity)
+    }
+    finishExcel(reportFilePath, pkg, wb)
+  }
+  
+  def partUsage(partUsageList: List[PartUsage], partMap:Map[String, Part2], title:String) = {
+    val (reportFilePath, pkg, wb) = prepareTemplate("partUsage.xlsx")
+    val evaluator = wb.getCreationHelper().createFormulaEvaluator()
+    val sheet = wb.getSheetAt(0)
+
+    sheet.getRow(0).getCell(0).setCellValue(title)
+    for {
+      part_idx <- partUsageList.zipWithIndex
+      p = part_idx._1
+      rowN = part_idx._2 + 2
+    } {
+      val row = sheet.createRow(rowN)
+      row.createCell(0).setCellValue(p.id)
+      row.createCell(1).setCellValue(partMap(p.getPartId).name)
+      row.createCell(2).setCellValue(partMap(p.getPartId).chineseName)
+      row.createCell(3).setCellValue(Monitor.map(Monitor.withName(p.monitor)).name)
+      row.createCell(4).setCellValue(p.usage)
+      row.createCell(5).setCellValue(p.getFreqDesc)
+      row.createCell(6).setCellValue(p.startDate.toString("YYYY-MM-dd"))
+      row.createCell(7).setCellValue(p.getNextReplaceDate.toString("YYYY-MM-dd"))
+      row.createCell(8).setCellValue(ModelHelper.formatOptBool(Some(p.alarm)))
+      row.createCell(9).setCellValue(ModelHelper.formatOptStr(p.nochange_reason))
+      row.createCell(10).setCellValue(ModelHelper.formatOptStr(p.remark))
+    }
+    finishExcel(reportFilePath, pkg, wb)
+  }
+  
+  import Maintance.PartInventory
+  def partInventoryAlarm(partList:List[PartInventory], idMap:Map[String, Part2], title:String) = {
+    val (reportFilePath, pkg, wb) = prepareTemplate("partInventoryAlarm.xlsx")
+    val evaluator = wb.getCreationHelper().createFormulaEvaluator()
+    val sheet = wb.getSheetAt(0)
+
+    sheet.getRow(0).getCell(0).setCellValue(title)
+    for {
+      part_idx <- partList.zipWithIndex
+      p = part_idx._1
+      rowN = part_idx._2 + 2
+    } {
+      val row = sheet.createRow(rowN)
+      row.createCell(0).setCellValue(p.id)
+      row.createCell(1).setCellValue(idMap(p.id).name)
+      row.createCell(2).setCellValue(idMap(p.id).chineseName)
+      row.createCell(3).setCellValue(p.inventory)
+      row.createCell(4).setCellValue(p.usage)
+    }
+    finishExcel(reportFilePath, pkg, wb)
+  }
 }

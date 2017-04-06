@@ -103,5 +103,15 @@ object Equipment {
       }.list.apply
     }
   }
+  
+  def getIdList = {
+    DB readOnly { implicit session =>
+      sql"""
+        SELECT id 
+        From Equipment
+        """.map { r => r.string(1)
+      }.list.apply
+    }
+  }
 }
 

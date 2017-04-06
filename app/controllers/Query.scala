@@ -752,6 +752,16 @@ object Query extends Controller {
         Ok.sendFile(creatPdfWithReportHeader(title, output),
           fileName = _ =>
             play.utils.UriEncoding.encodePathSegment(title + start.toString("YYMMdd") + "_" + end.toString("MMdd") + ".pdf", "UTF-8"))
+      case OutputType.excel =>
+        val periodStr = s"${start.toString("YYYY/MM/dd")}-${end.toString("MM/dd")}"
+        val title = if(notRepair)
+          "未立案警報 "
+        else
+          "警報"
+        val excel = ExcelUtility.alarmList(records, s"$title $periodStr")
+        Ok.sendFile(excel,
+          fileName = _ =>
+            play.utils.UriEncoding.encodePathSegment(title + start.toString("YYMMdd") + "_" + end.toString("MMdd") + ".xlsx", "UTF-8"))
     }
 
   }
