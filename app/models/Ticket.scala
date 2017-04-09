@@ -398,7 +398,7 @@ object Ticket {
         Update Ticket
         Set [ticketType]=${ticket.ticketType.id}, [owner_id]=${ticket.owner_id},
           [monitor]=${ticket.monitor.toString}, [monitorType]=${ticket.monitorType.map { _.toString }},
-          [reason]=${ticket.reason}, [execute_date]=${ticket.executeDate.toDate}, [form] = ${ticket.formJson}
+          [reason]=${ticket.reason}, [execute_date]=${ticket.executeDate.toDate}, [form] = ${ticket.formJson}, [readyToClose] = 1
         Where ID = ${ticket.id}
         """.update.apply
     }
