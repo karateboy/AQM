@@ -11,7 +11,7 @@ import scala.concurrent._
 import ExecutionContext.Implicits.global
 import scala.util.{Success, Failure}
 
-object DataCheckFinish
+case object DataCheckFinish
 
 class DataAlarmChecker extends Actor {
   def receive = {

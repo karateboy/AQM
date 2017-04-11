@@ -17,6 +17,8 @@ object Global extends GlobalSettings {
     
     Akka.system.scheduler.schedule(Duration(3, MINUTES), Duration(5, MINUTES), alarmActor, AlarmCheck)
     Akka.system.scheduler.schedule(Duration(3, MINUTES), Duration(10, MINUTES), alarmActor, DataCheck)
+    Akka.system.scheduler.schedule(Duration(1, MINUTES), Duration(1, DAYS), alarmActor, MaintanceTicketCheck)
+    
     AlarmTicketFilter.start
     PartAlarmWorker.start
   }

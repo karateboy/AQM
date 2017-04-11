@@ -203,7 +203,11 @@ object Alarm {
       """.map { r => AlarmItem(r.string(1), r.string(2))
       }.list.apply
     }
-  private var _map: Map[String, String] = Map(arList.map { r => (r.id -> r.desp) }: _*)
+  
+  val ticketMap = TicketType.map map {kv => kv._1.toString -> (kv._2 + "未執行") }
+
+  private var _map: Map[String, String] = Map(arList.map { r => (r.id -> r.desp) }: _*) ++ ticketMap
+  
 
   private def insertAlarmCode(ar:AlarmItem)={
     DB localTx {

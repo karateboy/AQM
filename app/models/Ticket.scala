@@ -306,11 +306,11 @@ object Ticket {
       """.map { ticketMapper }.list().apply()
   }
 
-  def queryMaintanceTickets(start: DateTime, end: DateTime)(implicit session: DBSession = AutoSession) = {
+  def queryActiveMaintanceTickets(start: DateTime)(implicit session: DBSession = AutoSession) = {
     sql"""
       Select *
       From Ticket
-      Where execute_date between ${start} and ${end} and ticketType != ${TicketType.repair.id} and active = 1
+      Where execute_date between ${start} and ${start + 1.day} and ticketType != ${TicketType.repair.id} and active = 1
       Order by execute_date      
       """.map { ticketMapper }.list().apply()
   }
@@ -398,7 +398,7 @@ object Ticket {
         Update Ticket
         Set [ticketType]=${ticket.ticketType.id}, [owner_id]=${ticket.owner_id},
           [monitor]=${ticket.monitor.toString}, [monitorType]=${ticket.monitorType.map { _.toString }},
-          [reason]=${ticket.reason}, [execute_date]=${ticket.executeDate.toDate}, [form] = ${ticket.formJson}, [readyToClose] = 1
+          [reason]=${ticket.reason}, [execute_date]=${ticket.executeDate.toDate}, [form] = ${ticket.formJson} 
         Where ID = ${ticket.id}
         """.update.apply
     }
@@ -509,7 +509,7 @@ object Ticket {
     DB localTx { implicit session =>
       sql"""
         Update Ticket
-        Set [form]=${Json.toJson(form).toString}
+        Set [form]=${Json.toJson(form).toString}, [readyToClose] = 1, [active] = 0
         Where ID = ${ID}
         """.update.apply
     }
@@ -525,4 +525,7 @@ object Ticket {
     }
   }
 
+  def getActiveTicket(date:DateTime)={
+    
+  }
 }

@@ -899,7 +899,7 @@ object Maintance extends Controller {
       val start = DateTime.now() - 21.day
       val list = Alarm.getAlarmNoTicketList(start)
       val excludedList = list.filter { ar =>
-        ar.code != MonitorStatus.MAINTANCE_STAT && ar.code != MonitorStatus.REPAIR && ar.code != "053"
+        ar.code != MonitorStatus.REPAIR && ar.code != "053"
       }
 
       Ok(views.html.alarmNoTicket(excludedList))
