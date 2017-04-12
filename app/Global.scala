@@ -17,12 +17,19 @@ object Global extends GlobalSettings {
     
     Akka.system.scheduler.schedule(Duration(3, MINUTES), Duration(5, MINUTES), alarmActor, AlarmCheck)
     Akka.system.scheduler.schedule(Duration(3, MINUTES), Duration(10, MINUTES), alarmActor, DataCheck)
-    Akka.system.scheduler.schedule(Duration(1, MINUTES), Duration(1, DAYS), alarmActor, MaintanceTicketCheck)
+    Akka.system.scheduler.schedule(Duration(secondToTomorror1AM, SECONDS), Duration(1, DAYS), alarmActor, MaintanceTicketCheck)
     
     AlarmTicketFilter.start
     PartAlarmWorker.start
   }
 
+  def secondToTomorror1AM = {
+    import com.github.nscala_time.time.Imports._
+    val tomorrow_1AM = DateTime.tomorrow().withMillisOfDay(0).withHourOfDay(1)
+    val duration = new Duration(DateTime.now(), tomorrow_1AM)
+    duration.getStandardSeconds    
+  }
+  
   override def onStop(app: Application) {
     Logger.info("Application shutdown...")
     super.onStop(app)

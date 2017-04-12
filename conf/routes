@@ -232,7 +232,8 @@ GET      /ManualAlarmTicket                                                     
 GET      /ReparingAlarmTicket                                                                        controllers.Maintance.repairingAlarmTicket(outputTypeStr="html")
 GET      /ReparingAlarmTicket/excel                                                                  controllers.Maintance.repairingAlarmTicket(outputTypeStr="excel")
 GET      /ClosedRepairTicket                                                                         controllers.Maintance.queryClosedRepairTicket
-GET      /ClosedRepairTicketReport/:monitors/:start/:end                                             controllers.Maintance.closedRepairTicketReport(monitors, start, end)
+GET      /ClosedRepairTicketReport/:monitors/:start/:end                                             controllers.Maintance.closedRepairTicketReport(monitors, start, end, outputTypeStr="html")
+GET      /Excel/ClosedRepairTicketReport/:monitors/:start/:end                                       controllers.Maintance.closedRepairTicketReport(monitors, start, end, outputTypeStr="excel")
 GET      /NoRepairAlarm                                                                              controllers.Maintance.queryNoRepairTicketAlarm
 
 # websockets

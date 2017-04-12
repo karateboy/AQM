@@ -712,7 +712,7 @@ object Maintance extends Controller {
         })
   }
 
-  case class UpdatePartUsageParam(id:String, freqType: String, days: Int, usage: Int)
+  case class UpdatePartUsageParam(id: String, freqType: String, days: Int, usage: Int)
   def updatePartUsage = Security.Authenticated(BodyParsers.parse.json) {
     import Part._
     implicit request =>
@@ -727,15 +727,15 @@ object Maintance extends Controller {
         param => {
           try {
             val partUsageOpt = PartUsage.getPartUsage(param.id)
-            if(partUsageOpt.isDefined){
+            if (partUsageOpt.isDefined) {
               val partUsage = partUsageOpt.get
-              if(partUsage.usage != param.usage){
+              if (partUsage.usage != param.usage) {
                 PartUsage.update(param.id, "usage", param.usage.toString)
               }
-              if(partUsage.freqType != param.freqType){
+              if (partUsage.freqType != param.freqType) {
                 PartUsage.update(param.id, "freqType", param.freqType)
               }
-              if(partUsage.freqDays != param.days){
+              if (partUsage.freqDays != param.days) {
                 PartUsage.update(param.id, "freq_days", param.days.toString())
               }
             }
@@ -1029,10 +1029,11 @@ object Maintance extends Controller {
       Ok(views.html.alarmNoRepair(group.privilege))
   }
 
-  def closedRepairTicketReport(monitorStr: String, startStr: String, endStr: String) = Security.Authenticated {
+  def closedRepairTicketReport(monitorStr: String, startStr: String, endStr: String, outputTypeStr: String) = Security.Authenticated {
     val monitors = monitorStr.split(":").map { Monitor.withName }
     val start = DateTime.parse(startStr)
     val end = DateTime.parse(endStr) + 1.day
+    val outputType = OutputType.withName(outputTypeStr)
 
     val tickets = Ticket.queryClosedRepairTickets(start, end)
     val filterTicket = tickets.filter { t => monitors.contains(t.monitor) }
@@ -1044,7 +1045,17 @@ object Maintance extends Controller {
     val allUsers = User.getAllUsers()
     val usrMap = Map(allUsers.map { u => (u.id.get -> u) }: _*)
 
-    Ok(views.html.closedAlarmTicketReport(ticketWithRepairForm, usrMap))
+    outputType match {
+      case OutputType.html =>
+        Ok(views.html.closedAlarmTicketReport(ticketWithRepairForm, usrMap))
+      case OutputType.excel =>
+        val title = s"結案查詢(${startStr}~${endStr})"
+        val excelFile = ExcelUtility.closedRepairTickets(ticketWithRepairForm, title,usrMap)
+        Ok.sendFile(excelFile, fileName = _ =>
+          play.utils.UriEncoding.encodePathSegment("結案查詢" + ".xlsx", "UTF-8"),
+          onClose = () => { Files.deleteIfExists(excelFile.toPath()) })
+    }
+
   }
 
   def modelList = Security.Authenticated {
@@ -1105,7 +1116,7 @@ object Maintance extends Controller {
 
     }
   }
-  
+
   def sop = Security.Authenticated {
     Ok(views.html.sop())
   }

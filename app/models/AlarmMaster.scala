@@ -28,7 +28,7 @@ class AlarmMaster extends Actor{
     case MaintanceTicketCheck =>
         val activeMaintanceTickets = Ticket.queryActiveMaintanceTickets(DateTime.yesterday().withMillisOfDay(0))
         for(ticket <- activeMaintanceTickets){
-          val ar = Alarm.Alarm(ticket.monitor, ticket.ticketType.toString(), DateTime.now, 0, "038")
+          val ar = Alarm.Alarm(ticket.monitor, ticket.ticketType.toString(), DateTime.now, 1, "038")
           Alarm.insertAlarm(ar)
         }
     case DataCheckFinish=>

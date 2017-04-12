@@ -2303,6 +2303,41 @@ object ExcelUtility {
     finishExcel(reportFilePath, pkg, wb)
   }
   
+  def closedRepairTickets(ticketWithRepairForm: List[(Ticket, RepairFormData)], title: String, userMap: Map[Int, User]) = {
+    val (reportFilePath, pkg, wb) = prepareTemplate("closedRepairTicket.xlsx")
+    val evaluator = wb.getCreationHelper().createFormulaEvaluator()
+    val sheet = wb.getSheetAt(0)
+
+    sheet.getRow(0).getCell(0).setCellValue(title)
+    for {
+      ticketR_idx <- ticketWithRepairForm.zipWithIndex
+      (ticket, form) = ticketR_idx._1
+      rowN = ticketR_idx._2 + 2
+    } {
+      val row = sheet.createRow(rowN)
+      row.createCell(0).setCellValue(ticket.id)
+
+      if(form.alarm.isDefined){
+        row.createCell(1).setCellValue(form.alarm.get.time.toString("YYYY/MM/dd HH:mm"))
+        row.createCell(2).setCellValue(MonitorStatus.map(form.alarm.get.code).desp)
+      }else{
+        row.createCell(1).setCellValue("-")
+        row.createCell(2).setCellValue("-")
+      }
+      row.createCell(3).setCellValue(Monitor.map(ticket.monitor).name)      
+      if (ticket.monitorType.isDefined)
+        row.createCell(4).setCellValue(MonitorType.map(ticket.monitorType.get).desp)
+
+      row.createCell(5).setCellValue(ticket.submit_date.toString("MM-d HH:mm"))
+      row.createCell(6).setCellValue(userMap(ticket.submiter_id).name)        
+      row.createCell(7).setCellValue(ticket.reason)
+      row.createCell(8).setCellValue(userMap(ticket.owner_id).name)
+      row.createCell(9).setCellValue(form.end)
+    }
+
+    finishExcel(reportFilePath, pkg, wb)
+  }
+  
   def parts(partList: List[Part2], title:String) = {
     val (reportFilePath, pkg, wb) = prepareTemplate("parts.xlsx")
     val evaluator = wb.getCreationHelper().createFormulaEvaluator()

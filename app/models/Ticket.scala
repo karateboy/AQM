@@ -310,7 +310,7 @@ object Ticket {
     sql"""
       Select *
       From Ticket
-      Where execute_date between ${start} and ${start + 1.day} and ticketType != ${TicketType.repair.id} and active = 1
+      Where execute_date >= ${start} and execute_date < ${start + 1.day} and ticketType != ${TicketType.repair.id} and active = 1
       Order by execute_date      
       """.map { ticketMapper }.list().apply()
   }
