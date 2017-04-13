@@ -272,6 +272,11 @@
 					  return false
 				  }
 
+				  if(this.id.indexOf("_") != -1){
+					  alert("物料類別代碼不可以包含'_'字元!")
+					  return false
+				  }
+				  
 				  if(this.name === ""){
 					  alert("英文名稱是空的!")
 					  return false

@@ -1177,40 +1177,58 @@ object ExcelUtility {
 
       for {
         row <- 4 to (4 + nDays - 1)
-        itemOpt = map.get((row - 3).toString)
+        itemOpt = map.get((row - 3).toString) if itemOpt.isDefined
+        item = itemOpt.get
       } {
-        if (itemOpt.isDefined) {
-          val item = itemOpt.get
-          sheet.getRow(row).getCell(1).setCellValue(item.startTime.toString("HH:mm"))
-          sheet.getRow(row).getCell(2).setCellValue(MonitorType.map(item.monitorType).desp)
-          if (item.z_val > MonitorType.map(item.monitorType).zd_law.get) {
+        sheet.getRow(row).getCell(1).setCellValue(item.startTime.toString("HH:mm"))
+        sheet.getRow(row).getCell(2).setCellValue(MonitorType.map(item.monitorType).desp)
+        for {
+          zd_law <- MonitorType.map(item.monitorType).zd_law
+          zd_internal <- MonitorType.map(item.monitorType).zd_internal
+        } {
+          if (item.z_val > zd_law)
             sheet.getRow(row).getCell(3).setCellStyle(lawStyle)
-          } else if (item.z_val > MonitorType.map(item.monitorType).zd_internal.get) {
+          else if (item.z_val > zd_internal)
             sheet.getRow(row).getCell(3).setCellStyle(internalStyle)
-          }
-          sheet.getRow(row).getCell(3).setCellValue(item.z_val)
-          sheet.getRow(row).getCell(4).setCellValue(MonitorType.map(item.monitorType).zd_internal.get)
-          sheet.getRow(row).getCell(5).setCellValue(MonitorType.map(item.monitorType).zd_law.get)
-          sheet.getRow(row).getCell(6).setCellValue(item.s_std)
-          sheet.getRow(row).getCell(7).setCellValue(item.s_sval)
-          if (item.sd_pnt > MonitorType.map(item.monitorType).sd_law.get) {
+
+          sheet.getRow(row).getCell(4).setCellValue(zd_internal)
+          sheet.getRow(row).getCell(5).setCellValue(zd_law)
+        }
+
+        sheet.getRow(row).getCell(3).setCellValue(item.z_val)
+        sheet.getRow(row).getCell(6).setCellValue(item.s_std)
+        sheet.getRow(row).getCell(7).setCellValue(item.s_sval)
+
+        for {
+          sd_law <- MonitorType.map(item.monitorType).sd_law
+          sd_internal <- MonitorType.map(item.monitorType).sd_internal
+        } {
+          if (item.sd_pnt > sd_law)
             sheet.getRow(row).getCell(8).setCellStyle(lawStyle)
-          } else if (item.sd_pnt > MonitorType.map(item.monitorType).sd_internal.get) {
+          else if (item.sd_pnt > sd_internal)
             sheet.getRow(row).getCell(8).setCellStyle(lawStyle)
-          }
+
           sheet.getRow(row).getCell(8).setCellValue(item.sd_pnt)
-          sheet.getRow(row).getCell(9).setCellValue(MonitorType.map(item.monitorType).sd_internal.get)
-          sheet.getRow(row).getCell(10).setCellValue(MonitorType.map(item.monitorType).sd_law.get)
-          if (item.z_val > MonitorType.map(item.monitorType).zd_law.get || item.sd_pnt > MonitorType.map(item.monitorType).sd_law.get) {
+          sheet.getRow(row).getCell(9).setCellValue(sd_internal)
+          sheet.getRow(row).getCell(10).setCellValue(sd_law)
+        }
+
+        for {
+          zd_law <- MonitorType.map(item.monitorType).zd_law
+          sd_law <- MonitorType.map(item.monitorType).sd_law
+          zd_internal <- MonitorType.map(item.monitorType).zd_internal
+          sd_internal <- MonitorType.map(item.monitorType).sd_internal
+        } {
+          if (item.z_val > zd_law || item.sd_pnt > sd_law) {
             sheet.getRow(row).getCell(11).setCellStyle(lawStyle)
             sheet.getRow(row).getCell(11).setCellValue("失敗")
           } else {
-            if (item.z_val > MonitorType.map(item.monitorType).zd_internal.get || item.sd_pnt > MonitorType.map(item.monitorType).sd_internal.get) {
+            if (item.z_val > zd_internal || item.sd_pnt > sd_internal) {
               sheet.getRow(row).getCell(11).setCellStyle(internalStyle)
             }
+
             sheet.getRow(row).getCell(11).setCellValue("成功")
           }
-
         }
       }
       sheet.getRow(36).getCell(0).setCellValue(s"${Monitor.map(monitor).name} (${MonitorType.map(monitorType).desp})零點校正趨勢圖")
@@ -2271,7 +2289,7 @@ object ExcelUtility {
 
     finishExcel(reportFilePath, pkg, wb)
   }
-  
+
   def tickets(tickets: List[Ticket], title: String, userMap: Map[Int, User]) = {
     val (reportFilePath, pkg, wb) = prepareTemplate("ticket.xlsx")
     val evaluator = wb.getCreationHelper().createFormulaEvaluator()
@@ -2292,17 +2310,17 @@ object ExcelUtility {
 
       row.createCell(3).setCellValue(ticket.submit_date.toString("MM-d HH:mm"))
       row.createCell(4).setCellValue(userMap(ticket.submiter_id).name)
-      row.createCell(5).setCellValue(TicketType.map(ticket.ticketType))        
+      row.createCell(5).setCellValue(TicketType.map(ticket.ticketType))
       row.createCell(6).setCellValue(ticket.reason)
       row.createCell(7).setCellValue(ModelHelper.formatOptStr(ticket.repairType))
-      row.createCell(8).setCellValue(ModelHelper.formatOptStr(ticket.repairSubType))      
+      row.createCell(8).setCellValue(ModelHelper.formatOptStr(ticket.repairSubType))
       row.createCell(9).setCellValue(userMap(ticket.owner_id).name)
       row.createCell(10).setCellValue(ticket.executeDate.toString("MM-d"))
     }
 
     finishExcel(reportFilePath, pkg, wb)
   }
-  
+
   def closedRepairTickets(ticketWithRepairForm: List[(Ticket, RepairFormData)], title: String, userMap: Map[Int, User]) = {
     val (reportFilePath, pkg, wb) = prepareTemplate("closedRepairTicket.xlsx")
     val evaluator = wb.getCreationHelper().createFormulaEvaluator()
@@ -2317,28 +2335,43 @@ object ExcelUtility {
       val row = sheet.createRow(rowN)
       row.createCell(0).setCellValue(ticket.id)
 
-      if(form.alarm.isDefined){
+      if (form.alarm.isDefined) {
         row.createCell(1).setCellValue(form.alarm.get.time.toString("YYYY/MM/dd HH:mm"))
         row.createCell(2).setCellValue(MonitorStatus.map(form.alarm.get.code).desp)
-      }else{
+      } else {
         row.createCell(1).setCellValue("-")
         row.createCell(2).setCellValue("-")
       }
-      row.createCell(3).setCellValue(Monitor.map(ticket.monitor).name)      
+      row.createCell(3).setCellValue(Monitor.map(ticket.monitor).name)
       if (ticket.monitorType.isDefined)
         row.createCell(4).setCellValue(MonitorType.map(ticket.monitorType.get).desp)
 
       row.createCell(5).setCellValue(ticket.submit_date.toString("MM-d HH:mm"))
-      row.createCell(6).setCellValue(userMap(ticket.submiter_id).name)        
+      row.createCell(6).setCellValue(userMap(ticket.submiter_id).name)
       row.createCell(7).setCellValue(ticket.reason)
       row.createCell(8).setCellValue(userMap(ticket.owner_id).name)
-      row.createCell(9).setCellValue(form.end)
+      row.createCell(9).setCellValue(form.explain)
+      row.createCell(10).setCellValue(form.result)
+      val resultOptStr = List(
+        if (form.getBool(3)) Some("儀器異常")
+        else
+          None,
+        if (form.getBool(4)) Some("儀器無異常")
+        else
+          None,
+        if (form.getBool(5)) Some("待料")
+        else
+          None)
+
+      val result = resultOptStr.flatMap { x => x }.mkString("/")
+      row.createCell(11).setCellValue(result)
+      row.createCell(12).setCellValue(form.end)
     }
 
     finishExcel(reportFilePath, pkg, wb)
   }
-  
-  def parts(partList: List[Part2], title:String) = {
+
+  def parts(partList: List[Part2], title: String) = {
     val (reportFilePath, pkg, wb) = prepareTemplate("parts.xlsx")
     val evaluator = wb.getCreationHelper().createFormulaEvaluator()
     val sheet = wb.getSheetAt(0)
@@ -2361,8 +2394,8 @@ object ExcelUtility {
     }
     finishExcel(reportFilePath, pkg, wb)
   }
-  
-  def partUsage(partUsageList: List[PartUsage], partMap:Map[String, Part2], title:String) = {
+
+  def partUsage(partUsageList: List[PartUsage], partMap: Map[String, Part2], title: String) = {
     val (reportFilePath, pkg, wb) = prepareTemplate("partUsage.xlsx")
     val evaluator = wb.getCreationHelper().createFormulaEvaluator()
     val sheet = wb.getSheetAt(0)
@@ -2388,9 +2421,9 @@ object ExcelUtility {
     }
     finishExcel(reportFilePath, pkg, wb)
   }
-  
+
   import Maintance.PartInventory
-  def partInventoryAlarm(partList:List[PartInventory], idMap:Map[String, Part2], title:String) = {
+  def partInventoryAlarm(partList: List[PartInventory], idMap: Map[String, Part2], title: String) = {
     val (reportFilePath, pkg, wb) = prepareTemplate("partInventoryAlarm.xlsx")
     val evaluator = wb.getCreationHelper().createFormulaEvaluator()
     val sheet = wb.getSheetAt(0)
