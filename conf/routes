@@ -204,6 +204,7 @@ PUT      /Part                                                                  
 DELETE   /Part/:id                                                                                   controllers.Maintance.deletePart(id)
 GET      /PartUsage                                                                                  controllers.Maintance.partUsage(outputTypeStr="html")
 GET      /PartUsage/excel                                                                            controllers.Maintance.partUsage(outputTypeStr="excel")
+GET      /PartUsage/json                                                                             controllers.Maintance.partUsageJson()
 DELETE   /PartUsage/:id                                                                              controllers.Maintance.deletePartUsage(id)
 PUT      /PartUsage                                                                                  controllers.Maintance.newPartUsage
 PUT      /UpdatePartUsage                                                                            controllers.Maintance.updatePartUsage

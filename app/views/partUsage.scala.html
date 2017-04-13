@@ -1,4 +1,4 @@
-@(partUsageList:List[PartUsage], partMap:Map[String, Part2])
+@()
 <div class="row">
     <div class="col-lg-12">
         <div class="panel panel-primary">
@@ -165,22 +165,7 @@
             				<th>備註</th>
             			</tr>
             		</thead>
-            		<tbody>
-            			@for(p<-partUsageList){
-            				<tr id="@p.id">
-            					<th>@p.id</th>
-            					<td>@partMap(p.getPartId).name</td>
-            					<td>@partMap(p.getPartId).chineseName</td>
-            					<td>@Monitor.map(Monitor.withName(p.monitor)).name</td>
-            					<td>@p.usage</td>
-            					<td>@p.getFreqDesc</td>
-            					<td>@p.startDate.toString("YYYY-MM-dd")</td>
-            					<td>@p.getNextReplaceDate.toString("YYYY-MM-dd")</td>
-            					<td>@ModelHelper.formatOptBool(Some(p.alarm))</td>
-            					<td>@ModelHelper.formatOptStr(p.nochange_reason)</td>
-            					<td>@ModelHelper.formatOptStr(p.remark)</td>
-            				</tr>
-            			}
+            		<tbody>            			
             		</tbody>
             	</table>          		
             </div>
@@ -418,7 +403,25 @@ $(document).ready(function() {
 			paging:   true,
 			info: true,
 			searching: true,
-			responsive: true
+			responsive: true,
+			ajax: {
+		        url: '/PartUsage/json',
+		        dataSrc: ''
+		    },
+		    columns: [
+		              { data: 'id' },
+		              { data: 'name' },
+		              { data: 'chineseName' },
+		              { data: 'monitor' },
+		              { data: 'usage' },
+		              { data: 'freqDesc' },
+		              { data: 'startDate' },
+		              { data: 'nextReplaceDate' },
+		              { data: 'alarm' },
+		              { data: 'nochange_reason' },
+		              { data: 'remark' }
+		          ]
+		    
 		} );
 
     	$('#partTable tbody').on('click', 'tr',
@@ -459,7 +462,7 @@ $(document).ready(function() {
     		}else{
     			var $trs = api.rows('.selected').data();
     		    var values={};
-    		    values['id']=$trs[0][0]; 
+    		    values['id']=$trs[0].id;
     				
     			$.ajax({
     				url : "/PartUsage/" + $trs[0][0],
@@ -489,7 +492,7 @@ $(document).ready(function() {
     			alert("請點擊選取要修改的料件");
     		}else{
     			var $trs = api.rows('.selected').data();
-    			app2.partUsage.id=$trs[0][0];    			
+    			app2.partUsage.id=$trs[0].id;    			
     		    $('#modifyPartModal').modal();    				
     		}
     	});   	

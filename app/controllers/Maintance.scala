@@ -657,16 +657,36 @@ object Maintance extends Controller {
 
   def partUsage(outputTypeStr: String) = Security.Authenticated {
     val outputType = OutputType.withName(outputTypeStr)
-    val parUsages = PartUsage.getList()
     outputType match {
       case OutputType.html =>
-        Ok(views.html.partUsage(PartUsage.getList(), Part.getIdMap()))
+        Ok(views.html.partUsage())
       case OutputType.excel =>
         val excelFile = ExcelUtility.partUsage(PartUsage.getList(), Part.getIdMap(), "物料使用紀錄表")
         Ok.sendFile(excelFile, fileName = _ =>
           play.utils.UriEncoding.encodePathSegment("物料使用紀錄表.xlsx", "UTF-8"),
           onClose = () => { Files.deleteIfExists(excelFile.toPath()) })
     }
+  }
+
+  case class PartUsageInfo(id: String, name: String, chineseName: String, monitor: String,
+                           usage: Int, freqDesc: String, startDate: String, nextReplaceDate: String, alarm: String, nochange_reason: String, remark: String)
+  def partUsageJson() = Security.Authenticated {
+    val partUsageList = PartUsage.getList()
+    implicit val write = Json.writes[PartUsageInfo]
+    val partMap = Part.getIdMap()
+    val partUsageInfoList = partUsageList map {
+      p =>
+        PartUsageInfo(p.id, partMap(p.getPartId).name, partMap(p.getPartId).chineseName,
+          Monitor.map(Monitor.withName(p.monitor)).name,
+          p.usage,
+          p.getFreqDesc,
+          p.startDate.toString("YYYY-MM-dd"),
+          p.getNextReplaceDate.toString("YYYY-MM-dd"),
+          ModelHelper.formatOptBool(Some(p.alarm)),
+          ModelHelper.formatOptStr(p.nochange_reason),
+          ModelHelper.formatOptStr(p.remark))
+    }
+    Ok(Json.toJson(partUsageInfoList))
   }
 
   def deletePartUsage(id: String) = Security.Authenticated {
@@ -1050,7 +1070,7 @@ object Maintance extends Controller {
         Ok(views.html.closedAlarmTicketReport(ticketWithRepairForm, usrMap))
       case OutputType.excel =>
         val title = s"結案查詢(${startStr}~${endStr})"
-        val excelFile = ExcelUtility.closedRepairTickets(ticketWithRepairForm, title,usrMap)
+        val excelFile = ExcelUtility.closedRepairTickets(ticketWithRepairForm, title, usrMap)
         Ok.sendFile(excelFile, fileName = _ =>
           play.utils.UriEncoding.encodePathSegment("結案查詢" + ".xlsx", "UTF-8"),
           onClose = () => { Files.deleteIfExists(excelFile.toPath()) })
