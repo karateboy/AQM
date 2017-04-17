@@ -335,6 +335,57 @@ object Maintance extends Controller {
       }
   }
 
+  case class TicketInfo(id: String, monitorType: String, monitor: String,
+                        submitDate: String, submitter: String, reason: String, owner: String, executeDate: String, ticketType: String,
+                        readyToClose: String, active: String, repairType:String, repairSubType:String)
+  def closeTicketJson = Security.Authenticated {
+    implicit request =>
+      val userInfoOpt = Security.getUserinfo(request)
+      if (userInfoOpt.isEmpty) {
+        Forbidden("Invalid access!")
+      } else {
+        val userInfo = userInfoOpt.get
+        val group = Group.getGroup(userInfo.groupID).get
+        val tickets = Ticket.ticketSubmittedByMe(userInfo.id)
+        //val ticketsOwnedByMe = 
+        val users = User.getAllUsers()
+        val usrMap = Map(users.map { u => (u.id.get -> u) }: _*)
+
+        implicit val write = Json.writes[TicketInfo]
+        val infoList = tickets map {
+          t =>
+            val monitorType = if (t.monitorType.isDefined)
+              MonitorType.map(t.monitorType.get).desp
+            else
+              "-"
+
+            val active = if (t.active) {
+              if (t.rejectReason.isDefined) {
+                s"駁回(${t.rejectReason.get})"
+              } else {
+                "否"
+              }
+            } else {
+              "是"
+            }
+            TicketInfo(id = t.id.toString,
+              monitor = Monitor.map(t.monitor).name,
+              monitorType = monitorType,
+              submitDate = t.submit_date.toString("MM-d HH:mm"),
+              submitter = usrMap(t.submiter_id).name,
+              reason = t.reason,
+              owner = usrMap(t.owner_id).name,
+              executeDate = t.executeDate.toString("MM-d"),
+              ticketType = TicketType.map(t.ticketType),
+              readyToClose = ModelHelper.formatOptBool(t.readyToClose),
+              active = active, 
+              repairType = ModelHelper.formatOptStr(t.repairType),
+              repairSubType = ModelHelper.formatOptStr(t.repairSubType))
+        }
+        Ok(Json.toJson(infoList))
+      }
+  }
+
   def closeTicketAction(idStr: String) = Security.Authenticated {
     implicit request =>
       val myself = request.user.id
@@ -376,8 +427,13 @@ object Maintance extends Controller {
                   bodyText = Some(msg),
                   bodyHtml = Some(htmlMsg))
 
-                MailerPlugin.send(email)
-                SmsSender.send(List(user), msg)
+                try{
+                  MailerPlugin.send(email)
+                  SmsSender.send(List(user), msg)
+                }catch{
+                  case ex:Throwable=>
+                    Logger.error("fail to send notification", ex)
+                }
               }
             }
         }
@@ -553,6 +609,15 @@ object Maintance extends Controller {
         },
         report => {
           MonitorJournal.updateReport(report)
+          //Update monitor abnormal report
+          val latestExplain = AbnormalReport.getLatestExplain(date)
+          val updatedExplain = latestExplain map {
+            entry => if(entry.monitor == monitor){
+              AbnormalEntry(monitor, entry.monitorType, entry.invalidHours, report.abnormal_desc)
+            }else
+              entry
+          }
+          AbnormalReport.updateReport(date, updatedExplain)
           Ok(Json.obj("ok" -> true))
         });
   }
@@ -1028,7 +1093,43 @@ object Maintance extends Controller {
             play.utils.UriEncoding.encodePathSegment("維修中案件" + ".xlsx", "UTF-8"),
             onClose = () => { Files.deleteIfExists(excel.toPath()) })
       }
+  }
 
+  case class RepairingTicketInfo(id: String, alarmTime: String, alarmCode: String, monitorType: String, monitor: String,
+                                 submitDate: String, submitter: String, reason: String, owner: String, executeDate: String, isDue: String)
+  def repairingAlarmTicketJson = Security.Authenticated {
+    val tickets = getActiveRepairTicketsByGroup(4)
+    val ticketWithAlarm =
+      for {
+        t <- tickets
+        arOpt = t.getRepairForm.alarm
+      } yield (t, arOpt)
+    val allUsers = User.getAllUsers()
+    val usrMap = Map(allUsers.map { u => (u.id.get -> u) }: _*)
+
+    implicit val writer = Json.writes[RepairingTicketInfo]
+    val repairingTicketInfoList = ticketWithAlarm map {
+      tAr =>
+        val t = tAr._1
+        val arOpt = tAr._2
+        val (alarmTime, alarmCode) = if (arOpt.isDefined)
+          (arOpt.get.time.toString("YYYY/MM/dd HH:mm"), MonitorStatus.map(arOpt.get.code).desp)
+        else
+          ("-", "-")
+        val monitorType = if (t.monitorType.isDefined)
+          MonitorType.map(t.monitorType.get).desp
+        else
+          "-"
+        val isDue = if (t.executeDate.isBefore(DateTime.yesterday))
+          "是"
+        else
+          "否"
+
+        RepairingTicketInfo(id = t.id.toString, alarmTime = alarmTime, alarmCode = alarmCode, monitor = Monitor.map(t.monitor).name, monitorType = monitorType,
+          submitDate = t.submit_date.toString("MM-d HH:mm"), submitter = usrMap(t.submiter_id).name, reason = t.reason,
+          owner = usrMap(t.owner_id).name, executeDate = t.executeDate.toString("MM-d"), isDue = isDue)
+    }
+    Ok(Json.toJson(repairingTicketInfoList))
   }
 
   def queryClosedRepairTicket = Security.Authenticated {

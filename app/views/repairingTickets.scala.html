@@ -29,38 +29,6 @@
 	</tr>
 </thead>
 <tbody>
-@for((t,arOpt) <- tickets){
-	<tr>
-	@if(canChangeOwner){
-		<td><input type="checkbox" value="@t.id"></td>		
-	}	
-	
-		<td><a href="#" onClick="loadPage('/Ticket/'+'@t.id','維修保養','案件細節')">@t.id</a></td>
-		@if(arOpt.isDefined){
-			<td>@arOpt.get.time.toString("YYYY/MM/dd HH:mm")</td>
-			<td>@MonitorStatus.map(arOpt.get.code).desp</td>
-		}else{
-			<td>-</td>
-			<td>-</td>			
-		}
-		<td>@Monitor.map(t.monitor).name</td>
-		@if(t.monitorType.isEmpty){
-			<td>-</td>
-		}else{
-			<td>@MonitorType.map(t.monitorType.get).desp</td>
-		}		
-		<td>@t.submit_date.toString("MM-d HH:mm")</td>
-		<td>@userMap(t.submiter_id).name</td>
-		<td>@t.reason</td>
-		<td>@userMap(t.owner_id).name</td>
-		<td>@t.executeDate.toString("MM-d")</td>
-		@if(t.executeDate.isBefore(DateTime.yesterday)){
-			<td class="text-danger">是</td>
-		}else{
-			<td>否</td>
-		}
-	</tr>
-}
 </tbody>
 </table>
 <script>
@@ -76,7 +44,37 @@ $(document ).ready(function() {
 			"order": [[ 1, 'desc' ]]
 		}else{
 			"order": [[ 0, 'desc' ]]
-		}
+		},
+		ajax: {
+		        url: '/ReparingAlarmTicket/json',
+		        dataSrc: ''
+		    },
+		    columns: [
+		    		@if(canChangeOwner){
+		    			{
+		    				data: 'id',
+		    				render: function ( data, type, row ) {
+        						return `<input type="checkbox" value='${data}'>`;
+    						}
+		    			},		
+					}
+		              { 
+		              	data: 'id',
+		              	render: function ( data, type, row ) {
+        						return `<a href="#" onClick="loadPage('/Ticket/${data}','維修保養','案件細節')">${data}</a>`;
+    						}		               
+		              },
+		              { data: 'alarmTime' },
+		              { data: 'alarmCode' },
+		              { data: 'monitorType' },
+		              { data: 'monitor' },
+		              { data: 'submitDate' },
+		              { data: 'submitter' },
+		              { data: 'reason' },
+		              { data: 'owner' },
+		              { data: 'executeDate' },
+		              { data: 'isDue' }
+		          ]
 	} );
 });
 </script>

@@ -875,32 +875,11 @@ object Report extends Controller {
       val userInfo = Security.getUserinfo(request).get
       val group = Group.getGroup(userInfo.groupID).get
       val date = DateTime.parse(dateStr)
-      val reportOpt = AbnormalReport.getReportFromDb(date)
-      val report =
-        if (reportOpt.isEmpty) {
-          AbnormalReport.newReport(date)
-          AbnormalReport(date, Seq.empty[AbnormalEntry])
-        } else
-          reportOpt.get
-
-      import scala.collection.mutable.Map
-      val explainMap = Map.empty[Monitor.Value, Map[MonitorType.Value, String]]
-      for (ex <- report.report) {
-        val mtMap = explainMap.getOrElseUpdate(ex.monitor, Map.empty[MonitorType.Value, String])
-        mtMap.put(ex.monitorType, ex.explain)
-      }
-
-      val latestReport = AbnormalReport(date, AbnormalReport.generate(date))
-      val reportWithExplain = latestReport.report.map {
-        ex =>
-          val mtMap = explainMap.getOrElse(ex.monitor, Map.empty[MonitorType.Value, String])
-          val explain = mtMap.getOrElse(ex.monitorType, "")
-          AbnormalEntry(ex.monitor, ex.monitorType, ex.invalidHours, explain)
-      }
+      val latestExplain = AbnormalReport.getLatestExplain(date)
       val outputType = OutputType.withName(outputTypeStr)
 
       val title = "測站異常狀況反應表"
-      val output = views.html.monitorAbnormalReport(date, reportWithExplain)
+      val output = views.html.monitorAbnormalReport(date, latestExplain)
 
       outputType match {
         case OutputType.html =>
@@ -911,7 +890,7 @@ object Report extends Controller {
               play.utils.UriEncoding.encodePathSegment(title + date.toString("YYYYMMdd") + ".pdf", "UTF-8"))
 
         case OutputType.excel =>
-          val excelFile = ExcelUtility.monitorAbnormalReport(date, reportWithExplain)
+          val excelFile = ExcelUtility.monitorAbnormalReport(date, latestExplain)
           Ok.sendFile(excelFile, fileName = _ =>
             play.utils.UriEncoding.encodePathSegment(title + date.toString("YYMMdd") + ".xlsx", "UTF-8"),
             onClose = () => { Files.deleteIfExists(excelFile.toPath()) })

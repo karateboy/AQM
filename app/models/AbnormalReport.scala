@@ -8,16 +8,16 @@ import play.api.libs.json._
 import play.api.libs.functional.syntax._
 import play.api.libs.json.Json
 
-case class AbnormalEntry(monitor:Monitor.Value, monitorType:MonitorType.Value, invalidHours:String, explain:String)
-case class AbnormalReport(date:DateTime, report:Seq[AbnormalEntry])
+case class AbnormalEntry(monitor: Monitor.Value, monitorType: MonitorType.Value, invalidHours: String, explain: String)
+case class AbnormalReport(date: DateTime, report: Seq[AbnormalEntry])
 object AbnormalReport {
   implicit val abEntriesReads = Json.reads[AbnormalEntry]
   implicit val abEntriesWrites = Json.writes[AbnormalEntry]
-  
+
   val defaultExplain = Seq.empty[AbnormalEntry]
-  
-  def newReport(date:DateTime)(implicit session: DBSession = AutoSession)={
-    DB localTx{ implicit session=>
+
+  def newReport(date: DateTime)(implicit session: DBSession = AutoSession) = {
+    DB localTx { implicit session =>
       val explain = Json.toJson(defaultExplain).toString
       sql"""
         Insert into AbnormalReport([date],[explain])
@@ -25,23 +25,49 @@ object AbnormalReport {
         """.update.apply
     }
   }
-  
-  def getReportFromDb(date:DateTime)(implicit session: DBSession = AutoSession)={
-    DB readOnly { implicit session =>
+
+  def getReportFromDb(date: DateTime)(implicit session: DBSession = AutoSession) = {
+    val reportOpt = DB readOnly { implicit session =>
       sql"""
         Select * 
         From AbnormalReport
         Where date = ${date}
-        """.map{
-          r=>
-            val report = Json.parse(r.string(2)).validate[Seq[AbnormalEntry]].get
-            AbnormalReport(r.date(1), report)
-        }.single.apply
+        """.map {
+        r =>
+          val report = Json.parse(r.string(2)).validate[Seq[AbnormalEntry]].get
+          AbnormalReport(r.date(1), report)
+      }.single.apply
     }
+
+    if (reportOpt.isEmpty) {
+      AbnormalReport.newReport(date)
+      AbnormalReport(date, Seq.empty[AbnormalEntry])
+    } else
+      reportOpt.get
   }
 
-  def updateReport(date:DateTime, explain:Seq[AbnormalEntry])(implicit session: DBSession = AutoSession)={
-    DB localTx{ implicit session=>
+  def getExplainMap(report: AbnormalReport) = {
+    import scala.collection.mutable.Map
+    val explainMap = Map.empty[Monitor.Value, Map[MonitorType.Value, String]]
+    for (ex <- report.report) {
+      val mtMap = explainMap.getOrElseUpdate(ex.monitor, Map.empty[MonitorType.Value, String])
+      mtMap.put(ex.monitorType, ex.explain)
+    }
+    explainMap
+  }
+
+  def getLatestExplain(date:DateTime) = {
+    val explainMap = getExplainMap(getReportFromDb(date)) 
+    val latestReport = AbnormalReport(date, AbnormalReport.generate(date))
+    latestReport.report.map {
+      ex =>
+        val mtMap = explainMap.getOrElse(ex.monitor, Map.empty[MonitorType.Value, String])
+        val explain = mtMap.getOrElse(ex.monitorType, "")
+        AbnormalEntry(ex.monitor, ex.monitorType, ex.invalidHours, explain)
+    }
+  }
+  def updateReport(date: DateTime, explain: Seq[AbnormalEntry])(implicit session: DBSession = AutoSession) = {
+    DB localTx { implicit session =>
       val explainJson = Json.toJson(explain).toString
       sql"""
         Update AbnormalReport
@@ -50,7 +76,7 @@ object AbnormalReport {
         """.update.apply
     }
   }
-  
+
   def generate(date: DateTime)(implicit session: DBSession = AutoSession) = {
     import Record._
     val pairs =
@@ -69,17 +95,17 @@ object AbnormalReport {
               (hr, MonitorStatus.map(data._2.get).desp)
 
           def genDesc(start: Int, end: Int, status: String, list: List[(Int, String)]): String = {
-              def output = {
-                if(start != end)
-                  s"${status}(${start}-${end})"
-                else
-                  s"${status}(${start})"
-              }
+            def output = {
+              if (start != end)
+                s"${status}(${start}-${end})"
+              else
+                s"${status}(${start})"
+            }
             list match {
               case Nil =>
-                 output 
+                output
               case head :: tail =>
-                if (status != head._2 || ((end+1) != head._1))
+                if (status != head._2 || ((end + 1) != head._1))
                   output + " ," + genDesc(head._1, head._1, head._2, tail)
                 else
                   genDesc(start, head._1, head._2, tail)

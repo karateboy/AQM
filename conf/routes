@@ -179,6 +179,7 @@ POST     /UpdateForm/:ID                                                        
 POST     /UpdateRepairForm/:ID                                                                       controllers.Maintance.updateRepairForm(ID: Int)
 GET      /CloseTicket                                                                                controllers.Maintance.closeTicket(outputTyeStr="html")
 GET      /CloseTicket/excel                                                                          controllers.Maintance.closeTicket(outputTyeStr="excel")
+GET      /CloseTicket/json                                                                           controllers.Maintance.closeTicketJson
 POST     /CloseTicket/:ids                                                                           controllers.Maintance.closeTicketAction(ids)
 POST     /ResumeTicket/:ids/:reason                                                                  controllers.Maintance.resumeTicketAction(ids, reason)
 POST     /TakeOverTicket/:ids                                                                        controllers.Maintance.takeOverTicketAction(ids)
@@ -232,6 +233,7 @@ POST     /AlarmToTicket                                                         
 GET      /ManualAlarmTicket                                                                          controllers.Maintance.manualAlarmTicket
 GET      /ReparingAlarmTicket                                                                        controllers.Maintance.repairingAlarmTicket(outputTypeStr="html")
 GET      /ReparingAlarmTicket/excel                                                                  controllers.Maintance.repairingAlarmTicket(outputTypeStr="excel")
+GET      /ReparingAlarmTicket/json                                                                   controllers.Maintance.repairingAlarmTicketJson
 GET      /ClosedRepairTicket                                                                         controllers.Maintance.queryClosedRepairTicket
 GET      /ClosedRepairTicketReport/:monitors/:start/:end                                             controllers.Maintance.closedRepairTicketReport(monitors, start, end, outputTypeStr="html")
 GET      /Excel/ClosedRepairTicketReport/:monitors/:start/:end                                       controllers.Maintance.closedRepairTicketReport(monitors, start, end, outputTypeStr="excel")

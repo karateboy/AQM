@@ -1,0 +1,75 @@
+@* ticketReport Template File *@
+@(url: String, showSelect:Boolean=false)
+<table id="ticketReport" class="table">
+<thead>
+	<tr>
+	@if(showSelect){
+		<th>選擇</th>		
+	}
+		<th>編號</th>
+		<th>立案時間</th>
+		<th>立案人</th>
+		<th>種類</th>		
+		<th>測站</th>
+		<th>測項</th>
+		<th>原因</th>
+		<th>分類</th>
+		<th>細分類</th>
+		<th>負責人</th>
+		<th>執行日期</th>
+		<th>待結案</th>
+		<th>已結案</th>
+		<th>下載表單</th>
+	</tr>
+</thead>
+<tbody></tbody>
+</table>
+<script>
+$(document ).ready(function() {
+	$('#ticketReport').dataTable( {
+		responsive: true,
+		language: {
+			url: '@routes.Assets.at("localization/zh_tw.json")',							
+		},
+		paging: true,
+		ajax: {
+		        url: '@url',
+		        dataSrc: ''
+		},
+		columns: [
+		    		@if(showSelect){
+		    			{
+		    				data: 'id',
+		    				render: function ( data, type, row ) {
+        						return `<input type="checkbox" value='${data}'>`;
+    						}
+		    			},		
+					}
+		            { 
+		              	data: 'id',
+		              	render: function ( data, type, row ) {
+        						return `<a href="#" onClick="loadPage('/Ticket/${data}','維修保養','案件細節')">${data}</a>`;
+    						}		               
+		            },
+		            { data: 'submitDate' },
+		            { data: 'submitter' },
+		            { data: 'ticketType' },
+		            { data: 'monitor' },
+		            { data: 'monitorType' },		              
+		            { data: 'reason' },
+		            { data: 'repairType' },
+		            { data: 'repairSubType' },
+		            { data: 'owner' },
+		            { data: 'executeDate' },
+		            { data: 'readyToClose' },
+		            { data: 'active' },
+		            { 
+		              	data: 'id',
+		              	render: function ( data, type, row ) {		              		
+        						return `<a href="/DownloadForm/${data}"><i class="fa fa-file-excel-o fa-2x"></i>`;
+    						}		               
+		            }
+		          ]
+	} );
+});
+</script>

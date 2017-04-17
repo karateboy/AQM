@@ -8,7 +8,7 @@
         	<div align="right">            			
 				<label class="btn btn-outline" data-toggle="tooltip" data-placement="bottom" title="Excel"><a href="/CloseTicket/excel" id="downloadExcel"><i class="fa fa-file-excel-o fa-2x"></i></a></label>            			
 			</div>
- 				@ticketReport(tickets, userMap, true)
+ 				@ticketReportAjax("/CloseTicket/json", true)
  				<div class="alert alert-info">
  					<p>結束案件: 使用者可以結束自己建立的案件</p> 
  					<p>駁回案件: 將案件發還給負責人處理</p>
