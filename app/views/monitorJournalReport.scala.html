@@ -1,5 +1,5 @@
 @* monitorJournalReport Template File *@
-@(report: MonitorJournal, invalidHour: List[(MonitorType.Value, List[MonitorInvalidHour])], userList:List[User])
+@(report: MonitorJournal, entires:Seq[AbnormalEntry], userList:List[User])
 <h3>測站工作日誌:@report.date.toString("YYYY-MM-d")</h3>
 <form class="form-horizontal">
 	<div class="form-group">
@@ -46,13 +46,7 @@
 		<div class="col-lg-8"  align="left">		
 			<textarea class="form-control" rows="5" id="event_desc">@report.event_desc</textarea>
 		</div>								
-	</div>
-	<div class="form-group">
-		<div class="col-lg-2 col-lg-offset-2">
-			<button type="button" class="btn btn-block btn-primary" id="save">儲存</button>
-		</div>
-	</div>
-	
+	</div>	
 </form>
 
 <table class="table table-striped" id="abnormalTab">
@@ -60,21 +54,22 @@
 	<tr>
 		<th>測項</th>
 		<th>異常小時</th>
-		<th>註記狀態</th>
+		<th>異常原因及故障檢修工作內容</th>
 	</tr>
 </thead>
 <tbody>
-@for(mt<-invalidHour){
-	@for(mih <- mt._2){		
-		<tr>
-			<td class="col-lg-1">@MonitorType.map(mt._1).desp</td>
-			<td class="col-lg-3">@mih.invalidHour</td>
-			<td class="col-lg-3">@mih.status</td>
-		</tr>
-	}
+@for(e<-entires){
+	<tr>
+		<td class="col-lg-1">@MonitorType.map(e.monitorType).desp</td>
+		<td class="col-lg-3">@e.invalidHours</td>
+		<td class="col-lg-7"><input type="text" style="width:100%" id="@e.monitor:@e.monitorType" value="@e.explain"></td>
+	</tr>
 }
 </tbody>
 </table>
+	<div class="col-lg-2 col-lg-offset-1">
+		<button type="button" class="btn btn-block btn-primary" id="save">儲存</button>
+	</div>
 <script>
 	var report_date = '@report.date.toString("YYYY-MM-d")';
 	var report_monitor = '@report.monitor';
@@ -91,7 +86,7 @@ $(document).ready(function() {
     	locale: "zh-TW"
 	});
 	
-	var routine_desc, abnormal_desc, event_desc, operator_id, enter_time, out_time;
+	var routine_desc, abnormal_desc, event_desc, operator_id, enter_time, out_time, entries;
 	function validate(){
 		var user = $("#operator option:selected");
 		console.log(user);
@@ -107,6 +102,21 @@ $(document).ready(function() {
 	    enter_time = $("#enter_time").val();
 	    out_time = $("#out_time").val();
 
+		var $inputs = $("#abnormalTab :input");
+		entries = [];
+		for(var i=0;i<$inputs.length;i++){
+			var input = $inputs.eq(i);
+			var id = input.prop("id");
+			var param = id.split(":");
+			var entry = {
+				monitor:param[0], 
+				monitorType:param[1],
+				invalidHours:"", 
+				explain:input.val()
+			};
+			entries.push(entry);
+		}
+	    
 	    return true;
 	}
 	
@@ -122,10 +132,9 @@ $(document).ready(function() {
 			abnormal_desc:abnormal_desc,
 			event_desc:event_desc,
 			enter_time:enter_time,
-			out_time:out_time
+			out_time:out_time,
+			entries:entries
 		};
-
-		console.log(report);
 		
 		$.ajax({
 			url: "/SaveMonitorJournalReport/"+report_monitor+"/"+report_date,

@@ -2055,7 +2055,7 @@ object ExcelUtility {
     finishExcel(reportFilePath, pkg, wb)
   }
 
-  def monitorJournalReport(report: MonitorJournal, invalidHourList: List[(MonitorType.Value, List[MonitorInvalidHour])], userList: List[User]) = {
+  def monitorJournalReport(report: MonitorJournal, entries:Seq[AbnormalEntry], userList: List[User]) = {
     val (reportFilePath, pkg, wb) = prepareTemplate("monitorJournal.xlsx")
     val evaluator = wb.getCreationHelper().createFormulaEvaluator()
 
@@ -2086,18 +2086,17 @@ object ExcelUtility {
 
     var startRow = 24
     for {
-      mt <- invalidHourList
-      ih <- mt._2
+      entry <- entries
     } {
       val row = sheet.createRow(startRow)
       def fillCell(i: Int, v: String) = {
         row.createCell(i).setCellStyle(style)
         row.getCell(i).setCellValue(v)
       }
-      fillCell(0, MonitorType.map(mt._1).desp)
+      fillCell(0, MonitorType.map(entry.monitorType).desp)
       fillCell(1, report.date.toString("MM/dd"))
-      fillCell(2, ih.invalidHour)
-      fillCell(3, ih.status)
+      fillCell(2, entry.invalidHours)
+      fillCell(3, entry.explain)
 
       startRow += 1
     }
@@ -2316,6 +2315,23 @@ object ExcelUtility {
       row.createCell(8).setCellValue(ModelHelper.formatOptStr(ticket.repairSubType))
       row.createCell(9).setCellValue(userMap(ticket.owner_id).name)
       row.createCell(10).setCellValue(ticket.executeDate.toString("MM-d"))
+      val form = ticket.getRepairForm
+      row.createCell(11).setCellValue(form.explain)
+      row.createCell(12).setCellValue(form.result)
+      val resultOptStr = List(
+        if (form.getBool(3)) Some("儀器異常")
+        else
+          None,
+        if (form.getBool(4)) Some("儀器無異常")
+        else
+          None,
+        if (form.getBool(5)) Some("待料")
+        else
+          None)
+
+      val result = resultOptStr.flatMap { x => x }.mkString("/")
+      row.createCell(13).setCellValue(result)
+      row.createCell(14).setCellValue(form.end)
     }
 
     finishExcel(reportFilePath, pkg, wb)

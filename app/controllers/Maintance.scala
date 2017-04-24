@@ -337,7 +337,7 @@ object Maintance extends Controller {
 
   case class TicketInfo(id: String, monitorType: String, monitor: String,
                         submitDate: String, submitter: String, reason: String, owner: String, executeDate: String, ticketType: String,
-                        readyToClose: String, active: String, repairType:String, repairSubType:String)
+                        readyToClose: String, active: String, repairType: String, repairSubType: String)
   def closeTicketJson = Security.Authenticated {
     implicit request =>
       val userInfoOpt = Security.getUserinfo(request)
@@ -378,7 +378,7 @@ object Maintance extends Controller {
               executeDate = t.executeDate.toString("MM-d"),
               ticketType = TicketType.map(t.ticketType),
               readyToClose = ModelHelper.formatOptBool(t.readyToClose),
-              active = active, 
+              active = active,
               repairType = ModelHelper.formatOptStr(t.repairType),
               repairSubType = ModelHelper.formatOptStr(t.repairSubType))
         }
@@ -427,11 +427,11 @@ object Maintance extends Controller {
                   bodyText = Some(msg),
                   bodyHtml = Some(htmlMsg))
 
-                try{
+                try {
                   MailerPlugin.send(email)
                   SmsSender.send(List(user), msg)
-                }catch{
-                  case ex:Throwable=>
+                } catch {
+                  case ex: Throwable =>
                     Logger.error("fail to send notification", ex)
                 }
               }
@@ -561,23 +561,18 @@ object Maintance extends Controller {
       val monitor = Monitor.withName(monitorStr)
       val date = DateTime.parse(dateStr)
 
-      val reportOpt = MonitorJournal.getReportFromDb(monitor, date)
-      val report =
-        if (reportOpt.isEmpty) {
-          MonitorJournal.newReport(monitor, date)
-          val enter_time: java.sql.Time = DateTime.parse("9:00", DateTimeFormat.forPattern("HH:mm"))
-          val out_time: java.sql.Time = DateTime.parse("17:00", DateTimeFormat.forPattern("HH:mm"))
+      val report = MonitorJournal.getReportFromDb(monitor, date)
 
-          MonitorJournal(date, monitor, "", "", "", None, enter_time, out_time)
-        } else
-          reportOpt.get
+      val abnormalEntries = AbnormalReport.getLatestExplain(date)
 
-      val invalidHourList = MonitorJournal.getInvalidHourList(monitor, date)
+      val monitorAbnormalEntries = abnormalEntries.filter { entry => entry.monitor == monitor }
+
+      //val invalidHourList = MonitorJournal.getInvalidHourList(monitor, date)
 
       val outputType = OutputType.withName(outputTypeStr)
 
       val title = "測站工作日誌"
-      val output = views.html.monitorJournalReport(report, invalidHourList, User.getAdminUsers())
+      val output = views.html.monitorJournalReport(report, monitorAbnormalEntries, User.getAdminUsers())
 
       outputType match {
         case OutputType.html =>
@@ -587,7 +582,7 @@ object Maintance extends Controller {
             fileName = _ =>
               play.utils.UriEncoding.encodePathSegment(title + date.toString("YYYYMMdd") + ".pdf", "UTF-8"))
         case OutputType.excel =>
-          val excelFile = ExcelUtility.monitorJournalReport(report, invalidHourList, User.getAdminUsers())
+          val excelFile = ExcelUtility.monitorJournalReport(report, monitorAbnormalEntries, User.getAdminUsers())
           Ok.sendFile(excelFile, fileName = _ =>
             play.utils.UriEncoding.encodePathSegment(title + date.toString("YYMMdd") + ".xlsx", "UTF-8"),
             onClose = () => { Files.deleteIfExists(excelFile.toPath()) })
@@ -611,13 +606,18 @@ object Maintance extends Controller {
           MonitorJournal.updateReport(report)
           //Update monitor abnormal report
           val latestExplain = AbnormalReport.getLatestExplain(date)
-          val updatedExplain = latestExplain map {
-            entry => if(entry.monitor == monitor){
-              AbnormalEntry(monitor, entry.monitorType, entry.invalidHours, report.abnormal_desc)
-            }else
-              entry
+          if (report.entries.isDefined) {
+            val abnormalEntries = report.entries.get
+            val updatedExplain = latestExplain map {
+              entry =>
+                val matchedOpt = abnormalEntries.find { updatedEntry => updatedEntry.monitor == entry.monitor &&
+                  updatedEntry.monitorType == entry.monitorType}
+                
+                matchedOpt.getOrElse(entry)
+            }
+            AbnormalReport.updateReport(date, updatedExplain)
           }
-          AbnormalReport.updateReport(date, updatedExplain)
+          
           Ok(Json.obj("ok" -> true))
         });
   }

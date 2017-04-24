@@ -10,50 +10,62 @@ import play.api.libs.json.Json
 import java.sql.Time
 import scala.language.implicitConversions
 
-case class MonitorJournalJson(date:String, monitor:Monitor.Value,  
-    routine_desc:String, abnormal_desc:String, event_desc:String, operator_id:Option[Int], enter_time:String, out_time:String)
-    
-case class MonitorJournal(date:DateTime, monitor:Monitor.Value,  
-    routine_desc:String, abnormal_desc:String, event_desc:String, operator_id:Option[Int], enter_time:Time, out_time:Time)
- 
-case class MonitorInvalidHour(invalidHour:String, status:String)
+case class MonitorJournalJson(date: String, monitor: Monitor.Value,
+                              routine_desc: String, abnormal_desc: String, event_desc: String, operator_id: Option[Int], 
+                              enter_time: String, out_time: String, entries: Option[Seq[AbnormalEntry]])
+
+case class MonitorJournal(date: DateTime, monitor: Monitor.Value,
+                          routine_desc: String, abnormal_desc: String, event_desc: String, operator_id: Option[Int], enter_time: Time, out_time: Time)
+
+case class MonitorInvalidHour(invalidHour: String, status: String)
 
 object MonitorJournal {
+  implicit val abRead = Json.reads[AbnormalEntry]
   implicit val mjRead = Json.reads[MonitorJournalJson]
-  implicit def jsonConvert(j:MonitorJournalJson)={
-    MonitorJournal(DateTime.parse(j.date), j.monitor, j.routine_desc, j.abnormal_desc, j.event_desc, j.operator_id, 
-        DateTime.parse(j.enter_time, DateTimeFormat.forPattern("HH:mm")), 
-        DateTime.parse(j.out_time, DateTimeFormat.forPattern("HH:mm")))
+  implicit def jsonConvert(j: MonitorJournalJson) = {
+    MonitorJournal(DateTime.parse(j.date), j.monitor, j.routine_desc, j.abnormal_desc, j.event_desc, j.operator_id,
+      DateTime.parse(j.enter_time, DateTimeFormat.forPattern("HH:mm")),
+      DateTime.parse(j.out_time, DateTimeFormat.forPattern("HH:mm")))
   }
-  
-  def newReport(monitor:Monitor.Value, date:DateTime)(implicit session: DBSession = AutoSession)={
-    val enter_time:java.sql.Time = DateTime.parse("9:00", DateTimeFormat.forPattern("HH:mm"))
-    val out_time:java.sql.Time = DateTime.parse("17:00", DateTimeFormat.forPattern("HH:mm"))
 
-    DB localTx{ implicit session=>
+  def newReport(monitor: Monitor.Value, date: DateTime)(implicit session: DBSession = AutoSession) = {
+    val enter_time: java.sql.Time = DateTime.parse("9:00", DateTimeFormat.forPattern("HH:mm"))
+    val out_time: java.sql.Time = DateTime.parse("17:00", DateTimeFormat.forPattern("HH:mm"))
+
+    DB localTx { implicit session =>
       sql"""
         Insert into MonitorJournal([date],[DP_NO],[routine_desc],[abnormal_desc],[event_desc],[operator_id],[enter_time],[out_time])
         values(${date.toString("YYYY-MM-dd")}, ${monitor.toString}, '', '', '', ${None}, ${enter_time}, ${out_time})
         """.update.apply
     }
   }
-  
-  def getReportFromDb(monitor:Monitor.Value, date:DateTime)(implicit session: DBSession = AutoSession)={
-    DB readOnly { implicit session =>
+
+  def getReportFromDb(monitor: Monitor.Value, date: DateTime)(implicit session: DBSession = AutoSession) = {
+    val reportOpt = DB readOnly { implicit session =>
       sql"""
         Select * 
         From MonitorJournal
         Where date = ${date} and DP_NO = ${monitor.toString}
-        """.map{
-          r=>
-            MonitorJournal(r.date(1), Monitor.withName(r.string(2)), r.string(3), r.string(4), 
-                r.string(5), r.intOpt(6), r.time(7), r.time(8))
-        }.single.apply
+        """.map {
+        r =>
+          MonitorJournal(r.date(1), Monitor.withName(r.string(2)), r.string(3), r.string(4),
+            r.string(5), r.intOpt(6), r.time(7), r.time(8))
+      }.single.apply
     }
+    
+    if (reportOpt.isEmpty) {
+      MonitorJournal.newReport(monitor, date)
+      val enter_time: java.sql.Time = DateTime.parse("9:00", DateTimeFormat.forPattern("HH:mm"))
+      val out_time: java.sql.Time = DateTime.parse("17:00", DateTimeFormat.forPattern("HH:mm"))
+
+      MonitorJournal(date, monitor, "", "", "", None, enter_time, out_time)
+    } else
+      reportOpt.get
+
   }
 
-  def updateReport(report : MonitorJournal)(implicit session: DBSession = AutoSession)={
-    DB localTx{ implicit session=>
+  def updateReport(report: MonitorJournal)(implicit session: DBSession = AutoSession) = {
+    DB localTx { implicit session =>
       sql"""
         Update MonitorJournal
         Set [routine_desc]=${report.routine_desc}
@@ -77,8 +89,7 @@ object MonitorJournal {
           r <- mtRecord
           hr = r._2
           data = r._1 if (data._1.isDefined && data._2.isDefined && !MonitorStatus.isNormalStat(data._2.get))
-        } yield 
-          (hr, MonitorStatus.map(data._2.get).desp)
+        } yield (hr, MonitorStatus.map(data._2.get).desp)
 
       def genDesc(start: Int, end: Int, status: String, list: List[(Int, String)]): List[MonitorInvalidHour] = {
         def output = {
@@ -87,13 +98,13 @@ object MonitorJournal {
           else
             MonitorInvalidHour(s"${start}", s"${status}")
         }
-        
+
         list match {
           case Nil =>
-            output::Nil
+            output :: Nil
           case head :: tail =>
             if (status != head._2)
-              output::genDesc(head._1, head._1, head._2, tail)
+              output :: genDesc(head._1, head._1, head._2, tail)
             else
               genDesc(start, head._1, head._2, tail)
         }
@@ -115,6 +126,5 @@ object MonitorJournal {
 
     l.toList
   }
-  
 
 }
