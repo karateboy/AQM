@@ -268,12 +268,12 @@ $( document ).ready(function() {
 		var diff = end.getTime()-start.getTime();
 		var workload = monitors.length * monitorTypes.length * diff;
 		if(reportUnit == "ten_min"){
-			if(workload >30 * 24 * 60 * 60 * 1000){
+			if(workload > 4 * 31 * 24 * 60 * 60 * 1000){
 				alert("請降低測站/測項數目/查詢區間");
 				return false;
 			}
 		}else if(reportUnit == "min" || reportUnit == "ten_min"){			
-			if(workload > 31 * 24*60*60*1000){
+			if(workload > 4 * 31 * 24*60*60*1000){
 				alert("請降低測站/測項數目/查詢區間");
 				return false;
 			}			

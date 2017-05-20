@@ -275,7 +275,7 @@ object Auditor {
         if (isOk(pm10)) {
           if (pm10._1.get > SystemConfig.getPM10Threshold()) {
             invalid = true
-            targetStat.setStat(A214, "032")
+            targetStat.setStat(A214, "m99")
           }
         }
       }
