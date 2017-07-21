@@ -272,16 +272,14 @@ object Auditor {
 
       def checkPm10 = {
         val pm10 = Record.monitorTypeProject2(A214)(record)
-        if (isOk(pm10)) {
-          if (pm10._1.get > SystemConfig.getPM10Threshold()) {
-            invalid = true
-            targetStat.setStat(A214, "m99")
-          }
+        if (pm10._1.get > SystemConfig.getPM10Threshold()) {
+          invalid = true
+          targetStat.setStat(A214, "M99")
         }
       }
-      
+
       checkPm10
-      
+
       //Save
       if (invalid)
         targetStat.chk = Some("BAD")
