@@ -411,7 +411,7 @@ object Ticket {
     import java.sql._
 
     val inputStream = new FileInputStream(photo)
-    val bytesBinder = ParameterBinder[InputStream](
+    val bytesBinder = ParameterBinder(
       inputStream,
       binder = (stmt: PreparedStatement, idx: Int) => stmt.setBinaryStream(idx, inputStream, photo.length))
 
@@ -428,7 +428,7 @@ object Ticket {
     import java.sql._
 
     val inputStream = new FileInputStream(photo)
-    val bytesBinder = ParameterBinder[InputStream](
+    val bytesBinder = ParameterBinder(
       inputStream,
       binder = (stmt: PreparedStatement, idx: Int) => stmt.setBinaryStream(idx, inputStream, photo.length))
 
