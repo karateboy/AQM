@@ -21,8 +21,8 @@
 	            			<label class="col-lg-1 control-label">測站</label>
 	            			<div class="col-lg-11">
 	            				<div class="btn-group" data-toggle="buttons">	            					            				
-	            					@for(m<-Monitor.instrumentMvList(privilege)){
-	            						@if(m == Monitor.instrumentMvList(privilege).head){
+	            					@for(m<-Monitor.myMvList(privilege)){
+	            						@if(m == Monitor.myMvList(privilege).head){
 	            							<label class="btn btn-outline btn-primary dim active">
 												<input type="radio" name="monitor" id="@m" checked>@Monitor.getDisplayName(m)</label>
 	            						}else{
