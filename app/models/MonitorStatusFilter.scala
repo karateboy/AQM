@@ -37,7 +37,7 @@ object MonitorStatusFilter extends Enumeration {
     Calbrating -> MonitorStatus.CALBRATION_STAT,
     Calbration_Fail -> MonitorStatus.CALBRATION_FAILED,
     Maintance -> MonitorStatus.MAINTANCE_STAT,
-    InvalidData -> MonitorStatus.INVALID_DATA,
+    InvalidData -> MonitorStatus.MAINTANCE_STAT,
     OverInternal -> MonitorStatus.CALBRATION_DIVERSION_STAT,
     DataLost -> MonitorStatus.DATA_LOSS_STAT,
     ValidData -> MonitorStatus.NORMAL_STAT)
@@ -66,14 +66,14 @@ object MonitorStatusFilter extends Enumeration {
         MonitorStatus.isMaintance(stat)
 
       case MonitorStatusFilter.InvalidData =>
-        MonitorStatus.isInvalidData(stat)
+        MonitorStatus.isError(stat)
 
       case MonitorStatusFilter.OverInternal =>
         MonitorStatus.isOverInternal(stat)
-        
+
       case MonitorStatusFilter.DataLost =>
         MonitorStatus.isDataLost(stat)
-        
+
       case MonitorStatusFilter.ValidData =>
         MonitorStatus.isValid(stat)
     }

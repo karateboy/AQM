@@ -79,7 +79,7 @@ object MonitorStatus {
 
   def isNormalStat(s: String) = {
     val tagInfo = getTagInfo(s)
-    val VALID_STATS = List(NORMAL_STAT, OVER_STAT, BELOW_STAT, CALBRATION_DIVERSION_STAT).map(getTagInfo)
+    val VALID_STATS = List(NORMAL_STAT, OVER_STAT, BELOW_STAT, CALBRATION_DIVERSION_STAT, OVERRANGE_DATA).map(getTagInfo)
 
     tagInfo.statusType match {
       case StatusType.Internal =>
@@ -96,7 +96,7 @@ object MonitorStatus {
 
   def isValid(s: String) = {
     val tagInfo = getTagInfo(s)
-    val VALID_STATS = List(NORMAL_STAT, OVER_STAT, BELOW_STAT, CALBRATION_DIVERSION_STAT).map(getTagInfo)
+    val VALID_STATS = List(NORMAL_STAT, OVER_STAT, BELOW_STAT, CALBRATION_DIVERSION_STAT, OVERRANGE_DATA).map(getTagInfo)
 
     tagInfo.statusType match {
       case StatusType.Internal =>
@@ -149,14 +149,10 @@ object MonitorStatus {
   }
 
   val REPAIR = "031"
-  val INVALID_DATA = "032"
+  val OVERRANGE_DATA = "032"
 
   def isRepairing(s: String) = {
     getTagInfo(REPAIR) == getTagInfo(s)
-  }
-
-  def isInvalidData(s: String) = {
-    getTagInfo(INVALID_DATA) == getTagInfo(s)
   }
 
   val DATA_LOSS_STAT = "036"
