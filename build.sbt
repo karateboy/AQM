@@ -1,7 +1,7 @@
 
 name := """aqms"""
 
-version := "1.1.21"
+version := "1.1.22"
 
 lazy val root = (project in file(".")).enablePlugins(PlayScala)
 

@@ -24,7 +24,10 @@
 		</li>
 		<li>
 			<a data-toggle="tab" href="#stdInternalTab"> <span class="glyphicons glyphicons-hotspot"></span>內控值</a>
-		</li> 							
+		</li> 
+		<li>
+			<a data-toggle="tab" href="#calibrationInternalTab"> <span class="glyphicons glyphicons-hotspot"></span>校正內控值</a>
+		</li>							
 		<li>
 			<a data-toggle="tab" href="#imgUrlTab"> <span class="glyphicons glyphicons-hotspot"></span>影像位址</a>
 		</li>
@@ -91,6 +94,45 @@
 				</div>
 			</form>
 		</div>
+		<div id="calibrationInternalTab" class="tab-pane">
+			<br/>
+			<form id="calibrationInternalForm" class="form-horizontal">
+				<input name='monitor' type="hidden" class="form-control" value="@monitor">
+				<div class="form-group">
+					<label class="col-lg-1 control-label">測項</label>
+					<div class="col-lg-11">
+						<div class="btn-group" data-toggle="buttons">
+          					@for(mt<-MonitorType.mtvAllList){
+          						@if(mt == MonitorType.mtvAllList.head){
+          							<label class="btn btn-outline btn-primary dim active">
+								<input type="radio" name="monitorType" id="@mt" checked>@MonitorType.map(mt).desp</label>	
+          						}else{
+          							<label class="btn btn-outline btn-primary dim">
+								<input type="radio" name="monitorType" id="@mt">@MonitorType.map(mt).desp</label>
+          						}
+          								
+          					}
+          					</div>
+					</div>
+				</div>
+				<div class="form-group">
+					<label class="col-lg-1 control-label">校正零點內控值</label>
+					<input class="col-lg-1" id="zdInternal">
+					<label class="col-lg-1">單位</label>														
+				</div>
+				<div class="form-group">
+					<label class="col-lg-1 control-label">校正偏移內控值</label>
+					<input class="col-lg-1" id="sdInternal">
+					<label class="col-lg-1">單位</label>														
+				</div>
+				
+				<div class="form-group">
+					<div class="col-lg-1 col-lg-offset-1">
+						<button class="btn btn-primary" type="submit">確認</button>								
+					</div>																											
+				</div>
+			</form>
+		</div>		
 		<div id="imgUrlTab" class="tab-pane">
 			<form id="imgUrlForm" class="form-horizontal">
 				<br/>
@@ -405,6 +447,62 @@ function() {
 		event.preventDefault();
 	});
 
+	$("#calibrationInternalForm :input[name='monitorType']").change(
+			function() {
+				//var me = $(this)
+				var me = $("#calibrationInternalForm :input[name='monitorType']:checked");
+				var url = "/CalibrationInternalStd/" + activeMonitor + "/" + me.prop("id");
+				$.ajax({
+					url : url,
+					data : "",
+					contentType : "application/json; charset=utf-8",
+					method : "GET",
+					cache:false,
+					dataType : "json",
+					success : function(result) {
+						$("#zdInternal").val(result.zd);
+						$("#sdInternal").val(result.sd);
+					},
+					error : function(xhr, status, errorThrown) {
+						console.log("失敗:"+ errorThrown);
+					},
+
+					complete : function(xhr, status) {
+					}});
+						
+			});
+
+	$("#calibrationInternalForm :input[name='monitorType']").change();
+	$("#calibrationInternalForm").submit(function(event) {
+		activeMonitor = $('#monitorTypesForm :input[name="monitor"]').val();
+
+		var mt = $("#calibrationInternalForm :input[name='monitorType']:checked").prop("id");
+		var zd = $("#zdInternal").val();
+		var sd = $("#sdInternal").val();
+		var param = {
+			zd:zd,
+			sd:sd
+		};
+		
+		var url = "/CalibrationInternalStd/" + activeMonitor + "/" + mt + "/" + zd + "/" + sd;
+		$.ajax({
+			url : url,
+			data : JSON.stringify(param),
+			contentType : "application/json; charset=utf-8",
+			method : "POST",
+			dataType : "json",
+			success : function(result) {
+				alert("成功");
+			},
+			error : function(xhr, status, errorThrown) {
+				alert("失敗:"+ errorThrown);
+			},
+
+			complete : function(xhr, status) {
+			}});
+		event.preventDefault();
+	});
+	
 	var equipmentModalCanHide = true;	
 	$("#newEquipModal").on('hide.bs.modal',function(e){		   
 		   if(!equipmentModalCanHide){			   

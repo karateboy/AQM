@@ -116,12 +116,61 @@ object Application extends Controller {
           oldCase.getNewStd(monitorType, stdValue)
         }
 
-      val newCase = Monitor(oldCase.id, oldCase.name, oldCase.lat, oldCase.lng, oldCase.url, oldCase.autoAudit, oldCase.monitorTypes, newStd)
+      val newCase = Monitor(oldCase.id, oldCase.name, oldCase.lat, oldCase.lng, oldCase.url, oldCase.autoAudit, oldCase.monitorTypes,
+        newStd, oldCase.calibrationZds, oldCase.calibrationSds)
       Monitor.updateStdInternal(newCase)
 
       Ok(Json.obj("ok" -> true))
   }
 
+  def getCalibrationInternalStd(monitorStr: String, mtStr: String) = Security.Authenticated {
+    implicit request =>
+      val m = Monitor.withName(monitorStr)
+      val mt = MonitorType.withName(mtStr)
+      val zdStr = Monitor.map(m).zdInternal(mt).map(_.toString).getOrElse("-")
+      val sdStr = Monitor.map(m).sdInternal(mt).map(_.toString).getOrElse("-")
+
+      Ok(Json.obj("zd" -> zdStr, "sd" -> sdStr))
+  }
+  def setCalibrationInternalStd(monitorStr: String, monitorTypeStr: String, zdStr: String, sdStr: String) = Security.Authenticated(BodyParsers.parse.json) {
+    implicit request =>
+      import java.lang.Float
+      val m = Monitor.withName(monitorStr)
+      val monitorType = MonitorType.withName(monitorTypeStr)
+      val oldCase = Monitor.map(m)
+
+      val newZd = {
+        val pairs = oldCase.calibrationZds map { zds => zds.id -> zds.std_internal }
+        val map = pairs.toMap
+        val newMap =
+          if (zdStr == "-") {
+            map - monitorType
+          } else {
+            val v = Float.parseFloat(zdStr)
+            map + (monitorType -> v)
+          }
+        newMap.map { kv => MonitorTypeStandard(kv._1, kv._2) }
+      }
+
+      val newSd = {
+        val pairs = oldCase.calibrationSds map { sds => sds.id -> sds.std_internal }
+        val map = pairs.toMap
+        val newMap =
+          if (zdStr == "-") {
+            map - monitorType
+          } else {
+            val v = Float.parseFloat(sdStr)
+            map + (monitorType -> v)
+          }
+        newMap.map { kv => MonitorTypeStandard(kv._1, kv._2) }
+      }
+
+      val newCase = Monitor(oldCase.id, oldCase.name, oldCase.lat, oldCase.lng, oldCase.url, oldCase.autoAudit, oldCase.monitorTypes,
+        oldCase.monitorTypeStds, newZd.toSeq, newSd.toSeq)
+      Monitor.updateCalibrationInternalStd(newCase)
+
+      Ok(Json.obj("ok" -> true))
+  }
   def setMonitorImgUrl(monitorStr: String) = Security.Authenticated(BodyParsers.parse.json) {
     implicit request =>
       val monitor = Monitor.withName(monitorStr)
@@ -219,7 +268,7 @@ object Application extends Controller {
             Ok(Json.obj("ok" -> true))
           } catch {
             case ex: Exception =>
-              Logger.error(ex.toString(),ex)
+              Logger.error(ex.toString(), ex)
               Ok(Json.obj("ok" -> false, "msg" -> ex.toString()))
           }
         })
@@ -669,7 +718,7 @@ object Application extends Controller {
     Ok(SystemConfig.getPM10Threshold().toString())
   }
 
-  case class Threshold(v:Double)
+  case class Threshold(v: Double)
   def setPm10Threshold = Security.Authenticated(BodyParsers.parse.json) {
     implicit request =>
       implicit val read = Json.reads[Threshold]

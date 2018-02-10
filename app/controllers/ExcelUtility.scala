@@ -1122,13 +1122,13 @@ object ExcelUtility {
       fillCell(newRow.createCell(2), MonitorType.map(item.monitorType).desp, 0)
       if (MonitorType.map(item.monitorType).zd_law.isDefined && item.z_val > MonitorType.map(item.monitorType).zd_law.get) {
         fillCellF(newRow.createCell(3), item.z_val, 2)
-      } else if (MonitorType.map(item.monitorType).zd_internal.isDefined && item.z_val > MonitorType.map(item.monitorType).zd_internal.get) {
+      } else if (Monitor.map(item.monitor).zdInternal(item.monitorType).isDefined && item.z_val > Monitor.map(item.monitor).zdInternal(item.monitorType).get) {
         fillCellF(newRow.createCell(3), item.z_val, 1)
       } else
         fillCellF(newRow.createCell(3), item.z_val, 0)
 
-      if (MonitorType.map(item.monitorType).zd_internal.isDefined)
-        fillCellF(newRow.createCell(4), MonitorType.map(item.monitorType).zd_internal.get, 0)
+      if (Monitor.map(item.monitor).zdInternal(item.monitorType).isDefined)
+        fillCellF(newRow.createCell(4), Monitor.map(item.monitor).zdInternal(item.monitorType).get, 0)
 
       if (MonitorType.map(item.monitorType).zd_law.isDefined)
         fillCellF(newRow.createCell(5), MonitorType.map(item.monitorType).zd_law.get, 0)
@@ -1137,13 +1137,13 @@ object ExcelUtility {
       fillCellF(newRow.createCell(7), item.s_sval, 0)
       if (MonitorType.map(item.monitorType).sd_law.isDefined && item.sd_pnt > MonitorType.map(item.monitorType).sd_law.get) {
         fillCellF(newRow.createCell(8), item.sd_pnt, 2)
-      } else if (MonitorType.map(item.monitorType).sd_internal.isDefined && item.sd_pnt > MonitorType.map(item.monitorType).sd_internal.get) {
+      } else if (Monitor.map(item.monitor).sdInternal(item.monitorType).isDefined && item.sd_pnt > Monitor.map(item.monitor).sdInternal(item.monitorType).get) {
         fillCellF(newRow.createCell(8), item.sd_pnt, 1)
       } else
         fillCellF(newRow.createCell(8), item.sd_pnt, 0)
 
-      if (MonitorType.map(item.monitorType).sd_internal.isDefined)
-        fillCellF(newRow.createCell(9), MonitorType.map(item.monitorType).sd_internal.get, 0)
+      if (Monitor.map(item.monitor).sdInternal(item.monitorType).isDefined)
+        fillCellF(newRow.createCell(9), Monitor.map(item.monitor).sdInternal(item.monitorType).get, 0)
 
       if (MonitorType.map(item.monitorType).sd_law.isDefined)
         fillCellF(newRow.createCell(10), MonitorType.map(item.monitorType).sd_law.get, 0)
@@ -1152,7 +1152,7 @@ object ExcelUtility {
         if (item.z_val > MonitorType.map(item.monitorType).zd_law.get || item.sd_pnt > MonitorType.map(item.monitorType).sd_law.get) {
           fillCell(newRow.createCell(11), "失敗", 2)
         } else {
-          if (item.z_val > MonitorType.map(item.monitorType).zd_internal.get || item.sd_pnt > MonitorType.map(item.monitorType).sd_internal.get) {
+          if (item.z_val > Monitor.map(item.monitor).zdInternal(item.monitorType).get || item.sd_pnt > Monitor.map(item.monitor).sdInternal(item.monitorType).get) {
             fillCell(newRow.createCell(11), "成功", 1)
           } else
             fillCell(newRow.createCell(11), "成功", 0)
@@ -1184,7 +1184,7 @@ object ExcelUtility {
         sheet.getRow(row).getCell(2).setCellValue(MonitorType.map(item.monitorType).desp)
         for {
           zd_law <- MonitorType.map(item.monitorType).zd_law
-          zd_internal <- MonitorType.map(item.monitorType).zd_internal
+          zd_internal <- Monitor.map(item.monitor).zdInternal(item.monitorType)
         } {
           if (item.z_val > zd_law)
             sheet.getRow(row).getCell(3).setCellStyle(lawStyle)
@@ -1201,7 +1201,7 @@ object ExcelUtility {
 
         for {
           sd_law <- MonitorType.map(item.monitorType).sd_law
-          sd_internal <- MonitorType.map(item.monitorType).sd_internal
+          sd_internal <- Monitor.map(item.monitor).sdInternal(item.monitorType)
         } {
           if (item.sd_pnt > sd_law)
             sheet.getRow(row).getCell(8).setCellStyle(lawStyle)
@@ -1216,8 +1216,8 @@ object ExcelUtility {
         for {
           zd_law <- MonitorType.map(item.monitorType).zd_law
           sd_law <- MonitorType.map(item.monitorType).sd_law
-          zd_internal <- MonitorType.map(item.monitorType).zd_internal
-          sd_internal <- MonitorType.map(item.monitorType).sd_internal
+          zd_internal <- Monitor.map(item.monitor).zdInternal(item.monitorType)
+          sd_internal <- Monitor.map(item.monitor).sdInternal(item.monitorType)
         } {
           if (item.z_val > zd_law || item.sd_pnt > sd_law) {
             sheet.getRow(row).getCell(11).setCellStyle(lawStyle)
@@ -1276,27 +1276,27 @@ object ExcelUtility {
         sheet.getRow(row).getCell(2).setCellValue(MonitorType.map(item.monitorType).desp)
         if (item.z_val > MonitorType.map(item.monitorType).zd_law.get) {
           sheet.getRow(row).getCell(3).setCellStyle(lawStyle)
-        } else if (item.z_val > MonitorType.map(item.monitorType).zd_internal.get) {
+        } else if (item.z_val > Monitor.map(item.monitor).zdInternal(item.monitorType).get) {
           sheet.getRow(row).getCell(3).setCellStyle(internalStyle)
         }
         sheet.getRow(row).getCell(3).setCellValue(item.z_val)
-        sheet.getRow(row).getCell(4).setCellValue(MonitorType.map(item.monitorType).zd_internal.get)
+        sheet.getRow(row).getCell(4).setCellValue(Monitor.map(item.monitor).zdInternal(item.monitorType).get)
         sheet.getRow(row).getCell(5).setCellValue(MonitorType.map(item.monitorType).zd_law.get)
         sheet.getRow(row).getCell(6).setCellValue(item.s_std)
         sheet.getRow(row).getCell(7).setCellValue(item.s_sval)
         if (item.sd_pnt > MonitorType.map(item.monitorType).sd_law.get) {
           sheet.getRow(row).getCell(8).setCellStyle(lawStyle)
-        } else if (item.sd_pnt > MonitorType.map(item.monitorType).sd_internal.get) {
+        } else if (item.sd_pnt > Monitor.map(item.monitor).sdInternal(item.monitorType).get) {
           sheet.getRow(row).getCell(8).setCellStyle(lawStyle)
         }
         sheet.getRow(row).getCell(8).setCellValue(item.sd_pnt)
-        sheet.getRow(row).getCell(9).setCellValue(MonitorType.map(item.monitorType).sd_internal.get)
+        sheet.getRow(row).getCell(9).setCellValue(Monitor.map(item.monitor).sdInternal(item.monitorType).get)
         sheet.getRow(row).getCell(10).setCellValue(MonitorType.map(item.monitorType).sd_law.get)
         if (item.z_val > MonitorType.map(item.monitorType).zd_law.get || item.sd_pnt > MonitorType.map(item.monitorType).sd_law.get) {
           sheet.getRow(row).getCell(11).setCellStyle(lawStyle)
           sheet.getRow(row).getCell(11).setCellValue("失敗")
         } else {
-          if (item.z_val > MonitorType.map(item.monitorType).zd_internal.get || item.sd_pnt > MonitorType.map(item.monitorType).sd_internal.get) {
+          if (item.z_val > Monitor.map(item.monitor).zdInternal(item.monitorType).get || item.sd_pnt > Monitor.map(item.monitor).sdInternal(item.monitorType).get) {
             sheet.getRow(row).getCell(11).setCellStyle(internalStyle)
           }
           sheet.getRow(row).getCell(11).setCellValue("成功")
