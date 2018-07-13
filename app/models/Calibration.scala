@@ -17,7 +17,7 @@ object Calibration {
       )
 
   def getTabName(year: Int) = {
-    SQLSyntax.createUnsafely(s"[AQMSDB].[dbo].[P1234567_Cal_${year}]")
+    SQLSyntax.createUnsafely(s"[P1234567_Cal_${year}]")
   }
   
   def calibrationQueryReport(monitor: Monitor.Value, start: Timestamp, end: Timestamp) = {

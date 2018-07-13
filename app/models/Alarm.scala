@@ -191,7 +191,7 @@ object Alarm {
   }
 
   def getTabName(year: Int) = {
-    SQLSyntax.createUnsafely(s"[AQMSDB].[dbo].[P1234567_Alm_${year}]")
+    SQLSyntax.createUnsafely(s"[P1234567_Alm_${year}]")
   }
 
   case class AlarmItem(id: String, desp: String)
@@ -199,7 +199,7 @@ object Alarm {
     DB readOnly { implicit session =>
       sql"""
         SELECT *
-        FROM [AQMSDB].[dbo].[alarmCode]
+        FROM [alarmCode]
       """.map { r => AlarmItem(r.string(1), r.string(2))
       }.list.apply
     }

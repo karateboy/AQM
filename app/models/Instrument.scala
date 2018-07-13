@@ -40,7 +40,7 @@ object Instrument extends Enumeration {
 
   
   def getTabName(inst: Instrument.Value, year: Int) = {
-    SQLSyntax.createUnsafely(s"[AQMSDB].[dbo].[P1234567_Diag${inst.toString}_${year}]")
+    SQLSyntax.createUnsafely(s"[P1234567_Diag${inst.toString}_${year}]")
   }
 
   def getH370Record(monitor: Monitor.Value, start: DateTime, end: DateTime)(implicit session: DBSession = AutoSession) = {

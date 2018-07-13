@@ -27,7 +27,7 @@ object MonitorStatus {
     DB readOnly { implicit session =>
       sql"""
         SELECT [statusNo],[statusName]
-        FROM [AQMSDB].[dbo].[Infor_Status]
+        FROM [Infor_Status]
         Order by [statusNo] Asc
       """.map { r =>
         val tagInfo = getTagInfo(r.string(1))

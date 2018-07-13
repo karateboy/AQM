@@ -47,13 +47,12 @@
 				<td>@Monitor.map(m).name</td> 
 				
 			@for(mt <- MonitorType.realtimeList.filter(privilege.allowedMonitorTypes.contains)){
-				@if(rt_status(m)(mt)._1.isEmpty){
-						@if(Monitor.map(m).monitorTypes.contains(mt)){
-							<td>-</td>	
-						}else{
-							<td>N/A</td>
-						}												
-					}else{						
+				@if(!Monitor.map(m).monitorTypes.contains(mt)){
+					<td>N/A</td>
+				}else{
+					@if(rt_status(m)(mt)._1.isEmpty){
+						<td>-</td>
+					}else{
 						<td style="@MonitorType.getStyleStr(m, mt, rt_status(m)(mt))" 
 							@if(Monitor.map(m).getStdInternal(mt).isDefined){																
 								title="內控值:@Monitor.map(m).getStdInternal(mt).get @MonitorType.map(mt).unit"
@@ -61,8 +60,8 @@
 							data-toggle="tooltip" data-container="body" data-trigger="hover"
 						>@MonitorType.format(mt, (rt_status(m)(mt)._1))</td>
 					}
-			}
-			
+				}
+			}			
 			</tr>
 		}
 	</tbody>
