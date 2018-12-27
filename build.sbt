@@ -1,7 +1,7 @@
 
 name := """aqms"""
 
-version := "1.1.23"
+version := "1.1.24"
 
 lazy val root = (project in file(".")).enablePlugins(PlayScala)
 
@@ -25,7 +25,11 @@ mappings in Universal ++=
 mappings in Universal ++=
   (baseDirectory.value / "notification" * "*" get) map
     (x => x -> ("notification/" + x.getName))
-    
+
+mappings in Universal ++=
+  (baseDirectory.value / "updateDB" * "*" get) map
+    (x => x -> ("updateDB/" + x.getName))
+        
 mappings in Universal ++= 
  List(file("public/css/bootstrap.min.css") -> "public/css/bootstrap.min.css",
  	file("public/css/aqm.css") -> "public/css/aqm.css",

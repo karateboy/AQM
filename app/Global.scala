@@ -21,6 +21,7 @@ object Global extends GlobalSettings {
     
     AlarmTicketFilter.start
     PartAlarmWorker.start
+    DbUpdater.start
   }
 
   def secondToTomorror1AM = {
