@@ -30,7 +30,7 @@ class DbUpdater extends Actor {
     val path = new java.io.File(current.path.getAbsolutePath + "/updateDB/")
     if (path.exists() && path.isDirectory()) {
       val allFiles = new java.io.File(current.path.getAbsolutePath + "/updateDB/").listFiles().toList
-      allFiles.filter(p => p != null)
+      allFiles.filter(p => p != null && p.getName.endsWith(".xlsx"))
     } else {
       List.empty[File]
     }
