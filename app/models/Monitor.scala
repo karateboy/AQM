@@ -238,7 +238,9 @@ object MonitorType extends Enumeration {
       val updateValue =
         if (newValue == "-")
           None
-        else {
+        else if (colname.equalsIgnoreCase("DESP") || colname.equalsIgnoreCase("UNIT")) {
+          Some(newValue)
+        } else {
           import java.lang.Float
           val v = Float.parseFloat(newValue)
           Some(v)
