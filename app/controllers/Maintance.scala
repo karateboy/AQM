@@ -981,7 +981,7 @@ object Maintance extends Controller {
   def alarmNoTicketList() = Security.Authenticated {
     implicit request =>
       //FIXME
-      val start = DateTime.now() - 21.day
+      val start = DateTime.now() - 14.day
       val list = Alarm.getAlarmNoTicketList(start)
       val excludedList = list.filter { ar =>
         ar.code != MonitorStatus.REPAIR && ar.code != "053"
