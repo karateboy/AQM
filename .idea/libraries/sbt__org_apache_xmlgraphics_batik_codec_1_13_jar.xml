@@ -1,0 +1,11 @@
+<component name="libraryTable">
+  <library name="sbt: org.apache.xmlgraphics:batik-codec:1.13:jar">
+    <CLASSES>
+      <root url="jar://$USER_HOME$/.ivy2/cache/org.apache.xmlgraphics/batik-codec/jars/batik-codec-1.13.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES>
+      <root url="jar://$USER_HOME$/.ivy2/cache/org.apache.xmlgraphics/batik-codec/srcs/batik-codec-1.13-sources.jar!/" />
+    </SOURCES>
+  </library>
+</component>

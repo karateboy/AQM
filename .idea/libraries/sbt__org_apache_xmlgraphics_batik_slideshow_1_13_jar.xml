@@ -1,0 +1,11 @@
+<component name="libraryTable">
+  <library name="sbt: org.apache.xmlgraphics:batik-slideshow:1.13:jar">
+    <CLASSES>
+      <root url="jar://$USER_HOME$/.ivy2/cache/org.apache.xmlgraphics/batik-slideshow/jars/batik-slideshow-1.13.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES>
+      <root url="jar://$USER_HOME$/.ivy2/cache/org.apache.xmlgraphics/batik-slideshow/srcs/batik-slideshow-1.13-sources.jar!/" />
+    </SOURCES>
+  </library>
+</component>

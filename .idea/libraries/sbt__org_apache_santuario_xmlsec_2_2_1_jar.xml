@@ -1,0 +1,11 @@
+<component name="libraryTable">
+  <library name="sbt: org.apache.santuario:xmlsec:2.2.1:jar">
+    <CLASSES>
+      <root url="jar://$USER_HOME$/.ivy2/cache/org.apache.santuario/xmlsec/bundles/xmlsec-2.2.1.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES>
+      <root url="jar://$USER_HOME$/.ivy2/cache/org.apache.santuario/xmlsec/srcs/xmlsec-2.2.1-sources.jar!/" />
+    </SOURCES>
+  </library>
+</component>

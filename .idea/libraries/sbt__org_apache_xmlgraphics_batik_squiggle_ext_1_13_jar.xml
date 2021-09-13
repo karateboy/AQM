@@ -1,0 +1,9 @@
+<component name="libraryTable">
+  <library name="sbt: org.apache.xmlgraphics:batik-squiggle-ext:1.13:jar">
+    <CLASSES>
+      <root url="jar://$USER_HOME$/.ivy2/cache/org.apache.xmlgraphics/batik-squiggle-ext/jars/batik-squiggle-ext-1.13.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES />
+  </library>
+</component>

@@ -43,7 +43,11 @@ object ExcelUtility {
 
   def createStyle(mt: MonitorType.Value)(implicit wb: XSSFWorkbook) = {
     val prec = MonitorType.map(mt).prec
-    val format_str = "0." + "0" * prec
+    val format_str = if(prec != 0)
+      "0." + "0" * prec
+    else
+      "0"
+
     val style = wb.createCellStyle();
     val format = wb.createDataFormat();
     // Create a new font and alter it.
@@ -53,13 +57,13 @@ object ExcelUtility {
 
     style.setFont(font)
     style.setDataFormat(format.getFormat(format_str))
-    style.setBorderBottom(CellStyle.BORDER_THIN);
+    style.setBorderBottom(BorderStyle.THIN);
     style.setBottomBorderColor(IndexedColors.BLACK.getIndex());
-    style.setBorderLeft(CellStyle.BORDER_THIN);
+    style.setBorderLeft(BorderStyle.THIN);
     style.setLeftBorderColor(IndexedColors.BLACK.getIndex());
-    style.setBorderRight(CellStyle.BORDER_THIN);
+    style.setBorderRight(BorderStyle.THIN);
     style.setRightBorderColor(IndexedColors.BLACK.getIndex());
-    style.setBorderTop(CellStyle.BORDER_THIN);
+    style.setBorderTop(BorderStyle.THIN);
     style.setTopBorderColor(IndexedColors.BLACK.getIndex());
     style
   }
@@ -350,7 +354,7 @@ object ExcelUtility {
       import org.apache.poi.hssf.util.HSSFColor
       def createInvalidStyle(mt: MonitorType.Value) = {
         val style = createStyle(mt)
-        style.setFillForegroundColor(HSSFColor.RED.index)
+        style.setFillForegroundColor(HSSFColor.HSSFColorPredefined.RED.getIndex)
         style.setFillPattern(FillPatternType.SOLID_FOREGROUND)
         style
       }

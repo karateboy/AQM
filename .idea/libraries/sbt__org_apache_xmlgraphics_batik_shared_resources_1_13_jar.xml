@@ -1,0 +1,11 @@
+<component name="libraryTable">
+  <library name="sbt: org.apache.xmlgraphics:batik-shared-resources:1.13:jar">
+    <CLASSES>
+      <root url="jar://$USER_HOME$/.ivy2/cache/org.apache.xmlgraphics/batik-shared-resources/jars/batik-shared-resources-1.13.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES>
+      <root url="jar://$USER_HOME$/.ivy2/cache/org.apache.xmlgraphics/batik-shared-resources/srcs/batik-shared-resources-1.13-sources.jar!/" />
+    </SOURCES>
+  </library>
+</component>
