@@ -7,18 +7,30 @@ import play.api.libs.concurrent.Akka
 import akka.actor._
 import scala.concurrent.duration._
 import scala.concurrent.ExecutionContext.Implicits.global
-
+import play.api.db.Database
 object Global extends GlobalSettings {
   def upgradeDB() {
     DB autoCommit {
       implicit session =>
-        sql"""
-             IF COL_LENGTH('[dbo].[MonitorType]', 'Warn') IS NULL
+        def alterIfMissing(field:String) = {
+          val fieldName = SQLSyntax.createUnsafely(s"$field")
+          sql"""
+             IF COL_LENGTH('[dbo].[MonitorType]', '$fieldName') IS NULL
              BEGIN
-                 ALTER TABLE [dbo].[MonitorType] ADD Warn Decimal(9,2) NULL,
-                 EightHrAvg Decimal(9,2) NULL, DayAvg Decimal(9,2) Null;
+                 ALTER TABLE [dbo].[MonitorType] ADD $fieldName Decimal(9,2) NULL;
              END
              """.execute().apply()
+        }
+        alterIfMissing("Warn")
+        alterIfMissing("EightHrAvg")
+        alterIfMissing("TwentyFourHrAvg")
+        alterIfMissing("YearAvg")
+
+        import com.github.nscala_time.time.Imports._
+        //Create this year Ozone 8hr table
+        val thisYear = DateTime.now().getYear
+        if(!Ozone8Hr.hasOzone8hrTab(thisYear))
+          Ozone8Hr.createTab(thisYear)
     }
 
     DB autoCommit( {
@@ -61,23 +73,24 @@ object Global extends GlobalSettings {
     upgradeDB()
 
     val alarmActor = Akka.system.actorOf(Props[AlarmMaster], name = "AlarmMaster")
-    
+
     Akka.system.scheduler.schedule(Duration(3, MINUTES), Duration(5, MINUTES), alarmActor, AlarmCheck)
     Akka.system.scheduler.schedule(Duration(3, MINUTES), Duration(10, MINUTES), alarmActor, DataCheck)
     Akka.system.scheduler.schedule(Duration(secondToTomorror1AM, SECONDS), Duration(1, DAYS), alarmActor, MaintanceTicketCheck)
-    
+
     AlarmTicketFilter.start
     PartAlarmWorker.start
     DbUpdater.start
+    OpenDataReceiver.startup()
   }
 
   def secondToTomorror1AM = {
     import com.github.nscala_time.time.Imports._
     val tomorrow_1AM = DateTime.tomorrow().withMillisOfDay(0).withHourOfDay(1)
     val duration = new Duration(DateTime.now(), tomorrow_1AM)
-    duration.getStandardSeconds    
+    duration.getStandardSeconds
   }
-  
+
   override def onStop(app: Application) {
     Logger.info("Application shutdown...")
     super.onStop(app)

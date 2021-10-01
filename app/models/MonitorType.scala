@@ -11,7 +11,8 @@ case class MonitorType(id: String, desp: String, unit: String,
                        zd_internal: Option[Float], zd_law: Option[Float],
                        sd_internal: Option[Float], sd_law: Option[Float],
                        epa_mapping: Option[String],
-                       prec: Int, order: Int)
+                       prec: Int, order: Int, warn: Option[Float], eightHrAvg: Option[Float],
+                       twentyFourHrAvg: Option[Float], yearAvg: Option[Float])
 
 object MonitorType extends Enumeration {
   implicit val mtReads: Reads[MonitorType.Value] = EnumUtils.enumReads(MonitorType)
@@ -19,7 +20,7 @@ object MonitorType extends Enumeration {
 
   val Other = Value("Oth")
   val OtherCase = MonitorType("Oth", "其他", "", None, None, None, None, None,
-    None, None, None, None, None, 0, 0)
+    None, None, None, None, None, 0, 0, None, None, None, None)
 
   private def mtList: List[MonitorType] =
     DB readOnly { implicit session =>
@@ -41,10 +42,19 @@ object MonitorType extends Enumeration {
           sd_law = r.floatOpt(13),
           epa_mapping = r.stringOpt(14),
           prec = r.int(15),
-          order = r.int(16))
+          order = r.int(16),
+          warn = r.floatOpt("Warn"),
+          eightHrAvg = r.floatOpt("EightHrAvg"),
+          twentyFourHrAvg = r.floatOpt("TwentyFourHrAvg"),
+          yearAvg = r.floatOpt("YearAvg"))
       }.list.apply
     }
-
+/*
+warn = r.floatOpt("Warn"),
+          eightHrAvg = r.floatOpt("EightHrAvg"),
+          twentyFourHrAvg = r.floatOpt("TwentyFourHrAvg"),
+          yearAvg = r.floatOpt("YearAvg")
+ */
   var map: Map[Value, MonitorType] = Map(mtList.map { e => Value(e.id) -> e }: _*) ++ Map(Other -> OtherCase) - MonitorType.withName("A325")
   val mtvAllList = mtList.map(mt => MonitorType.withName(mt.id)).filter { !List(MonitorType.withName("A325")).contains(_) }
 
@@ -114,7 +124,11 @@ object MonitorType extends Enumeration {
             sd_law = r.floatOpt(13),
             epa_mapping = r.stringOpt(14),
             prec = r.int(15),
-            order = r.int(16))
+            order = r.int(16),
+            warn = r.floatOpt("Warn"),
+            eightHrAvg = r.floatOpt("EightHrAvg"),
+            twentyFourHrAvg = r.floatOpt("TwentyFourHrAvg"),
+            yearAvg = r.floatOpt("YearAvg"))
         }.single.apply
       map = (map + (mt -> newMtOpt.get))
     }
@@ -181,6 +195,14 @@ object MonitorType extends Enumeration {
 
   val epaMap = {
     map.filter(p => p._2.epa_mapping.isDefined).map(kv => (kv._2.epa_mapping.get, kv._1))
+  }
+  val eapIdMap = {
+    val pairs =
+      for(epaMt <- epaList if MonitorType.map(epaMt).epa_mapping.isDefined)
+        yield {
+          MonitorType.map(epaMt).epa_mapping.get.toInt -> epaMt
+        }
+    pairs.toMap
   }
   import com.github.nscala_time.time.Imports._
   import java.sql.Timestamp

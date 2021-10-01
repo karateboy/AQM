@@ -1,7 +1,7 @@
 
 name := """aqms"""
 
-version := "1.2.1"
+version := "1.3.1"
 
 lazy val root = (project in file(".")).enablePlugins(PlayScala)
 
@@ -18,6 +18,7 @@ libraryDependencies ++= Seq(
   "io.github.cloudify" %% "spdf" % "1.3.1",
   "com.typesafe.play" %% "play-mailer" % "4.0.0"
 )
+
 // https://mvnrepository.com/artifact/org.apache.poi/poi-ooxml
 libraryDependencies += "org.apache.poi" % "poi-ooxml" % "5.0.0"
 

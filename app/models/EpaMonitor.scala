@@ -10,8 +10,10 @@ object EpaMonitor extends Enumeration{
   val Lunbei = Value("Lunbei")
   val Taixi = Value("Taixi")
   val Mailiao = Value("Mailiao")
+  val DaChen = Value("DaChen")
   
   val map=Map(
+    DaChen -> EpaMonitor("環保署大城站", 85),
     Erlin->EpaMonitor("環保署二林站", 35),
     Puzi->EpaMonitor("環保署朴子站", 40),
     Lunbei->EpaMonitor("環保署崙背站", 38),
@@ -20,6 +22,6 @@ object EpaMonitor extends Enumeration{
   )
   
   val idMap = map.map(r=>(r._2.id, r._1))
-  
+  val nameMap = map.map(r=>(r._2.name, r._1))
   val epaList = values.toList.sorted
 }

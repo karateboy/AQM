@@ -56,7 +56,41 @@ object ModelHelper {
     } else
       "否"
   }
+  def getPeriods(start: DateTime, endTime: DateTime, d: Period): List[DateTime] = {
+    import scala.collection.mutable.ListBuffer
 
+    val buf = ListBuffer[DateTime]()
+    var current = start
+    while (current < endTime) {
+      buf.append(current)
+      current += d
+    }
+
+    buf.toList
+  }
+
+  def errorHandler(prompt: String = "Error=>"): PartialFunction[Throwable, Any] = {
+    case ex: Throwable =>
+      Logger.error(prompt, ex)
+      throw ex
+  }
+
+  import scala.concurrent._
+
+  def waitReadyResult[T](f: Future[T]) = {
+    import scala.concurrent.duration._
+    import scala.util._
+
+    val ret = Await.ready(f, Duration.Inf).value.get
+
+    ret match {
+      case Success(t) =>
+        t
+      case Failure(ex) =>
+        Logger.error(ex.getMessage, ex)
+        throw ex
+    }
+  }
 }
 
 object EnumUtils {

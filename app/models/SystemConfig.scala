@@ -23,7 +23,7 @@ object SystemConfig {
         return i
     }
 
-    return 0
+    0
   }
 
   import java.io.File
@@ -63,6 +63,9 @@ object SystemConfig {
   def getPM10Threshold() = SystemConfig.getConfig(PM10ThresholdKey, "950").toDouble
   def setPM10Threshold(v: Double) = SystemConfig.setConfig(PM10ThresholdKey, v.toString())
 
+  val EpaLast = "EpaLast"
+  def getEpaLast = DateTime.parse(SystemConfig.getConfig(EpaLast, "2019-1-1 00:00"), DateTimeFormat.forPattern("yyyy-MM-dd HH:mm"))
+  def setEpaLast(dateTime: DateTime) = SystemConfig.setConfig(EpaLast, dateTime.toString("yyyy-MM-dd HH:mm"))
   var map = {
     val configPair =
       DB readOnly {

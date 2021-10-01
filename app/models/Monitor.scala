@@ -1,19 +1,17 @@
 package models
-import scala.collection.Map
-import java.sql.Date
-import play.api.Logger
-import scalikejdbc._
-import scalikejdbc.config._
-import EnumUtils._
+
+import models.EnumUtils._
 import play.api.libs.json._
-import play.api.libs.functional.syntax._
-import models.ModelHelper._
+import scalikejdbc._
+
+import scala.collection.Map
 
 case class Monitor(id: String, name: String, lat: Double, lng: Double, url: String, autoAudit: AutoAudit,
                    monitorTypes: Seq[MonitorType.Value], monitorTypeStds: Seq[MonitorTypeStandard],
                    calibrationZds: Seq[MonitorTypeStandard],
                    calibrationSds: Seq[MonitorTypeStandard]) {
   private val stdMap = Map(monitorTypeStds.map { r => r.id -> r.std_internal }: _*)
+
   def getStdInternal(mt: MonitorType.Value) = {
     val monitorStd = stdMap.get(mt)
     if (monitorStd.isDefined)
@@ -55,7 +53,9 @@ case class Monitor(id: String, name: String, lat: Double, lng: Double, url: Stri
     })
   }
 }
+
 case class MonitorTypeStandard(id: MonitorType.Value, std_internal: Float)
+
 object Monitor extends Enumeration {
   implicit val mReads: Reads[Monitor.Value] = EnumUtils.enumReads(Monitor)
   implicit val mWrites: Writes[Monitor.Value] = EnumUtils.enumWrites
@@ -64,7 +64,7 @@ object Monitor extends Enumeration {
   implicit val reads = Json.reads[Monitor]
   implicit val writes = Json.writes[Monitor]
 
-  lazy val monitorList: List[Monitor] =
+  def monitorList: List[Monitor] =
     DB readOnly { implicit session =>
       sql"""
         Select * 
@@ -85,17 +85,19 @@ object Monitor extends Enumeration {
           autoAudit, monitorTypes, monitorTypeStd, calibrationZd, calibrationSd)
       }.list.apply
     }
-
+  lazy val mvList = monitorList.map { m => Monitor.withName(m.id) }
   var map: Map[Value, Monitor] = Map(monitorList.map { e => Value(e.id) -> e }: _*)
 
-  lazy val mvList = monitorList.map { m => Monitor.withName(m.id) }
-
   def myMvList(p: Privilege) = {
-    mvList.filter { p.allowedMonitors.contains }
+    mvList.filter {
+      p.allowedMonitors.contains
+    }
   }
 
   def instrumentMvList(p: Privilege) = {
-    List(Monitor.withName("A012")).filter { p.allowedMonitors.contains }
+    List(Monitor.withName("A012")).filter {
+      p.allowedMonitors.contains
+    }
   }
 
   def getDisplayName(m: Monitor.Value) = {
