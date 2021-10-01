@@ -87,7 +87,8 @@ object Query extends Controller {
       }
   }
 
-  def historyReport(edit: Boolean, monitorStr: String, epaMonitorStr: String, monitorTypeStr: String, recordTypeStr: String, startStr: String, endStr: String, outputTypeStr: String) = Security.Authenticated {
+  def historyReport(edit: Boolean, monitorStr: String, epaMonitorStr: String, monitorTypeStr: String, recordTypeStr: String,
+                    startStr: String, endStr: String, mb:Boolean, outputTypeStr: String) = Security.Authenticated {
     implicit request =>
 
       import scala.collection.JavaConverters._
@@ -109,30 +110,42 @@ object Query extends Controller {
       val outputType = OutputType.withName(outputTypeStr)
 
       var timeSet = Set[DateTime]()
+
       val pairs =
-        if (tableType == TableType.Hour || tableType == TableType.Min) {
-          for {
-            m <- monitors
-            records = if (tableType == TableType.Hour)
-              Record.getHourRecords(m, start, end)
-            else
-              Record.getMinRecords(m, start, end)
-            mtRecords = records.map { rs => (Record.timeProjection(rs).toDateTime, Record.monitorTypeProject2(monitorType)(rs)) }
-            timeMap = Map(mtRecords: _*)
-          } yield {
-            timeSet ++= timeMap.keySet
-            (m -> timeMap)
+        for {
+          m <- monitors
+          records = if (tableType == TableType.Hour)
+            Record.getHourRecords(m, start, end)
+          else
+            Record.getMinRecords(m, start, end)
+
+          t = Record.monitorTypeProject2(monitorType)
+          calibrationMap = Calibration.getCalibrationMap(m, start, end)
+
+          mtRecords = records.map { rs =>
+            import Calibration._
+            if (mb && canCalibrate(monitorType, rs)(calibrationMap)) {
+              val calibrated = doCalibrate(monitorType, rs)(calibrationMap)
+              (Record.timeProjection(rs).toDateTime, (calibrated, t(rs)._2))
+            } else if (mb && monitorType == MonitorType.A296 &&
+              canCalibrate(MonitorType.A286, rs)(calibrationMap) && canCalibrate(MonitorType.A226, rs)(calibrationMap)) {
+              //A296=>NMHC, A286=>CH4, A226=>THC
+              val calibratedCH4 = doCalibrate(MonitorType.A286, rs)(calibrationMap)
+              val calibratedTHC = doCalibrate(MonitorType.A226, rs)(calibrationMap)
+              val interpolatedNMHC =
+                for (ch4 <- calibratedCH4; thc <- calibratedTHC)
+                  yield thc - ch4
+
+              (Record.timeProjection(rs).toDateTime, (interpolatedNMHC, t(rs)._2))
+            } else
+              (Record.timeProjection(rs).toDateTime, t(rs))
+
+            //(Record.timeProjection(rs).toDateTime, t(rs))
           }
-        } else {
-          for {
-            m <- monitors
-            records = Record.getSecRecords(m, start, end)
-            mtRecords = records.flatMap { rs => Record.secRecordProject(monitorType)(rs) }
-            timeMap = Map(mtRecords: _*)
-          } yield {
-            timeSet ++= timeMap.keySet
-            (m -> timeMap)
-          }
+          timeMap = Map(mtRecords: _*)
+        } yield {
+          timeSet ++= timeMap.keySet
+          (m -> timeMap)
         }
 
       val recordMap = Map(pairs: _*)
@@ -149,11 +162,7 @@ object Query extends Controller {
       val epaRecordMap = Map(epa_pairs: _*)
       val title = "歷史資料查詢"
       val output =
-        if (tableType == TableType.SixSec)
-          views.html.historyReport(edit, monitors, epaMonitors, monitorType, start, end, timeSet.toList.sorted, recordMap, epaRecordMap, true, tableType.toString)
-        else
-          views.html.historyReport(edit, monitors, epaMonitors, monitorType, start, end, timeSet.toList.sorted, recordMap, epaRecordMap, false, tableType.toString)
-          
+        views.html.historyReport(edit, monitors, epaMonitors, monitorType, start, end, timeSet.toList.sorted, recordMap, epaRecordMap, false, tableType.toString)
       outputType match {
         case OutputType.html =>
           Ok(output)
@@ -161,11 +170,6 @@ object Query extends Controller {
           Ok.sendFile(creatPdfWithReportHeader(title, output),
             fileName = _ =>
               play.utils.UriEncoding.encodePathSegment(title + start.toString("YYMMdd") + "_" + end.toString("MMdd") + ".pdf", "UTF-8"))
-        case OutputType.excel =>
-          val excelFile = ExcelUtility.historyReport(monitors, epaMonitors, monitorType, start, end, timeSet.toList.sorted, recordMap, epaRecordMap, tableType == TableType.SixSec)
-          Ok.sendFile(excelFile,
-            fileName = _ =>
-              play.utils.UriEncoding.encodePathSegment(title + start.toString("YYMMdd") + "_" + end.toString("MMdd") + ".xlsx", "UTF-8"))          
       }
   }
 
@@ -178,7 +182,7 @@ object Query extends Controller {
 
   def trendHelper(monitors: Array[Monitor.Value], epaMonitors: Array[EpaMonitor.Value],
                   monitorTypes: Array[MonitorType.Value], reportUnit: ReportUnit.Value, monitorStatusFilter: MonitorStatusFilter.Value,
-                  start: DateTime, end: DateTime) = {
+                  start: DateTime, end: DateTime, mb:Boolean) = {
     def statusFilter(data: (DateTime, (Option[Float], Option[String]))): Boolean = {
       if (data._2._2.isEmpty)
         return false
@@ -222,12 +226,32 @@ object Query extends Controller {
               case ReportUnit.Hour =>
                 Record.getHourRecords(m, start, end)
             }
-
+            calibrationMap = Calibration.getCalibrationMap(m, start, end)
             mtPairs = for {
               mt <- monitorTypes
-              mtRecords = records.map { rs => (Record.timeProjection(rs).toDateTime, Record.monitorTypeProject2(mt)(rs)) }
-              msfRecords = mtRecords.filter(statusFilter)
             } yield {
+              val mtRecords = if(mb) {
+                records.map { rs =>
+                  import Calibration._
+                  if (mb && canCalibrate(mt, rs)(calibrationMap)) {
+                    val calibrated = doCalibrate(mt, rs)(calibrationMap)
+                    (Record.timeProjection(rs).toDateTime, (calibrated, Record.monitorTypeProject2(mt)(rs)._2))
+                  } else if (mb && mt == MonitorType.A296 &&
+                    canCalibrate(MonitorType.A286, rs)(calibrationMap) && canCalibrate(MonitorType.A226, rs)(calibrationMap)) {
+                    //A296=>NMHC, A286=>CH4, A226=>THC
+                    val calibratedCH4 = doCalibrate(MonitorType.A286, rs)(calibrationMap)
+                    val calibratedTHC = doCalibrate(MonitorType.A226, rs)(calibrationMap)
+                    val interpolatedNMHC =
+                      for (ch4 <- calibratedCH4; thc <- calibratedTHC)
+                        yield thc - ch4
+
+                    (Record.timeProjection(rs).toDateTime, (interpolatedNMHC, Record.monitorTypeProject2(mt)(rs)._2))
+                  } else
+                    (Record.timeProjection(rs).toDateTime, Record.monitorTypeProject2(mt)(rs))
+                }
+              }else
+                records.map { rs => (Record.timeProjection(rs).toDateTime, Record.monitorTypeProject2(mt)(rs)) }
+              val msfRecords = mtRecords.filter(statusFilter)
               val timeMap = Map(msfRecords: _*)
               mt -> timeMap
             }
@@ -490,7 +514,7 @@ object Query extends Controller {
   }
 
   def historyTrendChart(monitorStr: String, epaMonitorStr: String, monitorTypeStr: String,
-                        reportUnitStr: String, msfStr: String, startStr: String, endStr: String, outputTypeStr: String) = Security.Authenticated {
+                        reportUnitStr: String, msfStr: String, startStr: String, endStr: String, mb:Boolean, outputTypeStr: String) = Security.Authenticated {
     implicit request =>
       import scala.collection.JavaConverters._
       val monitorStrArray = monitorStr.split(':')
@@ -516,7 +540,7 @@ object Query extends Controller {
         }
       val outputType = OutputType.withName(outputTypeStr)
 
-      val chart = trendHelper(monitors, epaMonitors, monitorTypes, reportUnit, monitorStatusFilter, start, end)
+      val chart = trendHelper(monitors, epaMonitors, monitorTypes, reportUnit, monitorStatusFilter, start, end, mb)
 
       if (outputType == OutputType.excel) {
         val mts = monitors.flatMap { _ => monitorTypes.toList }

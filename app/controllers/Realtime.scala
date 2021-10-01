@@ -71,7 +71,7 @@ object Realtime extends Controller {
       val end = current.toDateTime + 1.hour
 
       import Query.trendHelper
-      val chart = trendHelper(monitors, Array.empty[EpaMonitor.Value], monitorTypes, reportUnit, monitorStatusFilter, start, end)
+      val chart = trendHelper(monitors, Array.empty[EpaMonitor.Value], monitorTypes, reportUnit, monitorStatusFilter, start, end, false)
       
       Results.Ok(Json.toJson(chart))
   }
@@ -90,7 +90,7 @@ object Realtime extends Controller {
       val end = current.toDateTime + 1.minute
 
       import Query.trendHelper
-      val chart = trendHelper(monitors, Array.empty[EpaMonitor.Value], monitorTypes, reportUnit, monitorStatusFilter, start, end)
+      val chart = trendHelper(monitors, Array.empty[EpaMonitor.Value], monitorTypes, reportUnit, monitorStatusFilter, start, end, false)
       
       Results.Ok(Json.toJson(chart))
   }

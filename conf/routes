@@ -60,14 +60,14 @@ GET      /Excel/MonitorAggregateReport/:date                                    
 POST     /SaveMonitorAggregateReport/:date                                                           controllers.Report.saveMonitorAggregateReport(date)
 
 
-GET      /HistoryQuery                                                                               controllers.Query.history
-GET      /HistoryQueryReport/:edit/:monitor/:epaMonitor/:monitorType/:recordType/:start/:end         controllers.Query.historyReport(edit:Boolean, monitor, epaMonitor, monitorType, recordType, start, end, outputType="html")
-GET      /PDF/HistoryQueryReport/:edit/:monitor/:epaMonitor/:monitorType/:recordType/:start/:end     controllers.Query.historyReport(edit:Boolean, monitor, epaMonitor, monitorType, recordType, start, end, outputType="pdf")
-GET      /Excel/HistoryQueryReport/:edit/:monitor/:epaMonitor/:monitorType/:recordType/:start/:end   controllers.Query.historyReport(edit:Boolean, monitor, epaMonitor, monitorType, recordType, start, end, outputType="excel")
+GET      /HistoryQuery                                                                                  controllers.Query.history
+GET      /HistoryQueryReport/:edit/:monitor/:epaMonitor/:monitorType/:recordType/:start/:end/:mb        controllers.Query.historyReport(edit:Boolean, monitor, epaMonitor, monitorType, recordType, start, end, mb:Boolean, outputType="html")
+GET      /PDF/HistoryQueryReport/:edit/:monitor/:epaMonitor/:monitorType/:recordType/:start/:end/:mb    controllers.Query.historyReport(edit:Boolean, monitor, epaMonitor, monitorType, recordType, start, end, mb:Boolean, outputType="pdf")
+GET      /Excel/HistoryQueryReport/:edit/:monitor/:epaMonitor/:monitorType/:recordType/:start/:end/:mb  controllers.Query.historyReport(edit:Boolean, monitor, epaMonitor, monitorType, recordType, start, end, mb:Boolean, outputType="excel")
 
 GET      /HistoryTrend                                                                               controllers.Query.historyTrend
-GET      /JSON/HistoryTrend/:monitor/:epaMonitor/:monitorType/:reportUnit/:msf/:start/:end           controllers.Query.historyTrendChart(monitor, epaMonitor, monitorType, reportUnit, msf, start, end, outputTypeStr="html")
-GET      /Excel/HistoryTrend/:monitor/:epaMonitor/:monitorType/:reportUnit/:msf/:start/:end          controllers.Query.historyTrendChart(monitor, epaMonitor, monitorType, reportUnit, msf, start, end, outputTypeStr="excel")
+GET      /JSON/HistoryTrend/:monitor/:epaMonitor/:monitorType/:reportUnit/:msf/:start/:end/:mb       controllers.Query.historyTrendChart(monitor, epaMonitor, monitorType, reportUnit, msf, start, end, mb:Boolean, outputTypeStr="html")
+GET      /Excel/HistoryTrend/:monitor/:epaMonitor/:monitorType/:reportUnit/:msf/:start/:end/:mb      controllers.Query.historyTrendChart(monitor, epaMonitor, monitorType, reportUnit, msf, start, end, mb:Boolean, outputTypeStr="excel")
 
 GET      /PsiTrend                                                                                   controllers.Query.psiTrend
 GET      /JSON/PsiTrend/:monitor/:start/:end/:dailyPsi                                               controllers.Query.psiTrendChart(monitor, start, end, dailyPsi:Boolean, outputType="html")
