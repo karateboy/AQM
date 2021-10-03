@@ -36,10 +36,10 @@ object Application extends Controller {
       }
   }
 
-  def monitor(monitor: String) = Security.Authenticated {
+  def monitorConfig(monitor: String) = Security.Authenticated {
     implicit request =>
       val m = Monitor.withName(monitor)
-      Ok(views.html.monitor(m))
+      Ok(views.html.monitorConfig(m))
   }
 
   def monitorList = Security.Authenticated {
@@ -189,8 +189,13 @@ object Application extends Controller {
 
   def monitorTypeConfig = Security.Authenticated {
     implicit request =>
-      val autoAuditNormal = SystemConfig.getConfig(SystemConfig.AutoAuditAsNormal, "False").toBoolean
-      Ok(views.html.monitorTypeConfig(autoAuditNormal))
+      Ok(views.html.monitorTypeConfig())
+  }
+
+  def getAutoAuditNormal()= Security.Authenticated {
+    implicit request =>
+      val v = SystemConfig.getConfig(SystemConfig.AutoAuditAsNormal, "true")
+      Ok(Json.obj("value" -> v.toBoolean))
   }
 
   def setAutoAuditNormal(booleanStr: String) = Security.Authenticated {

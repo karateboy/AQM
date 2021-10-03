@@ -2,6 +2,7 @@
 bin/
 /db
 .eclipse
+.idea
 /logs/
 /modules
 /project/project

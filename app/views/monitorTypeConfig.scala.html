@@ -1,22 +1,8 @@
 @* monitorTypeConfig Template File *@
 @import MonitorType._
-@(autoAuditNormal:Boolean)
-<div class="row">
+@()
+<div class="row" id="monitorTypeConfigPage">
     <div class="col-lg-12">
-    	<div class="panel panel-primary">
-    		<div class="panel-heading panel-title"" >
-        		<a data-toggle="collapse" data-parent="#accordion" href="#effectiveRatio">有效數據百分比</a>	
-        	</div>
-        	<div class="panel-body panel-collapse" id="effectiveRatio">
-        		<form id="effectiveRatioForm" class="form-horizontal">
-						<br/>
-						<div class="form-group">
-							<label class="col-lg-1 control-label">百分比:</label>
-							<input class="col-lg-1" id="effectiveRatio" value="75" readonly>%																				
-						</div>						
-				</form>        		
-        	</div>
-    	</div>
     	<div class="panel panel-primary">
     		<div class="panel-heading panel-title" >
         		<a data-toggle="collapse" data-parent="#accordion">自動註記是否視為正常數據</a>	
@@ -25,13 +11,10 @@
         		<form id="autoAuditNormalForm" class="form-horizontal">
 						<br/>
 						<div class="form-group">
-							<label class="col-lg-1 control-label">視為正常數據:</label>
+							<label class="col-lg-1 control-label">正常數據:</label>
 							<div class="col-lg-1">
-                				<input id="autoAuditNormal" name='autoAuditNormal' type="checkbox" class="form-control" readonly
-                					@if(autoAuditNormal){
-                						checked
-                					}
-                				>
+                				<input id="autoAuditNormal" name='autoAuditNormal' type="checkbox" class="form-control" 
+								v-model="autoAuditNormal" @@click="setAutoAudit" />
                 			</div>																										
 						</div>						
 				</form>        		
@@ -59,11 +42,19 @@
         	</div>
     	</div>
         <div class="panel panel-primary">
-        <div class="panel-heading panel-title"" >
-        	<a data-toggle="collapse" data-parent="#accordion" href="#monitorType">點擊測項參數加以編輯</a>	
+        <div class="panel-heading panel-title" >
+        	<a data-toggle="collapse" data-parent="#accordion" href="#monitorType">測項參數</a>	
         </div>
-        <div class="panel-body panel-collapse" id="monitorType">    		
-			<div id="monitorTypeDiv" align="center">
+        <div class="panel-body panel-collapse" id="monitorType">
+			<div class="col-lg-12">
+				<label class="control-label">選擇測站:</label>				
+					<div class="btn-group" data-toggle="buttons">
+						<button type="button" v-for="m in monitorList" :key="m.id" 
+							class="btn btn-outline btn-primary" 						
+							:class="{ active: selectedMonitor == m.id }" @@click="selectedMonitor=m.id">{{ m.name }}</button>						
+					</div>
+			</div>			    		
+			<div id="monitorTypeDiv" align="center">				
             	<table id="monitorTypeTable" class="table" cellspacing="0" width="100%">
             		<thead>
             			<tr>
@@ -111,17 +102,26 @@
             				</tr>
             			}
             		</tbody>
-            	</table>          		
+            	</table>
             </div>
        </div>
        </div>
 	</div>
 </div>
 <script>
+const dataTableL10N = '/assets/localization/zh_tw.json';
 var app = new Vue({
-	  el: '#pm10OverInvalidForm',
+	  el: '#monitorTypeConfigPage',
 	  data: {
-		  pm10threshold_:0
+		  pm10threshold_:0,
+		  autoAuditNormal:false,
+		  monitorList: [],
+		  selectedMonitor: ''
+	  },
+	  watch:{
+		selectedMonitor(){
+			console.log(this.selectedMonitor);
+		}
 	  },
 	  computed:{
 		  pm10threshold:{
@@ -144,6 +144,18 @@ var app = new Vue({
 			  }
 		  }
 	  },
+	  async mounted(){
+		await this.getAutoAudit();
+		await this.getMonitorList();
+		var oTable = $('#monitorTypeTable').dataTable({
+        	language: {
+				url: dataTableL10N,							
+			},
+        	searching: false,
+        	ordering:  false,
+			paging: false
+        });
+	  },
 	  methods:{
 		  setThreshold(){
 			  axios.put("/PM10Threshold", {v:this.pm10threshold_}).then((resp)=>{
@@ -155,18 +167,55 @@ var app = new Vue({
 			  }).catch((err)=>{
 				  alert(err)
 			  }) 
+		  },
+		  async getAutoAudit(){
+			try{
+				const res = await axios.get("/AutoAuditNormal");
+				if(res.status === 200){
+					const ret = res.data;
+					this.autoAuditNormal = ret.value;
+				}
+			}catch(err){
+				throw new Error(err);
+			}
+		  },
+		  async setAutoAudit(){
+			try{
+				// click is before value change..
+				const url = `/AutoAuditNormal/${!this.autoAuditNormal}`
+				const res = await axios.post(url, {});
+				if(res.status === 200){
+					alert("設定成功");
+				}else{
+					alert("無法設定");
+				}
+			}catch(err){
+				throw new Error(err);
+			}
+		  },
+		  async getMonitorList(){
+			  try{
+				  const res = await axios.get("/MonitorList")
+				  if(res.status === 200){
+					  const ret = res.data;
+					  this.monitorList = ret;
+					  this.selectedMonitor = ret[0].id;
+				  }
+			  }catch(err){	
+				  throw new Error(err);
+			  }
 		  }
 	  }
 });
 
 </script>
 <script>
-var dataTableL10N = '@routes.Assets.at("localization/zh_tw.json")';
+// var dataTableL10N = '@routes.Assets.at("localization/zh_tw.json")';
 </script>
+
 <script>
-	$(document).ready(function() {
-        /* Init DataTables */
-        
+	
+/* 	$(document).ready(function() {
         var oTable = $('#monitorTypeTable').dataTable({
         	language: {
 				url: dataTableL10N,							
@@ -176,7 +225,6 @@ var dataTableL10N = '@routes.Assets.at("localization/zh_tw.json")';
 			paging: false
         });
 		
-        /* Apply the jEditable handlers to the table */
         oTable.$('td').editable( '/SaveMonitorTypeConfig', {
         	indicator : '儲存中...',
             tooltip   : '點擊該項目加以編輯...',
@@ -198,38 +246,5 @@ var dataTableL10N = '@routes.Assets.at("localization/zh_tw.json")';
             "width": "90%",
             "height": "100%"
         } );
-	});
-	$("#effectiveRatioForm").submit(function(evt){
-		alert("成功");
-		event.preventDefault();
-	});
-	$("#autoAuditNormal").change(function(evt){
-		var $ctrl = $(this);
-		var v = $ctrl.prop("checked");
-		var obj ={
-			value: v
-		};
-		var url = "/AutoAuditNormal/" + v;
-		console.log(url);
-		
-		$.ajax({
-			url: url,
-			data: JSON.stringify(obj),
-			contentType: "application/json; charset=utf-8",
-			method:"POST",			
-			dataType: "json",
-			success: function(result){
-				if(result.ok)
-					alert("設定成功");
-				else
-					alert("無法設定");
-			},
-			error: function(xhr, status, errorThrown){
-				alert(status + ":" + errorThrown);
-			},
-
-			complete: function(xhr, status){
-			}					
-		});	
-	});
+	}); */
 </script>

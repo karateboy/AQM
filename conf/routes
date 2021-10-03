@@ -104,8 +104,8 @@ GET      /CalibrationQueryReport/:monitor/:start/:end                           
 GET      /PDF/CalibrationQueryReport/:monitor/:start/:end                                            controllers.Query.calibrationQueryReport(monitor, start, end, outputTypeStr="pdf")
 GET      /Excel/CalibrationQueryReport/:monitor/:start/:end                                          controllers.Query.calibrationQueryReport(monitor, start, end, outputTypeStr="excel")
 
-GET      /Monitor                                                                                    controllers.Application.monitor(monitor = "A001")
-GET      /Monitor/:monitor                                                                           controllers.Application.monitor(monitor)
+GET      /MonitorConfig                                                                              controllers.Application.monitorConfig(monitor = "A001")
+GET      /MonitorConfig/:monitor                                                                     controllers.Application.monitorConfig(monitor)
 GET      /MonitorList                                                                                controllers.Application.monitorList
 GET      /MonitorInfo/:monitor                                                                       controllers.Application.getMonitorInfo(monitor)
 GET      /MonitorBios/:monitor                                                                       controllers.Application.getMonitorBios(monitor)
@@ -169,6 +169,7 @@ GET      /Instrument                                                            
 GET      /InstrumentReport/:monitor/:instrument/:start/:end                                          controllers.Application.instrumentReport(monitor, instrument, start, end, outputTypeStr="html")
 GET      /PDF/InstrumentReport/:monitor/:instrument/:start/:end                                      controllers.Application.instrumentReport(monitor, instrument, start, end, outputTypeStr="pdf")
 
+GET      /AutoAuditNormal                                                                            controllers.Application.getAutoAuditNormal
 POST     /AutoAuditNormal/:boolStr                                                                   controllers.Application.setAutoAuditNormal(boolStr)
 GET      /MyTicket                                                                                   controllers.Maintance.myTicket
 GET      /NewTicket                                                                                  controllers.Maintance.newTicket

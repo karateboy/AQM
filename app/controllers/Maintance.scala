@@ -624,7 +624,7 @@ object Maintance extends Controller {
 
   def equipmentManagement = Security.Authenticated {
     val m = Monitor.values.toList.head
-    Ok(views.html.monitor(m, true))
+    Ok(views.html.monitorConfig(m, true))
   }
 
   def partManagement(outputTypeStr: String) = Security.Authenticated {
