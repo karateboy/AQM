@@ -54,7 +54,7 @@ class OpenDataReceiver extends Actor with ActorLogging {
 
   def receive = {
     case GetEpaHourData =>
-      val start = SystemConfig.getEpaLast - 1.day
+      val start = SystemConfig.getEpaLast - 7.day
       val end = DateTime.now().withMillisOfDay(0)
       if (start < end) {
         getEpaHourData(start, end)
@@ -84,10 +84,11 @@ class OpenDataReceiver extends Actor with ActorLogging {
         val siteName = dataNode \ "SiteName"
         val itemId = dataNode \ "ItemId"
         val monitorDateOpt = dataNode \ "MonitorDate"
+        val siteID = (dataNode \ "SiteId").text.trim.toInt
 
         try {
           //Filter interested EPA monitor
-          if (EpaMonitor.nameMap.contains(siteName.text.trim()) &&
+          if (EpaMonitor.idMap.contains(siteID) &&
             MonitorType.eapIdMap.contains(itemId.text.trim().toInt)) {
             val epaMonitor = EpaMonitor.withName(siteName.text.trim())
             val monitorType = MonitorType.eapIdMap(itemId.text.trim().toInt)
@@ -136,7 +137,7 @@ class OpenDataReceiver extends Actor with ActorLogging {
           val MStation = EpaMonitor.map(monitor)
           val MItem = MonitorType.map(mtValue._1).epa_mapping.get
           val MDate: java.sql.Timestamp = dateTime
-          DB localTx { implicit session =>
+          DB autoCommit { implicit session =>
             sql"""
               UPDATE dbo.hour_data
               SET MValue = ${mtValue._2}

@@ -82,6 +82,15 @@
             					}
 	            			</div>            		
 	                    </div>
+						<div class="form-group">
+							<label class="col-lg-1 control-label">數據類型</label>
+							<div class="col-lg-11 btn-group" data-toggle="buttons">
+								<label class="btn btn-outline btn-primary dim active">
+									<input type="radio" name="mb" id="false" checked>一般測值</label>
+								<label class="btn btn-outline btn-primary dim">
+									<input type="radio" name="mb" id="true">修正MB值</label>
+							</div>
+						</div>
 	                    <div class="form-group">
 	            			<label class="col-lg-1 control-label">圖表類型</label>						
 	            			<div class="col-lg-11 btn-group" data-toggle="buttons">
@@ -221,7 +230,7 @@ $( document ).ready(function() {
 		}
 	});
 	
-	var monitors, epaMonitors, monitorTypes, reportUnit, monitorStatusFilter, reportStart, reportEnd, chartType;
+	var monitors, epaMonitors, monitorTypes, reportUnit, monitorStatusFilter, reportStart, reportEnd, chartType, mb;
 	
 	function validate(){
 		monitors = $("input[name='monitor']:checked");
@@ -280,7 +289,9 @@ $( document ).ready(function() {
 		}
 
 		chartType = $("input[name='chartType']:checked").attr('id');
-		 
+
+		mb = $("input[name='mb']:checked").attr('id');
+
 		return true;
 	}
 	
@@ -318,7 +329,8 @@ $( document ).ready(function() {
 				monitorTypeParam += ':' + monitorTypes[i].id;
 		}	
 
-		var base_url = 	monitorParam + "/" + epaMonitorParam + "/" + monitorTypeParam + "/" + reportUnit +"/"+ monitorStatusFilter + "/"+reportStart + "/" + reportEnd;
+		var base_url = 	monitorParam + "/" + epaMonitorParam + "/" +
+			monitorTypeParam + "/" + reportUnit +"/"+ monitorStatusFilter + "/"+reportStart + "/" + reportEnd + "/" + mb;
 		var url = "/JSON/HistoryTrend/" + base_url; 
 		function pointFormatter(){
 			var d = new Date(this.x);

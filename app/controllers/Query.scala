@@ -109,7 +109,14 @@ object Query extends Controller {
 
       val outputType = OutputType.withName(outputTypeStr)
 
-      var timeSet = Set[DateTime]()
+      val timeList = tableType match {
+        case TableType.SixSec =>
+          Report.getPeriods(start, end, 6.second)
+        case TableType.Hour =>
+          Report.getPeriods(start.withMinuteOfHour(0), end.withMinuteOfHour(0), 1.hour)
+        case TableType.Min =>
+          Report.getPeriods(start, end, 1.minute)
+      }
 
       val pairs =
         for {
@@ -139,12 +146,9 @@ object Query extends Controller {
               (Record.timeProjection(rs).toDateTime, (interpolatedNMHC, t(rs)._2))
             } else
               (Record.timeProjection(rs).toDateTime, t(rs))
-
-            //(Record.timeProjection(rs).toDateTime, t(rs))
           }
           timeMap = Map(mtRecords: _*)
         } yield {
-          timeSet ++= timeMap.keySet
           (m -> timeMap)
         }
 
@@ -162,7 +166,7 @@ object Query extends Controller {
       val epaRecordMap = Map(epa_pairs: _*)
       val title = "歷史資料查詢"
       val output =
-        views.html.historyReport(edit, monitors, epaMonitors, monitorType, start, end, timeSet.toList.sorted, recordMap, epaRecordMap, false, tableType.toString)
+        views.html.historyReport(edit, monitors, epaMonitors, monitorType, start, end, timeList, recordMap, epaRecordMap, false, tableType.toString)
       outputType match {
         case OutputType.html =>
           Ok(output)

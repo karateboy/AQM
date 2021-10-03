@@ -824,22 +824,26 @@ object Record {
   }
 
   case class EpaHourRecord(monitor: EpaMonitor.Value, time: DateTime, monitorType: MonitorType.Value, value: Float)
-  def getEpaHourRecord(epaMonitor: EpaMonitor.Value, monitorType: MonitorType.Value, startTime: DateTime, endTime: DateTime)(implicit session: DBSession = AutoSession) = {
+  def getEpaHourRecord(epaMonitor: EpaMonitor.Value, monitorType: MonitorType.Value, startTime: DateTime, endTime: DateTime)
+                      (implicit session: DBSession = AutoSession): List[EpaHourRecord] = {
     val start: Timestamp = startTime
     val end: Timestamp = endTime
     val monitorId = EpaMonitor.map(epaMonitor).id
     val monitorTypeStrOpt = MonitorType.map(monitorType).epa_mapping
-    if (monitorTypeStrOpt.isEmpty)
+    if (monitorTypeStrOpt.isEmpty) {
+      Logger.error(s"Epa mapping is empty for $monitorType")
       List.empty[EpaHourRecord]
-    else {
+    } else {
       val monitorTypeStr = monitorTypeStrOpt.get
+
       sql"""
-        Select * 
+        Select *
         From hour_data
         Where MStation=${monitorId} and MItem=${monitorTypeStr} and MDate >= ${start} and MDate < ${end}
         ORDER BY MDate ASC
       """.map {
-        rs => EpaHourRecord(EpaMonitor.idMap(rs.int(2)), rs.timestamp(3), MonitorType.epaMap(rs.string(4)), rs.float(5))
+        rs =>
+          EpaHourRecord(EpaMonitor.idMap(rs.int(1)), rs.jodaDateTime(2), MonitorType.epaMap(rs.string(3)), rs.float(4))
       }.list().apply()
     }
   }

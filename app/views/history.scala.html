@@ -68,6 +68,15 @@
             					}
 	            			</div>            		
 	                    </div>
+								<div class="form-group">
+									<label class="col-lg-1 control-label">數據類型</label>
+									<div class="col-lg-11 btn-group" data-toggle="buttons">
+										<label class="btn btn-outline btn-primary dim active">
+											<input type="radio" name="mb" id="false" checked>一般測值</label>
+										<label class="btn btn-outline btn-primary dim">
+											<input type="radio" name="mb" id="true">修正MB值</label>
+									</div>
+								</div>
 	                    <div class="form-group">
 	            			<label class="col-lg-1 control-label">查詢區間</label>	
 	            			<div class="col-lg-5">
@@ -89,7 +98,6 @@
         	<div class="panel panel-success" style="display:none" id="reportPanel">
             	<div class="panel-body panel-collapse" id="monitorReport">
             		<div align="right">
-            			<label class="btn btn-outline" data-toggle="tooltip" data-placement="bottom" title="PDF"><a href="#" id="downloadPDF"><i class="fa fa-file-pdf-o fa-2x pdf"></i></a></label>
             			<label class="btn btn-outline" data-toggle="tooltip" data-placement="bottom" title="Excel"><a href="#" id="downloadExcel"><i class="fa fa-file-excel-o fa-2x"></i></a></label>            			            			
                 	</div>
  
@@ -201,7 +209,7 @@ $( document ).ready(function() {
 		enableEpa(true);
 	});
 	
-	var monitors, epaMonitors, monitorType, tableType, reportStart, reportEnd;
+	var monitors, epaMonitors, monitorType, tableType, reportStart, reportEnd, mb;
 
 	function validate(){
 		monitors = $("input[name='monitor']:checked");
@@ -247,7 +255,8 @@ $( document ).ready(function() {
 				return false;
 			}
 		}
-		
+		mb = $("input[name='mb']:checked").attr('id');
+
 		return true;
 	}
 
@@ -280,9 +289,9 @@ $( document ).ready(function() {
 		
 		var url;
 		if(url_head != "/HistoryQueryReport/false/"){
-			url= url_head + monitorParam + "/None/" + monitorType + "/" + tableType + "/" +reportStart + "/" + reportEnd;		  	
+			url= url_head + monitorParam + "/None/" + monitorType + "/" + tableType + "/" +reportStart + "/" + reportEnd + "/" + mb;
 		}else{
-			url= url_head + monitorParam + "/" + epaMonitorParam + "/" + monitorType + "/" + tableType + "/" +reportStart + "/" + reportEnd;
+			url= url_head + monitorParam + "/" + epaMonitorParam + "/" + monitorType + "/" + tableType + "/" +reportStart + "/" + reportEnd + "/" + mb;
 		}
 		
 		$.ajax({

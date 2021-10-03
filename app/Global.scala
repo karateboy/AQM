@@ -7,8 +7,27 @@ import play.api.libs.concurrent.Akka
 import akka.actor._
 import scala.concurrent.duration._
 import scala.concurrent.ExecutionContext.Implicits.global
-import play.api.db.Database
 object Global extends GlobalSettings {
+  def upgradeEpaDataTab()(implicit session: DBSession): Unit ={
+      sql"""
+              IF COL_LENGTH('[dbo].[Hour_data]', 'ID') IS NOT NULL
+                Begin
+                  DROP TABLE hour_data;
+                  CREATE TABLE [dbo].[hour_data](
+	                  [MStation] [int] NOT NULL,
+	                  [MDate] [datetime2](7) NOT NULL,
+	                  [MItem] [varchar](50) NOT NULL,
+	                  [MValue] [float] NOT NULL,
+                    CONSTRAINT [PK_hour_data] PRIMARY KEY CLUSTERED
+                    (
+	                    [MStation] ASC,
+	                    [MDate] ASC,
+	                    [MItem] ASC
+                    )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
+                  ) ON [PRIMARY];
+                End
+             """.execute().apply()
+      }
   def upgradeDB() {
     DB autoCommit {
       implicit session =>
@@ -31,6 +50,8 @@ object Global extends GlobalSettings {
         val thisYear = DateTime.now().getYear
         if(!Ozone8Hr.hasOzone8hrTab(thisYear))
           Ozone8Hr.createTab(thisYear)
+
+        upgradeEpaDataTab()
     }
 
     DB autoCommit( {

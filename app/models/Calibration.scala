@@ -12,7 +12,7 @@ object Calibration {
   case class CalibrationItem(monitor:Monitor.Value, monitorType:MonitorType.Value,
         startTime:DateTime, endTime:DateTime, span:Float, z_std:Float, z_val:Float, 
         zd_val:Float, zd_pnt:Float,
-        s_std:Float, s_sval:Float, sd_val:Float, sd_pnt:Float
+        s_std:Float, s_sval:Float, sd_val:Float, sd_pnt:Float, mb: Float
       ){
     def save() = {
       DB localTx {
@@ -94,7 +94,13 @@ object Calibration {
     val s_sval = rs.float(11)
     val sd_val = rs.float(12)
     val sd_pnt = rs.float(13)
-    CalibrationItem(monitor, monitorType, startTime, endTime, span, z_std, z_val, zd_val, zd_pnt, s_std, s_sval, sd_val, sd_pnt)
+
+    val zero = z_val
+    val standard_span = s_std
+    val calibration_span = s_sval
+    val mb = (calibration_span - zero) * (standard_span / calibration_span)
+
+    CalibrationItem(monitor, monitorType, startTime, endTime, span, z_std, z_val, zd_val, zd_pnt, s_std, s_sval, sd_val, sd_pnt, mb = mb)
   }
 
   def calibrationQueryReport(monitor: Monitor.Value, start: Timestamp, end: Timestamp) = {
