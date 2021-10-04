@@ -79,6 +79,11 @@ object SystemConfig {
     Map(configPair: _*)
   }
 
+  val Ozone8HrCalculateDate = "Ozone8HrCalculateDate"
+  def getOzone8HrCalculateDate = DateTime.parse(SystemConfig.getConfig(Ozone8HrCalculateDate, DateTime.now.toString("yyyy-MM-dd")),
+    DateTimeFormat.forPattern("yyyy-MM-dd"))
+  def setOzone8HrCalculateDate(dateTime: DateTime) = SystemConfig.setConfig(Ozone8HrCalculateDate, dateTime.toString("yyyy-MM-dd"))
+
   def getConfig(key: String, defaultValue: String) = {
     val opt = map.get(key)
     if (opt.isDefined)
