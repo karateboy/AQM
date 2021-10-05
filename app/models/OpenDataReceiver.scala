@@ -47,7 +47,7 @@ class OpenDataReceiver extends Actor with ActorLogging {
 
   val timer = {
     import scala.concurrent.duration._
-    Akka.system.scheduler.schedule(Duration(5, SECONDS), Duration(1, HOURS), receiver, GetEpaHourData)
+    context.system.scheduler.schedule(Duration(5, SECONDS), Duration(1, HOURS), receiver, GetEpaHourData)
   }
 
   import scala.xml._

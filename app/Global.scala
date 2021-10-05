@@ -103,6 +103,7 @@ object Global extends GlobalSettings {
     PartAlarmWorker.start
     DbUpdater.start
     OpenDataReceiver.startup()
+    Ozone8HrCalculator.start
   }
 
   def secondToTomorror1AM = {
