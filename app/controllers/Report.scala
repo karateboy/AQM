@@ -329,6 +329,30 @@ object Report extends Controller {
     buf.toList
   }
 
+  def get8hrPeriods(start:DateTime, end:DateTime): List[DateTime] = {
+    import scala.collection.mutable.ListBuffer
+
+    val buf = ListBuffer[DateTime]()
+    var current = start
+    def appendBuffer()= {
+      while (current < end) {
+        buf.append(current)
+        if((current + 1.hour).getDayOfWeek == current.getDayOfWeek)
+          current += 1.hour
+        else
+          current = current.withMillisOfDay(0).withHourOfDay(7).plusDays(1)
+      }
+      buf.toList
+    }
+    if(current< start.withMillisOfDay(0).withHourOfDay(7)) {
+      current = start.withMillisOfDay(0).withHourOfDay(7)
+      appendBuffer
+    } else {
+      current = start
+      appendBuffer
+    }
+  }
+
   def getPeriodReportMap(monitor: Monitor.Value, start: DateTime, end: DateTime, filter: MonitorStatusFilter.Value, period: Period) = {
     val adjustStart = DateTime.parse(start.toString("YYYY-MM-dd"))
     val adjustEnd = DateTime.parse(end.toString("YYYY-MM-dd")) + 1.day

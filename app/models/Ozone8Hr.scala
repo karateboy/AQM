@@ -100,7 +100,7 @@ object Ozone8HrCalculator {
   }
 
   def calculateOzoneOfTheSameMonth(start: DateTime, end: DateTime): Unit = {
-    Logger.info(s"update O3 8hr ${start.getYear}/${start.getMonthOfYear()}")
+    Logger.info(s"upsert O3 8hr ${start.getYear}/${start.getMonthOfYear()}")
     val tabName = Ozone8Hr.getTabName(start.getYear())
     for (m <- Monitor.mvList) {
       if (Monitor.map(m).monitorTypes.contains(MonitorType.A225)) {
@@ -108,16 +108,16 @@ object Ozone8HrCalculator {
           .map(hr => OzoneRecord(hr.date.toJodaDateTime, hr.o3, hr.o3_stat)).toList
         val DP_NO = Monitor.map(m).id
         val avgList: Seq[List[OzoneRecord]] =
-          for (i <- 0 to hrList.length - 8 if hrList(i).time.getDayOfMonth == hrList(i + 7).time.getDayOfMonth) yield
-            hrList.slice(i, i + 7)
+          for (i <- 0 to hrList.length - 8 if hrList(i).time.getDayOfMonth() == hrList(i).time.plusHours(7).getDayOfMonth()) yield
+            hrList.slice(i, i + 8)
 
         for {avgData <- avgList if avgData.nonEmpty
              head = avgData.head
              dataList = avgData.filter(r => head.time <= r.time && r.time < head.time + 8.hour) if dataList.nonEmpty
-             } {
 
+             avgList = dataList.map(_.value).flatten
+             } yield {
           val recordTime: java.sql.Timestamp = (head.time + 7.hour)
-          val avgList = dataList.map(_.value).flatten
           val avg: Option[Float] = if (avgList.nonEmpty)
             Some(avgList.sum / avgList.length)
           else
@@ -138,11 +138,64 @@ object Ozone8HrCalculator {
               IF(@@ROWCOUNT = 0)
               BEGIN
                 INSERT INTO $tabName ([DP_NO], [M_DateTime], [Value], [Status])
-                VALUES($DP_NO, $recordTime, $avg, ${MonitorStatus.NORMAL_STAT})
+                VALUES($DP_NO, $recordTime, $avg, ${status})
               END
             """.update.apply
             }
           }
+        }
+      }
+    }
+
+  }
+
+  def calculateOzoneOfTheSameMonthBatch(start: DateTime, end: DateTime): Unit = {
+    Logger.info(s"upsert O3 8hr ${start.getYear}/${start.getMonthOfYear()}")
+    val tabName = Ozone8Hr.getTabName(start.getYear())
+    for (m <- Monitor.mvList) {
+      if (Monitor.map(m).monitorTypes.contains(MonitorType.A225)) {
+        val hrList: List[OzoneRecord] = Record.getHourRecords(m, start, end)
+          .map(hr => OzoneRecord(hr.date.toJodaDateTime, hr.o3, hr.o3_stat)).toList
+        val DP_NO = Monitor.map(m).id
+        val avgList: Seq[List[OzoneRecord]] =
+          for (i <- 0 to hrList.length - 8) yield
+            hrList.slice(i, i + 8)
+
+        val updateParamOptions: Seq[Option[Seq[Any]]] =
+          for {avgData <- avgList if avgData.nonEmpty
+               head = avgData.head
+               dataList = avgData.filter(r => head.time <= r.time && r.time < head.time + 8.hour) if dataList.nonEmpty
+               avgList = dataList.map(_.value).flatten
+               } yield {
+            val recordTime: java.sql.Timestamp = (head.time + 7.hour)
+            val avg: Option[Float] = if (avgList.nonEmpty)
+              Some(avgList.sum / avgList.length)
+            else
+              None
+
+            val statusMap: Map[Option[String], Int] = dataList.groupBy(_.status).mapValues(_.size)
+            val status: Option[String] = statusMap.maxBy(t => t._2)._1
+            if (avg.nonEmpty && status.nonEmpty)
+              Some(Seq(DP_NO, recordTime, avg, status, DP_NO, recordTime, DP_NO, recordTime, avg, status))
+            else
+              None
+          }
+        val updateParam: Seq[Seq[Any]] = updateParamOptions.flatten
+        DB autoCommit { implicit session =>
+          sql"""
+              UPDATE $tabName
+              SET [DP_NO] = ?
+                  ,[M_DateTime] = ?
+                  ,[Value] = ?
+                  ,[Status] = ?
+              WHERE [DP_NO]=? and [M_DateTime] =?;
+
+              IF(@@ROWCOUNT = 0)
+              BEGIN
+                INSERT INTO $tabName ([DP_NO], [M_DateTime], [Value], [Status])
+                VALUES(?, ?, ?, ?)
+              END
+            """.batch(updateParam: _*).apply()
         }
       }
     }
@@ -163,16 +216,6 @@ class Ozone8HrCalculator extends Actor {
     Akka.system.scheduler.schedule(Duration(5, SECONDS), Duration(10, MINUTES), self, CalculateCurrent)
   }
 
-  def calculateCurrent() = {
-    for (m <- Monitor.mvList if Monitor.map(m).monitorTypes.contains(MonitorType.A225)) {
-      val hr = DateTime.now.getHourOfDay
-      val end = DateTime.now().withMillisOfDay(0).withHourOfDay(hr)
-      val start = end - 8.hours
-      val records = Record.getHourRecords(m, start, end)
-      calculateOznoe8Hr(Monitor.map(m).id, records, end - 1.hour)
-    }
-  }
-
   override def receive: Receive = {
     case CalculateCurrent =>
       if (LocalTime.now.getHourOfDay >= 8) {
@@ -190,20 +233,28 @@ class Ozone8HrCalculator extends Actor {
           Ozone8Hr.createTab(date.getYear)
 
         val start: DateTime = date.withDayOfMonth(1).withMillisOfDay(0)
-        val end: DateTime = if (date.withMillisOfDay(0).withHourOfDay(23).isAfterNow())
-          DateTime.now().minusHours(1).withMinuteOfHour(0)
-        else
-          date.withMillisOfDay(0).withHourOfDay(23)
+        val end: DateTime = date.plusMonths(1).withMillisOfDay(0)
 
         Future {
           blocking {
-            calculateOzoneOfTheSameMonth(start, end)
+            //calculateOzoneOfTheSameMonth(start, end)
+            calculateOzoneOfTheSameMonthBatch(start, end)
             val nextStep = start.minusMonths(1)
             SystemConfig.setOzone8HrCalculateDate(nextStep)
             self ! CalculateOznoe(nextStep)
           }
         }
       }
+  }
+
+  def calculateCurrent() = {
+    for (m <- Monitor.mvList if Monitor.map(m).monitorTypes.contains(MonitorType.A225)) {
+      val hr = DateTime.now.getHourOfDay
+      val end = DateTime.now().withMillisOfDay(0).withHourOfDay(hr)
+      val start = end - 8.hours
+      val records = Record.getHourRecords(m, start, end)
+      calculateOznoe8Hr(Monitor.map(m).id, records, end - 1.hour)
+    }
   }
 
   override def postStop(): Unit = {

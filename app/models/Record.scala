@@ -26,80 +26,81 @@ object TableType extends Enumeration {
   val SixSec = Value("SixSec")
   val Min = Value("Min")
   val Hour = Value("Hour")
-  val map = Map((SixSec -> "六秒資料"), (Min -> "分鐘資料"), (Hour -> "小時資料"))
+  val EightHour = Value("EightHour")
+  val map = Map(SixSec -> "六秒資料", Min -> "分鐘資料", Hour -> "小時資料", EightHour->"八小時資料")
 }
 
 object Record {
   case class HourRecord(
     name: String,
     date: Timestamp,
-    chk: Option[String],
-    tsp: Option[Float],
-    tsp_stat: Option[String],
-    pm10: Option[Float],
-    pm10_stat: Option[String],
-    pm25: Option[Float],
-    pm25_stat: Option[String],
-    s: Option[Float],
-    s_stat: Option[String],
-    so2: Option[Float],
-    so2_stat: Option[String],
-    nox: Option[Float],
-    nox_stat: Option[String],
-    co: Option[Float],
-    co_stat: Option[String],
-    o3: Option[Float],
-    o3_stat: Option[String],
-    thc: Option[Float],
-    thc_stat: Option[String],
-    ammonia: Option[Float],
-    ammonia_stat: Option[String],
-    noy: Option[Float],
-    noy_stat: Option[String],
-    noy_no: Option[Float],
-    noy_no_stat: Option[String],
-    nh3: Option[Float],
-    nh3_stat: Option[String],
-    no: Option[Float],
-    no_stat: Option[String],
-    ch4: Option[Float],
-    ch4_stat: Option[String],
-    monitor_humid: Option[Float],
-    monitor_humid_stat: Option[String],
-    monitor_temp: Option[Float],
-    monitor_temp_stat: Option[String],
-    no2: Option[Float],
-    no2_stat: Option[String],
-    nmhc: Option[Float],
-    nmhc_stat: Option[String],
-    wind_speed: Option[Float],
-    wind_speed_stat: Option[String],
-    wind_dir: Option[Float],
-    wind_dir_stat: Option[String],
-    rain: Option[Float],
-    rain_stat: Option[String],
-    temp: Option[Float],
-    temp_stat: Option[String],
-    humid: Option[Float],
-    humid_stat: Option[String],
-    air_pressure: Option[Float],
-    air_pressure_stat: Option[String],
-    noy_dif: Option[Float],
-    noy_dif_stat: Option[String],
-    nh3_nt: Option[Float],
-    nh3_nt_stat: Option[String],
-    nh3_nox: Option[Float],
-    nh3_nox_stat: Option[String],
-    nh3_no: Option[Float],
-    nh3_no_stat: Option[String],
-    nh3_no2: Option[Float],
-    nh3_no2_stat: Option[String],
-    h2s_cs: Option[Float],
-    h2s_cs_stat: Option[String],
-    h2s_so2: Option[Float],
-    h2s_so2_stat: Option[String],
-    h2s: Option[Float],
-    h2s_stat: Option[String])
+    chk: Option[String] = None,
+    tsp: Option[Float]= None,
+    tsp_stat: Option[String]= None,
+    pm10: Option[Float]= None,
+    pm10_stat: Option[String]= None,
+    pm25: Option[Float]= None,
+    pm25_stat: Option[String]= None,
+    s: Option[Float]= None,
+    s_stat: Option[String]= None,
+    so2: Option[Float]= None,
+    so2_stat: Option[String]= None,
+    nox: Option[Float]= None,
+    nox_stat: Option[String]= None,
+    co: Option[Float]= None,
+    co_stat: Option[String]= None,
+    var o3: Option[Float]= None,
+    var o3_stat: Option[String]= None,
+    thc: Option[Float]= None,
+    thc_stat: Option[String]= None,
+    ammonia: Option[Float]= None,
+    ammonia_stat: Option[String]= None,
+    noy: Option[Float]= None,
+    noy_stat: Option[String]= None,
+    noy_no: Option[Float]= None,
+    noy_no_stat: Option[String]= None,
+    nh3: Option[Float]= None,
+    nh3_stat: Option[String]= None,
+    no: Option[Float]= None,
+    no_stat: Option[String]= None,
+    ch4: Option[Float]= None,
+    ch4_stat: Option[String]= None,
+    monitor_humid: Option[Float]= None,
+    monitor_humid_stat: Option[String]= None,
+    monitor_temp: Option[Float]= None,
+    monitor_temp_stat: Option[String]= None,
+    no2: Option[Float]= None,
+    no2_stat: Option[String]= None,
+    nmhc: Option[Float]= None,
+    nmhc_stat: Option[String]= None,
+    wind_speed: Option[Float]= None,
+    wind_speed_stat: Option[String]= None,
+    wind_dir: Option[Float]= None,
+    wind_dir_stat: Option[String]= None,
+    rain: Option[Float]= None,
+    rain_stat: Option[String]= None,
+    temp: Option[Float]= None,
+    temp_stat: Option[String]= None,
+    humid: Option[Float]= None,
+    humid_stat: Option[String]= None,
+    air_pressure: Option[Float]= None,
+    air_pressure_stat: Option[String]= None,
+    noy_dif: Option[Float]= None,
+    noy_dif_stat: Option[String]= None,
+    nh3_nt: Option[Float]= None,
+    nh3_nt_stat: Option[String]= None,
+    nh3_nox: Option[Float]= None,
+    nh3_nox_stat: Option[String]= None,
+    nh3_no: Option[Float]= None,
+    nh3_no_stat: Option[String]= None,
+    nh3_no2: Option[Float]= None,
+    nh3_no2_stat: Option[String]= None,
+    h2s_cs: Option[Float]= None,
+    h2s_cs_stat: Option[String]= None,
+    h2s_so2: Option[Float]= None,
+    h2s_so2_stat: Option[String]= None,
+    h2s: Option[Float]= None,
+    h2s_stat: Option[String]= None)
 
   case class SixSecRecord(
     monitor: Monitor.Value,
@@ -175,6 +176,29 @@ object Record {
     SixSecRecord(Monitor.withName(rs.string(1)), rs.timestamp(2), windSpeed, windSpeed_stat, windDir, windDir_stat)
   }
 
+  def get8HourRecords(monitor: Monitor.Value, startTime: DateTime, endTime: DateTime)(implicit session: DBSession = AutoSession): List[Record.HourRecord] = {
+    val start: Timestamp = startTime
+    val end: Timestamp = endTime
+    val monitorName = monitor.toString()
+
+    if (startTime == endTime)
+      List.empty[HourRecord]
+    else {
+      val tab_name = getTabName(TableType.EightHour, startTime.getYear)
+      val result = sql"""
+        Select *
+        From ${tab_name}
+        Where DP_NO=${monitorName} and M_DateTime >= ${start} and M_DateTime < ${end}
+        ORDER BY M_DateTime ASC
+      """.map { rs=>
+        HourRecord(name = rs.string(1), rs.timestamp(2),
+          o3 = Some(rs.float(3)), o3_stat = Some(rs.string(4)) ) }.list().apply()
+      if (startTime.getYear == endTime.getYear)
+        result
+      else
+        result ++ get8HourRecords(monitor, DateTime.parse(s"${startTime.getYear + 1}-1-1"), endTime)
+    }
+  }
   def getHourRecords(monitor: Monitor.Value, startTime: DateTime, endTime: DateTime)(implicit session: DBSession = AutoSession): List[Record.HourRecord] = {
     val start: Timestamp = startTime
     val end: Timestamp = endTime
@@ -812,8 +836,10 @@ object Record {
     typeRecords
   }
 
-  def getTabName(tab: TableType.Value, year: Int) = {
+  def getTabName(tab: TableType.Value, year: Int): SQLSyntax = {
     tab match {
+      case TableType.EightHour=>
+        Ozone8Hr.getTabName(year)
       case TableType.Hour =>
         SQLSyntax.createUnsafely(s"[P1234567_Hr_${year}]")
       case TableType.Min =>
