@@ -990,6 +990,15 @@ object Maintance extends Controller {
       Ok(views.html.alarmNoTicket(excludedList))
   }
 
+  def alarmTicketList() = Security.Authenticated {
+    implicit request =>
+      //FIXME
+      val start = DateTime.now() - 2.day
+      val list = Alarm.getAlarmAutoTicketList(start)
+
+      Ok(views.html.alarmAutoTicket(list))
+  }
+
   def alarmNoTicketExcel() = Security.Authenticated {
     implicit request =>
       //FIXME
@@ -1002,6 +1011,18 @@ object Maintance extends Controller {
       val excelFile = ExcelUtility.alarmList(excludedList, "待立案警報 (" + DateTime.now.toString("YYYY/MM/dd HH:mm") + ")")
       Ok.sendFile(excelFile, fileName = _ =>
         play.utils.UriEncoding.encodePathSegment("待立案.xlsx", "UTF-8"),
+        onClose = () => { Files.deleteIfExists(excelFile.toPath()) })
+  }
+
+  def alarmTicketExcel() = Security.Authenticated {
+    implicit request =>
+      //FIXME
+      val start = DateTime.now() - 2.day
+      val list = Alarm.getAlarmAutoTicketList(start)
+
+      val excelFile = ExcelUtility.alarmList(list, "警報立案 (" + DateTime.now.toString("YYYY/MM/dd HH:mm") + ")")
+      Ok.sendFile(excelFile, fileName = _ =>
+        play.utils.UriEncoding.encodePathSegment("警報立案.xlsx", "UTF-8"),
         onClose = () => { Files.deleteIfExists(excelFile.toPath()) })
   }
 

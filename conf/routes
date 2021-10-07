@@ -58,7 +58,9 @@ GET      /MonitorAggregateReport/:date                                          
 GET      /PDF/MonitorAggregateReport/:date                                                           controllers.Report.monitorAggregateReport(date, outputTypeStr="pdf")
 GET      /Excel/MonitorAggregateReport/:date                                                         controllers.Report.monitorAggregateReport(date, outputTypeStr="excel")
 POST     /SaveMonitorAggregateReport/:date                                                           controllers.Report.saveMonitorAggregateReport(date)
-
+GET      /AggregateQuery                                                                             controllers.Report.aggregateQuery
+GET      /AggregateReport/:monitors/:monitorTypes/:start/:end                                        controllers.Report.aggregateReport(monitors, monitorTypes, start, end, outputType="html")
+GET      /Excel/AggregateReport/:monitors/:monitorTypes/:start/:end                                  controllers.Report.aggregateReport(monitors, monitorTypes, start, end, outputType="excel")
 
 GET      /HistoryQuery                                                                                  controllers.Query.history
 GET      /HistoryQueryReport/:edit/:monitor/:epaMonitor/:monitorType/:recordType/:start/:end/:mb        controllers.Query.historyReport(edit:Boolean, monitor, epaMonitor, monitorType, recordType, start, end, mb:Boolean, outputType="html")
@@ -234,6 +236,8 @@ PUT      /PM10Threshold                                                         
 #Alarm Ticket
 GET      /AlarmNoTicketList                                                                          controllers.Maintance.alarmNoTicketList
 GET      /AlarmNoTicketList/excel                                                                    controllers.Maintance.alarmNoTicketExcel
+GET      /AlarmTicketList                                                                            controllers.Maintance.alarmTicketList
+GET      /AlarmTicketList/excel                                                                      controllers.Maintance.alarmTicketExcel
 POST     /AlarmToTicket                                                                              controllers.Maintance.alarmToTicket
 GET      /ManualAlarmTicket                                                                          controllers.Maintance.manualAlarmTicket
 GET      /ReparingAlarmTicket                                                                        controllers.Maintance.repairingAlarmTicket(outputTypeStr="html")
@@ -246,7 +250,7 @@ GET      /NoRepairAlarm                                                         
 
 #JSON
 GET      /MonitorTypeAlertInfo/:monitor         controllers.Application.getMonitorTypeAlertInfo(monitor)
-GET      /MonitorTypeAlertConfig
+POST     /MonitorTypeAlertInfo                  controllers.Application.updateMonitorTypeAlertInfo()
 # websockets
 GET      /MinMonthlyReportSocket                                                                     controllers.Report.getMinMonthlySocket
 GET      /DownloadMinMonthlyReport/:n                                                                controllers.Report.downloadMinMontlyReport(n: Int)

@@ -93,7 +93,7 @@ object Alarm {
     }.single.apply
   }
 
-  def getAlarmNoTicketList(start: DateTime)(implicit session: DBSession = AutoSession) = {
+  def getAlarmNoTicketList(start: DateTime)(implicit session: DBSession = AutoSession): List[Alarm] = {
     val tab = getTabName(start.getYear)
     val startT: Timestamp = start
     sql"""
@@ -108,6 +108,20 @@ object Alarm {
     }.list.apply
   }
 
+  def getAlarmAutoTicketList(start: DateTime)(implicit session: DBSession = AutoSession): List[Alarm] = {
+    val tab = getTabName(start.getYear)
+    val startT: Timestamp = start
+    sql"""
+        Select *
+        From ${tab}
+        Where M_DateTime>=${startT} and CHK = 'ATO'
+        ORDER BY M_DateTime ASC
+        """.map {
+      rs =>
+        Alarm(Monitor.withName(rs.string(1)), rs.string(2), rs.timestamp(3), rs.float(4),
+          MonitorStatus.getTagInfo(rs.string(5).trim()).toString, rs.stringOpt(6))
+    }.list.apply
+  }
 /*
   def getFirstAlarmNoTicket(start: DateTime)(implicit session: DBSession = AutoSession) = {
     val tab = getTabName(start.getYear)
@@ -148,7 +162,7 @@ object Alarm {
         """.update.apply
   }
 
-  def insertAlarm(ar: Alarm) = {
+  def insertAlarm(ar: Alarm): Int = {
     val tab = getTabName(ar.time.getYear)
     def checkExist() = {
       import java.sql.Timestamp

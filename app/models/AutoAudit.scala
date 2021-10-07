@@ -495,8 +495,8 @@ case class OverInternalStdMinRule(enabled: Boolean, threshold: Int) extends Rule
 
     val records = Record.getMinRecords(m, DateTime.now - 1.hour, DateTime.now)
     for {
-      mt <- mCase.monitorTypes if mCase.getStdInternal(mt).isDefined
-      std_internal = mCase.getStdInternal(mt).get
+      mt <- mCase.monitorTypes
+      std_internal <- MonitorTypeAlert.map(m)(mt).internal
       mtRecords = records.map { Record.monitorTypeProject2(mt) }
     } {
       val over = mtRecords.count(r => r._1.isDefined && r._2.isDefined

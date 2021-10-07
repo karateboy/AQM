@@ -275,7 +275,7 @@ object Query extends Controller {
       case ReportUnit.TenMin =>
         Report.getPeriods(DateTime.parse(start.toString("YYYY-MM-dd")), DateTime.parse(end.toString("YYYY-MM-dd")) + 1.day, 10.minute)
       case ReportUnit.EightHour =>
-        Report.getPeriods(DateTime.parse(start.toString("YYYY-MM-dd")), DateTime.parse(end.toString("YYYY-MM-dd")) + 1.day, 8.hour)
+        Report.getPeriods(DateTime.parse(start.toString("YYYY-MM-dd")), DateTime.parse(end.toString("YYYY-MM-dd")) + 1.day, 1.hour)
       case ReportUnit.Day =>
         Report.getDays(DateTime.parse(start.toString("YYYY-MM-dd")), DateTime.parse(end.toString("YYYY-MM-dd")))
       case ReportUnit.Week =>
@@ -495,7 +495,7 @@ object Query extends Controller {
 
       val std_internal_line = {
         val std_internals = monitors.map {
-          Monitor.map(_).getStdInternal(mt)
+          MonitorTypeAlert.map(_)(mt).internal
         }
         val min_std_internal = std_internals.min
         if (min_std_internal.isDefined)

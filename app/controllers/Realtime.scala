@@ -176,7 +176,7 @@ object Realtime extends Controller {
 
         val std_internal_line =
           {
-            val std_internals = group.privilege.allowedMonitors.map { Monitor.map(_).getStdInternal(mt) }
+            val std_internals = group.privilege.allowedMonitors.map { MonitorTypeAlert.map(_)(mt).internal }
             val min_std_internal = std_internals.min
             if (min_std_internal.isDefined)
               Some(AxisLine("#0000FF", 2, mtCase.std_internal_default.get, Some(AxisLineLabel("left", "內控值"))))

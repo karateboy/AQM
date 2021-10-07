@@ -1,5 +1,6 @@
 package models
 
+import play.api.Logger
 import scalikejdbc._
 
 case class MonitorTypeAlert(monitor: Monitor.Value, monitorType: MonitorType.Value,
@@ -19,7 +20,15 @@ case class MonitorTypeAlertInfo(monitorID: String, monitorTypeID: String, name:S
                                 internal: Option[Float], warn: Option[Float], std_law: Option[Float],
                                 std_hour: Option[Float], std_day: Option[Float],
                                 eightHrAvg: Option[Float], twentyFourHrAvg: Option[Float],
-                                yearAvg: Option[Float])
+                                yearAvg: Option[Float]){
+  def getMonitorTypeAlert = {
+    val m = Monitor.withName(monitorID)
+    val mt = MonitorType.withName(monitorTypeID)
+    MonitorTypeAlert(m, mt,
+      internal, warn, std_law, std_hour, std_day, eightHrAvg, twentyFourHrAvg, yearAvg)
+  }
+}
+
 
 object MonitorTypeAlert {
   def hasTable()(implicit session: DBSession) = {
@@ -71,6 +80,7 @@ object MonitorTypeAlert {
         MonitorTypeAlert(m, mt, mCase.getStdInternal(mt), None, mtCase.std_law, mtCase.std_hour, mtCase.std_day,
           None, None, None)
       }
+    Logger.info(s"mta list #=${mtaList.size}")
 
     val paramList:Seq[Seq[Any]] = mtaList map { mta =>
       Seq(
@@ -113,7 +123,7 @@ object MonitorTypeAlert {
          """.batch(paramList:_*).apply()
   }
 
-  def save(mta: MonitorTypeAlert)(implicit session: DBSession) = {
+  def insert(mta: MonitorTypeAlert)(implicit session: DBSession) = {
     sql"""
         INSERT INTO [dbo].[MonitorTypeAlert]
            ([DP_NO]
@@ -138,6 +148,27 @@ object MonitorTypeAlert {
            ,${mta.twentyFourHrAvg}
            ,${mta.yearAvg})
          """.update().apply()
+  }
+
+  def save(mta: MonitorTypeAlertInfo)(implicit session: DBSession) = {
+    sql"""
+     UPDATE [dbo].[MonitorTypeAlert]
+        SET
+         [STD_Internal] = ${mta.internal}
+        ,[Warn] = ${mta.warn}
+        ,[STD_Law] = ${mta.std_law}
+        ,[STD_Hour] = ${mta.std_hour}
+        ,[STD_Day] = ${mta.std_day}
+        ,[EightHrAvg] = ${mta.eightHrAvg}
+        ,[TwentyFourHrAvg] = ${mta.twentyFourHrAvg}
+        ,[STD_Year] = ${mta.yearAvg}
+        WHERE [DP_NO] = ${mta.monitorID} and [ITEM] = ${mta.monitorTypeID}
+         """.update().apply()
+    val m = Monitor.withName(mta.monitorID)
+    val mt = MonitorType.withName(mta.monitorTypeID)
+    val mtMap = map(m)
+    val newMtMap = mtMap + (mt-> mta.getMonitorTypeAlert)
+    map = map + (m-> newMtMap)
   }
 
   var map = Map.empty[Monitor.Value, Map[MonitorType.Value, MonitorTypeAlert]]

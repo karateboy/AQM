@@ -15,10 +15,12 @@ import play.api.data._
 import play.api.data.Forms._
 import play.api.libs.ws._
 import play.api.libs.ws.ning.NingAsyncHttpClientConfigBuilder
+
 import scala.concurrent.Future
 import PdfUtility._
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
+import scalikejdbc.DB
 object Application extends Controller {
 
   val title = "麥寮廠區空氣品質及氣象監測系統"
@@ -92,7 +94,7 @@ object Application extends Controller {
     implicit request =>
       val m = Monitor.withName(monitorStr)
       val mt = MonitorType.withName(mtStr)
-      val std = Monitor.map(m).getStdInternal(mt)
+      val std = MonitorTypeAlert.map(m)(mt).internal
 
       Ok(Json.obj(
         if (std.isDefined)
@@ -744,5 +746,24 @@ object Application extends Controller {
     val list = MonitorTypeAlert.map(monitor).values.toList.map{mta=>mta.getInfo}.sortBy(_.monitorTypeID)
     implicit val write = Json.writes[MonitorTypeAlertInfo]
     Ok(Json.toJson(list))
+  }
+
+  def updateMonitorTypeAlertInfo()= Security.Authenticated(BodyParsers.parse.json) {
+    implicit request =>
+      implicit val read = Json.reads[MonitorTypeAlertInfo]
+      val monitorTypes = request.body.validate[MonitorTypeAlertInfo]
+
+      monitorTypes.fold(
+        error => {
+          Logger.error(JsError.toJson(error).toString())
+          BadRequest(Json.obj("ok" -> false, "msg" -> JsError.toJson(error)))
+        },
+        mta => {
+          DB autoCommit {
+            implicit session=>
+              MonitorTypeAlert.save(mta)
+          }
+          Ok(Json.obj("ok" -> true))
+        })
   }
 }

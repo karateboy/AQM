@@ -229,7 +229,7 @@ warn = r.floatOpt("Warn"),
       val value = v._1.get
       val status = v._2.get
 
-      val internal_std = Monitor.map(m).getStdInternal(mt)
+      val internal_std = MonitorTypeAlert.map(m)(mt).internal
       val overInternal =
         if (internal_std.isDefined && (value > internal_std.get))
           true

@@ -40,6 +40,20 @@ object AggregateReport {
     }
   }
 
+  def getReportListFromDb(start: DateTime, end:DateTime)(implicit session: DBSession = AutoSession) = {
+    DB readOnly { implicit session =>
+      sql"""
+        Select *
+        From AggregateReport
+        Where date between $start and $end
+        """.map {
+        rs =>
+          val report = Json.parse(rs.string(2)).validate[Seq[MonitorSummary]].get
+          AggregateReport(rs.date(1), report)
+      }.list().apply()
+    }
+  }
+
   def updateReport(date: DateTime, explain: Seq[MonitorSummary])(implicit session: DBSession = AutoSession) = {
     DB localTx { implicit session =>
       val explainJson = Json.toJson(explain).toString
@@ -69,9 +83,9 @@ object AggregateReport {
 
         val descs =
           for {
-            t <- dailyReport.typeList if Monitor.map(m).getStdInternal(t.monitorType).isDefined
+            t <- dailyReport.typeList if MonitorTypeAlert.map(m)(t.monitorType).internal.isDefined
             mCase = MonitorType.map(t.monitorType)
-            mtInternal = Monitor.map(m).getStdInternal(t.monitorType).get
+            mtInternal = MonitorTypeAlert.map(m)(t.monitorType).internal.get
             over_hrs = t.dataList.filter(r => r._2.isDefined && r._3.isDefined && MonitorStatus.isNormalStat(r._3.get)
               && r._2.get > mtInternal) if !over_hrs.isEmpty
           } yield {

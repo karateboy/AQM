@@ -1,0 +1,174 @@
+<div class="row" id="monitorTypeConfigPage">
+    <div class="col-lg-12">
+        <div class="panel panel-primary">
+            <div class="panel-heading panel-title">
+                <a data-toggle="collapse" data-parent="#accordion" href="#monitorType">測項參數</a>
+            </div>
+            <div class="panel-body">
+                <label class="control-label">選擇測站:</label>
+                <div class="btn-group" data-toggle="buttons">
+                    <button type="button" v-for="m in monitorList" :key="m.id" class="btn btn-outline btn-primary"
+                        :class="{ active: selectedMonitor == m.id }" @click="updateSelectedMonitor(m.id)">{{ m.name
+                        }}</button>
+                </div>
+                <table class="table table-hover table-condensed">
+                    <thead>
+                        <tr>
+                            <th>代碼</th>
+                            <th>名稱</th>
+                            <th>單位</th>
+                            <th>內控值</th>
+                            <th>警告值</th>
+                            <th>法規值</th>
+                            <th>小時標準</th>
+                            <th>日標準</th>
+                            <th>8小時平均值</th>
+                            <th>24小時平均值</th>
+                            <th>年平均值</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr v-for="mta in monitorTypeAlertInfo">
+                            <td>{{ mta.monitorTypeID }}</td>
+                            <td>{{ mta.name }}</td>
+                            <td>{{ mta.unit }}</td>
+                            <td><input class="form-control" v-model.number="mta.internal" @change="markDirty(mta)" />
+                            </td>
+                            <td><input class="form-control" v-model.number="mta.warn" @change="markDirty(mta)" /></td>
+                            <td><input class="form-control" v-model.number="mta.std_law" @change="markDirty(mta)" />
+                            </td>
+                            <td><input class="form-control" v-model.number="mta.std_hour" @change="markDirty(mta)" />
+                            </td>
+                            <td><input class="form-control" v-model.number="mta.std_day" @change="markDirty(mta)" />
+                            </td>
+                            <td><input class="form-control" v-model.number="mta.eightHrAvg" @change="markDirty(mta)" />
+                            </td>
+                            <td><input class="form-control" v-model.number="mta.twentyFourHrAvg"
+                                    @change="markDirty(mta)" /></td>
+                            <td><input class="form-control" v-model.number="mta.yearAvg" @change="markDirty(mta)" />
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+                <div class="form-group">
+                    <div class="col-lg-1 col-lg-offset-1">
+                        <button type="button" class="btn btn-primary" @click="save">儲存</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<script>
+    const dataTableL10N = '/assets/localization/zh_tw.json';
+    var app = new Vue({
+        el: '#monitorTypeConfigPage',
+        data: {
+            pm10threshold_: 0,
+            autoAuditNormal: false,
+            monitorList: [],
+            selectedMonitor: '',
+            monitorTypeAlertInfo: []
+        },
+        computed: {
+            pm10threshold: {
+                get: function () {
+                    if (this.pm10threshold_ == 0) {
+                        axios.get("/PM10Threshold").then((resp) => {
+                            const ret = resp.data
+                            if (resp.status == 200) {
+                                this.pm10threshold_ = ret
+                            } else
+                                alert(resp.statusText)
+                        }).catch((err) => {
+                            alert(err)
+                        })
+                    }
+                    return this.pm10threshold_
+                },
+                set: function (v) {
+                    this.pm10threshold_ = v
+                }
+            }
+        },
+        async mounted() {
+            await this.getMonitorList();
+            this.selectedMonitor = this.monitorList[0].id;
+            await this.getMonitorTypeAlertInfo();
+        },
+        methods: {
+            markDirty(mta) {
+                mta.dirty = true;
+            },
+            async getMonitorList() {
+                try {
+                    const res = await axios.get("/MonitorList")
+                    if (res.status === 200) {
+                        const ret = res.data;
+                        this.monitorList = ret;
+                        this.selectedMonitor = ret[0].id;
+                    }
+                } catch (err) {
+                    throw new Error(err);
+                }
+            },
+            async updateSelectedMonitor(m) {
+                this.selectedMonitor = m;
+                await this.getMonitorTypeAlertInfo();
+            },
+            async getMonitorTypeAlertInfo() {
+                try {
+                    const res = await axios.get(`/MonitorTypeAlertInfo/${this.selectedMonitor}`)
+                    if (res.status == 200) {
+                        this.monitorTypeAlertInfo = res.data;
+                    }
+                } catch (err) {
+                    throw new Error(err);
+                }
+            },
+            check(mta) {
+                if (!mta.internal)
+                    mta.internal = null
+
+                if (!mta.warn)
+                    mta.warn = null
+
+                if (!mta.std_law)
+                    mta.std_law = null
+
+                if (!mta.std_hour)
+                    mta.std_hour = null
+
+                if (!mta.std_day)
+                    mta.std_day = null
+
+                if (!mta.eightHrAvg)
+                    mta.eightHrAvg = null
+
+                if (!mta.twentyFourHrAvg)
+                    mta.twentyFourHrAvg = null
+
+                if (!mta.yearAvg)
+                    mta.yearAvg = null
+            },
+            async save() {
+                try {
+                    let all = [];
+                    for (let mta of this.monitorTypeAlertInfo) {
+                        if (mta.dirty) {
+                            this.check(mta);
+                            const p = axios.post(`/MonitorTypeAlertInfo`, mta)
+                            all.push(p)
+                        }
+                    }
+                    console.log(all)
+                    const ret = await Promise.all(all)
+                    alert("成功")
+                } catch (err) {
+                    throw new Error(err);
+                }
+            }
+        }
+    });
+
+</script>

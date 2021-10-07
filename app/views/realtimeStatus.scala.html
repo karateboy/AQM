@@ -54,8 +54,8 @@
 						<td>-</td>
 					}else{
 						<td style="@MonitorType.getStyleStr(m, mt, rt_status(m)(mt))" 
-							@if(Monitor.map(m).getStdInternal(mt).isDefined){																
-								title="內控值:@Monitor.map(m).getStdInternal(mt).get @MonitorType.map(mt).unit"
+							@if(MonitorTypeAlert.map(m)(mt).internal.isDefined){
+								title="內控值:@MonitorTypeAlert.map(m)(mt).internal.get @MonitorType.map(mt).unit"
 							}
 							data-toggle="tooltip" data-container="body" data-trigger="hover"
 						>@MonitorType.format(mt, (rt_status(m)(mt)._1))</td>
