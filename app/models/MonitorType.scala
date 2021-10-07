@@ -11,8 +11,7 @@ case class MonitorType(id: String, desp: String, unit: String,
                        zd_internal: Option[Float], zd_law: Option[Float],
                        sd_internal: Option[Float], sd_law: Option[Float],
                        epa_mapping: Option[String],
-                       prec: Int, order: Int, warn: Option[Float], eightHrAvg: Option[Float],
-                       twentyFourHrAvg: Option[Float], yearAvg: Option[Float])
+                       prec: Int, order: Int)
 
 object MonitorType extends Enumeration {
   implicit val mtReads: Reads[MonitorType.Value] = EnumUtils.enumReads(MonitorType)
@@ -20,7 +19,7 @@ object MonitorType extends Enumeration {
 
   val Other = Value("Oth")
   val OtherCase = MonitorType("Oth", "其他", "", None, None, None, None, None,
-    None, None, None, None, None, 0, 0, None, None, None, None)
+    None, None, None, None, None, 0, 0)
 
   private def mtList: List[MonitorType] =
     DB readOnly { implicit session =>
@@ -42,11 +41,7 @@ object MonitorType extends Enumeration {
           sd_law = r.floatOpt(13),
           epa_mapping = r.stringOpt(14),
           prec = r.int(15),
-          order = r.int(16),
-          warn = r.floatOpt("Warn"),
-          eightHrAvg = r.floatOpt("EightHrAvg"),
-          twentyFourHrAvg = r.floatOpt("TwentyFourHrAvg"),
-          yearAvg = r.floatOpt("YearAvg"))
+          order = r.int(16))
       }.list.apply
     }
 /*
@@ -124,11 +119,7 @@ warn = r.floatOpt("Warn"),
             sd_law = r.floatOpt(13),
             epa_mapping = r.stringOpt(14),
             prec = r.int(15),
-            order = r.int(16),
-            warn = r.floatOpt("Warn"),
-            eightHrAvg = r.floatOpt("EightHrAvg"),
-            twentyFourHrAvg = r.floatOpt("TwentyFourHrAvg"),
-            yearAvg = r.floatOpt("YearAvg"))
+            order = r.int(16))
         }.single.apply
       map = (map + (mt -> newMtOpt.get))
     }

@@ -147,16 +147,16 @@ object Query extends Controller {
             if (mb && canCalibrate(monitorType, rs)(calibrationMap)) {
               val calibrated = doCalibrate(monitorType, rs)(calibrationMap)
               (Record.timeProjection(rs).toDateTime, (calibrated, t(rs)._2))
-            } else if (mb && monitorType == MonitorType.A296 &&
-              canCalibrate(MonitorType.A286, rs)(calibrationMap) && canCalibrate(MonitorType.A226, rs)(calibrationMap)) {
+            } else if (mb && monitorType == MonitorType.A226 &&
+              canCalibrate(MonitorType.A286, rs)(calibrationMap) && canCalibrate(MonitorType.A296, rs)(calibrationMap)) {
               //A296=>NMHC, A286=>CH4, A226=>THC
               val calibratedCH4 = doCalibrate(MonitorType.A286, rs)(calibrationMap)
-              val calibratedTHC = doCalibrate(MonitorType.A226, rs)(calibrationMap)
-              val interpolatedNMHC =
-                for (ch4 <- calibratedCH4; thc <- calibratedTHC)
-                  yield thc - ch4
+              val calibratedNMHC = doCalibrate(MonitorType.A226, rs)(calibrationMap)
+              val thc =
+                for (ch4 <- calibratedCH4; nmhc <- calibratedNMHC)
+                  yield ch4 + nmhc
 
-              (Record.timeProjection(rs).toDateTime, (interpolatedNMHC, t(rs)._2))
+              (Record.timeProjection(rs).toDateTime, (thc, t(rs)._2))
             } else
               (Record.timeProjection(rs).toDateTime, t(rs))
           }

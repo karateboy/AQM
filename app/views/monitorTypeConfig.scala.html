@@ -42,69 +42,55 @@
         	</div>
     	</div>
         <div class="panel panel-primary">
-        <div class="panel-heading panel-title" >
-        	<a data-toggle="collapse" data-parent="#accordion" href="#monitorType">測項參數</a>	
-        </div>
-        <div class="panel-body panel-collapse" id="monitorType">
-			<div class="col-lg-12">
-				<label class="control-label">選擇測站:</label>				
-					<div class="btn-group" data-toggle="buttons">
-						<button type="button" v-for="m in monitorList" :key="m.id" 
-							class="btn btn-outline btn-primary" 						
-							:class="{ active: selectedMonitor == m.id }" @@click="selectedMonitor=m.id">{{ m.name }}</button>						
-					</div>
-			</div>			    		
-			<div id="monitorTypeDiv" align="center">				
-            	<table id="monitorTypeTable" class="table" cellspacing="0" width="100%">
-            		<thead>
+        	<div class="panel-heading panel-title" >
+        		<a data-toggle="collapse" data-parent="#accordion" href="#monitorType">測項參數</a>	
+        	</div>
+        	<div class="panel-body">
+				<div class="col-lg-12">
+					<label class="control-label">選擇測站:</label>				
+						<div class="btn-group" data-toggle="buttons">
+							<button type="button" v-for="m in monitorList" :key="m.id" 
+								class="btn btn-outline btn-primary" 						
+								:class="{ active: selectedMonitor == m.id }" @@click="updateSelectedMonitor(m.id)">{{ m.name }}</button>						
+						</div>
+				</div>			    		
+				
+				<table class="table table-striped">
+					<thead>
             			<tr>
-            				<th>測項代碼</th>
+            				<th>代碼</th>
             				<th>名稱</th>
             				<th>單位</th>
-            				<th>預設內控值</th>
+            				<th>內控值</th>
+							<th>警告值</th>
             				<th>法規值</th>
             				<th>小時標準</th>
             				<th>日標準</th>
             				<th>小數點位數</th>
+							<th>8小時平均值</th>
+							<th>24小時平均值</th>
+							<th>年平均值</th>
             			</tr>
             		</thead>
-            		<tbody>
-            			@for(mt<-MonitorType.mtvAllList){
-            				<tr id="@map(mt).id">
-            					<th>@map(mt).id</th>
-            					<td col="desp">@map(mt).desp</td>
-            					<td col="unit">@map(mt).unit</td>
-            					@if(map(mt).std_internal_default.isEmpty){
-            						<td col="std_internal">-</td>
-            					}else{
-            						<td col="std_internal">@map(mt).std_internal_default</td>
-            					}
-            					
-            					@if(map(mt).std_law.isEmpty){
-            						<td col="std_law">-</td>
-            					}else{
-            						<td col="std_law">@map(mt).std_law</td>
-            					}
-            					
-            					@if(map(mt).std_hour.isEmpty){
-            						<td col="std_hour">-</td>
-            					}else{
-            						<td col="std_hour">@map(mt).std_hour</td>
-            					}
-            					
-            					@if(map(mt).std_day.isEmpty){
-            						<td col="std_day">-</td>
-            					}else{
-            						<td col="std_day">@map(mt).std_day</td>
-            					}
-            					
-            					<td col="precision">@map(mt).prec</td> 
-            				</tr>
-            			}
-            		</tbody>
-            	</table>
-            </div>
-       </div>
+					<tbody>
+						<tr v-for="mta in monitorTypeAlertInfo">
+							<td>{{ mta.monitorTypeID }}</td>
+							<td>{{ mta.name }}</td>
+							<td>{{ mta.unit }}</td>
+							<td>{{ show(mta, mta.internal) }}</td>
+							<td>{{ show(mta, mta.warn) }}</td>
+							<td>{{ show(mta, mta.std_law) }}</td>
+							<td>{{ show(mta, mta.std_hour) }}</td>
+							<td>{{ show(mta, mta.std_day) }}</td>
+							<td>{{ mta.prec }}</td>
+							<td>{{ show(mta, mta.eightHrAvg) }}</td>
+							<td>{{ show(mta, mta.twentyFourHrAvg) }}</td>
+							<td>{{ show(mta, mta.yearAvg) }}</td>
+						</tr>
+					</tbody>
+				</table>
+            	
+       		</div>
        </div>
 	</div>
 </div>
@@ -116,7 +102,8 @@ var app = new Vue({
 		  pm10threshold_:0,
 		  autoAuditNormal:false,
 		  monitorList: [],
-		  selectedMonitor: ''
+		  selectedMonitor: '',
+		  monitorTypeAlertInfo: []
 	  },
 	  watch:{
 		selectedMonitor(){
@@ -147,14 +134,17 @@ var app = new Vue({
 	  async mounted(){
 		await this.getAutoAudit();
 		await this.getMonitorList();
-		var oTable = $('#monitorTypeTable').dataTable({
+		this.selectedMonitor = this.monitorList[0].id;
+		await this.getMonitorTypeAlertInfo();
+		/*
+		$('#monitorTypeTable').dataTable({
         	language: {
 				url: dataTableL10N,							
 			},
         	searching: false,
         	ordering:  false,
 			paging: false
-        });
+        });*/
 	  },
 	  methods:{
 		  setThreshold(){
@@ -204,6 +194,26 @@ var app = new Vue({
 			  }catch(err){	
 				  throw new Error(err);
 			  }
+		  },
+		  async updateSelectedMonitor(m){
+			this.selectedMonitor = m;
+			await this.getMonitorTypeAlertInfo();
+		  },
+		  async getMonitorTypeAlertInfo(){
+			  try{
+				const res = await axios.get(`/MonitorTypeAlertInfo/${this.selectedMonitor}`)
+				if(res.status == 200){
+					this.monitorTypeAlertInfo = res.data;  
+				}
+			  }catch(err){
+				  throw new Error(err);
+			  }
+		  },
+		  show(mta, v){
+			if(v !== null && v !== undefined)
+				return v.toFixed(mta.prec)
+			else
+				return "-"
 		  }
 	  }
 });

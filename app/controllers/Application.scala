@@ -738,4 +738,11 @@ object Application extends Controller {
           Ok(Json.obj("ok" -> true))
         })
   }
+
+  def getMonitorTypeAlertInfo(monitorStr:String) = Security.Authenticated {
+    val monitor = Monitor.withName(monitorStr)
+    val list = MonitorTypeAlert.map(monitor).values.toList.map{mta=>mta.getInfo}.sortBy(_.monitorTypeID)
+    implicit val write = Json.writes[MonitorTypeAlertInfo]
+    Ok(Json.toJson(list))
+  }
 }
