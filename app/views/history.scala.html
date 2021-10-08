@@ -58,7 +58,7 @@
 	            			<label class="col-lg-1 control-label">資料來源</label>						
 	            			<div class="col-lg-11 btn-group" data-toggle="buttons">
            						@for(tt<-TableType.values.toList.sorted){
-           							@if(tt == TableType.values.toList.sorted.last){
+           							@if(tt == TableType.Hour){
            								<label class="btn btn-outline btn-primary dim active">
 										<input type="radio" name="tableType" id="@tt" checked>@TableType.map(tt)</label>
            							}else{
@@ -68,7 +68,11 @@
             					}
 	            			</div>            		
 	                    </div>
-								<div class="form-group">
+								@if(hideDataSource){
+								<div class="form-group" style="display:none">
+									}else{
+									<div class="form-group">
+										}
 									<label class="col-lg-1 control-label">數據類型</label>
 									<div class="col-lg-11 btn-group" data-toggle="buttons">
 										<label class="btn btn-outline btn-primary dim active">

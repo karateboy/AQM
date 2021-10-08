@@ -86,35 +86,7 @@ class DataAlarmChecker extends Actor {
               alarm = true
               val ar = Alarm.Alarm(m, mt.toString, r._1.toDateTime, 1.0f, "011")
               try {
-                if(Alarm.insertAlarm(ar) != 0){
-                  Alarm.updateAlarmTicketState(ar.monitor, ar.mItem, new DateTime(ar.time), "ATO")
-                  val ar_state =
-                    if (ar.mVal == 0)
-                      "恢復正常"
-                    else
-                      "觸發"
-
-                  val reason = s"${ar.time.toString("YYYY/MM/dd HH:mm")} ${Monitor.map(ar.monitor).name}:${Alarm.map(ar.mItem)}-${MonitorStatus.map(ar.code).desp}:${ar_state}"
-                  val mtOpt = try {
-                    Some(MonitorType.withName(ar.mItem))
-                  } catch {
-                    case ex: Throwable =>
-                      None
-                  }
-                  val (repairType, repairSubType) = if (mtOpt.isDefined) {
-                    (Some("數據"), Some(MonitorType.map(mtOpt.get).desp))
-                  } else
-                    (None, None)
-
-                  implicit val w1 = Json.writes[PartFormData]
-                  implicit val write = Json.writes[RepairFormData]
-                  val ticket =
-                    Ticket(0, DateTime.now, true, TicketType.repair, 19,
-                      SystemConfig.getAlarmTicketDefaultUserId(), ar.monitor, mtOpt, reason,
-                      DateTime.now.plusDays(2), Json.toJson(Ticket.defaultAlarmTicketForm(ar)).toString,
-                      repairType, repairSubType, Some(false))
-                  Ticket.newTicket(ticket)
-                }
+                Alarm.insertAlarm(ar)
               } catch {
                 case ex: Exception =>
                 // Skip duplicate alarm
