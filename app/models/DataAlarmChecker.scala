@@ -7,6 +7,7 @@ import Alarm._
 import ModelHelper._
 import models._
 import models.ModelHelper._
+import models.Ozone8HrCalculator.updateCurrentOzone8Hr
 import play.api.libs.json.Json
 
 import scala.concurrent._
@@ -35,6 +36,7 @@ class DataAlarmChecker extends Actor {
 
   def check = {
     Future {
+      updateCurrentOzone8Hr
       val alarm1 = checkMinData
       val alarm2 = checkHourData
       alarm1 || alarm2

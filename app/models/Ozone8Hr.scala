@@ -65,6 +65,19 @@ object Ozone8HrCalculator {
     worker ! CalculateOznoe(date)
   }
 
+  def updateCurrentOzone8Hr(): Unit ={
+    for (m <- Monitor.mvList) {
+      if (Monitor.map(m).monitorTypes.contains(MonitorType.A225)) {
+        val now = DateTime.now
+        val hrList = Record.getHourRecords(m, DateTime.now-8.hour, now)
+
+        val recordTime = DateTime.now.withMillisOfDay(0).withHourOfDay(now.getHourOfDay)
+        if(hrList.nonEmpty)
+        calculateOznoe8Hr(m.toString, hrList, recordTime)
+      }
+    }
+  }
+
   def calculateOznoe8Hr(DP_NO: String, hourRecordList: List[HourRecord], recordTime: DateTime): Unit = {
     val tabName = Ozone8Hr.getTabName(recordTime.getYear())
     val dataList: List[OzoneRecord] = hourRecordList
