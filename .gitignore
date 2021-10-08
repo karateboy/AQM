@@ -23,3 +23,6 @@ server.pid
 /conf/application.conf
 /conf/system.properties
 /notification
+/.metals/metals.h2.db
+/.metals/*.log
+/.vscode/settings.json

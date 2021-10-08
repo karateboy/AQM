@@ -94,6 +94,10 @@ object SystemConfig {
     }
   }
 
+  val ConvertOverStdYear = "ConvertOverStdYear"
+  def getConvertOverStdYear = SystemConfig.getConfig(ConvertOverStdYear, "2021").toInt
+  def setConvertOverStdYear(year:Int) = SystemConfig.setConfig(ConvertOverStdYear, year.toString)
+
   def setConfig(key: String, value: String) = {
     map = (map - key) + (key -> value)
     DB localTx {

@@ -56,6 +56,7 @@ object Global extends GlobalSettings {
           MonitorTypeAlert.initTable()
         }
     }
+    OverStdConverter.start
   }
 
   override def onStart(app: Application) {
