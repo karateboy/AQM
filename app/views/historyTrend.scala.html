@@ -1,409 +1,423 @@
 @* trendReport Template File *@
 @(privilege: Privilege)
 <div class="row">
-   	<div class="col-lg-12">
-   			<div class="panel panel-primary">
-            	<div class="panel-heading panel-title" >
-            		<a data-toggle="collapse" href="#reportParam">查詢參數</a>	
-                </div>
-            	<div class="panel-body panel-collapse in" id="reportParam">
-            		<form class="form-horizontal">
-	            		<div class="form-group">
-	            			<label class="col-lg-1 control-label">測站</label>
-	            			<div class="col-lg-11">
-	            				<button id="select-all-monitors" class="btn btn-info" type="button">全選</button>
-	            				<div class="btn-group" data-toggle="buttons">	            					            				
-	            					@for(m<-Monitor.myMvList(privilege)){
-	            						@if(m == Monitor.myMvList(privilege).head){
-	            							<label class="btn btn-outline btn-primary dim active">
-											<input type="checkbox" name="monitor" id="@m" checked>@Monitor.getDisplayName(m)</label>
-	            						}else{
-	            							<label class="btn btn-outline btn-primary dim">
-											<input type="checkbox" name="monitor" id="@m">@Monitor.getDisplayName(m)</label>
-	            						}
-	            						
-	            					}
-	            				</div>
-	            			</div>	            			            		
-	                    </div>
-	                    <div class="form-group">
-	            			<label class="col-lg-1 control-label">環保署測站</label>
-	            			<div class="col-lg-11">
-	            				<div class="btn-group" data-toggle="buttons">	            					            				
-	            					@for(m<-EpaMonitor.values.toList.sorted){
-	            						<label class="btn btn-outline btn-primary dim">
-										<input type="checkbox" name="epaMonitor" id="@m">@EpaMonitor.map(m).name</label>		            						
-	            					}
-	            				</div>
-	            			</div>	            			            		
-	                    </div>
-	                    <div class="form-group">
-	            			<label class="col-lg-1 control-label">測項</label>
-	            			<div class="col-lg-11">
-	            				<button id="select-all-monitorTypes" class="btn btn-info" type="button">全選</button>
-	            				<div class="btn-group" data-toggle="buttons">	            				
-	            				@for(mt<-MonitorType.myMtvList(privilege)){
-	            					@if(mt == MonitorType.myMtvList(privilege).head){
-	            						<label class="btn btn-outline btn-primary dim active">
-										<input type="checkbox" name="monitorType" id="@mt" checked>@MonitorType.map(mt).desp</label>	
-	            					}else{
-	            						<label class="btn btn-outline btn-primary dim">
-										<input type="checkbox" name="monitorType" id="@mt">@MonitorType.map(mt).desp</label>
-	            					}	            					
-	            				}
-	            				</div>
-	            			</div>	            			            		
-	                    </div>
-	                    <div class="form-group">
-	            			<label class="col-lg-1 control-label">報表單位</label>						
-	            			<div class="col-lg-11 btn-group" data-toggle="buttons">
-           						@for(ru<-ReportUnit.values.toList.sorted){
-           							@if(ru == ReportUnit.Hour){
-           								<label class="btn btn-outline btn-primary dim active">
-											<input type="radio" name="reportUnit" id="@ru" checked>@ReportUnit.map(ru)</label>
-           							}else{
-        	   							<label class="btn btn-outline btn-primary dim">
-											<input type="radio" name="reportUnit" id="@ru">@ReportUnit.map(ru)</label>
-           							}
-           						}
-	            			</div>            		
-	                    </div>
-	                    <div class="form-group">
-	            			<label class="col-lg-1 control-label">狀態碼</label>						
-	            			<div class="col-lg-11 btn-group" data-toggle="buttons">
-           						@for(msf<-MonitorStatusFilter.values.toList.sorted){ 
-           							@if(msf == MonitorStatusFilter.values.toList.sorted.head){
-           								<label class="btn btn-outline btn-primary dim active">
-											<input type="radio" name="monitorStatusFilter" id="@msf" checked>@MonitorStatusFilter.map(msf)</label>
-           							}else{
-           								<label class="btn btn-outline btn-primary dim">
-											<input type="radio" name="monitorStatusFilter" id="@msf">@MonitorStatusFilter.map(msf)</label>
-           							}            							
-            					}
-	            			</div>            		
-	                    </div>
-						<div class="form-group">
-							<label class="col-lg-1 control-label">數據類型</label>
-							<div class="col-lg-11 btn-group" data-toggle="buttons">
-								<label class="btn btn-outline btn-primary dim active">
-									<input type="radio" name="mb" id="false" checked>一般測值</label>
-								<label class="btn btn-outline btn-primary dim">
-									<input type="radio" name="mb" id="true">修正MB值</label>
+	<div class="col-lg-12">
+		<div class="panel panel-primary">
+			<div class="panel-heading panel-title">
+				<a data-toggle="collapse" href="#reportParam">查詢參數</a>
+			</div>
+			<div class="panel-body panel-collapse in" id="reportParam">
+				<form class="form-horizontal">
+					<div class="form-group">
+						<label class="col-lg-1 control-label">測站</label>
+						<div class="col-lg-11">
+							<button id="select-all-monitors" class="btn btn-info" type="button">全選</button>
+							<div class="btn-group" data-toggle="buttons">
+								@for(m<-Monitor.myMvList(privilege)){ @if(m==Monitor.myMvList(privilege).head){ <label
+									class="btn btn-outline btn-primary dim active">
+									<input type="checkbox" name="monitor" id="@m"
+										checked>@Monitor.getDisplayName(m)</label>
+									}else{
+									<label class="btn btn-outline btn-primary dim">
+										<input type="checkbox" name="monitor" id="@m">@Monitor.getDisplayName(m)</label>
+									}
+
+									}
 							</div>
 						</div>
-	                    <div class="form-group">
-	            			<label class="col-lg-1 control-label">圖表類型</label>						
-	            			<div class="col-lg-11 btn-group" data-toggle="buttons">
-           						<label class="btn btn-outline btn-primary dim active">
-									<input type="radio" name="chartType" id="line" checked>折線圖</label>
+					</div>
+					<div class="form-group">
+						<label class="col-lg-1 control-label">環保署測站</label>
+						<div class="col-lg-11">
+							<button id="select-all-epamonitors" class="btn btn-info" type="button">全選</button>
+							<div class="btn-group" data-toggle="buttons">
+								@for(m<-EpaMonitor.values.toList.sorted){ <label
+									class="btn btn-outline btn-primary dim">
+									<input type="checkbox" name="epaMonitor" id="@m">@EpaMonitor.map(m).name</label>
+									}
+							</div>
+						</div>
+					</div>
+					<div class="form-group">
+						<label class="col-lg-1 control-label">測項</label>
+						<div class="col-lg-11">
+							<button id="select-all-monitorTypes" class="btn btn-info" type="button">全選</button>
+							<div class="btn-group" data-toggle="buttons">
+								@for(mt<-MonitorType.myMtvList(privilege)){
+									@if(mt==MonitorType.myMtvList(privilege).head){ <label
+									class="btn btn-outline btn-primary dim active">
+									<input type="checkbox" name="monitorType" id="@mt"
+										checked>@MonitorType.map(mt).desp</label>
+									}else{
+									<label class="btn btn-outline btn-primary dim">
+										<input type="checkbox" name="monitorType"
+											id="@mt">@MonitorType.map(mt).desp</label>
+									}
+									}
+							</div>
+						</div>
+					</div>
+					<div class="form-group">
+						<label class="col-lg-1 control-label">報表單位</label>
+						<div class="col-lg-11 btn-group" data-toggle="buttons">
+							@for(ru<-ReportUnit.values.toList.sorted){ @if(ru==ReportUnit.Hour){ <label
+								class="btn btn-outline btn-primary dim active">
+								<input type="radio" name="reportUnit" id="@ru" checked>@ReportUnit.map(ru)</label>
+								}else{
 								<label class="btn btn-outline btn-primary dim">
-									<input type="radio" name="chartType" id="spline">曲線圖</label>
+									<input type="radio" name="reportUnit" id="@ru">@ReportUnit.map(ru)</label>
+								}
+								}
+						</div>
+					</div>
+					<div class="form-group">
+						<label class="col-lg-1 control-label">狀態碼</label>
+						<div class="col-lg-11 btn-group" data-toggle="buttons">
+							@for(msf<-MonitorStatusFilter.values.toList.sorted){
+								@if(msf==MonitorStatusFilter.values.toList.sorted.head){ <label
+								class="btn btn-outline btn-primary dim active">
+								<input type="radio" name="monitorStatusFilter" id="@msf"
+									checked>@MonitorStatusFilter.map(msf)</label>
+								}else{
 								<label class="btn btn-outline btn-primary dim">
-									<input type="radio" name="chartType" id="area">面積圖</label>	
-								<label class="btn btn-outline btn-primary dim">
-									<input type="radio" name="chartType" id="areaspline">曲線面積圖</label>		
-								<label class="btn btn-outline btn-primary dim">
-									<input type="radio" name="chartType" id="column">柱狀圖</label>
+									<input type="radio" name="monitorStatusFilter"
+										id="@msf">@MonitorStatusFilter.map(msf)</label>
+								}
+								}
+						</div>
+					</div>
+					<div class="form-group">
+						<label class="col-lg-1 control-label">數據類型</label>
+						<div class="col-lg-11 btn-group" data-toggle="buttons">
+							<label class="btn btn-outline btn-primary dim active">
+								<input type="radio" name="mb" id="false" checked>一般測值</label>
+							<label class="btn btn-outline btn-primary dim">
+								<input type="radio" name="mb" id="true">修正MB值</label>
+						</div>
+					</div>
+					<div class="form-group">
+						<label class="col-lg-1 control-label">圖表類型</label>
+						<div class="col-lg-11 btn-group" data-toggle="buttons">
+							<label class="btn btn-outline btn-primary dim active">
+								<input type="radio" name="chartType" id="line" checked>折線圖</label>
+							<label class="btn btn-outline btn-primary dim">
+								<input type="radio" name="chartType" id="spline">曲線圖</label>
+							<label class="btn btn-outline btn-primary dim">
+								<input type="radio" name="chartType" id="area">面積圖</label>
+							<label class="btn btn-outline btn-primary dim">
+								<input type="radio" name="chartType" id="areaspline">曲線面積圖</label>
+							<label class="btn btn-outline btn-primary dim">
+								<input type="radio" name="chartType" id="column">柱狀圖</label>
 
-								<label class="btn btn-outline btn-primary dim">
-									<input type="radio" name="chartType" id="scatter">點圖</label>			
-	            			</div>            		
-	                    </div>
-	                    <div class="form-group">
-	                    	<label class="col-lg-1 control-label">Y軸範圍</label>
-	                    	<div class="col-lg-11">
-	                    		<label>Ymin:<input id="YMin"/></label>	                    			                    		
-	                    		<label>Ymax:<input id="YMax"/></label>	                    		
-	                    	</div>	                    	
-	                    </div>
-	                    
-	                    <div class="form-group">
-	            			<label class="col-lg-1 control-label">查詢區間</label>	
-	            			<div class="col-lg-5">
-	            				<div class="input-daterange input-group" id="datepicker">
-                    			<span class="input-group-addon"><i class="fa fa-calendar"></i></span><input type="text" class="input-sm form-control" name="start" id="reportStart" required/>
-                       			<span class="input-group-addon">至</span>
-                        		<input type="text" class="input-sm form-control" name="end" id="reportEnd" required/>                        
-                    		</div>
-	            			</div>												
-	                    </div>
-	                    
-						<div class="form-group">
-							<div class="col-lg-1 col-lg-offset-1">
-								<button type="button" class="btn btn-primary" id="queryReport">查詢</button>
-							</div>							
-						</div>	                    	                    	                    
-            		</form>
-            	</div>
-        	</div>
-        	<div class="panel panel-success" style="display:none" id="reportPanel">
-            	<div class="panel-body panel-collapse">
-            		<div align="right">            			
-            			<label class="btn btn-outline" data-toggle="tooltip" data-placement="bottom" title="Excel"><a href="#" id="downloadExcel"><i class="fa fa-file-excel-o fa-2x"></i></a></label>            			
-                	</div>
-					<div id="reportDiv" style="width:99%">
-            		</div>
-            	</div>
-        	</div>
+							<label class="btn btn-outline btn-primary dim">
+								<input type="radio" name="chartType" id="scatter">點圖</label>
+						</div>
+					</div>
+					<div class="form-group">
+						<label class="col-lg-1 control-label">Y軸範圍</label>
+						<div class="col-lg-11">
+							<label>Ymin:<input id="YMin" /></label>
+							<label>Ymax:<input id="YMax" /></label>
+						</div>
+					</div>
+
+					<div class="form-group">
+						<label class="col-lg-1 control-label">查詢區間</label>
+						<div class="col-lg-5">
+							<div class="input-daterange input-group" id="datepicker">
+								<span class="input-group-addon"><i class="fa fa-calendar"></i></span><input type="text"
+									class="input-sm form-control" name="start" id="reportStart" required />
+								<span class="input-group-addon">至</span>
+								<input type="text" class="input-sm form-control" name="end" id="reportEnd" required />
+							</div>
+						</div>
+					</div>
+
+					<div class="form-group">
+						<div class="col-lg-1 col-lg-offset-1">
+							<button type="button" class="btn btn-primary" id="queryReport">查詢</button>
+						</div>
+					</div>
+				</form>
+			</div>
+		</div>
+		<div class="panel panel-success" style="display:none" id="reportPanel">
+			<div class="panel-body panel-collapse">
+				<div align="right">
+					<label class="btn btn-outline" data-toggle="tooltip" data-placement="bottom" title="Excel"><a
+							href="#" id="downloadExcel"><i class="fa fa-file-excel-o fa-2x"></i></a></label>
+				</div>
+				<div id="reportDiv" style="width:99%">
+				</div>
+			</div>
+		</div>
 	</div>
 </div>
 <script>
-$( document ).ready(function() {
-	$('#select-all-monitors').click(function(){
-		$('.btn-group input[name="monitor"]').each(function(){
-	            // toggle checkbox
-	            $(this).prop('checked',!$(this).prop('checked'));
-	            // toggle class
-	            $(this).parents('label').toggleClass('active');
-	        });
-	});
+	$(document).ready(function () {
+		$('#select-all-monitors').click(function () {
+			$('.btn-group input[name="monitor"]').each(function () {
+				// toggle checkbox
+				$(this).prop('checked', !$(this).prop('checked'));
+				// toggle class
+				$(this).parents('label').toggleClass('active');
+			});
+		});
 
-	$('#select-all-monitorTypes').click(function(){
-		$('.btn-group input[name="monitorType"]').each(function(){
-	            // toggle checkbox
-	            $(this).prop('checked',!$(this).prop('checked'));
-	            // toggle class
-	            $(this).parents('label').toggleClass('active');
-	        });
-	});
-	
-	$('#reportStart').datetimepicker({
-		format: 'YYYY-M-D HH:mm',
-		defaultDate: moment().subtract(1, 'days'),
-    	locale: "zh-TW"
-	});
-	$('#reportEnd').datetimepicker({
-		format: 'YYYY-M-D HH:mm',
-		defaultDate: moment(),
-    	locale: "zh-TW"
-	});
-    $("#reportStart").on("dp.change", function (e) {
-        $('#reportEnd').data("DateTimePicker").minDate(e.date);
-    });
-    
-    $("#reportEnd").on("dp.change", function (e) {
-        $('#reportStart').data("DateTimePicker").maxDate(e.date);
-    });
+		$('#select-all-epamonitors').click(function () {
+			$('.btn-group input[name="epaMonitor"]').each(function () {
+				// toggle checkbox
+				$(this).prop('checked', !$(this).prop('checked'));
+				// toggle class
+				$(this).parents('label').toggleClass('active');
+			});
+		});
 
-    $("input[name='reportUnit']").change(function(){
-		var me = $(this)
-		if(me.attr('id') == 'ten_min' || me.attr('id') == 'min' || me.attr('id') == 'hour'){
-			$('#reportStart').data("DateTimePicker").format("YYYY-M-D HH:mm");
-			$('#reportEnd').data("DateTimePicker").format("YYYY-M-D HH:mm");
-			$('#reportStart').data("DateTimePicker").daysOfWeekDisabled([]);
-			$('#reportEnd').data("DateTimePicker").daysOfWeekDisabled([]);						
-		}else if(me.attr('id') == 'eight_hour' || me.attr('id') == 'day'){
-			$('#reportStart').data("DateTimePicker").format("YYYY-M-D");
-			$('#reportEnd').data("DateTimePicker").format("YYYY-M-D");
-			$('#reportStart').data("DateTimePicker").daysOfWeekDisabled([]);
-			$('#reportEnd').data("DateTimePicker").daysOfWeekDisabled([]);												
-		}else if(me.attr('id') == 'week'){
-			$('#reportStart').data("DateTimePicker").format("YYYY-M-D");
-			$('#reportStart').data("DateTimePicker").daysOfWeekDisabled([1,2,3,4,5,6]);
-			$('#reportEnd').data("DateTimePicker").format("YYYY-M-D");
-			$('#reportEnd').data("DateTimePicker").daysOfWeekDisabled([1,2,3,4,5,6]);			
-		}else {
-			$('#reportStart').data("DateTimePicker").format("YYYY-M");
-			$('#reportEnd').data("DateTimePicker").format("YYYY-M");
-			$('#reportStart').data("DateTimePicker").daysOfWeekDisabled([]);
-			$('#reportEnd').data("DateTimePicker").daysOfWeekDisabled([]);			
-		}
-		
-		if(me.attr('id') != 'hour'){
-			//Disable EPA 
-			var $epaMonitors = $("input[name='epaMonitor']");
-			for(var i=0;i<$epaMonitors.length;i++){
-				var $epa = $epaMonitors.eq(i);
-				$epa.prop('disabled', true);
-				$epa.prop('checked', false);
-				$epa.parent().removeClass("active");
-				$epa.parent().addClass("disabled");  
-			}				
-		} else{
-			//Enable EPA
-			var $epaMonitors = $("input[name='epaMonitor']");
-			for(var i=0;i<$epaMonitors.length;i++){
-				var $epa = $epaMonitors.eq(i);
-				$epa.prop('disabled', false);				
-				$epa.parent().removeClass("disabled");				  
+		$('#select-all-monitorTypes').click(function () {
+			$('.btn-group input[name="monitorType"]').each(function () {
+				// toggle checkbox
+				$(this).prop('checked', !$(this).prop('checked'));
+				// toggle class
+				$(this).parents('label').toggleClass('active');
+			});
+		});
+
+		$('#reportStart').datetimepicker({
+			format: 'YYYY-M-D HH:mm',
+			defaultDate: moment().subtract(1, 'days'),
+			locale: "zh-TW"
+		});
+		$('#reportEnd').datetimepicker({
+			format: 'YYYY-M-D HH:mm',
+			defaultDate: moment(),
+			locale: "zh-TW"
+		});
+		$("#reportStart").on("dp.change", function (e) {
+			$('#reportEnd').data("DateTimePicker").minDate(e.date);
+		});
+
+		$("#reportEnd").on("dp.change", function (e) {
+			$('#reportStart').data("DateTimePicker").maxDate(e.date);
+		});
+
+		$("input[name='reportUnit']").change(function () {
+			var me = $(this)
+			if (me.attr('id') == 'ten_min' || me.attr('id') == 'min' || me.attr('id') == 'hour') {
+				$('#reportStart').data("DateTimePicker").format("YYYY-M-D HH:mm");
+				$('#reportEnd').data("DateTimePicker").format("YYYY-M-D HH:mm");
+				$('#reportStart').data("DateTimePicker").daysOfWeekDisabled([]);
+				$('#reportEnd').data("DateTimePicker").daysOfWeekDisabled([]);
+			} else if (me.attr('id') == 'eight_hour' || me.attr('id') == 'day') {
+				$('#reportStart').data("DateTimePicker").format("YYYY-M-D");
+				$('#reportEnd').data("DateTimePicker").format("YYYY-M-D");
+				$('#reportStart').data("DateTimePicker").daysOfWeekDisabled([]);
+				$('#reportEnd').data("DateTimePicker").daysOfWeekDisabled([]);
+			} else if (me.attr('id') == 'week') {
+				$('#reportStart').data("DateTimePicker").format("YYYY-M-D");
+				$('#reportStart').data("DateTimePicker").daysOfWeekDisabled([1, 2, 3, 4, 5, 6]);
+				$('#reportEnd').data("DateTimePicker").format("YYYY-M-D");
+				$('#reportEnd').data("DateTimePicker").daysOfWeekDisabled([1, 2, 3, 4, 5, 6]);
+			} else {
+				$('#reportStart').data("DateTimePicker").format("YYYY-M");
+				$('#reportEnd').data("DateTimePicker").format("YYYY-M");
+				$('#reportStart').data("DateTimePicker").daysOfWeekDisabled([]);
+				$('#reportEnd').data("DateTimePicker").daysOfWeekDisabled([]);
 			}
-		}
-	});
-	
-	var monitors, epaMonitors, monitorTypes, reportUnit, monitorStatusFilter, reportStart, reportEnd, chartType, mb;
-	
-	function validate(){
-		monitors = $("input[name='monitor']:checked");
 
-		if (monitors.length == 0) {
-			alert("請選擇測站");
-			return false;
-		}
+			if (me.attr('id') != 'hour') {
+				//Disable EPA 
+				var $epaMonitors = $("input[name='epaMonitor']");
+				for (var i = 0; i < $epaMonitors.length; i++) {
+					var $epa = $epaMonitors.eq(i);
+					$epa.prop('disabled', true);
+					$epa.prop('checked', false);
+					$epa.parent().removeClass("active");
+					$epa.parent().addClass("disabled");
+				}
+			} else {
+				//Enable EPA
+				var $epaMonitors = $("input[name='epaMonitor']");
+				for (var i = 0; i < $epaMonitors.length; i++) {
+					var $epa = $epaMonitors.eq(i);
+					$epa.prop('disabled', false);
+					$epa.parent().removeClass("disabled");
+				}
+			}
+		});
 
-		epaMonitors = $("input[name='epaMonitor']:checked");
+		var monitors, epaMonitors, monitorTypes, reportUnit, monitorStatusFilter, reportStart, reportEnd, chartType, mb;
 
-		monitorTypes = $("input[name='monitorType']:checked");
-		if(monitorTypes.length == 0) {
-			alert('請選擇測項');
-			return false;
-		}
+		function validate() {
+			monitors = $("input[name='monitor']:checked");
 
-		reportUnit = $("input[name='reportUnit']:checked").attr('id');
-		if(!reportUnit) {
-			alert("請選擇報表單位");
-			return false;
-		}
-
-		monitorStatusFilter = $("input[name='monitorStatusFilter']:checked").attr('id');
-		if(!monitorStatusFilter) {
-			alert("請選擇狀態碼");
-			return false;
-		}
-		
-		reportStart = $('#reportStart').val();
-		if(reportStart.length === 0){
-			alert('請選擇開始日期');
-			return false;
-		}
-		
-		reportEnd = $('#reportEnd').val();
-		if(reportStart.length === 0){
-			alert('請選擇結束日期');
-			return false;
-		}
-
-		var start = new Date(reportStart);
-		var end = new Date(reportEnd);
-		var diff = end.getTime()-start.getTime();
-		var workload = monitors.length * monitorTypes.length * diff;
-		if(reportUnit == "ten_min"){
-			if(workload > 4 * 31 * 24 * 60 * 60 * 1000){
-				alert("請降低測站/測項數目/查詢區間");
+			if (monitors.length == 0) {
+				alert("請選擇測站");
 				return false;
 			}
-		}else if(reportUnit == "min" || reportUnit == "ten_min"){			
-			if(workload > 4 * 31 * 24*60*60*1000){
-				alert("請降低測站/測項數目/查詢區間");
+
+			epaMonitors = $("input[name='epaMonitor']:checked");
+
+			monitorTypes = $("input[name='monitorType']:checked");
+			if (monitorTypes.length == 0) {
+				alert('請選擇測項');
 				return false;
-			}			
+			}
+
+			reportUnit = $("input[name='reportUnit']:checked").attr('id');
+			if (!reportUnit) {
+				alert("請選擇報表單位");
+				return false;
+			}
+
+			monitorStatusFilter = $("input[name='monitorStatusFilter']:checked").attr('id');
+			if (!monitorStatusFilter) {
+				alert("請選擇狀態碼");
+				return false;
+			}
+
+			reportStart = $('#reportStart').val();
+			if (reportStart.length === 0) {
+				alert('請選擇開始日期');
+				return false;
+			}
+
+			reportEnd = $('#reportEnd').val();
+			if (reportStart.length === 0) {
+				alert('請選擇結束日期');
+				return false;
+			}
+
+			var start = new Date(reportStart);
+			var end = new Date(reportEnd);
+			var diff = end.getTime() - start.getTime();
+			var workload = monitors.length * monitorTypes.length * diff;
+			if (reportUnit == "ten_min") {
+				if (workload > 4 * 31 * 24 * 60 * 60 * 1000) {
+					alert("請降低測站/測項數目/查詢區間");
+					return false;
+				}
+			} else if (reportUnit == "min" || reportUnit == "ten_min") {
+				if (workload > 4 * 31 * 24 * 60 * 60 * 1000) {
+					alert("請降低測站/測項數目/查詢區間");
+					return false;
+				}
+			}
+
+			chartType = $("input[name='chartType']:checked").attr('id');
+
+			mb = $("input[name='mb']:checked").attr('id');
+
+			return true;
 		}
 
-		chartType = $("input[name='chartType']:checked").attr('id');
+		$('#queryReport').click(function () {
+			if (!validate())
+				return;
 
-		mb = $("input[name='mb']:checked").attr('id');
+			$('#reportDiv').html('');
+			$("body").css("cursor", "progress");
 
-		return true;
-	}
-	
-	$('#queryReport').click(function(){
-		if(!validate())
-			return;
-			
-		$('#reportDiv').html('');
-		$("body").css("cursor", "progress");
-
-		var monitorParam='';
-		for (var i = 0; i < monitors.length; i++) {
-			if(monitorParam=='')
-				monitorParam = monitors[i].id;
-			else
-				monitorParam += ':' + monitors[i].id;
-		}	
-		var epaMonitorParam='';
-		if (epaMonitors.length == 0) {
-			epaMonitorParam = 'None'
-		}else{
-			for (var i = 0; i < epaMonitors.length; i++) {
-				if(epaMonitorParam=='')
-					epaMonitorParam = epaMonitors[i].id;
+			var monitorParam = '';
+			for (var i = 0; i < monitors.length; i++) {
+				if (monitorParam == '')
+					monitorParam = monitors[i].id;
 				else
-					epaMonitorParam += ':' + epaMonitors[i].id;
-			}	
-		}
-		
-		var monitorTypeParam='';
-		for (var i = 0; i < monitorTypes.length; i++) {
-			if(monitorTypeParam=='')
-				monitorTypeParam = monitorTypes[i].id;
-			else
-				monitorTypeParam += ':' + monitorTypes[i].id;
-		}	
+					monitorParam += ':' + monitors[i].id;
+			}
+			var epaMonitorParam = '';
+			if (epaMonitors.length == 0) {
+				epaMonitorParam = 'None'
+			} else {
+				for (var i = 0; i < epaMonitors.length; i++) {
+					if (epaMonitorParam == '')
+						epaMonitorParam = epaMonitors[i].id;
+					else
+						epaMonitorParam += ':' + epaMonitors[i].id;
+				}
+			}
 
-		var base_url = 	monitorParam + "/" + epaMonitorParam + "/" +
-			monitorTypeParam + "/" + reportUnit +"/"+ monitorStatusFilter + "/"+reportStart + "/" + reportEnd + "/" + mb;
-		var url = "/JSON/HistoryTrend/" + base_url; 
-		function pointFormatter(){
-			var d = new Date(this.x);
-			return d.toLocaleString() + ": " + Math.round(this.y) + "度";
-		}
-		
-		$.ajax({
-			url : url,
-			data : "",
-			contentType : "application/json; charset=utf-8",
-			type : "GET",
-			cache:false,
-			dataType : "json",
-			success : function(result) {
-				$("#reportPanel").css('display','block');				
-						
-				result.chart = {
-					type: chartType,
-					zoomType: 'x',
-		            panning: true,
-		            panKey: 'shift',
-		            alignTicks: false,
-		            height: chartHeight
-				};
-				
-				result.colors=[
-				'#7CB5EC','#434348','#90ED7D','#F7A35C','#8085E9','#F15C80',
-				'#E4D354','#2B908F','#FB9FA8','#91E8E1','#7CB5EC','#80C535','#969696'];
-				result.tooltip ={
-	            	valueDecimals: 2};
-	            result.legend={enabled:true};
-				result.credits={
-					enabled:false,
-					href:'http://www.wecc.com.tw/'
-				};
-				result.xAxis.type = "datetime";
-				result.xAxis.dateTimeLabelFormats = {
-	                day: '%b%e日',
-	                week: '%b%e日',
-	            	month: '%y年%b',
-	            };
-				
-				result.plotOptions= {
-						scatter:{
-							tooltip:{
+			var monitorTypeParam = '';
+			for (var i = 0; i < monitorTypes.length; i++) {
+				if (monitorTypeParam == '')
+					monitorTypeParam = monitorTypes[i].id;
+				else
+					monitorTypeParam += ':' + monitorTypes[i].id;
+			}
+
+			var base_url = monitorParam + "/" + epaMonitorParam + "/" +
+				monitorTypeParam + "/" + reportUnit + "/" + monitorStatusFilter + "/" + reportStart + "/" + reportEnd + "/" + mb;
+			var url = "/JSON/HistoryTrend/" + base_url;
+			function pointFormatter() {
+				var d = new Date(this.x);
+				return d.toLocaleString() + ": " + Math.round(this.y) + "度";
+			}
+
+			$.ajax({
+				url: url,
+				data: "",
+				contentType: "application/json; charset=utf-8",
+				type: "GET",
+				cache: false,
+				dataType: "json",
+				success: function (result) {
+					$("#reportPanel").css('display', 'block');
+
+					result.chart = {
+						type: chartType,
+						zoomType: 'x',
+						panning: true,
+						panKey: 'shift',
+						alignTicks: false,
+						height: chartHeight
+					};
+
+					result.colors = [
+						'#7CB5EC', '#434348', '#90ED7D', '#F7A35C', '#8085E9', '#F15C80',
+						'#E4D354', '#2B908F', '#FB9FA8', '#91E8E1', '#7CB5EC', '#80C535', '#969696'];
+					result.tooltip = {
+						valueDecimals: 2
+					};
+					result.legend = { enabled: true };
+					result.credits = {
+						enabled: false,
+						href: 'http://www.wecc.com.tw/'
+					};
+					result.xAxis.type = "datetime";
+					result.xAxis.dateTimeLabelFormats = {
+						day: '%b%e日',
+						week: '%b%e日',
+						month: '%y年%b',
+					};
+
+					result.plotOptions = {
+						scatter: {
+							tooltip: {
 								pointFormatter: pointFormatter
 							}
 						}
 					};
 
-									
-				
-				var yMin = $("#YMin").val();
-				if(yMin.length != 0){
-					result.yAxis[0].floor = result.yAxis[0].min =parseInt(yMin);
-				}
-				var yMax = $("#YMax").val();
-				if(yMax.length != 0){
-					result.yAxis[0].ceiling = result.yAxis[0].max = parseInt(yMax);
-				}				
-				$("#downloadExcel").prop("href", "/Excel/HistoryTrend/" + base_url);
-				$('#reportDiv').highcharts(result);
-			},
-			error : function(xhr, status, errorThrown) {
-				console.log("錯誤訊息:" + status + "-" + errorThrown);
-			},
 
-			complete : function(xhr, status) {
-				$("body").css("cursor", "default");
-			}
+
+					var yMin = $("#YMin").val();
+					if (yMin.length != 0) {
+						result.yAxis[0].floor = result.yAxis[0].min = parseInt(yMin);
+					}
+					var yMax = $("#YMax").val();
+					if (yMax.length != 0) {
+						result.yAxis[0].ceiling = result.yAxis[0].max = parseInt(yMax);
+					}
+					$("#downloadExcel").prop("href", "/Excel/HistoryTrend/" + base_url);
+					$('#reportDiv').highcharts(result);
+				},
+				error: function (xhr, status, errorThrown) {
+					console.log("錯誤訊息:" + status + "-" + errorThrown);
+				},
+
+				complete: function (xhr, status) {
+					$("body").css("cursor", "default");
+				}
+			});
 		});
 	});
-});
 </script>
-
-

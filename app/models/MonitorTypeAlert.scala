@@ -73,7 +73,7 @@ object MonitorTypeAlert {
   def initTable()(implicit session: DBSession): Unit = {
     val mtaList =
       for {m <- Monitor.mvList
-           mt <- MonitorType.mtvList
+           mt <- MonitorType.mtvAllList
            mCase = Monitor.map(m)
            mtCase = MonitorType.map(mt)
            } yield {

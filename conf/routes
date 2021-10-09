@@ -249,8 +249,11 @@ GET      /Excel/ClosedRepairTicketReport/:monitors/:start/:end                  
 GET      /NoRepairAlarm                                                                              controllers.Maintance.queryNoRepairTicketAlarm
 
 #JSON
+GET      /EpaMonitors                                                                                controllers.Application.epaMonitorList
 GET      /MonitorTypeAlertInfo/:monitor         controllers.Application.getMonitorTypeAlertInfo(monitor)
 POST     /MonitorTypeAlertInfo                  controllers.Application.updateMonitorTypeAlertInfo()
+GET      /EpaMonitorTypeAlert/:monitor          controllers.Application.getEpaMonitorTypeAlertInfo(monitor:Int)
+POST     /EpaMonitorTypeAlert                   controllers.Application.updateEpaMonitorTypeAlert()
 # websockets
 GET      /MinMonthlyReportSocket                                                                     controllers.Report.getMinMonthlySocket
 GET      /DownloadMinMonthlyReport/:n                                                                controllers.Report.downloadMinMontlyReport(n: Int)

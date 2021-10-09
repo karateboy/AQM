@@ -5,13 +5,31 @@
                 <a data-toggle="collapse" data-parent="#accordion" href="#monitorType">測項參數</a>
             </div>
             <div class="panel-body">
-                <label class="control-label">選擇測站:</label>
-                <div class="btn-group" data-toggle="buttons">
-                    <button type="button" v-for="m in monitorList" :key="m.id" class="btn btn-outline btn-primary"
-                        :class="{ active: selectedMonitor == m.id }" @click="updateSelectedMonitor(m.id)">{{ m.name
-                        }}</button>
-                </div>
-                <table class="table table-hover table-condensed">
+                <form class="form-horizontal">
+                    <div class="form-group">
+                        <label class="col-lg-2 control-label">選擇測站:</label>
+                        <div class="col-lg-10">
+                            <div class="btn-group" data-toggle="buttons">
+                                <button type="button" v-for="m in monitorList" :key="m.id"
+                                    class="btn btn-outline btn-primary" :class="{ active: selectedMonitor == m.id }"
+                                    @click="updateSelectedMonitor(m.id)">{{ m.name
+                                    }}</button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="col-lg-2 control-label">選擇環保署測站:</label>
+                        <div class="col-lg-10">
+                            <div class="btn-group" data-toggle="buttons">
+                                <button type="button" v-for="m in epaMonitorList" :key="m.id"
+                                    class="btn btn-outline btn-primary" :class="{ active: selectedMonitor == m.id }"
+                                    @click="updateSelectedEpaMonitor(m.id)">{{ m.name
+                                    }}</button>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+                <table v-if="!isEpaMonitor" class="table table-hover table-condensed">
                     <thead>
                         <tr>
                             <th>代碼</th>
@@ -50,6 +68,21 @@
                         </tr>
                     </tbody>
                 </table>
+                <table v-else class="table table-hover table-condensed">
+                    <thead>
+                        <tr>
+                            <th>名稱</th>
+                            <th>內控值</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr v-for="mta in epaMonitorTypeAlertList">
+                            <td>{{ mta.item }}</td>
+                            <td><input class="form-control" v-model.number="mta.internal" @change="markDirty(mta)" />
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
                 <div class="form-group">
                     <div class="col-lg-1 col-lg-offset-1">
                         <button type="button" class="btn btn-primary" @click="save">儲存</button>
@@ -67,8 +100,11 @@
             pm10threshold_: 0,
             autoAuditNormal: false,
             monitorList: [],
+            epaMonitorList: [],
             selectedMonitor: '',
-            monitorTypeAlertInfo: []
+            monitorTypeAlertInfo: [],
+            epaMonitorTypeAlertList: [],
+            isEpaMonitor: false
         },
         computed: {
             pm10threshold: {
@@ -95,6 +131,7 @@
             await this.getMonitorList();
             this.selectedMonitor = this.monitorList[0].id;
             await this.getMonitorTypeAlertInfo();
+            await this.getEpaMonitorList();
         },
         methods: {
             markDirty(mta) {
@@ -112,15 +149,44 @@
                     throw new Error(err);
                 }
             },
+            async getEpaMonitorList() {
+                try {
+                    const res = await axios.get("/EpaMonitors")
+                    if (res.status === 200) {
+                        const ret = res.data;
+                        this.epaMonitorList = ret;
+                        console.log(ret);
+                    }
+                } catch (err) {
+                    throw new Error(err);
+                }
+            },
             async updateSelectedMonitor(m) {
+                this.isEpaMonitor = false;
                 this.selectedMonitor = m;
                 await this.getMonitorTypeAlertInfo();
+            },
+            async updateSelectedEpaMonitor(m) {
+                this.isEpaMonitor = true;
+                this.selectedMonitor = m;
+                await this.getEpaMonitorTypeAlert()
             },
             async getMonitorTypeAlertInfo() {
                 try {
                     const res = await axios.get(`/MonitorTypeAlertInfo/${this.selectedMonitor}`)
                     if (res.status == 200) {
                         this.monitorTypeAlertInfo = res.data;
+                    }
+                } catch (err) {
+                    throw new Error(err);
+                }
+            },
+            async getEpaMonitorTypeAlert() {
+                try {
+                    const res = await axios.get(`/EpaMonitorTypeAlert/${this.selectedMonitor}`)
+                    if (res.status == 200) {
+                        this.epaMonitorTypeAlertList = res.data;
+                        console.log(res.data)
                     }
                 } catch (err) {
                     throw new Error(err);
@@ -151,17 +217,31 @@
                 if (!mta.yearAvg)
                     mta.yearAvg = null
             },
+            checkEpa(mta){
+                if (!mta.internal)
+                    mta.internal = null
+            },
             async save() {
                 try {
                     let all = [];
-                    for (let mta of this.monitorTypeAlertInfo) {
-                        if (mta.dirty) {
-                            this.check(mta);
-                            const p = axios.post(`/MonitorTypeAlertInfo`, mta)
-                            all.push(p)
+                    if (!this.isEpaMonitor) {
+                        for (let mta of this.monitorTypeAlertInfo) {
+                            if (mta.dirty) {
+                                this.check(mta);
+                                const p = axios.post(`/MonitorTypeAlertInfo`, mta)
+                                all.push(p)
+                            }
+                        }
+                    }else{
+                        for (let mta of this.epaMonitorTypeAlertList) {
+                            if (mta.dirty) {
+                                this.checkEpa(mta);
+                                const p = axios.post(`/EpaMonitorTypeAlert`, mta)
+                                all.push(p)
+                            }
                         }
                     }
-                    console.log(all)
+
                     const ret = await Promise.all(all)
                     alert("成功")
                 } catch (err) {

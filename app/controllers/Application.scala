@@ -49,6 +49,12 @@ object Application extends Controller {
       Ok(Json.toJson(Monitor.monitorList))
   }
 
+  def epaMonitorList = Security.Authenticated {
+    implicit request =>
+      implicit val write = Json.writes[EpaMonitor]
+      Ok(Json.toJson(EpaMonitor.map.values.toList.sortBy(_.id)))
+  }
+
   case class MonitorInfo(mt: Seq[MonitorType.Value], imgUrl: String, equipments: List[Equipment])
   implicit val equipmentWrite = Json.writes[Equipment]
   implicit val mInfoWrite = Json.writes[MonitorInfo]
@@ -743,8 +749,18 @@ object Application extends Controller {
 
   def getMonitorTypeAlertInfo(monitorStr:String) = Security.Authenticated {
     val monitor = Monitor.withName(monitorStr)
-    val list = MonitorTypeAlert.map(monitor).values.toList.map{mta=>mta.getInfo}.sortBy(_.monitorTypeID)
+    val list = MonitorTypeAlert.map(monitor).filter(p=>Monitor.map(monitor).monitorTypes.contains(p._1))
+      .values.toList.map{mta=>mta.getInfo}.sortBy(_.monitorTypeID)
+
     implicit val write = Json.writes[MonitorTypeAlertInfo]
+    Ok(Json.toJson(list))
+  }
+
+  def getEpaMonitorTypeAlertInfo(monitorID:Int) = Security.Authenticated {
+    val epaMonitor = EpaMonitor.idMap(monitorID)
+    val list = EpaMonitorTypeAlert.map(epaMonitor).values.toList.sortBy(_.monitorType)
+
+    implicit val write = Json.writes[EpaMonitorTypeAlert]
     Ok(Json.toJson(list))
   }
 
@@ -762,6 +778,25 @@ object Application extends Controller {
           DB autoCommit {
             implicit session=>
               MonitorTypeAlert.save(mta)
+          }
+          Ok(Json.obj("ok" -> true))
+        })
+  }
+
+  def updateEpaMonitorTypeAlert()= Security.Authenticated(BodyParsers.parse.json) {
+    implicit request =>
+      implicit val read = Json.reads[EpaMonitorTypeAlert]
+      val ret = request.body.validate[EpaMonitorTypeAlert]
+
+      ret.fold(
+        error => {
+          Logger.error(JsError.toJson(error).toString())
+          BadRequest(Json.obj("ok" -> false, "msg" -> JsError.toJson(error)))
+        },
+        mta => {
+          DB autoCommit {
+            implicit session=>
+              EpaMonitorTypeAlert.save(mta)
           }
           Ok(Json.obj("ok" -> true))
         })

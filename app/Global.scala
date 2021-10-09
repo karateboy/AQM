@@ -55,6 +55,10 @@ object Global extends GlobalSettings {
           MonitorTypeAlert.createMonitorTypeAlert()
           MonitorTypeAlert.initTable()
         }
+        if(!EpaMonitorTypeAlert.hasTable()){
+          EpaMonitorTypeAlert.createMonitorTypeAlert()
+          EpaMonitorTypeAlert.initTable()
+        }
     }
     OverStdConverter.start
   }
@@ -72,6 +76,7 @@ object Global extends GlobalSettings {
     Akka.system.scheduler.schedule(Duration(secondToTomorror1AM, SECONDS), Duration(1, DAYS), alarmActor, MaintanceTicketCheck)
 
     MonitorTypeAlert.init()
+    EpaMonitorTypeAlert.init()
     AlarmTicketFilter.start
     PartAlarmWorker.start
     DbUpdater.start
