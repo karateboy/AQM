@@ -59,6 +59,8 @@ object Global extends GlobalSettings {
           EpaMonitorTypeAlert.createMonitorTypeAlert()
           EpaMonitorTypeAlert.initTable()
         }
+        Ticket.upgrade()
+        EpaTicket.create()
     }
     OverStdConverter.start
   }

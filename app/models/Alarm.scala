@@ -267,4 +267,46 @@ object Alarm {
   def map(key: String) = {
     _map.getOrElse(key, "未知的警告代碼:" + key)
   }
+
+  def getReason(ar:Alarm) = {
+    val tokens = ar.mItem.split("-")
+    if(ar.code == MonitorStatus.OVER_STAT && tokens.length == 3){
+      val dataType = tokens(1) match {
+        case DataType.Hour=>
+          "小時值"
+        case DataType.EightHour=>
+          "8小時平均值"
+        case DataType.Day=>
+          "日平均值"
+        case DataType.TwentyFourHour=>
+          "24小時值"
+        case DataType.Year=>
+          "年平均值"
+      }
+      val alarmLevel = tokens(2) match {
+        case AlarmLevel.Internal=>
+          "內控值"
+        case AlarmLevel.Warn=>
+          "警戒值"
+        case AlarmLevel.Law=>
+          "法規值"
+      }
+      s"超出${dataType}${alarmLevel}"
+    }else
+      MonitorStatus.map(ar.code).desp
+  }
+
+  def getMonitorTypeValue(ar:Alarm)={
+    val tokens = ar.mItem.split("-")
+    if(ar.code == MonitorStatus.OVER_STAT && tokens.length == 3){
+      val mt = MonitorType.withName(tokens(0))
+      val mtCase = MonitorType.map(mt)
+      s"${MonitorType.format(mt, Some(ar.mVal))}${mtCase.unit}"
+    }else {
+      if(ar.mVal == 0)
+        "解除"
+      else
+        "觸發"
+    }
+  }
 }

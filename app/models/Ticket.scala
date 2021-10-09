@@ -135,7 +135,8 @@ object TicketType extends Enumeration {
 case class Ticket(id: Int, submit_date: DateTime, active: Boolean, ticketType: TicketType.Value, submiter_id: Int, owner_id: Int, monitor: Monitor.Value,
                   monitorType: Option[MonitorType.Value], reason: String, executeDate: DateTime, formJson: String,
                   repairType: Option[String], repairSubType: Option[String], readyToClose: Option[Boolean],
-                  rejectReason: Option[String] = None) {
+                  rejectReason: Option[String] = None, overStd: Option[Int] = None,
+                  extendDate: Option[DateTime] = None, extendReason: Option[String]= None) {
 
   implicit val formDataRead = Json.reads[FormData]
   implicit val formDataWrite = Json.writes[FormData]
@@ -172,6 +173,23 @@ object Ticket {
   implicit val repairDataRead = Json.reads[RepairFormData]
   implicit val repairDataWrite = Json.writes[RepairFormData]
 
+  def upgrade()(implicit session: DBSession = AutoSession) = {
+    sql"""
+             IF COL_LENGTH('[dbo].[Ticket]', 'OverStd') IS NULL
+             BEGIN
+                 ALTER TABLE [dbo].[Ticket] ADD OverStd Int NULL;
+             END;
+             IF COL_LENGTH('[dbo].[Ticket]', 'ExtendDate') IS NULL
+             BEGIN
+                 ALTER TABLE [dbo].[Ticket] ADD ExtendDate [datetime] NULL;
+             END;
+             IF COL_LENGTH('[dbo].[Ticket]', 'ExtendReason') IS NULL
+             BEGIN
+                 ALTER TABLE [dbo].[Ticket] ADD ExtendReason [nvarchar](50) NULL;
+             END;
+             """.execute().apply()
+  }
+
   def newTicket(ticket: Ticket)(implicit session: DBSession = AutoSession) = {
     DB localTx { implicit session =>
       val submit_tt: java.sql.Timestamp = ticket.submit_date
@@ -191,13 +209,15 @@ object Ticket {
         ,[form]
         ,[repairType]
         ,[repairSubType]
-        ,[readyToClose])
+        ,[readyToClose]
+        ,[overStd])
         values(${submit_tt}, ${ticket.active}, ${ticket.ticketType.id}, ${ticket.submiter_id}, ${ticket.owner_id}, ${ticket.monitor.toString},
           ${ticket.monitorType.map { _.toString }}, ${ticket.reason}, ${execute_date}, 
           ${ticket.formJson},
           ${ticket.repairType},
           ${ticket.repairSubType},
-          ${ticket.readyToClose})
+          ${ticket.readyToClose},
+          ${ticket.overStd})
         """.update.apply
 
       if (ticket.ticketType == TicketType.repair) {
@@ -247,7 +267,7 @@ object Ticket {
     }
   }
 
-  def ticketMapper =
+  def ticketMapper: WrappedResultSet => Ticket =
     { r: WrappedResultSet =>
       val ticketType = TicketType.withId(r.int(4))
       Ticket(r.int(1), r.timestamp(2), r.boolean(3), ticketType,
@@ -267,7 +287,10 @@ object Ticket {
         r.stringOpt(12),
         r.stringOpt(13),
         r.booleanOpt(14),
-        r.stringOpt(17))
+        r.stringOpt(17),
+        r.intOpt(18),
+        r.jodaDateTimeOpt(19),
+        r.stringOpt(20))
     }
 
   def queryTickets(start: DateTime, end: DateTime)(implicit session: DBSession = AutoSession) = {
@@ -342,6 +365,16 @@ object Ticket {
       From Ticket
       Where ticketType = ${TicketType.repair.id} and active = 1 and submiter_id in $userIdStr and readyToClose = 0
       Order by execute_date      
+      """.map { ticketMapper }.list().apply()
+  }
+
+  def getActiveRepairDueTicketsByGroup(implicit session: DBSession = AutoSession) = {
+    val now: java.sql.Timestamp = DateTime.now()
+    sql"""
+      Select *
+      From Ticket
+      Where ticketType = ${TicketType.repair.id} and active = 1 and readyToClose = 0 and execute_date < ${now}
+      Order by execute_date
       """.map { ticketMapper }.list().apply()
   }
 
@@ -523,9 +556,5 @@ object Ticket {
         Where ID = ${ID}
         """.update.apply
     }
-  }
-
-  def getActiveTicket(date:DateTime)={
-    
   }
 }

@@ -980,7 +980,6 @@ object Maintance extends Controller {
 
   def alarmNoTicketList() = Security.Authenticated {
     implicit request =>
-      //FIXME
       val start = DateTime.now() - 14.day
       val list = Alarm.getAlarmNoTicketList(start)
       val excludedList = list.filter { ar =>
@@ -988,6 +987,14 @@ object Maintance extends Controller {
       }
 
       Ok(views.html.alarmNoTicket(excludedList))
+  }
+
+  def getEpaTickets() = Security.Authenticated {
+    implicit request =>
+      val start = DateTime.now() - 3.day
+      val list = EpaTicket.getTickets(start)
+
+      Ok(views.html.epaTicket(list))
   }
 
   def alarmTicketList() = Security.Authenticated {
@@ -1052,9 +1059,13 @@ object Maintance extends Controller {
                 else
                   "觸發"
 
-              val reason = s"${ar.time.toString("YYYY/MM/dd HH:mm")} ${Monitor.map(ar.monitor).name}:${Alarm.map(alarmId.mItem)}-${MonitorStatus.map(ar.code).desp}:${ar_state}"
+              val reason = s"${ar.time.toString("YYYY/MM/dd HH:mm")} ${Monitor.map(ar.monitor).name}:${Alarm.map(alarmId.mItem)}-${Alarm.getReason(ar)}:${ar_state}"
               val mtOpt = try {
-                Some(MonitorType.withName(ar.mItem))
+                val tokens = ar.mItem.split("-")
+                if(ar.code == MonitorStatus.OVER_STAT && tokens.length == 3){
+                  Some(MonitorType.withName(tokens(0)))
+                }else
+                  Some(MonitorType.withName(ar.mItem))
               } catch {
                 case ex: Throwable =>
                   None
@@ -1134,7 +1145,7 @@ object Maintance extends Controller {
         val t = tAr._1
         val arOpt = tAr._2
         val (alarmTime, alarmCode) = if (arOpt.isDefined)
-          (arOpt.get.time.toString("YYYY/MM/dd HH:mm"), MonitorStatus.map(arOpt.get.code).desp)
+          (arOpt.get.time.toString("YYYY/MM/dd HH:mm"), Alarm.getReason(arOpt.get))
         else
           ("-", "-")
         val monitorType = if (t.monitorType.isDefined)
@@ -1142,15 +1153,67 @@ object Maintance extends Controller {
         else
           "-"
         val isDue = if (t.executeDate.isBefore(DateTime.yesterday))
-          "是"
+          "已逾期"
         else
-          "否"
+          "未逾期"
 
         RepairingTicketInfo(id = t.id.toString, alarmTime = alarmTime, alarmCode = alarmCode, monitor = Monitor.map(t.monitor).name, monitorType = monitorType,
           submitDate = t.submit_date.toString("MM-d HH:mm"), submitter = usrMap(t.submiter_id).name, reason = t.reason,
           owner = usrMap(t.owner_id).name, executeDate = t.executeDate.toString("MM-d"), isDue = isDue)
     }
     Ok(Json.toJson(repairingTicketInfoList))
+  }
+
+  def dueTicketList(outputTypeStr: String) = Security.Authenticated {
+    implicit request =>
+      val userInfo = request.user
+      val tickets = getActiveRepairDueTicketsByGroup()
+      val outputType = OutputType.withName(outputTypeStr)
+
+      val ticketWithAlarm =
+        for {
+          t <- tickets
+          arOpt = t.getRepairForm.alarm
+        } yield (t, arOpt)
+      val allUsers = User.getAllUsers()
+      val usrMap = Map(allUsers.map { u => (u.id.get -> u) }: _*)
+
+      outputType match {
+        case OutputType.excel =>
+          val excel = ExcelUtility.repairingTickets(ticketWithAlarm, "逾期案件", usrMap)
+          Ok.sendFile(excel, fileName = _ =>
+            play.utils.UriEncoding.encodePathSegment("逾期案件" + ".xlsx", "UTF-8"),
+            onClose = () => { Files.deleteIfExists(excel.toPath()) })
+        case OutputType.json =>
+          implicit val writer = Json.writes[RepairingTicketInfo]
+          val repairingTicketInfoList = ticketWithAlarm map {
+            tAr =>
+              val t = tAr._1
+              val arOpt = tAr._2
+              val (alarmTime, alarmCode) = if (arOpt.isDefined)
+                (arOpt.get.time.toString("YYYY/MM/dd HH:mm"), Alarm.getReason(arOpt.get))
+              else
+                ("-", "-")
+              val monitorType = if (t.monitorType.isDefined)
+                MonitorType.map(t.monitorType.get).desp
+              else
+                "-"
+              val isDue = if (t.executeDate.isBefore(DateTime.yesterday)) {
+                if(t.extendDate.isEmpty)
+                  "已逾期"
+                else{
+                  val extendDate = t.extendDate.get
+                  s"展延(${extendDate.toString("M/d")})${t.extendReason.getOrElse("")}"
+                }
+              } else
+                "未逾期"
+
+              RepairingTicketInfo(id = t.id.toString, alarmTime = alarmTime, alarmCode = alarmCode, monitor = Monitor.map(t.monitor).name, monitorType = monitorType,
+                submitDate = t.submit_date.toString("MM-d HH:mm"), submitter = usrMap(t.submiter_id).name, reason = t.reason,
+                owner = usrMap(t.owner_id).name, executeDate = t.executeDate.toString("MM-d"), isDue = isDue)
+          }
+          Ok(Json.toJson(repairingTicketInfoList))
+      }
   }
 
   def queryClosedRepairTicket = Security.Authenticated {

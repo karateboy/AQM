@@ -82,7 +82,7 @@ RequestHeader)
 		src="http://maps.googleapis.com/maps/api/js?key=AIzaSyCFuSnApEhdYSANwfU4OZ4tH902Tu3vjFI">
 		</script>
 	<script src="/assets/js/plugins/infobox/infobox_packed.js"></script>
-	<script>
+	<script>		
 		Highcharts.setOptions({
 			global: {
 				useUTC: false
@@ -235,7 +235,7 @@ RequestHeader)
 								<a href="#" onClick="loadPage('/ReparingAlarmTicket','警報案件管理','處理中案件')">處理中案件</a>
 							</li>
 							<li>
-								<a href="#" onClick="loadPage('/EpaAlarmTicket','警報案件管理','環保署案件')">環保署案件</a>
+								<a href="#" onClick="loadPage('/EpaTickets','警報案件管理','環保署案件')">環保署案件</a>
 							</li>
 							<li>
 								<a href="#" onClick="loadPage('/CloseTicket','警報案件管理','等待簽結案件')">等待簽結案件</a>
@@ -254,7 +254,7 @@ RequestHeader)
 						<a href="#"><i class="fa fa-desktop"></i> <span class="nav-label">系統管理</span></a>
 						<ul class="nav nav-second-level">
 							<li><a href="#" onClick="loadPage('/MonitorStatusConfig','系統管理','狀態碼管理')">狀態碼管理</a></li>
-							<li><a href="#" onClick="loadPage('/MonitorTypeConfig','系統管理','測項參數')">測項參數</a></li>
+							<li><a href="#" onClick="loadPage('/assets/html/monitorTypeConfig.html','系統管理','測項參數')">測項參數</a></li>
 							<li><a href="#"
 									onClick="loadPage('/assets/html/monitorTypeAlertConfig.html','系統管理','測值標準管理')">測值標準管理</a>
 							</li>
@@ -353,13 +353,13 @@ RequestHeader)
 							</li>
 							<li>
 								<a class="text-left link-block" href="#"
-									onClick="nRepairing=0;updateAlarmTicketCount();loadPage('/EpaAlarmTicket','警報案件管理','環保署案件')"><strong>環保署案件</strong>
-									<span id="repairing_count" class="label label-danger"></span></a>
+									onClick="loadPage('/EpaTickets','警報案件管理','環保署案件')"><strong>環保署案件</strong>
+									<span id="epa_count" class="label label-danger"></span></a>
 							</li>
 							<li>
 								<a class="text-left link-block" href="#"
-									onClick="nRepairing=0;updateAlarmTicketCount();loadPage('/DueTicket','警報案件管理','逾期案件')"><strong>逾期案件</strong>
-									<span id="repairing_count" class="label label-danger"></span></a>
+									onClick="loadPage('/assets/html/dueTickets.html','警報案件管理','逾期案件')"><strong>逾期案件</strong>
+									<span id="due_count" class="label label-danger"></span></a>
 							</li>
 							<li>
 								<a class="text-left link-block" href="#"

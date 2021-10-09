@@ -19,6 +19,7 @@
 		<th>時間</th>
 		<th>測站</th>
 		<th>項目</th>
+		<th>測值</th>
 		<th>警報</th>
 	</tr>
 </thead>
@@ -29,7 +30,8 @@
 			<td>@a.time.toString("YYYY/MM/dd HH:mm")</td>
 			<td>@Monitor.map(a.monitor).name</td>			
 			<td>@models.Alarm.map(a.mItem)</td>
-			<td>@MonitorStatus.map(a.code).desp</td>
+			<td>@models.Alarm.getMonitorTypeValue(a)</td>
+			<td>@models.Alarm.getReason(a)</td>
 		</tr>
 	}
 </tbody>

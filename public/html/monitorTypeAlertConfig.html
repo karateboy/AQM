@@ -71,13 +71,19 @@
                 <table v-else class="table table-hover table-condensed">
                     <thead>
                         <tr>
+                            <th>代碼</th>
                             <th>名稱</th>
+                            <th>單位</th>
+                            <th>小數點</th>
                             <th>內控值</th>
                         </tr>
                     </thead>
                     <tbody>
                         <tr v-for="mta in epaMonitorTypeAlertList">
-                            <td>{{ mta.item }}</td>
+                            <th>{{ mta.monitorType }}</th>
+                            <th>{{ mtMap.get(mta.monitorType).desp }}</th>
+                            <td>{{ mtMap.get(mta.monitorType).unit }}</td>
+                            <td>{{ mtMap.get(mta.monitorType).prec }}</td>
                             <td><input class="form-control" v-model.number="mta.internal" @change="markDirty(mta)" />
                             </td>
                         </tr>
@@ -96,15 +102,19 @@
     const dataTableL10N = '/assets/localization/zh_tw.json';
     var app = new Vue({
         el: '#monitorTypeConfigPage',
-        data: {
-            pm10threshold_: 0,
-            autoAuditNormal: false,
-            monitorList: [],
-            epaMonitorList: [],
-            selectedMonitor: '',
-            monitorTypeAlertInfo: [],
-            epaMonitorTypeAlertList: [],
-            isEpaMonitor: false
+        data() {
+            let mtMap = new Map();
+            return {
+                pm10threshold_: 0,
+                autoAuditNormal: false,
+                monitorList: [],
+                epaMonitorList: [],
+                selectedMonitor: '',
+                monitorTypeAlertInfo: [],
+                epaMonitorTypeAlertList: [],
+                isEpaMonitor: false,
+                mtMap
+            }
         },
         computed: {
             pm10threshold: {
@@ -132,6 +142,7 @@
             this.selectedMonitor = this.monitorList[0].id;
             await this.getMonitorTypeAlertInfo();
             await this.getEpaMonitorList();
+            await this.getMonitorTypes()
         },
         methods: {
             markDirty(mta) {
@@ -155,7 +166,6 @@
                     if (res.status === 200) {
                         const ret = res.data;
                         this.epaMonitorList = ret;
-                        console.log(ret);
                     }
                 } catch (err) {
                     throw new Error(err);
@@ -170,6 +180,25 @@
                 this.isEpaMonitor = true;
                 this.selectedMonitor = m;
                 await this.getEpaMonitorTypeAlert()
+            },
+            async getMonitorTypes() {
+                try {
+                    const res = await axios.get("/MonitorTypes")
+                    if (res.status === 200) {
+                        const ret = res.data
+                        for (let mt of ret) {
+                            this.mtMap.set(mt.id, mt)
+                        }
+                    }
+                } catch (err) {
+                    throw new Error(err);
+                }
+            },
+            getMonitorTypeName(id) {
+                if (this.mtMap.has(id)) {
+                    return this.mtMap.get(id).desp
+                } else
+                    return ""
             },
             async getMonitorTypeAlertInfo() {
                 try {
@@ -186,7 +215,6 @@
                     const res = await axios.get(`/EpaMonitorTypeAlert/${this.selectedMonitor}`)
                     if (res.status == 200) {
                         this.epaMonitorTypeAlertList = res.data;
-                        console.log(res.data)
                     }
                 } catch (err) {
                     throw new Error(err);
@@ -217,7 +245,7 @@
                 if (!mta.yearAvg)
                     mta.yearAvg = null
             },
-            checkEpa(mta){
+            checkEpa(mta) {
                 if (!mta.internal)
                     mta.internal = null
             },
@@ -232,7 +260,7 @@
                                 all.push(p)
                             }
                         }
-                    }else{
+                    } else {
                         for (let mta of this.epaMonitorTypeAlertList) {
                             if (mta.dirty) {
                                 this.checkEpa(mta);

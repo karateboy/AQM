@@ -102,8 +102,11 @@ object Realtime extends Controller {
   case class YAxis(labels: Option[String], title: AxisTitle, plotLines: Option[Seq[AxisLine]], opposite:Boolean=false, 
       floor:Option[Int]=None, ceiling:Option[Int]=None, min:Option[Int]=None, max:Option[Int]=None, tickInterval:Option[Int]=None, 
       gridLineWidth:Option[Int]=None, gridLineColor:Option[String]=None)
-      
-  case class seqData(name: String, data: Seq[Seq[Option[Double]]], yAxis:Int=0, chartType:Option[String]=None, 
+
+  case class ToolTip(valueDecimals: Int)
+  case class seqData(name: String, data: Seq[Seq[Option[Double]]], yAxis:Int=0,
+                     tooltip: ToolTip,
+                     chartType:Option[String]=None,
       status:Option[Seq[Option[String]]]=None)
   case class HighchartData(chart: Map[String, String],
                            title: Map[String, String],
@@ -118,15 +121,18 @@ object Realtime extends Controller {
   implicit val axisLineWrite = Json.writes[AxisLine]
   implicit val axisTitleWrite = Json.writes[AxisTitle]
   implicit val yaWrite = Json.writes[YAxis]
+  implicit val tpWrite = Json.writes[ToolTip]
   type lof = (Long, Option[Float])
-          
+
+
   implicit val seqDataWrite:Writes[seqData] = (
     (__ \ "name").write[String] and
     (__ \ "data").write[Seq[Seq[Option[Double]]]] and
-    (__ \ "yAxis").write[Int] and
+    (__ \ "yAxis").write[Int] and (__ \ "tooltip").write[ToolTip] and
     (__ \ "type").write[Option[String]] and
     (__ \ "status").write[Option[Seq[Option[String]]]]
   )(unlift(seqData.unapply))
+
   implicit val hcWrite = Json.writes[HighchartData]
   implicit val feqWrite = Json.writes[FrequencyTab]
   implicit val wrWrite = Json.writes[WindRoseReport]
@@ -163,7 +169,7 @@ object Realtime extends Controller {
               Seq(Some(latestRecordTime.getMillis), None)
           }
 
-        }))
+        }), tooltip = ToolTip(valueDecimals = MonitorType.map(mt).prec))
       }
 
       def getAxisLines(mt: MonitorType.Value) = {

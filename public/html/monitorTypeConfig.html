@@ -1,0 +1,294 @@
+<div class="row" id="monitorTypeConfigPage">
+    <div class="col-lg-12">
+        <div class="panel panel-primary">
+            <div class="panel-heading panel-title">
+                <a data-toggle="collapse" data-parent="#accordion">自動註記是否視為正常數據</a>
+            </div>
+            <div class="panel-body panel-collapse">
+                <form id="autoAuditNormalForm" class="form-horizontal">
+                    <br />
+                    <div class="form-group">
+                        <label class="col-lg-1 control-label">正常數據:</label>
+                        <div class="col-lg-1">
+                            <input id="autoAuditNormal" name='autoAuditNormal' type="checkbox" class="form-control"
+                                v-model="autoAuditNormal" @click="setAutoAudit" />
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+        <div class="panel panel-primary" id="pm10OverInvalidForm" v-on:submit.prevent="setThreshold">
+            <div class="panel-heading panel-title">
+                <a data-toggle="collapse" data-parent="#accordion">PM10超過臨界視為無效數據</a>
+            </div>
+            <div class="panel-body panel-collapse">
+                <form class="form-horizontal">
+                    <br />
+                    <div class="form-group">
+                        <label class="col-lg-1 control-label">臨界值:</label>
+                        <div class="col-lg-1">
+                            <input type="number" v-model="pm10threshold">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <div class="col-lg-offset-1">
+                            <button class="btn btn-primary">設定</button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+        <div class="panel panel-primary">
+            <div class="panel-heading panel-title">
+                <a data-toggle="collapse" data-parent="#accordion" href="#monitorType">測項參數</a>
+            </div>
+            <div class="panel-body">
+                <form class="form-horizontal">
+                    <div class="form-group">
+                        <label class="col-lg-2 control-label">選擇測站:</label>
+                        <div class="col-lg-10">
+                            <div class="btn-group" data-toggle="buttons">
+                                <button type="button" v-for="m in monitorList" :key="m.id"
+                                    class="btn btn-outline btn-primary" :class="{ active: selectedMonitor == m.id }"
+                                    @click="updateSelectedMonitor(m.id)">{{ m.name
+                                    }}</button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="col-lg-2 control-label">選擇環保署測站:</label>
+                        <div class="col-lg-10">
+                            <div class="btn-group" data-toggle="buttons">
+                                <button type="button" v-for="m in epaMonitorList" :key="m.id"
+                                    class="btn btn-outline btn-primary" :class="{ active: selectedMonitor == m.id }"
+                                    @click="updateSelectedEpaMonitor(m.id)">{{ m.name
+                                    }}</button>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+
+                <table v-if="!isEpaMonitor" class="table table-striped">
+                    <thead>
+                        <tr>
+                            <th>代碼</th>
+                            <th>名稱</th>
+                            <th>單位</th>
+                            <th>內控值</th>
+                            <th>警告值</th>
+                            <th>法規值</th>
+                            <th>小時標準</th>
+                            <th>日標準</th>
+                            <th>小數點位數</th>
+                            <th>8小時平均值</th>
+                            <th>24小時平均值</th>
+                            <th>年平均值</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr v-for="mta in monitorTypeAlertInfo">
+                            <td>{{ mta.monitorTypeID }}</td>
+                            <td>{{ mta.name }}</td>
+                            <td>{{ mta.unit }}</td>
+                            <td>{{ show(mta, mta.internal) }}</td>
+                            <td>{{ show(mta, mta.warn) }}</td>
+                            <td>{{ show(mta, mta.std_law) }}</td>
+                            <td>{{ show(mta, mta.std_hour) }}</td>
+                            <td>{{ show(mta, mta.std_day) }}</td>
+                            <td>{{ mta.prec }}</td>
+                            <td>{{ show(mta, mta.eightHrAvg) }}</td>
+                            <td>{{ show(mta, mta.twentyFourHrAvg) }}</td>
+                            <td>{{ show(mta, mta.yearAvg) }}</td>
+                        </tr>
+                    </tbody>
+                </table>
+                <table v-else class="table table-hover table-condensed">
+                    <thead>
+                        <tr>
+                            <th>代碼</th>
+                            <th>名稱</th>
+                            <th>單位</th>
+                            <th>小數點</th>
+                            <th>內控值</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr v-for="mta in epaMonitorTypeAlertList">
+                            <th>{{ mta.monitorType }}</th>
+                            <th>{{ mtMap.get(mta.monitorType).desp }}</th>
+                            <td>{{ mtMap.get(mta.monitorType).unit }}</td>
+                            <td>{{ mtMap.get(mta.monitorType).prec }}</td>
+                            <td>{{ showEpa(mta, mta.internal) }} </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+<script>
+    var app = new Vue({
+        el: '#monitorTypeConfigPage',
+        data() {
+            let mtMap = new Map();
+            return {
+                pm10threshold_: 0,
+                autoAuditNormal: false,
+                monitorList: [],
+                epaMonitorList: [],
+                selectedMonitor: '',
+                monitorTypeAlertInfo: [],
+                epaMonitorTypeAlertList: [],
+                isEpaMonitor: false,
+                mtMap
+            }
+        },
+        computed: {
+            pm10threshold: {
+                get: function () {
+                    if (this.pm10threshold_ == 0) {
+                        axios.get("/PM10Threshold").then((resp) => {
+                            const ret = resp.data
+                            if (resp.status == 200) {
+                                this.pm10threshold_ = ret
+                            } else
+                                alert(resp.statusText)
+                        }).catch((err) => {
+                            alert(err)
+                        })
+                    }
+                    return this.pm10threshold_
+                },
+                set: function (v) {
+                    this.pm10threshold_ = v
+                }
+            }
+        },
+        async mounted() {
+            await this.getAutoAudit();
+            await this.getMonitorList();
+            this.selectedMonitor = this.monitorList[0].id;
+            await this.getMonitorTypeAlertInfo();
+            await this.getEpaMonitorList();
+            await this.getMonitorTypes()
+        },
+        methods: {
+            setThreshold() {
+                axios.put("/PM10Threshold", { v: this.pm10threshold_ }).then((resp) => {
+                    const ret = resp.data
+                    if (ret.ok)
+                        alert("成功")
+                    else
+                        alert("失敗:" + ret.msg)
+                }).catch((err) => {
+                    alert(err)
+                })
+            },
+            async getAutoAudit() {
+                try {
+                    const res = await axios.get("/AutoAuditNormal");
+                    if (res.status === 200) {
+                        const ret = res.data;
+                        this.autoAuditNormal = ret.value;
+                    }
+                } catch (err) {
+                    throw new Error(err);
+                }
+            },
+            async setAutoAudit() {
+                try {
+                    // click is before value change..
+                    const url = `/AutoAuditNormal/${!this.autoAuditNormal}`
+                    const res = await axios.post(url, {});
+                    if (res.status === 200) {
+                        alert("設定成功");
+                    } else {
+                        alert("無法設定");
+                    }
+                } catch (err) {
+                    throw new Error(err);
+                }
+            },
+            async getMonitorList() {
+                try {
+                    const res = await axios.get("/MonitorList")
+                    if (res.status === 200) {
+                        const ret = res.data;
+                        this.monitorList = ret;
+                        this.selectedMonitor = ret[0].id;
+                    }
+                } catch (err) {
+                    throw new Error(err);
+                }
+            },
+            async getEpaMonitorList() {
+                try {
+                    const res = await axios.get("/EpaMonitors")
+                    if (res.status === 200) {
+                        const ret = res.data;
+                        this.epaMonitorList = ret;
+                    }
+                } catch (err) {
+                    throw new Error(err);
+                }
+            },
+            async updateSelectedMonitor(m) {
+                this.isEpaMonitor = false;
+                this.selectedMonitor = m;
+                await this.getMonitorTypeAlertInfo();
+            },
+            async updateSelectedEpaMonitor(m) {
+                this.isEpaMonitor = true;
+                this.selectedMonitor = m;
+                await this.getEpaMonitorTypeAlert()
+            },
+            async getMonitorTypes() {
+                try {
+                    const res = await axios.get("/MonitorTypes")
+                    if (res.status === 200) {
+                        const ret = res.data
+                        for (let mt of ret) {
+                            this.mtMap.set(mt.id, mt)
+                        }
+                    }
+                } catch (err) {
+                    throw new Error(err);
+                }
+            },
+            async getMonitorTypeAlertInfo() {
+                try {
+                    const res = await axios.get(`/MonitorTypeAlertInfo/${this.selectedMonitor}`)
+                    if (res.status == 200) {
+                        this.monitorTypeAlertInfo = res.data;
+                    }
+                } catch (err) {
+                    throw new Error(err);
+                }
+            },
+            async getEpaMonitorTypeAlert() {
+                try {
+                    const res = await axios.get(`/EpaMonitorTypeAlert/${this.selectedMonitor}`)
+                    if (res.status == 200) {
+                        this.epaMonitorTypeAlertList = res.data;
+                    }
+                } catch (err) {
+                    throw new Error(err);
+                }
+            },
+            show(mta, v) {
+                if (v !== null && v !== undefined)
+                    return v.toFixed(mta.prec)
+                else
+                    return "-"
+            },
+            showEpa(mta, v) {
+                if (v !== null && v !== undefined) {                    
+                    return v.toFixed(this.mtMap.get(mta.monitorType).prec)
+                }
+                else
+                    return "-"
+            }
+        }
+    });
+
+</script>

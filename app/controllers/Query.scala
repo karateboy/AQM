@@ -108,10 +108,10 @@ object Query extends Controller {
       val monitorType = MonitorType.withName(monitorTypeStr)
       val tableType = TableType.withName(recordTypeStr)
       val start =
-        DateTime.parse(startStr, DateTimeFormat.forPattern("YYYY-MM-dd HH:mm"))
+        DateTime.parse(startStr, DateTimeFormat.forPattern("YYYY-MM-dd HH"))
 
       val end =
-        DateTime.parse(endStr, DateTimeFormat.forPattern("YYYY-MM-dd HH:mm"))
+        DateTime.parse(endStr, DateTimeFormat.forPattern("YYYY-MM-dd HH"))
 
       val outputType = OutputType.withName(outputTypeStr)
 
@@ -384,9 +384,11 @@ object Query extends Controller {
           }
         } yield {
           if (mt != windMtv)
-            seqData(name = Monitor.map(m).name + "_" + MonitorType.map(mt).desp, data = timeData, status = Some(timeStatus))
+            seqData(name = Monitor.map(m).name + "_" + MonitorType.map(mt).desp, data = timeData, status = Some(timeStatus),
+              tooltip = ToolTip(valueDecimals = MonitorType.map(mt).prec))
           else
-            seqData(name = Monitor.map(m).name + "_" + MonitorType.map(mt).desp, data = timeData, yAxis = 1, chartType = Some("scatter"), status = Some(timeStatus))
+            seqData(name = Monitor.map(m).name + "_" + MonitorType.map(mt).desp, data = timeData, yAxis = 1, chartType = Some("scatter"),
+              status = Some(timeStatus), tooltip = ToolTip(valueDecimals = MonitorType.map(mt).prec))
         }
       } else {
         for {
@@ -405,7 +407,8 @@ object Query extends Controller {
               None
           }
         } yield {
-          seqData(name = Monitor.map(m).name + "_" + MonitorType.map(mt).desp, data = timeData, status = Some(timeStatus))
+          seqData(name = Monitor.map(m).name + "_" + MonitorType.map(mt).desp, data = timeData,
+            status = Some(timeStatus), tooltip = ToolTip(MonitorType.map(mt).prec))
         }
       }
 
@@ -438,18 +441,18 @@ object Query extends Controller {
       } yield {
         if (monitorTypes.length > 1 && monitorTypes.contains(windMtv)) {
           if (mt != windMtv)
-            seqData(EpaMonitor.map(m).name + "_" + MonitorType.map(mt).desp, timeData)
+            seqData(EpaMonitor.map(m).name + "_" + MonitorType.map(mt).desp, timeData, tooltip = ToolTip(MonitorType.map(mt).prec))
           else
-            seqData(EpaMonitor.map(m).name + "_" + MonitorType.map(mt).desp, timeData, 1, Some("scatter"))
+            seqData(EpaMonitor.map(m).name + "_" + MonitorType.map(mt).desp, timeData, 1, ToolTip(MonitorType.map(mt).prec), Some("scatter"))
         } else {
-          seqData(EpaMonitor.map(m).name + "_" + MonitorType.map(mt).desp, timeData)
+          seqData(EpaMonitor.map(m).name + "_" + MonitorType.map(mt).desp, timeData, tooltip = ToolTip(MonitorType.map(mt).prec))
         }
       }
     }
 
     val epa_series = epaSeries()
 
-    val series = local_series ++ epa_series
+    val series: Array[seqData] = local_series ++ epa_series
 
     val downloadFileName = {
       val startName = start.toString("YYMMdd")
@@ -668,7 +671,7 @@ object Query extends Controller {
             Seq(Some(time.getMillis.toDouble), None)
         }
       } yield {
-        seqData(Monitor.map(m).name, timeData)
+        seqData(Monitor.map(m).name, timeData, tooltip = ToolTip(0))
       }
 
       val timeStrSeq =
@@ -905,7 +908,7 @@ object Query extends Controller {
           for (dir <- 0 to nWay - 1)
             yield Seq(Some(dir.toDouble), Some(windMap(dir)(level).toDouble))
 
-        seqData(speedLevel(level), data)
+        seqData(speedLevel(level), data, tooltip = ToolTip(MonitorType.map(monitorType).prec))
       }
 
       val title = "風瑰圖"
@@ -960,7 +963,7 @@ object Query extends Controller {
             yield seqData((start.getYear - yData._2).toString,
               yData._1.map(i => Seq(Some((new DateTime(i._1) + yData._2.year).getMillis.toDouble), i._2._1.map {
                 _.toDouble
-              })))
+              })), tooltip = ToolTip(mtCase.prec))
 
         val c = HighchartData(
           scala.collection.immutable.Map("type" -> "line"),

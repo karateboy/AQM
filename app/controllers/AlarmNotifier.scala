@@ -81,7 +81,7 @@ class AlarmNotifier(out: ActorRef) extends Actor {
             else
               "觸發"
 
-          val msg = s"${CmdType.alert}!${ar.time.toString("MM-dd HH:mm")} ${Monitor.map(ar.monitor).name}:${Alarm.map(ar.mItem)}-${MonitorStatus.map(ar.code).desp}:${ar_state}"
+          val msg = s"${CmdType.alert}!${ar.time.toString("MM-dd HH:mm")} ${Monitor.map(ar.monitor).name}:${Alarm.map(ar.mItem)}-${Alarm.getReason(ar)}:${ar_state}"
           out ! msg
         }
       }

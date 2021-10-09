@@ -111,6 +111,7 @@ GET      /MonitorConfig/:monitor                                                
 GET      /MonitorList                                                                                controllers.Application.monitorList
 GET      /MonitorInfo/:monitor                                                                       controllers.Application.getMonitorInfo(monitor)
 GET      /MonitorBios/:monitor                                                                       controllers.Application.getMonitorBios(monitor)
+GET      /MonitorTypes                                                                               controllers.Application.getMonitorTypes
 POST     /MonitorTypes/:monitor                                                                      controllers.Application.setMonitorTypes(monitor)
 GET      /InternalStd/:monitor/:mt                                                                   controllers.Application.getInternalStd(monitor, mt)
 POST     /InternalStd/:monitor/:mt/:std                                                              controllers.Application.setInternalStd(monitor, mt, std)
@@ -247,6 +248,11 @@ GET      /ClosedRepairTicket                                                    
 GET      /ClosedRepairTicketReport/:monitors/:start/:end                                             controllers.Maintance.closedRepairTicketReport(monitors, start, end, outputTypeStr="html")
 GET      /Excel/ClosedRepairTicketReport/:monitors/:start/:end                                       controllers.Maintance.closedRepairTicketReport(monitors, start, end, outputTypeStr="excel")
 GET      /NoRepairAlarm                                                                              controllers.Maintance.queryNoRepairTicketAlarm
+GET      /EpaTickets                                                                                 controllers.Maintance.getEpaTickets
+GET      /DueTicket/excel                                                                            controllers.Maintance.dueTicketList(outputTypeStr="excel")
+GET      /DueTicket/json                                                                             controllers.Maintance.dueTicketList(outputTypeStr="json")
+
+
 
 #JSON
 GET      /EpaMonitors                                                                                controllers.Application.epaMonitorList

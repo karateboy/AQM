@@ -16,6 +16,18 @@ import scala.util.{Failure, Success}
 
 case object DataCheckFinish
 
+object DataType {
+  val Hour = "HOUR"
+  val EightHour="8Hour"
+  val Day = "Day"
+  val TwentyFourHour = "24H"
+  val Year = "Year"
+}
+object AlarmLevel {
+  val Internal = "Internal"
+  val Warn = "Warn"
+  val Law = "Law"
+}
 class DataAlarmChecker extends Actor {
   def receive = {
     case Start(startTime) =>
@@ -84,7 +96,8 @@ class DataAlarmChecker extends Actor {
             if (MonitorStatus.isNormalStat(status)
               && v > std_internal) {
               alarm = true
-              val ar = Alarm.Alarm(m, mt.toString, r._1.toDateTime, 1.0f, "011")
+              val mItem = s"${mt.toString}-${DataType.Hour}-${AlarmLevel.Internal}"
+              val ar = Alarm.Alarm(m, mItem, r._1.toDateTime, v, MonitorStatus.OVER_STAT)
               try {
                 Alarm.insertAlarm(ar)
               } catch {

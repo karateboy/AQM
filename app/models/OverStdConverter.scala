@@ -46,6 +46,16 @@ object OverStdConverter {
           Where DP_NO=${monitorName} and ${field_name} = '011'
     """.update.apply
   }
+
+  def convertAlarmOverStdToNewCode(year:Int)(implicit session: DBSession = AutoSession) = {
+    val tab_name = Alarm.getTabName(year)
+    sql"""
+          Update ${tab_name}
+          Set CODE2='016'
+          Where CODE2 = '011'
+    """.update.apply
+  }
+
   def checkIfHasField(tabType: TableType.Value, year:Int, monitorType: MonitorType.Value)(implicit session: DBSession = AutoSession) ={
     val tab_name = getTabName(tabType, year)
     val field_name = getFieldName(tabType, monitorType)
@@ -67,6 +77,17 @@ object OverStdConverter {
           SET [statusNo] = '016'
           WHERE [statusNo] = '011'
          """
+  }
+
+  def hasAlarmTable(year:Int)(implicit session: DBSession = AutoSession): Boolean ={
+    val list = {
+      sql"""
+          SELECT TABLE_NAME
+          FROM INFORMATION_SCHEMA.TABLES
+         """.map { rs => rs.string(1) }.list().apply()
+    }
+    //P1234567_Hr_2012
+    list.contains(s"P1234567_Alm_${year}")
   }
 }
 

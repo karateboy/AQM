@@ -857,7 +857,6 @@ object Record {
     val monitorId = EpaMonitor.map(epaMonitor).id
     val monitorTypeStrOpt = MonitorType.map(monitorType).epa_mapping
     if (monitorTypeStrOpt.isEmpty) {
-      Logger.error(s"Epa mapping is empty for $monitorType")
       List.empty[EpaHourRecord]
     } else {
       val monitorTypeStr = monitorTypeStrOpt.get

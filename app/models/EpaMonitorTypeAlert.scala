@@ -96,7 +96,7 @@ object EpaMonitorTypeAlert {
 
   def save(mta: EpaMonitorTypeAlert)(implicit session: DBSession) = {
     sql"""
-     UPDATE [dbo].[EMonitorTypeAlert]
+     UPDATE [dbo].[EpaMonitorTypeAlert]
         SET
          [STD_Internal] = ${mta.internal}
         WHERE [DP_NO] = ${mta.id} and [ITEM] = ${mta.monitorType.toString}

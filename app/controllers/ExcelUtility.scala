@@ -1343,7 +1343,11 @@ object ExcelUtility {
     }
 
     val styles = precArray.map { prec =>
-      val format_str = "0." + "0" * prec
+      val format_str = if(prec != 0)
+          "0." + "0" * prec
+      else
+        "0"
+
       val style = wb.createCellStyle();
       style.setDataFormat(format.getFormat(format_str))
       style
@@ -2284,9 +2288,16 @@ object ExcelUtility {
       row.createCell(7).setCellValue(ticket.reason)
       row.createCell(8).setCellValue(userMap(ticket.owner_id).name)
       row.createCell(9).setCellValue(ticket.executeDate.toString("MM-d"))
-      if (ticket.executeDate.isBefore(DateTime.yesterday))
-        row.createCell(10).setCellValue("是")
-      else
+      if (ticket.executeDate.isBefore(DateTime.yesterday)) {
+        val state =
+          if(ticket.extendDate.isEmpty)
+            "已逾期"
+        else{
+          val extendDate = ticket.extendDate.get
+          s"展延(${extendDate.toString("M/d")})${ticket.extendReason.getOrElse("")}"
+        }
+        row.createCell(10).setCellValue(state)
+      } else
         row.createCell(10).setCellValue("否")
     }
 

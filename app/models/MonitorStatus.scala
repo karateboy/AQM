@@ -74,7 +74,7 @@ object MonitorStatus {
 
   val UNAVOIDABLE_STAT = "000"
   val NORMAL_STAT = "010"
-  val OVER_STAT = "011"
+  val OVER_STAT = "016"
   val BELOW_STAT = "012"
 
   def isNormalStat(s: String) = {
@@ -232,7 +232,7 @@ object MonitorStatus {
   private var _map: Map[String, MonitorStatus] = refreshMap
   val msvList = msList.map { r => r.info.toString }
   val manualMonitorStatusList = { msvList.filter { _map(_).info.statusType == StatusType.Manual } }
-  val alarmList = List("000", "011", "031", "033", "035", "036",
+  val alarmList = List("000", "016", "031", "033", "035", "036",
     "043",
     "050", "052", "053", "054", "056", "057", "058", "059", "060",
     "a10", "b10", "c10", "d10", "e10", "f10", "g10", "h10", "i10", "j10", "k10")
@@ -247,7 +247,11 @@ object MonitorStatus {
         case StatusType.Manual =>
           MonitorStatus(tagInfo, "人工註記")
         case StatusType.Internal =>
-          MonitorStatus(tagInfo, "未知:" + key)
+          //FIXME
+          if(key == "011")
+            MonitorStatus(tagInfo, "舊超限")
+          else
+            MonitorStatus(tagInfo, "未知:" + key)
       }
 
     })
