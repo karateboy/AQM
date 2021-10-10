@@ -268,9 +268,17 @@ object Alarm {
     _map.getOrElse(key, "未知的警告代碼:" + key)
   }
 
+  def getItem(ar:Alarm) = {
+    val tokens = ar.mItem.split("-")
+    if((ar.code == MonitorStatus.OVER_STAT || ar.code == MonitorStatus.WARN_STAT) && tokens.length == 3)
+      _map.getOrElse(tokens(0), "未知的警告代碼:" + ar.mItem)
+    else
+      _map.getOrElse(ar.mItem, "未知的警告代碼:" + ar.mItem)
+  }
+
   def getReason(ar:Alarm) = {
     val tokens = ar.mItem.split("-")
-    if(ar.code == MonitorStatus.OVER_STAT && tokens.length == 3){
+    if((ar.code == MonitorStatus.OVER_STAT || ar.code == MonitorStatus.WARN_STAT) && tokens.length == 3){
       val dataType = tokens(1) match {
         case DataType.Hour=>
           "小時值"

@@ -74,6 +74,7 @@ object MonitorStatus {
 
   val UNAVOIDABLE_STAT = "000"
   val NORMAL_STAT = "010"
+  val WARN_STAT = "011"
   val OVER_STAT = "016"
   val BELOW_STAT = "012"
 

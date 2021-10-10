@@ -108,10 +108,10 @@ object Query extends Controller {
       val monitorType = MonitorType.withName(monitorTypeStr)
       val tableType = TableType.withName(recordTypeStr)
       val start =
-        DateTime.parse(startStr, DateTimeFormat.forPattern("YYYY-MM-dd HH"))
+        DateTime.parse(startStr, DateTimeFormat.forPattern("YYYY-MM-dd HH:mm"))
 
       val end =
-        DateTime.parse(endStr, DateTimeFormat.forPattern("YYYY-MM-dd HH"))
+        DateTime.parse(endStr, DateTimeFormat.forPattern("YYYY-MM-dd HH:mm"))
 
       val outputType = OutputType.withName(outputTypeStr)
 
@@ -121,7 +121,7 @@ object Query extends Controller {
         case TableType.EightHour =>
           Report.get8hrPeriods(start.withMillisOfDay(0).withHourOfDay(start.getHourOfDay()), end)
         case TableType.Hour =>
-          Report.getPeriods(start.withMinuteOfHour(0), end.withMinuteOfHour(0), 1.hour)
+          Report.getPeriods(start.withMinuteOfHour(0).plusHours(1), end.withMinuteOfHour(0), 1.hour)
         case TableType.Min =>
           Report.getPeriods(start, end, 1.minute)
       }

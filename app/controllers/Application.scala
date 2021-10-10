@@ -229,11 +229,8 @@ object Application extends Controller {
 
         Ok(mtData.data)
       } catch {
-        case e: Exception =>
-          Logger.error(e.toString)
-          BadRequest(e.toString)
         case e: Throwable =>
-          Logger.error(e.toString)
+          Logger.error(e.toString, e)
           BadRequest(e.toString)
       }
   }

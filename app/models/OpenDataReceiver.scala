@@ -20,12 +20,13 @@ object OpenDataReceiver {
     Logger.info(s"OpenData receiver starts")
   }
 
-  def reloadEpaData(start:DateTime, end:DateTime): Unit = {
+  def reloadEpaData(start: DateTime, end: DateTime): Unit = {
     receiver ! ReloadEpaData(start, end)
   }
 
+  case class ReloadEpaData(start: DateTime, end: DateTime)
+
   case object GetEpaHourData
-  case class ReloadEpaData(start:DateTime, end:DateTime)
 }
 
 import java.util.Date
@@ -77,10 +78,10 @@ class OpenDataReceiver extends Actor with ActorLogging {
       def filter(dataNode: Node) = {
         val monitorDateOpt = dataNode \ "MonitorDate"
         val mDate =
-          try{
+          try {
             DateTime.parse(s"${monitorDateOpt.text.trim()}", DateTimeFormat.forPattern("YYYY-MM-dd HH:mm:ss"))
-          }catch{
-            case _:Exception=>
+          } catch {
+            case _: Exception =>
               DateTime.parse(s"${monitorDateOpt.text.trim()}", DateTimeFormat.forPattern("YYYY-MM-dd"))
           }
 
@@ -91,7 +92,13 @@ class OpenDataReceiver extends Actor with ActorLogging {
         val siteName = dataNode \ "SiteName"
         val itemId = dataNode \ "ItemId"
         val monitorDateOpt = dataNode \ "MonitorDate"
-        val siteID = (dataNode \ "SiteId").text.trim.toInt
+        val siteID = try {
+          (dataNode \ "SiteId").text.trim.toInt
+        } catch {
+          case _: Throwable =>
+            // FIXME workaround EPA data bug!
+            (dataNode \ "SiteId").text.trim.toDouble.toInt
+        }
 
         try {
           //Filter interested EPA monitor
@@ -101,8 +108,8 @@ class OpenDataReceiver extends Actor with ActorLogging {
             val monitorType = MonitorType.eapIdMap(itemId.text.trim().toInt)
             val mDate = try {
               DateTime.parse(s"${monitorDateOpt.text.trim()}", DateTimeFormat.forPattern("YYYY-MM-dd HH:mm:ss"))
-            }catch {
-              case _:Exception=>
+            } catch {
+              case _: Exception =>
                 DateTime.parse(s"${monitorDateOpt.text.trim()}", DateTimeFormat.forPattern("YYYY-MM-dd"))
             }
 
@@ -134,9 +141,14 @@ class OpenDataReceiver extends Actor with ActorLogging {
 
       val qualifiedData = data.filter(filter)
 
-      qualifiedData.map {
-        processData
-      }
+      qualifiedData.foreach(node => {
+        try {
+          processData(node)
+        } catch {
+          case _: Throwable =>
+          //skip buggy data
+        }
+      })
 
       val updateCounts =
         for {
@@ -163,7 +175,7 @@ class OpenDataReceiver extends Actor with ActorLogging {
             """.update.apply
           }
         }
-      if(updateCounts.sum != 0)
+      if (updateCounts.sum != 0)
         Logger.debug(s"EPA ${updateCounts.sum} records have been upserted.")
 
       qualifiedData.size
@@ -178,7 +190,7 @@ class OpenDataReceiver extends Actor with ActorLogging {
               parser(response.xml)
             } catch {
               case ex: Exception =>
-                Logger.error(ex.toString())
+                Logger.error(ex.toString(), ex)
                 throw ex
             }
         }
@@ -192,32 +204,32 @@ class OpenDataReceiver extends Actor with ActorLogging {
       })
     }
 
-    def getMonthData(year:Int, month:Int, skip: Int) {
+    def getMonthData(year: Int, month: Int, skip: Int) {
       val url = f"https://data.epa.gov.tw/api/v1/aqx_p_15?format=xml&offset=$skip%d&limit=$limit&year_month=$year%d_$month%02d&api_key=fa3fdec2-19b2-4108-a7f0-63ea3a9a776a"
       val f = WS.url(url).get()
       f onFailure (errorHandler())
-      for(resp <- f) {
+      for (resp <- f) {
         try {
           val updateCount = parser(resp.xml)
           if (updateCount < limit) {
             Logger.info(f"Import EPA $year/$month%02d complete")
             val dataLast = new DateTime(year, month, 1, 0, 0).plusMonths(1)
             SystemConfig.setEpaLast(dataLast)
-            if(dataLast < end)
+            if (dataLast < end)
               self ! ReloadEpaData(dataLast, end)
           } else
             getMonthData(year, month, skip + limit)
         } catch {
           case ex: Exception =>
-            Logger.error(ex.toString())
+            Logger.error(ex.toString(), ex)
             throw ex
         }
       }
     }
 
-    if(start.toString("yyyy-M") == DateTime.now().toString("yyyy-M"))
+    if (start.toString("yyyy-M") == DateTime.now().toString("yyyy-M"))
       getThisMonth(0)
-    else{
+    else {
       getMonthData(start.getYear(), start.getMonthOfYear(), 0)
     }
   }

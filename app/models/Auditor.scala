@@ -12,7 +12,8 @@ import MonitorType._
 /**
  * @author user
  */
-class AuditStat(hr: HourRecord) {
+case class AuditStat(hr: HourRecord) {
+  var changed = false
   val name = hr.name
   val date = hr.date
   var chk = hr.chk
@@ -51,6 +52,8 @@ class AuditStat(hr: HourRecord) {
   var h2s_cs_stat = hr.h2s_cs_stat
   var h2s_so2_stat = hr.h2s_so2_stat
 
+  def getValueStat(mt: MonitorType.Value): (Option[Float], Option[String]) =
+    Record.monitorTypeProject2(mt)(hr)
   def getStat(mt: MonitorType.Value) = {
     mt match {
       case A213 => tsp_stat
@@ -93,6 +96,7 @@ class AuditStat(hr: HourRecord) {
   }
 
   def setStat(mt: MonitorType.Value, stat: String) = {
+    changed = true
     mt match {
       case A213 => tsp_stat = Some(stat)
       case A214 => pm10_stat = Some(stat)
@@ -213,7 +217,7 @@ class AuditStat(hr: HourRecord) {
 
 object Auditor {
   def clearAuditData(records: List[HourRecord]) = {
-    val auditStatList = records.map { new AuditStat(_) }
+    val auditStatList = records.map { AuditStat(_) }
     auditStatList.foreach { _.clear }
   }
 

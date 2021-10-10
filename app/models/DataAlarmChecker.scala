@@ -41,7 +41,7 @@ class DataAlarmChecker extends Actor {
             
           parent ! DataCheckFinish
         case Failure(ex)=>
-          Logger.error(ex.getMessage)
+          Logger.error(ex.getMessage, ex)
           parent ! DataCheckFinish
       }
   }

@@ -29,7 +29,7 @@
 			<td><input type="checkbox" id="@a.monitor:@a.mItem:@a.time.getMillis"></td>
 			<td>@a.time.toString("YYYY/MM/dd HH:mm")</td>
 			<td>@Monitor.map(a.monitor).name</td>			
-			<td>@models.Alarm.map(a.mItem)</td>
+			<td>@models.Alarm.getItem(a)</td>
 			<td>@models.Alarm.getMonitorTypeValue(a)</td>
 			<td>@models.Alarm.getReason(a)</td>
 		</tr>
