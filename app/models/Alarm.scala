@@ -264,7 +264,7 @@ object Alarm {
     }
   }
   
-  def map(key: String) = {
+  private def map(key: String) = {
     _map.getOrElse(key, "未知的警告代碼:" + key)
   }
 
@@ -274,6 +274,16 @@ object Alarm {
       _map.getOrElse(tokens(0), "未知的警告代碼:" + ar.mItem)
     else
       _map.getOrElse(ar.mItem, "未知的警告代碼:" + ar.mItem)
+  }
+
+  def isOverStd(ar:Alarm): Boolean = {
+    val tokens = ar.mItem.split("-")
+    (ar.code == MonitorStatus.OVER_STAT || ar.code == MonitorStatus.WARN_STAT) && tokens.length == 3
+  }
+
+  def getOverStdLevel(ar:Alarm): Int = {
+    val tokens = ar.mItem.split("-")
+    AlarmLevel.mapCode(tokens(2))
   }
 
   def getReason(ar:Alarm) = {

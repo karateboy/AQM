@@ -34,7 +34,7 @@ class AlarmWorker extends Actor{
           try {
             sendAlarmEmail(matchedUser, ar)            
             EventLog.create(EventLog(DateTime.now, EventLog.evtTypeInformAlarm,
-              s"送信警告信給${userName} ${Monitor.map(ar.monitor).name}-${Alarm.map(ar.mItem)}-${MonitorStatus.map(ar.code).desp}"))
+              s"送信警告信給${userName} ${Monitor.map(ar.monitor).name}-${Alarm.getItem(ar)}-${Alarm.getReason(ar)}"))
           } catch {
             case ex: Exception =>
               Console.print(ex.toString)
@@ -56,10 +56,10 @@ class AlarmWorker extends Actor{
       else
         "觸發"
 
-    val msg = s"${Monitor.map(alarm.monitor).name}- ${alarm.time.toString}:${Alarm.map(alarm.mItem)}:${MonitorStatus.map(alarm.code).desp}:${ar_state}"
-    val htmlMsg = s"<html><body><p><b>${Monitor.map(alarm.monitor).name}-${alarm.time.toString("YYYY/MM/dd HH:mm")}:${Alarm.map(alarm.mItem)}:${MonitorStatus.map(alarm.code).desp}:${ar_state}</b></p></body></html>"
+    val msg = s"${Monitor.map(alarm.monitor).name}- ${alarm.time.toString}:${Alarm.getItem(alarm)}:${Alarm.getReason(alarm)}:${ar_state}"
+    val htmlMsg = s"<html><body><p><b>${Monitor.map(alarm.monitor).name}-${alarm.time.toString("YYYY/MM/dd HH:mm")}:${Alarm.getItem(alarm)}:${Alarm.getReason(alarm)}:${ar_state}</b></p></body></html>"
     val email = Email(
-      s"警報: ${Monitor.map(alarm.monitor).name}-${Alarm.map(alarm.mItem)}(${MonitorStatus.map(alarm.code).desp})",
+      s"警報: ${Monitor.map(alarm.monitor).name}-${Alarm.getItem(alarm)}(${Alarm.getReason(alarm)})",
       "警報服務 <karateboy.huang@gmail.com>",
       users.map { _.email },
       // adds attachment

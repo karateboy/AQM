@@ -27,6 +27,7 @@ object AlarmLevel {
   val Internal = "Internal"
   val Warn = "Warn"
   val Law = "Law"
+  def mapCode = Map(Internal->1, Warn->2, Law->4)
 }
 class DataAlarmChecker extends Actor {
   def receive = {

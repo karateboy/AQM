@@ -248,6 +248,7 @@ GET      /ClosedRepairTicket                                                    
 GET      /ClosedRepairTicketReport/:monitors/:start/:end                                             controllers.Maintance.closedRepairTicketReport(monitors, start, end, outputTypeStr="html")
 GET      /Excel/ClosedRepairTicketReport/:monitors/:start/:end                                       controllers.Maintance.closedRepairTicketReport(monitors, start, end, outputTypeStr="excel")
 GET      /NoRepairAlarm                                                                              controllers.Maintance.queryNoRepairTicketAlarm
+GET      /OverStdAlarmTicket                                                                         controllers.Maintance.overStdAlarmTicketQuery
 GET      /EpaTickets                                                                                 controllers.Maintance.getEpaTickets
 GET      /DueTicket/excel                                                                            controllers.Maintance.dueTicketList(outputTypeStr="excel")
 GET      /DueTicket/json                                                                             controllers.Maintance.dueTicketList(outputTypeStr="json")

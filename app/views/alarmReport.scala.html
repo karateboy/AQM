@@ -18,12 +18,12 @@
 	</tr>
 </thead>
 <tbody>
-	@for(a <- report){
+	@for(ar <- report){
 		<tr>
-			<td>@Monitor.map(a.monitor).name</td>
-			<td>@a.time.toString("YYYY/MM/dd HH:mm")</td>
-			<td>@models.Alarm.map(a.mItem)</td>
-			<td>@MonitorStatus.map(a.code).desp</td>
+			<td>@Monitor.map(ar.monitor).name</td>
+			<td>@ar.time.toString("YYYY/MM/dd HH:mm")</td>
+			<td>@models.Alarm.getItem(ar)</td>
+			<td>@models.Alarm.getReason(ar)</td>
 		</tr>
 	}
 </tbody>

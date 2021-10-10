@@ -2253,8 +2253,8 @@ object ExcelUtility {
       val row = sheet.createRow(rowN)
       row.createCell(0).setCellValue(ar.time.toString("YYYY/MM/dd HH:mm"))
       row.createCell(1).setCellValue(Monitor.map(ar.monitor).name)
-      row.createCell(2).setCellValue(Alarm.map(ar.mItem))
-      row.createCell(3).setCellValue(MonitorStatus.map(ar.code).desp)
+      row.createCell(2).setCellValue(Alarm.getItem(ar))
+      row.createCell(3).setCellValue(Alarm.getReason(ar))
     }
     finishExcel(reportFilePath, pkg, wb)
   }

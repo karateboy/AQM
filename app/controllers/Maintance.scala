@@ -1059,7 +1059,11 @@ object Maintance extends Controller {
                 else
                   "觸發"
 
-              val reason = s"${ar.time.toString("YYYY/MM/dd HH:mm")} ${Monitor.map(ar.monitor).name}:${Alarm.map(alarmId.mItem)}-${Alarm.getReason(ar)}:${ar_state}"
+              var overStd = 0
+              if(Alarm.isOverStd(ar)){
+                overStd = Alarm.getOverStdLevel(ar)
+              }
+              val reason = s"${ar.time.toString("YYYY/MM/dd HH:mm")} ${Monitor.map(ar.monitor).name}:${Alarm.getItem(ar)}-${Alarm.getReason(ar)}:${ar_state}"
               val mtOpt = try {
                 val tokens = ar.mItem.split("-")
                 if(ar.code == MonitorStatus.OVER_STAT && tokens.length == 3){
@@ -1081,7 +1085,7 @@ object Maintance extends Controller {
                   Ticket(0, DateTime.now, true, TicketType.repair, user.id,
                     SystemConfig.getAlarmTicketDefaultUserId(), alarmId.monitor, mtOpt, reason,
                     executeDate, Json.toJson(Ticket.defaultAlarmTicketForm(ar)).toString,
-                    repairType, repairSubType, Some(false))
+                    repairType, repairSubType, Some(false), overStd = Some(overStd))
                 Ticket.newTicket(ticket)
               }
             }
@@ -1234,6 +1238,14 @@ object Maintance extends Controller {
       Ok(views.html.alarmNoRepair(group.privilege))
   }
 
+  def overStdAlarmTicketQuery = Security.Authenticated {
+    implicit request =>
+      val userInfo = Security.getUserinfo(request).get
+      val group = Group.getGroup(userInfo.groupID).get
+      val adminUsers = User.getAdminUsers()
+
+      Ok(views.html.overStdAlarmTicketQuery(group.privilege))
+  }
   def closedRepairTicketReport(monitorStr: String, startStr: String, endStr: String, outputTypeStr: String) = Security.Authenticated {
     val monitors = monitorStr.split(":").map { Monitor.withName }
     val start = DateTime.parse(startStr)
