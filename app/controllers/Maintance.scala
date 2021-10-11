@@ -16,6 +16,11 @@ import PdfUtility._
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
 import Ticket._
+import com.google.inject.Inject
+import play.api.libs.json.Json.reads
+import play.api.libs.ws.{WS, WSClient}
+import scala.concurrent.ExecutionContext.Implicits.global
+
 import java.nio.file.Files
 
 object PartReplaceFilter extends Enumeration {
@@ -28,6 +33,7 @@ object PartReplaceFilter extends Enumeration {
 /**
  * @author user
  */
+
 object Maintance extends Controller {
   def newTicket = Security.Authenticated {
     implicit request =>
@@ -109,6 +115,21 @@ object Maintance extends Controller {
     Ok(views.html.ticketReport(filterTicket, usrMap))
   }
 
+  def ticketReportOverStd(ticketTypeStr: String, monitorStr: String, startStr: String, endStr: String, overStdStr:String) = Security.Authenticated {
+    val ticketTypes = ticketTypeStr.split(":").map { TicketType.withName }
+    val monitors = monitorStr.split(":").map { Monitor.withName }
+    val start = DateTime.parse(startStr)
+    val end = DateTime.parse(endStr) + 1.day
+    val overStdCode = overStdStr.split(":").map{AlarmLevel.withName}.map(AlarmLevel.map(_).code)
+
+    val tickets = Ticket.queryOverStdTickets(start, end, overStdCode)
+    val filterTicket = tickets.filter { t => ticketTypes.contains(t.ticketType) && monitors.contains(t.monitor) }
+    val allUsers = User.getAllUsers()
+    val usrMap = Map(allUsers.map { u => (u.id.get -> u) }: _*)
+
+    Ok(views.html.ticketReport(filterTicket, usrMap))
+  }
+
   def myTicket = Security.Authenticated {
     implicit request =>
       val userInfoOpt = Security.getUserinfo(request)
@@ -140,7 +161,22 @@ object Maintance extends Controller {
         Ok(views.html.ticket(ticketOpt.get, group.privilege, adminUsers, userInfo.id))
       }
   }
-
+  case class ExtendTickeParam(extendDate: Seq[String], extendReason: String)
+  def extendTicket(ID: Int) = Security.Authenticated(BodyParsers.parse.json) {
+    implicit request =>
+      implicit val reads = Json.reads[ExtendTickeParam]
+      val ret = request.body.validate[ExtendTickeParam]
+      ret.fold(
+        error => {
+          Logger.error(JsError.toJson(error).toString())
+          BadRequest(Json.obj("ok" -> false, "msg" -> JsError.toJson(error)))
+        },
+        param=>{
+          val extendDate = DateTime.parse(param.extendDate(0))
+          Ticket.extendTicket(ID, extendDate, param.extendReason)
+          Ok(Json.obj("ok" -> true))
+        })
+  }
   def updateTicket(ID: Int) = Security.Authenticated(BodyParsers.parse.json) {
     implicit request =>
       val ticketResult = request.body.validate[TicketParam]
@@ -869,10 +905,11 @@ object Maintance extends Controller {
     Ok(views.html.eventLog())
   }
 
-  def eventLogReport(startStr: String, endStr: String) = Security.Authenticated {
+  def eventLogReport(eventTypeStr:String, startStr: String, endStr: String) = Security.Authenticated {
+    val eventTypes = eventTypeStr.split(":").map(_.toInt)
     val start = DateTime.parse(startStr)
     val end = DateTime.parse(endStr) + 1.day
-    val logs = EventLog.getList(start, end)
+    val logs = EventLog.getList(eventTypes, start, end)
     Ok(views.html.eventLogReport(logs))
   }
 
@@ -1242,10 +1279,21 @@ object Maintance extends Controller {
     implicit request =>
       val userInfo = Security.getUserinfo(request).get
       val group = Group.getGroup(userInfo.groupID).get
-      val adminUsers = User.getAdminUsers()
 
       Ok(views.html.overStdAlarmTicketQuery(group.privilege))
   }
+  def overStdAlarmTicketReport(levelStr:String, monitorStr:String, startStr:String, endStr:String) = Security.Authenticated {
+    implicit request =>
+      val userInfo = Security.getUserinfo(request).get
+      val group = Group.getGroup(userInfo.groupID).get
+      val levels = levelStr.split(":").map(AlarmLevel.withName)
+      val monitors = monitorStr.split(":").map(Monitor.withName)
+      val start = DateTime.parse(startStr, DateTimeFormat.forPattern("yyyy-M-d"))
+      val end = DateTime.parse(endStr, DateTimeFormat.forPattern("yyyy-M-d"))
+
+      Ok(views.html.overStdAlarmTicketQuery(group.privilege))
+  }
+
   def closedRepairTicketReport(monitorStr: String, startStr: String, endStr: String, outputTypeStr: String) = Security.Authenticated {
     val monitors = monitorStr.split(":").map { Monitor.withName }
     val start = DateTime.parse(startStr)
@@ -1336,6 +1384,21 @@ object Maintance extends Controller {
 
   def sop = Security.Authenticated {
     Ok(views.html.sop())
+  }
+
+  case class LinePayload(message: String)
+  def testLineNotify = Security.Authenticated.async {
+    implicit request=>
+    val userInfo = Security.getUserinfo(request).get
+    implicit val write = Json.writes[LinePayload]
+    val f = WS.url("https://notify-api.line.me/api/notify").
+      withHeaders("Authorization"-> s"Bearer gKt23Rc3ApWo2h8tqOrEeZEHFB88WjIcbO6n8QZbBHW",
+      "Content-Type"->"application/x-www-form-urlencoded")
+      .post(Map("message" -> Seq(s"${userInfo.name}測試line訊息")))
+    for(ret<-f) yield {
+      Logger.info(ret.body)
+      Ok(Json.obj("ok"->true))
+    }
   }
 
 }

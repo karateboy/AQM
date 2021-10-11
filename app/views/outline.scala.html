@@ -131,7 +131,6 @@ RequestHeader)
 <body class="skin-1">
 	<!--New UI -->
 	<div id="wrapper">
-
 		<nav class="navbar-default navbar-static-side" role="navigation">
 			<div class="sidebar-collapse">
 				<ul class="nav" id="side-menu">
@@ -255,7 +254,8 @@ RequestHeader)
 					}
 					@if(user.isAdmin && privilege.allowedMenuRights.contains(MenuRight.SystemManagement)){
 					<li>
-						<a href="#"><i class="fa fa-desktop"></i> <span class="nav-label">系統管理</span></a>
+						<a href="#"><i class="fa fa-desktop"></i> <span class="nav-label">系統管理</span><span
+								class="fa arrow"></span></a>
 						<ul class="nav nav-second-level">
 							<li><a href="#" onClick="loadPage('/MonitorStatusConfig','系統管理','狀態碼管理')">狀態碼管理</a></li>
 							<li><a href="#"
@@ -276,12 +276,16 @@ RequestHeader)
 							<li><a href="#"
 									onClick="loadPage('/assets/html/reloadEpaRecord.html','系統管理','回補環保署測站資料')">回補環保署測站資料</a>
 							</li>
+							<li><a href="#"
+								onClick="loadPage('/assets/html/lineNotify.html','系統管理','LINE通報設定')">LINE通報設定</a>
+						</li>
 						</ul>
 					</li>
 					}
 					@if(privilege.allowedMenuRights.contains(MenuRight.RepartMaintance)){
 					<li>
-						<a href="#"><i class="fa fa-tasks"></i> <span class="nav-label">維修保養</span></a>
+						<a href="#"><i class="fa fa-tasks"></i> <span class="nav-label">維修保養</span><span
+								class="fa arrow"></span></a>
 						<ul class="nav nav-second-level">
 							<li>
 								<a href="#">案件管理<span class="fa arrow"></span></a>

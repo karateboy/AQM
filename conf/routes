@@ -179,10 +179,12 @@ GET      /NewTicket                                                             
 POST     /NewTicket/:id                                                                              controllers.Maintance.newTicketAction(id)
 GET      /QueryTicket                                                                                controllers.Maintance.queryTicket
 GET      /TicketReport/:ticketTypes/:monitors/:start/:end                                            controllers.Maintance.ticketReport(ticketTypes, monitors, start, end)
+GET      /TicketReport/:ticketTypes/:monitors/:start/:end/:overStd                                   controllers.Maintance.ticketReportOverStd(ticketTypes, monitors, start, end, overStd)
 GET      /Ticket/:ID                                                                                 controllers.Maintance.ticket(ID:Int)
 POST     /AttachTicketPhoto/:id                                                                      controllers.Maintance.attachTicketPhoto(id:Int)
 GET      /AttachTicketPhoto/:id/:idx                                                                 controllers.Maintance.getTicketPhoto(id: Int, idx:Int)
 POST     /UpdateTicket/:ID                                                                           controllers.Maintance.updateTicket(ID:Int)
+POST     /ExtendTicket/:ID                                                                           controllers.Maintance.extendTicket(ID:Int)
 POST     /UpdateForm/:ID                                                                             controllers.Maintance.updateForm(ID:Int)
 POST     /UpdateRepairForm/:ID                                                                       controllers.Maintance.updateRepairForm(ID: Int)
 GET      /CloseTicket                                                                                controllers.Maintance.closeTicket(outputTyeStr="html")
@@ -222,7 +224,7 @@ GET      /PartInventoryAlarm/excel                                              
 GET      /SOP                                                                                        controllers.Maintance.sop
 
 GET      /EventLog                                                                                   controllers.Maintance.eventLog
-GET      /EventLogReport/:start/:end                                                                 controllers.Maintance.eventLogReport(start, end)
+GET      /EventLogReport/:eventTypes/:start/:end                                                     controllers.Maintance.eventLogReport(eventTypes, start, end)
 
 GET      /TestAlarmMail                                                                              controllers.Maintance.testAlarmMail
 GET      /DutySchedule                                                                               controllers.Maintance.dutySchedule
@@ -249,11 +251,15 @@ GET      /ClosedRepairTicketReport/:monitors/:start/:end                        
 GET      /Excel/ClosedRepairTicketReport/:monitors/:start/:end                                       controllers.Maintance.closedRepairTicketReport(monitors, start, end, outputTypeStr="excel")
 GET      /NoRepairAlarm                                                                              controllers.Maintance.queryNoRepairTicketAlarm
 GET      /OverStdAlarmTicket                                                                         controllers.Maintance.overStdAlarmTicketQuery
+GET      /OverStdAlarmTicketReport/:level/:monitors/:start/:end                                      controllers.Maintance.overStdAlarmTicketReport(level, monitors, start, end)
 GET      /EpaTickets                                                                                 controllers.Maintance.getEpaTickets
-GET      /DueTicket/excel                                                                            controllers.Maintance.dueTicketList(outputTypeStr="excel")
-GET      /DueTicket/json                                                                             controllers.Maintance.dueTicketList(outputTypeStr="json")
+GET      /DueTicket/excel                                                       controllers.Maintance.dueTicketList(outputTypeStr="excel")
+GET      /DueTicket/json                                                        controllers.Maintance.dueTicketList(outputTypeStr="json")
+GET      /TestLineMessage                                                       controllers.Maintance.testLineNotify
 
-
+GET      /AggregateQuery                                                        controllers.Report.aggregateQuery
+GET      /AggregrateReport2/:monitors/:monitorTypes/:start/:end                 controllers.Report.getAggregrateReport2(monitors, monitorTypes, start, end, outputType="html")
+GET      /Excel/AggregrateReport2/:monitors/:monitorTypes/:start/:end           controllers.Report.getAggregrateReport2(monitors, monitorTypes, start, end, outputType="excel")
 
 #JSON
 GET      /EpaMonitors                                                                                controllers.Application.epaMonitorList

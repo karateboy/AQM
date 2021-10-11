@@ -2,176 +2,202 @@
 @import com.github.nscala_time.time.Imports._
 @(privilege: Privilege)
 <div class="row">
-   	<div class="col-lg-12">
-        	<div class="panel panel-primary" id="paramPanel">
-            	<div class="panel-heading panel-title" >
-            		<a data-toggle="collapse" data-parent="#accordion" href="#reportParam">查詢參數</a>	
-                </div>
-            	<div class="panel-body panel-collapse in" id="reportParam">
-            		<form class="form-horizontal">
-						<div class="form-group">
-	            			<label class="col-lg-1 control-label">案件類別</label>
-	            			<div class="col-lg-11">
-	            				<button id="select-all-levels" class="btn btn-info" type="button">全選</button>
-	            				<div class="btn-group" data-toggle="buttons">	            					            				
-	            					@for(m<-Monitor.myMvList(privilege)){
-	            						@if(m == Monitor.myMvList(privilege).head){
-	            							<label class="btn btn-outline btn-primary dim active">
-												<input type="checkbox" name="" id="@m" checked>@Monitor.getDisplayName(m)</label>
-	            						}else{
-	            							<label class="btn btn-outline btn-primary dim">
-												<input type="checkbox" name="monitor" id="@m">@Monitor.getDisplayName(m)</label>
-	            						}
-	            						
-	            					}
-	            				</div>
-	            			</div>	            			            		
-	                    </div>
-            			<div class="form-group">
-	            			<label class="col-lg-1 control-label">測站</label>
-	            			<div class="col-lg-11">
-	            				<button id="select-all-monitors" class="btn btn-info" type="button">全選</button>
-	            				<div class="btn-group" data-toggle="buttons">	            					            				
-	            					@for(m<-Monitor.myMvList(privilege)){
-	            						@if(m == Monitor.myMvList(privilege).head){
-	            							<label class="btn btn-outline btn-primary dim active">
-												<input type="checkbox" name="monitor" id="@m" checked>@Monitor.getDisplayName(m)</label>
-	            						}else{
-	            							<label class="btn btn-outline btn-primary dim">
-												<input type="checkbox" name="monitor" id="@m">@Monitor.getDisplayName(m)</label>
-	            						}
-	            						
-	            					}
-	            				</div>
-	            			</div>	            			            		
-	                    </div>
-	                    <div class="form-group">
-	            			<label class="col-lg-1 control-label">查詢區間</label>	
-	            			<div class="col-lg-5">
-	            				<div class="input-daterange input-group" id="datepicker">
-                    				<span class="input-group-addon"><i class="fa fa-calendar"></i></span>
-                    				<input type="text" class="input-sm form-control" name="start" id="reportStart" value='@((DateTime.now-1.week).toString("YYYY-MM-dd"))' required/>
-                       				<span class="input-group-addon">至</span>
-                        			<input type="text" class="input-sm form-control" name="end" id="reportEnd" value='@(DateTime.now.toString("YYYY-MM-dd"))' required/>                        
-                    			</div>                        
-                    		</div>
-	            		</div>
-	            		<div class="form-group">
-							<div class="col-lg-1 col-lg-offset-1">
-								<button type="button" class="btn btn-primary" id="queryReport">查詢</button>
-							</div>							
-						</div>	                               			                    
-            		</form>
-            	</div>
-        	</div>
-        	<div class="panel panel-success" style="display:none" id="reportPanel">
-            	<div class="panel-body panel-collapse" id="monitorReport">
-            	<div align="right">            			
-					<label class="btn btn-outline" data-toggle="tooltip" data-placement="bottom" title="Excel"><a href="#" id="downloadExcel"><i class="fa fa-file-excel-o fa-2x"></i></a></label>            			
+	<div class="col-lg-12">
+		<div class="panel panel-primary" id="paramPanel">
+			<div class="panel-heading panel-title">
+				<a data-toggle="collapse" data-parent="#accordion" href="#reportParam">查詢參數</a>
+			</div>
+			<div class="panel-body panel-collapse in" id="reportParam">
+				<form class="form-horizontal">
+					<div class="form-group">
+						<label class="col-lg-1 control-label">案件類別</label>
+						<div class="col-lg-11">
+							<button id="select-all-levels" class="btn btn-info" type="button">全選</button>
+							<div class="btn-group" data-toggle="buttons">
+								@for(level<-AlarmLevel.values.toList){ @if(level==AlarmLevel.values.toList.head){ <label
+									class="btn btn-outline btn-primary dim active">
+									<input type="checkbox" name="alarmLevel" id="@level"
+										checked>@AlarmLevel.map(level).desc</label>
+									}else{
+									<label class="btn btn-outline btn-primary dim">
+										<input type="checkbox" name="alarmLevel"
+											id="@level">@AlarmLevel.map(level).desc</label>
+									}
+
+									}
+							</div>
+						</div>
+					</div>
+					<div class="form-group">
+						<label class="col-lg-1 control-label">測站</label>
+						<div class="col-lg-11">
+							<button id="select-all-monitors" class="btn btn-info" type="button">全選</button>
+							<div class="btn-group" data-toggle="buttons">
+								@for(m<-Monitor.myMvList(privilege)){ @if(m==Monitor.myMvList(privilege).head){ <label
+									class="btn btn-outline btn-primary dim active">
+									<input type="checkbox" name="monitor" id="@m"
+										checked>@Monitor.getDisplayName(m)</label>
+									}else{
+									<label class="btn btn-outline btn-primary dim">
+										<input type="checkbox" name="monitor" id="@m">@Monitor.getDisplayName(m)</label>
+									}
+
+									}
+							</div>
+						</div>
+					</div>
+					<div class="form-group">
+						<label class="col-lg-1 control-label">查詢區間</label>
+						<div class="col-lg-5">
+							<div class="input-daterange input-group" id="datepicker">
+								<span class="input-group-addon"><i class="fa fa-calendar"></i></span>
+								<input type="text" class="input-sm form-control" name="start" id="reportStart"
+									value='@((DateTime.now-1.week).toString("YYYY-MM-dd"))' required />
+								<span class="input-group-addon">至</span>
+								<input type="text" class="input-sm form-control" name="end" id="reportEnd"
+									value='@(DateTime.now.toString("YYYY-MM-dd"))' required />
+							</div>
+						</div>
+					</div>
+					<div class="form-group">
+						<div class="col-lg-1 col-lg-offset-1">
+							<button type="button" class="btn btn-primary" id="queryReport">查詢</button>
+						</div>
+					</div>
+				</form>
+			</div>
+		</div>
+		<div class="panel panel-success" style="display:none" id="reportPanel">
+			<div class="panel-body panel-collapse" id="monitorReport">
+				<div align="right">
+					<label class="btn btn-outline" data-toggle="tooltip" data-placement="bottom" title="Excel"><a
+							href="#" id="downloadExcel"><i class="fa fa-file-excel-o fa-2x"></i></a></label>
 				</div>
-					<div id="reportDiv" align="center" style="overflow-x:auto">
-            		</div>
-            	</div>
-        	</div>
+				<div id="reportDiv" align="center" style="overflow-x:auto">
+				</div>
+			</div>
+		</div>
 	</div>
 </div>
 <script>
 	var localized_url = '@routes.Assets.at("localization/zh_tw.json")';
 </script>
 <script>
-$( document ).ready(function() {
-	$('#select-all-monitors').click(function(){
-			$('.btn-group input[name="monitor"]').each(function(){
-		            // toggle checkbox
-		            $(this).prop('checked',!$(this).prop('checked'));
-		            // toggle class
-		            $(this).parents('label').toggleClass('active');
-		        });
-	});
+	$(document).ready(function () {
+		$('#select-all-levels').click(function () {
+			$('.btn-group input[name="alarmLevel"]').each(function () {
+				// toggle checkbox
+				$(this).prop('checked', !$(this).prop('checked'));
+				// toggle class
+				$(this).parents('label').toggleClass('active');
+			});
+		});
+		$('#select-all-monitors').click(function () {
+			$('.btn-group input[name="monitor"]').each(function () {
+				// toggle checkbox
+				$(this).prop('checked', !$(this).prop('checked'));
+				// toggle class
+				$(this).parents('label').toggleClass('active');
+			});
+		});
 
-	$('#datepicker').datepicker({
-		format: 'yyyy-mm-dd',
-	    todayBtn: "linked",
-	    defaultDate:0,
-	    language: "zh-TW"
-	});
+		$('#datepicker').datepicker({
+			format: 'yyyy-mm-dd',
+			todayBtn: "linked",
+			defaultDate: 0,
+			language: "zh-TW"
+		});
 
-	var monitors, statusFilter, reportStart, reportEnd;
-	
-	function validate(){
-		monitors = $("input[name='monitor']:checked");
+		var alarmLevel, monitors, statusFilter, reportStart, reportEnd;
 
-		if (monitors.length == 0) {
-			alert("請選擇測站");
-			return false;
+		function validate() {
+			alarmLevel = $("input[name='alarmLevel']:checked");
+
+			if (alarmLevel.length == 0) {
+				alert("請選擇測站");
+				return false;
+			}
+
+			monitors = $("input[name='monitor']:checked");
+
+			if (monitors.length == 0) {
+				alert("請選擇測站");
+				return false;
+			}
+
+			statusFilter = $("input[name='monitorStatus']:checked");
+
+			reportStart = $('#reportStart').val();
+			if (reportStart.length === 0) {
+				alert('請選擇開始日期');
+				return false;
+			}
+
+			reportEnd = $('#reportEnd').val();
+			if (reportStart.length === 0) {
+				alert('請選擇結束日期');
+				return false;
+			}
+
+			return true;
 		}
 
-		statusFilter = $("input[name='monitorStatus']:checked");
-		
-		reportStart = $('#reportStart').val();
-		if(reportStart.length === 0){
-			alert('請選擇開始日期');
-			return false;
-		}
-		
-		reportEnd = $('#reportEnd').val();
-		if(reportStart.length === 0){
-			alert('請選擇結束日期');
-			return false;
-		}
-		
-		return true;
-	}
-	
-	$('#queryReport').click(function(){
-		if(!validate())
-			return;
+		$('#queryReport').click(function () {
+			if (!validate())
+				return;
 
-		$("#reportPanel").css('display','block');
-		$("#reportPanel").collapse('show');
+			$("#reportPanel").css('display', 'block');
+			$("#reportPanel").collapse('show');
 
-		$('#reportDiv').html('');
-		$("body").css("cursor", "progress");
+			$('#reportDiv').html('');
+			$("body").css("cursor", "progress");
 
-		var monitorParam='';
-		for (var i = 0; i < monitors.length; i++) {
-			if(monitorParam=='')
-				monitorParam = monitors[i].id;
-			else
-				monitorParam += ':' + monitors[i].id;
-		}
-		
-		var statusFilterParam='NotRepair';
-		
-		var url = "/AlarmReport/" + monitorParam + "/" + statusFilterParam + "/" + reportStart + "/" + reportEnd;
-		$.ajax({
-			url: url,
-			data: '',
-			contentType: "application/json; charset=utf-8",
-			type: "GET",
-			dataType: "html",
-			success: function(result){
-				$('#reportDiv').html(result);
-				$("#downloadExcel").prop("href", "/Excel" + url);
-				$( document ).ready(function() {
-					$('#alarmReport').dataTable( {
-						responsive: true,
-						language: {
-							url: localized_url,							
-						},
-        				searching: false,
-        				paging: false
-					} );
-				});
-			},
-			error: function(xhr, status, errorThrown){
-				console.log("錯誤訊息:" + status + "-" + errorThrown);
-			},
+			console.log(alarmLevel)
+			var alarmLevlParam = '';
+			for (var i = 0; i < alarmLevel.length; i++) {
+				if (alarmLevlParam == '')
+					alarmLevlParam = alarmLevel[i].id;
+				else
+					alarmLevlParam += ':' + alarmLevel[i].id;
+			}
 
-			complete: function(xhr, status){
-				$("body").css("cursor", "default");
-			}					
+			var monitorParam = '';
+			for (var i = 0; i < monitors.length; i++) {
+				if (monitorParam == '')
+					monitorParam = monitors[i].id;
+				else
+					monitorParam += ':' + monitors[i].id;
+			}
+
+			var url = `/TicketReport/repair/${monitorParam}/${reportStart}/${reportEnd}/${alarmLevlParam}`;
+			$.ajax({
+				url: url,
+				data: '',
+				contentType: "application/json; charset=utf-8",
+				type: "GET",
+				dataType: "html",
+				success: function (result) {
+					$('#reportDiv').html(result);
+					$("#downloadExcel").prop("href", "/Excel" + url);
+					$(document).ready(function () {
+						$('#alarmReport').dataTable({
+							responsive: true,
+							language: {
+								url: localized_url,
+							},
+							searching: false,
+							paging: false
+						});
+					});
+				},
+				error: function (xhr, status, errorThrown) {
+					console.log("錯誤訊息:" + status + "-" + errorThrown);
+				},
+
+				complete: function (xhr, status) {
+					$("body").css("cursor", "default");
+				}
+			});
 		});
 	});
-});
 </script>

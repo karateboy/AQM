@@ -18,6 +18,7 @@ object AlarmNotifier {
 
 class AlarmNotifier(out: ActorRef) extends Actor {
   var lastCheckTime = DateTime.now
+  import AlarmMaster._
 
   object CmdType extends Enumeration {
     val start = Value /* start:userId */

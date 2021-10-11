@@ -12,22 +12,25 @@ case class EventLog(evtTime:DateTime, evtType:Int, evtDesc:String)
 object EventLog {
   val evtTypeManualAudit = 1
   val evtTypeInformAlarm = 2
+  val evtTypeDueAlarm = 3
   
-  val mapEvtTypeStr = Map(
+  val map = Map(
       evtTypeManualAudit -> "人工註記",
-      evtTypeInformAlarm -> "警報通報"
+      evtTypeInformAlarm -> "警報通報",
+      evtTypeDueAlarm -> "逾期案件"
   )
-  
+
   def evtTypeToStr(evtType:Int) = {
-    mapEvtTypeStr.getOrElse(evtType, s"未知事件類別:${evtType}")
+    map.getOrElse(evtType, s"未知事件類別:${evtType}")
   }
   
-  def getList(start:DateTime, end:DateTime) = {
+  def getList(eventTypes:Seq[Int], start:DateTime, end:DateTime) = {
     DB readOnly { implicit session =>
+      val eventTypeStr = SQLSyntax.createUnsafely(eventTypes.mkString("('", "','", "')"))
       sql"""
         Select * 
         From eventLog
-        Where evtTime Between ${start} and ${end}
+        Where evtTime Between ${start} and ${end} and evtType in $eventTypeStr
         ORDER BY evtTime DESC
         """.map { r =>
         EventLog(r.timestamp(1), r.int(2), r.string(3))

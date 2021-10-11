@@ -283,32 +283,16 @@ object Alarm {
 
   def getOverStdLevel(ar:Alarm): Int = {
     val tokens = ar.mItem.split("-")
-    AlarmLevel.mapCode(tokens(2))
+    val overStdLevel = AlarmLevel.withName(tokens(2))
+    AlarmLevel.map(overStdLevel).code
   }
 
   def getReason(ar:Alarm) = {
     val tokens = ar.mItem.split("-")
     if((ar.code == MonitorStatus.OVER_STAT || ar.code == MonitorStatus.WARN_STAT) && tokens.length == 3){
-      val dataType = tokens(1) match {
-        case DataType.Hour=>
-          "小時值"
-        case DataType.EightHour=>
-          "8小時平均值"
-        case DataType.Day=>
-          "日平均值"
-        case DataType.TwentyFourHour=>
-          "24小時值"
-        case DataType.Year=>
-          "年平均值"
-      }
-      val alarmLevel = tokens(2) match {
-        case AlarmLevel.Internal=>
-          "內控值"
-        case AlarmLevel.Warn=>
-          "警戒值"
-        case AlarmLevel.Law=>
-          "法規值"
-      }
+      val dataType = AlarmDataType.map(AlarmDataType.withName(tokens(1)))
+      val alarmLevel = AlarmLevel.map(AlarmLevel.withName(tokens(2))).desc
+
       s"超出${dataType}${alarmLevel}"
     }else
       MonitorStatus.map(ar.code).desp

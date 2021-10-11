@@ -1,0 +1,122 @@
+<div class="row" id="LineNotifyConfigPage">
+    <div class="col-lg-12">
+        <div class="panel panel-primary">
+            <div class="panel-heading panel-title">
+                <a data-toggle="collapse" data-parent="#accordion" href="#monitorType">測項參數</a>
+            </div>
+            <div class="panel-body">
+                <form class="form-horizontal">
+                    <div class="form-group">
+                        <label class="col-lg-2 control-label">選擇測站:</label>
+                        <div class="col-lg-10">
+                            <div class="btn-group" data-toggle="buttons">
+                                <button type="button" v-for="m in monitorList" :key="m.id"
+                                    class="btn btn-outline btn-primary" :class="{ active: selectedMonitor == m.id }"
+                                    @click="updateSelectedMonitor(m.id)">{{ m.name
+                                    }}</button>
+                            </div>
+                        </div>
+                    </div>                    
+                </form>
+                <h3>細節和業主詳細討論後定案...Line notify已通. 請按一下測試就好...我會收到訊息Orz</h3>
+                <div class="form-group">
+                    <div class="col-lg-1 col-lg-offset-1">
+                        <button type="button" class="btn btn-primary" @click="testLine">測試</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<script>    
+    var app = new Vue({
+        el: '#LineNotifyConfigPage',
+        data() {
+            let mtMap = new Map();
+            return {
+                pm10threshold_: 0,
+                autoAuditNormal: false,
+                monitorList: [],
+                epaMonitorList: [],
+                selectedMonitor: '',
+                isEpaMonitor: false,
+                mtMap
+            }
+        },
+        computed: {            
+        },
+        async mounted() {
+            await this.getMonitorList();
+            this.selectedMonitor = this.monitorList[0].id;
+            await this.getEpaMonitorList();
+            await this.getMonitorTypes()
+        },
+        methods: {
+            markDirty(mta) {
+                mta.dirty = true;
+            },
+            async getMonitorList() {
+                try {
+                    const res = await axios.get("/MonitorList")
+                    if (res.status === 200) {
+                        const ret = res.data;
+                        this.monitorList = ret;
+                        this.selectedMonitor = ret[0].id;
+                    }
+                } catch (err) {
+                    throw new Error(err);
+                }
+            },
+            async getEpaMonitorList() {
+                try {
+                    const res = await axios.get("/EpaMonitors")
+                    if (res.status === 200) {
+                        const ret = res.data;
+                        this.epaMonitorList = ret;
+                    }
+                } catch (err) {
+                    throw new Error(err);
+                }
+            },
+            async updateSelectedMonitor(m) {
+                this.isEpaMonitor = false;
+                this.selectedMonitor = m;
+                await this.getMonitorTypeAlertInfo();
+            },
+            async updateSelectedEpaMonitor(m) {
+                this.isEpaMonitor = true;
+                this.selectedMonitor = m;
+                await this.getEpaMonitorTypeAlert()
+            },
+            async getMonitorTypes() {
+                try {
+                    const res = await axios.get("/MonitorTypes")
+                    if (res.status === 200) {
+                        const ret = res.data
+                        for (let mt of ret) {
+                            this.mtMap.set(mt.id, mt)
+                        }
+                    }
+                } catch (err) {
+                    throw new Error(err);
+                }
+            },
+            getMonitorTypeName(id) {
+                if (this.mtMap.has(id)) {
+                    return this.mtMap.get(id).desp
+                } else
+                    return ""
+            },
+            async testLine() {
+                try {
+                    const res = await axios.get("/TestLineMessage");
+                    if(res.status === 200)
+                        alert("成功")
+                } catch (err) {
+                    throw new Error(err);
+                }
+            }
+        }
+    });
+
+</script>

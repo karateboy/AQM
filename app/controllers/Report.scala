@@ -1075,6 +1075,25 @@ object Report extends Controller {
         });
   }
 
+  def getAggregrateReport2(monitorStr:String, monitorTypeStr:String, startStr:String, endStr:String, outputTypeStr:String)= Security.Authenticated {
+    val monitors = monitorStr.split(":").map(Monitor.withName)
+    val monitorTypes = monitorTypeStr.split(":").map(MonitorType.withName)
+    val start = DateTime.parse(startStr, DateTimeFormat.forPattern("yyyy-M-d"))
+    val end = DateTime.parse(endStr, DateTimeFormat.forPattern("yyyy-M-d"))
+    val reports = AggregateReport2.query(monitors, monitorTypes, start, end)
+    val outputType = OutputType.withName(outputTypeStr)
+    outputType match {
+      case OutputType.html=>
+        val output = views.html.aggregateReport2(reports)
+        Ok(output)
+      case OutputType.json=>
+        implicit val write = Json.writes[AggregateReport2]
+        Ok(Json.toJson(reports))
+    }
+
+
+  }
+
   case class MonthHourReport(hourStatArray: Array[Stat], dailyReports: Array[DailyReport], StatStat: Stat)
 
   case class ReportInfo(monitor: String, reportType: String, startTime: String)

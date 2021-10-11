@@ -240,7 +240,7 @@ class Ozone8HrCalculator extends Actor {
       }
     case CalculateOznoe(date) =>
       if (!Ozone8Hr.hasHourTab(date.getYear)) {
-        Logger.info(s"Reach end of beginning year ${date.getYear()}")
+        Logger.info(s"Ozone 8hr reach end of beginning year ${date.getYear()}")
       } else {
         if (!Ozone8Hr.hasOzone8hrTab(date.getYear))
           Ozone8Hr.createTab(date.getYear)

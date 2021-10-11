@@ -1,94 +1,120 @@
 @* calibration Template File *@
 @import com.github.nscala_time.time.Imports._
 <div class="row">
-   	<div class="col-lg-12">
-        	<div class="panel panel-primary" id="paramPanel">
-            	<div class="panel-heading panel-title" >
-            		<a data-toggle="collapse" data-parent="#accordion" href="#reportParam">查詢參數</a>	
-                </div>
-            	<div class="panel-body panel-collapse in" id="reportParam">
-            		<form class="form-horizontal">
-            			<div class="form-group">
-	            			<label class="col-lg-1 control-label">查詢區間</label>	
-	            			<div class="col-lg-5">
-	            				<div class="input-daterange input-group" id="datepicker">
-                    				<span class="input-group-addon"><i class="fa fa-calendar"></i></span><input type="text" class="input-sm form-control" name="start" id="reportStart" value='@((DateTime.now-1.day).toString("YYYY-MM-dd"))' required/>
-                       				<span class="input-group-addon">至</span>
-                        			<input type="text" class="input-sm form-control" name="end" id="reportEnd" value='@(DateTime.now.toString("YYYY-MM-dd"))' required/>                        
-                    			</div>                        
-                    		</div>
-	            		</div>
-	            		<div class="form-group">
-							<div class="col-lg-1 col-lg-offset-1">
-								<button type="button" class="btn btn-primary" id="queryReport">查詢</button>
-							</div>							
+	<div class="col-lg-12">
+		<div class="panel panel-primary" id="paramPanel">
+			<div class="panel-heading panel-title">
+				<a data-toggle="collapse" data-parent="#accordion" href="#reportParam">查詢參數</a>
+			</div>
+			<div class="panel-body panel-collapse in" id="reportParam">
+				<form class="form-horizontal">
+					<div class="form-group">
+						<label class="col-lg-1 control-label">案件類別</label>
+						<div class="col-lg-11">
+							<div class="btn-group" data-toggle="buttons">
+								@for(evtType<-EventLog.map.keys.toList){ @if(evtType==EventLog.map.keys.toList.head){
+									<label class="btn btn-outline btn-primary dim active">
+									<input type="radio" name="evtType" id="@evtType"
+										checked>@EventLog.map(evtType)</label>
+									}else{
+									<label class="btn btn-outline btn-primary dim">
+										<input type="radio" name="evtType" id="@evtType">@EventLog.map(evtType)</label>
+									}
+
+									}
+							</div>
 						</div>
-            		</form>
-            	</div>
-        	</div>
-        	<div class="panel panel-success" style="display:none" id="reportPanel">
-            	<div class="panel-body panel-collapse" id="monitorReport">            	
-					<div id="reportDiv" align="center">
-            		</div>
-            	</div>
-        	</div>
+					</div>
+					<div class="form-group">
+						<label class="col-lg-1 control-label">查詢區間</label>
+						<div class="col-lg-5">
+							<div class="input-daterange input-group" id="datepicker">
+								<span class="input-group-addon"><i class="fa fa-calendar"></i></span><input type="text"
+									class="input-sm form-control" name="start" id="reportStart"
+									value='@((DateTime.now-1.day).toString("YYYY-MM-dd"))' required />
+								<span class="input-group-addon">至</span>
+								<input type="text" class="input-sm form-control" name="end" id="reportEnd"
+									value='@(DateTime.now.toString("YYYY-MM-dd"))' required />
+							</div>
+						</div>
+					</div>
+					<div class="form-group">
+						<div class="col-lg-1 col-lg-offset-1">
+							<button type="button" class="btn btn-primary" id="queryReport">查詢</button>
+						</div>
+					</div>
+				</form>
+			</div>
+		</div>
+		<div class="panel panel-success" style="display:none" id="reportPanel">
+			<div class="panel-body panel-collapse" id="monitorReport">
+				<div id="reportDiv" align="center">
+				</div>
+			</div>
+		</div>
 	</div>
 </div>
 <script>
-$( document ).ready(function() {
-	$('#datepicker').datepicker({
-		format: 'yyyy-mm-dd',
-	    todayBtn: "linked",
-	    language: "zh-TW"
-	});
+	$(document).ready(function () {
+		$('#datepicker').datepicker({
+			format: 'yyyy-mm-dd',
+			todayBtn: "linked",
+			language: "zh-TW"
+		});
 
-	var monitors, reportStart, reportEnd;
-	
-	function validate(){
-		reportStart = $('#reportStart').val();
-		if(reportStart.length === 0){
-			alert('請選擇開始日期');
-			return false;
+		var eventType, reportStart, reportEnd;
+
+		function validate() {
+			eventType = $("input[name='evtType']:checked").attr('id');
+			if (!eventType) {
+				alert('請選擇事件種類');
+				return false;
+			}
+
+			reportStart = $('#reportStart').val();
+			if (reportStart.length === 0) {
+				alert('請選擇開始日期');
+				return false;
+			}
+
+			reportEnd = $('#reportEnd').val();
+			if (reportStart.length === 0) {
+				alert('請選擇結束日期');
+				return false;
+			}
+
+			return true;
 		}
-		
-		reportEnd = $('#reportEnd').val();
-		if(reportStart.length === 0){
-			alert('請選擇結束日期');
-			return false;
-		}
 
-		return true;
-	}
-	
-	$('#queryReport').click(function(){
-		if(!validate())
-			return;
+		$('#queryReport').click(function () {
+			if (!validate())
+				return;
 
-		$("#reportPanel").css('display','block');
-		$('#reportDiv').html('');
-		$("body").css("cursor", "progress");
-			
-		var url = "/EventLogReport/" + reportStart + "/" + reportEnd;
-		console.log(url);
-		$.ajax({
-			url: url,
-			data: '',
-			contentType: "application/json; charset=utf-8",
-			type: "GET",
-			cache:false,
-			dataType: "html",
-			success: function(result){
-				$('#reportDiv').html(result);
-				$("#reportPanel").collapse('show');
-			},
-			error: function(xhr, status, errorThrown){
-				console.log("錯誤訊息:" + status + "-" + errorThrown);
-			},
+			$("#reportPanel").css('display', 'block');
+			$('#reportDiv').html('');
+			$("body").css("cursor", "progress");
 
-			complete: function(xhr, status){
-				$("body").css("cursor", "default");
-			}					
+			var url = `/EventLogReport/${eventType}/${reportStart}/${reportEnd}`;
+			console.log(url);
+			$.ajax({
+				url: url,
+				data: '',
+				contentType: "application/json; charset=utf-8",
+				type: "GET",
+				cache: false,
+				dataType: "html",
+				success: function (result) {
+					$('#reportDiv').html(result);
+					$("#reportPanel").collapse('show');
+				},
+				error: function (xhr, status, errorThrown) {
+					console.log("錯誤訊息:" + status + "-" + errorThrown);
+				},
+
+				complete: function (xhr, status) {
+					$("body").css("cursor", "default");
+				}
+			});
 		});
 	});
-});
 </script>

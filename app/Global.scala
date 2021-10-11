@@ -61,6 +61,7 @@ object Global extends GlobalSettings {
         }
         Ticket.upgrade()
         EpaTicket.create()
+        AggregateReport2.createTab
     }
     OverStdConverter.start
   }
@@ -73,6 +74,7 @@ object Global extends GlobalSettings {
 
     val alarmActor = Akka.system.actorOf(Props[AlarmMaster], name = "AlarmMaster")
 
+    import AlarmMaster._
     Akka.system.scheduler.schedule(Duration(3, MINUTES), Duration(5, MINUTES), alarmActor, AlarmCheck)
     Akka.system.scheduler.schedule(Duration(3, MINUTES), Duration(10, MINUTES), alarmActor, DataCheck)
     Akka.system.scheduler.schedule(Duration(secondToTomorror1AM, SECONDS), Duration(1, DAYS), alarmActor, MaintanceTicketCheck)

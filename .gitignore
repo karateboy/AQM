@@ -26,3 +26,4 @@ server.pid
 /.metals/metals.h2.db
 /.metals/*.log
 /.vscode/settings.json
+/.metals

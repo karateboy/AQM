@@ -1,47 +1,68 @@
 package models
-import play.api._
+
 import akka.actor._
 import com.github.nscala_time.time.Imports._
-import play.api.Play.current
-import Alarm._
-import ModelHelper._
-import models._
 import models.ModelHelper._
 import models.Ozone8HrCalculator.updateCurrentOzone8Hr
+import play.api._
 import play.api.libs.json.Json
 
+import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent._
-import ExecutionContext.Implicits.global
 import scala.util.{Failure, Success}
 
 case object DataCheckFinish
 
-object DataType {
-  val Hour = "HOUR"
-  val EightHour="8Hour"
-  val Day = "Day"
-  val TwentyFourHour = "24H"
-  val Year = "Year"
+object AlarmDataType extends Enumeration {
+  val Hour = Value("HOUR")
+  val EightHour = Value("8Hour")
+  val Day = Value("Day")
+  val TwentyFourHour = Value("24H")
+  val Year = Value("Year")
+
+  def map(dataType: AlarmDataType.Value): String = {
+    dataType match {
+      case Hour =>
+        "小時值"
+      case EightHour =>
+        "8小時平均值"
+      case Day =>
+        "日平均值"
+      case TwentyFourHour =>
+        "24小時值"
+      case Year =>
+        "年平均值"
+    }
+  }
 }
-object AlarmLevel {
-  val Internal = "Internal"
-  val Warn = "Warn"
-  val Law = "Law"
-  def mapCode = Map(Internal->1, Warn->2, Law->4)
+
+case class AlarmLevel(name: String, desc:String, code: Int)
+
+object AlarmLevel extends Enumeration {
+  val Internal = Value("Internal")
+  val Warn = Value("Warn")
+  val Law = Value("Law")
+  val map = Map(Internal -> AlarmLevel(Internal.toString, "內控值",1),
+    Warn -> AlarmLevel(Warn.toString, "警告值", 2),
+    Law -> AlarmLevel(Law.toString, "法規值", 4)
+  )
 }
+
 class DataAlarmChecker extends Actor {
+  import AlarmMaster._
+
   def receive = {
     case Start(startTime) =>
       val checkFuture = check
       val parent = sender
 
-      checkFuture.onComplete { 
-        case Success(a)=>
+      checkFuture.onComplete {
+        case Success(a) =>
           if (a)
             parent ! AlarmCheck
-            
+
           parent ! DataCheckFinish
-        case Failure(ex)=>
+        case Failure(ex) =>
           Logger.error(ex.getMessage, ex)
           parent ! DataCheckFinish
       }
@@ -58,21 +79,21 @@ class DataAlarmChecker extends Actor {
 
   def checkMinData() = {
     var alarm = false
-    for{m<-Monitor.mvList
-      mCase = Monitor.map(m)
-      autoAudit = mCase.autoAudit
-      }{
-        if(autoAudit.overInternalStdMinRule.isDefined){
-          val rule = autoAudit.overInternalStdMinRule.get
-          if(rule.checkInvalid(m))
-            alarm = true
-        }
-        
-        if(autoAudit.dataReadyMinRule.isDefined){
-          val rule = autoAudit.dataReadyMinRule.get
-          if(rule.checkInvalid(m))
-            alarm = true
-        }                
+    for {m <- Monitor.mvList
+         mCase = Monitor.map(m)
+         autoAudit = mCase.autoAudit
+         } {
+      if (autoAudit.overInternalStdMinRule.isDefined) {
+        val rule = autoAudit.overInternalStdMinRule.get
+        if (rule.checkInvalid(m))
+          alarm = true
+      }
+
+      if (autoAudit.dataReadyMinRule.isDefined) {
+        val rule = autoAudit.dataReadyMinRule.get
+        if (rule.checkInvalid(m))
+          alarm = true
+      }
     }
 
     alarm
@@ -97,10 +118,36 @@ class DataAlarmChecker extends Actor {
             if (MonitorStatus.isNormalStat(status)
               && v > std_internal) {
               alarm = true
-              val mItem = s"${mt.toString}-${DataType.Hour}-${AlarmLevel.Internal}"
+              val mItem = s"${mt.toString}-${AlarmDataType.Hour}-${AlarmLevel.Internal}"
               val ar = Alarm.Alarm(m, mItem, r._1.toDateTime, v, MonitorStatus.OVER_STAT)
               try {
                 Alarm.insertAlarm(ar)
+              } catch {
+                case ex: Exception =>
+                // Skip duplicate alarm
+              }
+            }
+
+            if(MonitorStatus.isInvalidOrCalibration(status)){
+              val ar = Alarm.Alarm(m, mt.toString, r._1.toDateTime, v, status)
+              try {
+                if(Alarm.insertAlarm(ar)!=0){
+                  Alarm.updateAlarmTicketState(m, mt.toString, r._1.toDateTime, "YES")
+                  // Auto to ticket
+                  val reason = s"${ar.time.toString("YYYY/MM/dd HH:mm")} ${Monitor.map(ar.monitor).name}:${Alarm.getItem(ar)}-${Alarm.getReason(ar)}:觸發"
+                  val (repairType, repairSubType) =
+                    (Some("數據"), Some(MonitorType.map(mt).desp))
+
+                  val executeDate = DateTime.tomorrow().plusDays(1)
+                  implicit val w1 = Json.writes[PartFormData]
+                  implicit val write = Json.writes[RepairFormData]
+                    val ticket =
+                      Ticket(0, DateTime.now, true, TicketType.repair, 19,
+                        SystemConfig.getAlarmTicketDefaultUserId(), m, Some(mt), reason,
+                        executeDate, Json.toJson(Ticket.defaultAlarmTicketForm(ar)).toString,
+                        repairType, repairSubType, Some(false))
+                    Ticket.newTicket(ticket)
+                  }
               } catch {
                 case ex: Exception =>
                 // Skip duplicate alarm
@@ -111,6 +158,7 @@ class DataAlarmChecker extends Actor {
       }
       //Auto audit
       Auditor.auditHourData(m, mCase.autoAudit, currentHour.toDateTime - 1.day, currentHour.toDateTime + 1.hour)
+      AggregateReport2.generate(m, hours)
     }
 
     alarm

@@ -1,132 +1,150 @@
 @* newTicket Template File *@
 @import controllers.Security.UserInfo
+@import com.github.nscala_time.time.Imports._
 @(ticket:Ticket, privilege: Privilege, adminUsers:List[User], myself:Int)
 <div class="row">
-   	<div class="col-lg-12">
-        <div class="panel panel-primary" id="paramPanel">
-           	<div class="panel-heading panel-title" >
-            	<a data-toggle="collapse" data-parent="#accordion" href="#newTicket">案件:@ticket.id</a>	
-            </div>
-            <div class="panel-body panel-collapse in">
-            	<form class="form-horizontal" id="newTicketForm">            		
-            		<div class="form-group">
-            			<label class="col-lg-1 control-label">案件類別</label>
-            			<div class="col-lg-11">
-            			<div class="btn-group" data-toggle="buttons">	            					            				
-	            				@for(tt<-TicketType.values.toList.sorted){
-	            					@if(tt == ticket.ticketType){
-	            						<label class="btn btn-outline btn-primary dim active">
-										<input type="radio" name="ticketType" id="@tt" checked>@TicketType.map(tt)</label>
-	            					}else{
-	            						<label class="btn btn-outline btn-primary dim">
+	<div class="col-lg-12">
+		<div class="panel panel-primary" id="paramPanel">
+			<div class="panel-heading panel-title">
+				<a data-toggle="collapse" data-parent="#accordion" href="#newTicket">案件:@ticket.id</a>
+			</div>
+			<div class="panel-body panel-collapse in">
+				<form class="form-horizontal" id="newTicketForm">
+					<div class="form-group">
+						<label class="col-lg-1 control-label">案件類別</label>
+						<div class="col-lg-11">
+							<div class="btn-group" data-toggle="buttons">
+								@for(tt<-TicketType.values.toList.sorted){ @if(tt==ticket.ticketType){ <label
+									class="btn btn-outline btn-primary dim active">
+									<input type="radio" name="ticketType" id="@tt" checked>@TicketType.map(tt)</label>
+									}else{
+									<label class="btn btn-outline btn-primary dim">
 										<input type="radio" name="ticketType" id="@tt">@TicketType.map(tt)</label>
-	            					}	            								
-	            				}
-	            		</div>
-	            		</div>
-            		</div>
-	            	<div class="form-group" id="monitor">
-	            		<label class="col-lg-1 control-label">測站</label>
-	            		<div class="col-lg-11">
-	            			<div class="btn-group" data-toggle="buttons">	            					            				
-	            				@for(m<-Monitor.myMvList(privilege)){
-	            					@if(m == ticket.monitor){
-	            						<label class="btn btn-outline btn-primary dim active">
-										<input type="radio" name="monitor" id="@m" checked>@Monitor.getDisplayName(m)</label>
-	            					}else{
-	            						<label class="btn btn-outline btn-primary dim">
+									}
+									}
+							</div>
+						</div>
+					</div>
+					<div class="form-group" id="monitor">
+						<label class="col-lg-1 control-label">測站</label>
+						<div class="col-lg-11">
+							<div class="btn-group" data-toggle="buttons">
+								@for(m<-Monitor.myMvList(privilege)){ @if(m==ticket.monitor){ <label
+									class="btn btn-outline btn-primary dim active">
+									<input type="radio" name="monitor" id="@m"
+										checked>@Monitor.getDisplayName(m)</label>
+									}else{
+									<label class="btn btn-outline btn-primary dim">
 										<input type="radio" name="monitor" id="@m">@Monitor.getDisplayName(m)</label>
-	            					}	            								
-	            				}
-	            			</div>
-	            		</div>	            			            		
-	                </div>
-	                <div class="form-group" id="monitorType">
-	            		<label class="col-lg-1 control-label">測項</label>						
-	            		<div class="col-lg-11 btn-group" data-toggle="buttons">
-	            		@for(mt<-MonitorType.myMtvList(privilege)){
-	            			@if(ticket.monitorType.isDefined && ticket.monitorType.get == mt){
-	            				<label class="btn btn-outline btn-primary dim active">
-	            				<input type="radio" name="monitorType" id="@mt" checked>@MonitorType.map(mt).desp</label>
-	            			}else{
-	            				<label class="btn btn-outline btn-primary dim">
-	            				<input type="radio" name="monitorType" id="@mt">@MonitorType.map(mt).desp</label>
-	            			}	            										
-	            		}
-	            		</div>            		
-	                </div>
-	                <div class="form-group" id="repairReason">
-	                	<label class="col-lg-1 control-label" for="reason">維修原因</label>
-	                	<div class="col-lg-11">
-	                		<textarea class="form-control" rows="5" id="reason">@ticket.reason</textarea>
-	                	</div>	                	
-	                </div>
-	                <div class="form-group" id="executeDate">
-	            		<label class="col-lg-1 control-label">處理日期</label>	
-	            			<div class="col-lg-5">
-	            				<div class="input-group date">
-  									<span class="input-group-addon"><i class="fa fa-calendar"></i></span>
-  									<input type="text" class="form-control" name="executeDate" value="@ticket.executeDate.toString("YYYY-MM-d")">
-  								</div>
-	            			</div>
-	                </div>
-	                <div class="form-group">
-	            		<label class="col-lg-1 control-label">負責人員</label>	
-	            		<div class="col-lg-11">
-	            		<div class="btn-group" data-toggle="buttons">	            					            				
-	            			@for(user<-adminUsers){
-	            				@if(user.id.get == ticket.owner_id){
-	            					<label class="btn btn-outline btn-primary dim active">
+									}
+									}
+							</div>
+						</div>
+					</div>
+					<div class="form-group" id="monitorType">
+						<label class="col-lg-1 control-label">測項</label>
+						<div class="col-lg-11 btn-group" data-toggle="buttons">
+							@for(mt<-MonitorType.myMtvList(privilege)){ @if(ticket.monitorType.isDefined &&
+								ticket.monitorType.get==mt){ <label class="btn btn-outline btn-primary dim active">
+								<input type="radio" name="monitorType" id="@mt"
+									checked>@MonitorType.map(mt).desp</label>
+								}else{
+								<label class="btn btn-outline btn-primary dim">
+									<input type="radio" name="monitorType" id="@mt">@MonitorType.map(mt).desp</label>
+								}
+								}
+						</div>
+					</div>
+					<div class="form-group" id="repairReason">
+						<label class="col-lg-1 control-label" for="reason">維修原因</label>
+						<div class="col-lg-11">
+							<textarea class="form-control" rows="5" id="reason">@ticket.reason</textarea>
+						</div>
+					</div>
+					<div class="form-group" id="executeDate">
+						<label class="col-lg-1 control-label">處理期限</label>
+						<div class="col-lg-5">
+							<div class="input-group date">
+								<span class="input-group-addon"><i class="fa fa-calendar"></i></span>
+								<input type="text" class="form-control" name="executeDate"
+									value="@ticket.executeDate.toString(" YYYY-MM-d")">
+							</div>
+						</div>
+					</div>
+					<div class="form-group" id="executeDate">
+						<label class="col-lg-1 control-label">修訂預期完成日</label>
+						<div class="col-lg-5">
+							<div class="input-group date">
+								<span class="input-group-addon"><i class="fa fa-calendar"></i></span>
+								<input type="text" class="form-control" name="extendDate"
+									value="@ticket.extendDate.getOrElse(DateTime.now).toString("YYYY-MM-d")">
+							</div>
+						</div>
+						<label class="col-lg-1 control-label">原因</label>
+						<div class="col-lg-4">
+							<textarea class="form-control" rows="3" id="extendReason">@ticket.extendReason</textarea>
+						</div>
+						<div class="col-lg-1">
+							<button type="button" class="btn btn-primary" id="extendTicket">送出申請</button>
+						</div>
+					</div>
+					<div class="form-group">
+						<label class="col-lg-1 control-label">負責人員</label>
+						<div class="col-lg-11">
+							<div class="btn-group" data-toggle="buttons">
+								@for(user<-adminUsers){ @if(user.id.get==ticket.owner_id){ <label
+									class="btn btn-outline btn-primary dim active">
 									<input type="radio" name="owner" id="@user.id.get" checked>@user.name</label>
-	            				}else{
-	            					<label class="btn btn-outline btn-primary dim">
-									<input type="radio" name="owner" id="@user.id.get">@user.name</label>
-	            				}	            								
-	            			}
-	            		</div>
-	            		</div>
-	                </div>
-	                
+									}else{
+									<label class="btn btn-outline btn-primary dim">
+										<input type="radio" name="owner" id="@user.id.get">@user.name</label>
+									}
+									}
+							</div>
+						</div>
+					</div>
+
 					<div class="form-group">
 						<div class="col-lg-1 col-lg-offset-1">
 							<button type="button" class="btn btn-primary" id="updateTicket">更新</button>
 						</div>
-					</div>	                    	                    	                    
-            	</form>
-            </div>
-		</div>
-        <div class="panel panel-success" id="reportPanel">
-        	<div class="panel-heading panel-title" >
-            	<a data-toggle="collapse" data-parent="#accordion" href="#ticketForm">案件表單</a>	
-            </div>
-        	<div class="panel-body panel-collapse" id="ticketForm">
- 				
-            </div>
-        </div>
-        <div class="panel panel-success" id="reportPanel">
-        	<div class="row">
-        		<div class="col-lg-6">
-        			<img class="img-responsive" src="/AttachTicketPhoto/@ticket.id/0" alt="照片1"/>        			
-        		</div>
-        		<div class="col-lg-6">
-        			<img class="img-responsive" src="/AttachTicketPhoto/@ticket.id/1" alt="照片2"/>        			
-        		</div> 
-        	</div>
-        	<div class="panel-heading panel-title" >
-            	<a data-toggle="collapse" data-parent="#accordion" href="#ticketForm">附加照片</a>	
-            </div>
-        	<div class="panel-body panel-collapse">
- 				<form action="/AttachTicketPhoto/@ticket.id" method="post" enctype="multipart/form-data" id="attachPhotoForm">
- 					<div class="form-group">
-    					<input class="btn btn-info" type="file" name="photo1" id="photoFile1">
-    					<input class="btn btn-info" type="file" name="photo2" id="photoFile2">
-    				</div>
-    				<div class="form-group">
-    					<button type="button" class="btn btn-primary" id="attachPhoto">上傳</button>
-    				</div>
+					</div>
 				</form>
-            </div>
-        </div>
+			</div>
+		</div>
+		<div class="panel panel-success" id="reportPanel">
+			<div class="panel-heading panel-title">
+				<a data-toggle="collapse" data-parent="#accordion" href="#ticketForm">案件表單</a>
+			</div>
+			<div class="panel-body panel-collapse" id="ticketForm">
+
+			</div>
+		</div>
+		<div class="panel panel-success" id="reportPanel">
+			<div class="row">
+				<div class="col-lg-6">
+					<img class="img-responsive" src="/AttachTicketPhoto/@ticket.id/0" alt="照片1" />
+				</div>
+				<div class="col-lg-6">
+					<img class="img-responsive" src="/AttachTicketPhoto/@ticket.id/1" alt="照片2" />
+				</div>
+			</div>
+			<div class="panel-heading panel-title">
+				<a data-toggle="collapse" data-parent="#accordion" href="#ticketForm">附加照片</a>
+			</div>
+			<div class="panel-body panel-collapse">
+				<form action="/AttachTicketPhoto/@ticket.id" method="post" enctype="multipart/form-data"
+					id="attachPhotoForm">
+					<div class="form-group">
+						<input class="btn btn-info" type="file" name="photo1" id="photoFile1">
+						<input class="btn btn-info" type="file" name="photo2" id="photoFile2">
+					</div>
+					<div class="form-group">
+						<button type="button" class="btn btn-primary" id="attachPhoto">上傳</button>
+					</div>
+				</form>
+			</div>
+		</div>
 	</div>
 </div>
 <script>
@@ -134,144 +152,194 @@
 </script>
 
 <script>
-$( document ).ready(function() {
-	$('input[name="executeDate"]').datetimepicker({
-		format: 'YYYY-MM-D',
-    	locale: "zh-TW"
-	});
+	$(document).ready(function () {
+		$('input[name="executeDate"]').datetimepicker({
+			format: 'YYYY-MM-D',
+			locale: "zh-TW"
+		});
 
-	$("#ticketForm").load("/Form/"+ticketId);
-	
-	$("input[name='ticketType']").change(
-			function() {
+		$("#ticketForm").load("/Form/" + ticketId);
+
+		$("input[name='ticketType']").change(
+			function () {
 				var me = $(this)
 				var id = me.attr('id');
 				console.log("change event! " + id);
-				
-				if(id == 'repair'){
-					$("#monitorType").css('display','block');
-					$("#repairReason").css('display','block');				
-				}else{
-					$("#monitorType").css('display','none');
-					$("#repairReason").css('display','none');
+
+				if (id == 'repair') {
+					$("#monitorType").css('display', 'block');
+					$("#repairReason").css('display', 'block');
+				} else {
+					$("#monitorType").css('display', 'none');
+					$("#repairReason").css('display', 'none');
 				}
-			}					
-	);
-
-	var ticketType, monitors, monitorTypes, reason, owner, executeDate;
-	function validate(){
-		ticketType = $("input[name='ticketType']:checked").prop("id");
-		
-		var $monitors = $("input[name='monitor']:checked");
-		if($monitors.length == 0){
-			alert("請選擇測站");
-			return false;
-		}
-		
-		monitors=[];
-		for(var i=0;i<$monitors.length;i++){ 
-			monitors.push($monitors[i].id);
-		}
-
-		monitorTypes=[];
-		$monitorTypes = $("input[name='monitorType']:checked");
-		if(ticketType == 'repair' && $monitorTypes.length ==0){
-			alert("請選擇測項");
-			return false;	
-		}
-		
-		for(var i=0;i<$monitorTypes.length;i++){
-			monitorTypes.push($monitorTypes[i].id);
-		}
-		
-		reason = $('#reason').val();
-
-		owner = $("input[name='owner']:checked").prop("id");
-		if(!owner){
-			alert("請指定負責人");
-			return false;
-		}
-		
-		var $executeDate = $("input[name='executeDate']").filter(function(idx, elem){
-			return this.value != "";
-			});
-		
-		executeDate = [];
-		if($executeDate.length == 0){
-			alert("請選擇執行日期");
-			return;
-		} 
-
-		for(var i=0;i<$executeDate.length;i++){
-			executeDate.push($executeDate[i].value);
-		}
-		return true;
-	}
-
-	$("#updateTicket").click(function(){
-		if(!validate())
-			return;
-
-		var param = {
-			ticketType :ticketType,
-			monitors : monitors,
-			monitorTypes : monitorTypes,
-			reason : reason,
-			owner :  parseInt(owner),
-			executeDate	: executeDate		
-		};
-
-		$("body").css("cursor", "progress");
-		var url = "/UpdateTicket/" + ticketId; 
-		
-		$.ajax({
-			url : url,
-			data : JSON.stringify(param),
-			contentType : "application/json; charset=utf-8",
-			type : "POST",
-			dataType : "json",
-			success : function(result) {
-				if(result.ok){
-					alert("成功更新");
-					$("#ticketForm").load("/Form/"+ticketId);
-				}				
-			},
-			error : function(xhr, status, errorThrown) {
-				console.log("錯誤訊息:" + status + "-" + errorThrown);
-			},
-
-			complete : function(xhr, status) {
-				$("body").css("cursor", "default");
 			}
-		});
-		
-	});
-	
-	$('#attachPhoto').click(function () {
-	    var data;
-	
-	    data = new FormData();
-	    var $photoFile = $('#photoFile');
-	    console.log($photoFile);
-	    data.append('photo1', $('#photoFile1')[0].files[0]);
-	    data.append('photo2', $('#photoFile2')[0].files[0]);
-	    
-	    $.ajax({
-	        url: "/AttachTicketPhoto/" + ticketId,
-	        data: data,
-	        cache: false,
-	        dataType: 'json',
-	        contentType: false,
-	        processData: false,
-	        type: 'POST',
-	        success: function ( data ) {
-		        if(data.ok)
-	            	alert("上傳成功");
-	        }
-	    });
-	});
-	//Fire change event
-	$("input[name='ticketType']:checked").change();	
-});
-</script>
+		);
 
+		let ticketType, monitors, monitorTypes, reason, owner, executeDate, extendDate, extendReason;
+		function validate() {
+			ticketType = $("input[name='ticketType']:checked").prop("id");
+
+			var $monitors = $("input[name='monitor']:checked");
+			if ($monitors.length == 0) {
+				alert("請選擇測站");
+				return false;
+			}
+
+			monitors = [];
+			for (var i = 0; i < $monitors.length; i++) {
+				monitors.push($monitors[i].id);
+			}
+
+			monitorTypes = [];
+			$monitorTypes = $("input[name='monitorType']:checked");
+			if (ticketType == 'repair' && $monitorTypes.length == 0) {
+				alert("請選擇測項");
+				return false;
+			}
+
+			for (var i = 0; i < $monitorTypes.length; i++) {
+				monitorTypes.push($monitorTypes[i].id);
+			}
+
+			reason = $('#reason').val();
+
+			owner = $("input[name='owner']:checked").prop("id");
+			if (!owner) {
+				alert("請指定負責人");
+				return false;
+			}
+
+			let $executeDate = $("input[name='executeDate']").filter(function (idx, elem) {
+				return this.value != "";
+			});
+
+			executeDate = [];
+			if ($executeDate.length == 0) {
+				alert("請選擇執行日期");
+				return;
+			}
+
+			for (var i = 0; i < $executeDate.length; i++) {
+				executeDate.push($executeDate[i].value);
+			}
+			return true;
+		}
+
+		function validateExtend() {
+			let $extendDate = $("input[name='extendDate']").filter(function (idx, elem) {
+				return this.value != "";
+			});
+
+			extendDate = [];
+			if ($extendDate.length == 0) {
+				alert("請選擇延期日期");
+				return false;
+			}
+
+			for (var i = 0; i < $extendDate.length; i++) {
+				extendDate.push($extendDate[i].value);
+			}
+
+			extendReason = $("#extendReason").val();
+
+			return true;
+		}
+
+		$("#extendTicket").click(function () {
+			if (!validateExtend())
+				return;
+
+			let param = {				
+				extendDate,
+				extendReason
+			};
+			let url = `/ExtendTicket/${ticketId}`;
+			$.ajax({
+				url: url,
+				data: JSON.stringify(param),
+				contentType: "application/json; charset=utf-8",
+				type: "POST",
+				dataType: "json",
+				success: function (result) {
+					if (result.ok) {
+						alert("成功申請");
+						$("#ticketForm").load("/Form/" + ticketId);
+					}
+				},
+				error: function (xhr, status, errorThrown) {
+					console.log("錯誤訊息:" + status + "-" + errorThrown);
+				},
+
+				complete: function (xhr, status) {
+					$("body").css("cursor", "default");
+				}
+			});
+		});
+
+		$("#updateTicket").click(function () {
+			if (!validate())
+				return;
+
+			var param = {
+				ticketType: ticketType,
+				monitors: monitors,
+				monitorTypes: monitorTypes,
+				reason: reason,
+				owner: parseInt(owner),
+				executeDate: executeDate
+			};
+
+			$("body").css("cursor", "progress");
+			var url = "/UpdateTicket/" + ticketId;
+
+			$.ajax({
+				url: url,
+				data: JSON.stringify(param),
+				contentType: "application/json; charset=utf-8",
+				type: "POST",
+				dataType: "json",
+				success: function (result) {
+					if (result.ok) {
+						alert("成功更新");
+						$("#ticketForm").load("/Form/" + ticketId);
+					}
+				},
+				error: function (xhr, status, errorThrown) {
+					console.log("錯誤訊息:" + status + "-" + errorThrown);
+				},
+
+				complete: function (xhr, status) {
+					$("body").css("cursor", "default");
+				}
+			});
+
+		});
+
+		$('#attachPhoto').click(function () {
+			var data;
+
+			data = new FormData();
+			var $photoFile = $('#photoFile');
+			console.log($photoFile);
+			data.append('photo1', $('#photoFile1')[0].files[0]);
+			data.append('photo2', $('#photoFile2')[0].files[0]);
+
+			$.ajax({
+				url: "/AttachTicketPhoto/" + ticketId,
+				data: data,
+				cache: false,
+				dataType: 'json',
+				contentType: false,
+				processData: false,
+				type: 'POST',
+				success: function (data) {
+					if (data.ok)
+						alert("上傳成功");
+				}
+			});
+		});
+		//Fire change event
+		$("input[name='ticketType']:checked").change();
+	});
+</script>

@@ -1,0 +1,158 @@
+<div class="row" id="AggregateReport2">
+    <div class="col-lg-12">
+        <div class="panel panel-primary">
+            <div class="panel-heading panel-title">
+                <a data-toggle="collapse" data-parent="#accordion" href="#monitorType">測項參數</a>
+            </div>
+            <div class="panel-body">
+                <form class="form-horizontal">
+                    <div class="form-group">
+                        <label class="col-lg-2 control-label">選擇測站:</label>
+                        <div class="col-lg-10">
+                            <div class="btn-group" data-toggle="buttons">
+                                <label v-for="m in monitorList" :key="m.id" class="btn btn-outline btn-primary dim"
+                                    :class="{ active: isSelectedMonitor(m.id) }">
+                                    <input type="checkbox" name="monitor" :value="m.id" v-model="form.monitors">{{
+                                    m.name }}</label>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="col-lg-2 control-label">選擇測項:</label>
+                        <div class="col-lg-10">
+                            <div class="btn-group" data-toggle="buttons">
+                                <label v-for="mt in monitorTypeList" :key="mt" class="btn btn-outline btn-primary dim"
+                                    :class="{ active: isSelectedMonitorType(mt) }">
+                                    <input type="checkbox" name="monitorType" :value="mt" v-model="form.monitorTypes">{{
+                                    mt }}</label>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- <div class="form-group">
+                        <label class="col-lg-1 control-label">查詢區間</label>
+                        <div class="col-lg-5">
+                            <div class="input-daterange input-group" id="datepicker">
+                                <span class="input-group-addon"><i class="fa fa-calendar"></i></span><input
+                                    type="date" class="input-sm form-control" v-model="form.start"
+                                    required />
+                                <span class="input-group-addon">至</span>
+                                <input type="date" class="input-sm form-control" v-model="form.end"
+                                    required />
+                            </div>
+                        </div>
+                    </div> -->
+                </form>
+                <div class="form-group">
+                    <div class="col-lg-1 col-lg-offset-1">
+                        <button type="button" class="btn btn-primary" @click="query">查詢</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<script>
+    var app = new Vue({
+        el: '#AggregateReport2',
+        data() {
+            let mtMap = new Map();
+            let mMap = new Map();
+            return {
+                form: {
+                    monitors: [],
+                    monitorTypes: [],
+                    start: "",
+                    end: ""
+                },
+                monitorList: [],
+                mtMap,
+                mMap
+            }
+        },
+        computed: {
+            monitorTypeList() {
+                let ret = [];
+                for (let m of this.form.monitors) {
+                    ret.concat(this.mMap.get().monitorTypes)
+                }
+                // create Set, eliminate duplicates
+                let set_ob = new Set(ret);
+
+                let ret2 = [];
+
+                for (let mt of set_ob) {
+                    ret2.push(mt);
+                }
+                console.log(ret2)
+                return ret2;
+            }
+        },
+        async mounted() {
+            await this.getMonitorList();
+            await this.getMonitorTypes()
+        },
+        methods: {
+            markDirty(mta) {
+                mta.dirty = true;
+            },
+            isSelectedMonitor(id) {
+                return this.form.monitors.indexOf(id) !== -1
+            },
+            isSelectedMonitorType(id) {
+                return this.form.monitorTypes.indexOf(id) !== -1;
+            },
+            async getMonitorList() {
+                try {
+                    const res = await axios.get("/MonitorList")
+                    if (res.status === 200) {
+                        const ret = res.data;
+                        this.monitorList = ret;
+                        console.log(ret)
+                        for (let m of ret) {
+                            this.mMap.set(m.id, m);
+                        }
+                    }
+                } catch (err) {
+                    throw new Error(err);
+                }
+            },
+            async updateSelectedMonitor(m) {
+                this.isEpaMonitor = false;
+                this.selectedMonitor = m;
+                await this.getMonitorTypeAlertInfo();
+            },
+            async updateSelectedEpaMonitor(m) {
+                this.isEpaMonitor = true;
+                this.selectedMonitor = m;
+                await this.getEpaMonitorTypeAlert()
+            },
+            async getMonitorTypes() {
+                try {
+                    const res = await axios.get("/MonitorTypes")
+                    if (res.status === 200) {
+                        const ret = res.data
+                        this.monitorTypeList = ret;
+                        for (let mt of ret) {
+                            this.mtMap.set(mt.id, mt)
+                        }
+                    }
+                } catch (err) {
+                    throw new Error(err);
+                }
+            },
+            getMonitorTypeName(id) {
+                if (this.mtMap.has(id)) {
+                    return this.mtMap.get(id).desp
+                } else
+                    return ""
+            },
+            async query() {
+                try {
+                    console.log(this.form)
+                } catch (err) {
+                    throw new Error(err);
+                }
+            }
+        }
+    });
+</script>

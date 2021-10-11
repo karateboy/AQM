@@ -302,6 +302,16 @@ object Ticket {
       """.map { ticketMapper }.list().apply()
   }
 
+  def queryOverStdTickets(start: DateTime, end: DateTime, stdCodes:Seq[Int])(implicit session: DBSession = AutoSession) = {
+    val stdCodeStr = SQLSyntax.createUnsafely(stdCodes.mkString("('", "','", "')"))
+    sql"""
+      Select *
+      From Ticket
+      Where submit_date between ${start} and ${end} and OverStd in ${stdCodeStr}
+      Order by submit_date desc
+      """.map { ticketMapper }.list().apply()
+  }
+
   def queryMonitorTickets(m:Monitor.Value, start: DateTime, end: DateTime)(implicit session: DBSession = AutoSession) = {
     sql"""
       Select *
@@ -387,6 +397,18 @@ object Ticket {
       """.map { ticketMapper }.list().apply()
   }
 
+  def overStdAlarmTickets(alarmLevels: Seq[AlarmLevel.Value], monitors: Seq[Monitor.Value], start:DateTime, end:DateTime)(implicit session: DBSession = AutoSession) = {
+    val startT: java.sql.Timestamp = start
+    val endT: java.sql.Timestamp = end
+    val monitorStr = monitors.map(_.toString)
+    sql"""
+      Select *
+      From Ticket
+      Where monitor
+      Order by submit_date desc
+      """.map { ticketMapper }.list().apply()
+  }
+
   def ticketSubmittedByMe(ID: Int, readyToClose: Boolean = true)(implicit session: DBSession = AutoSession) = {
     val bit = if (readyToClose) 1 else 0
     sql"""
@@ -404,6 +426,8 @@ object Ticket {
       Where id = ${ID}
       """.map { ticketMapper }.single().apply()
   }
+
+
 
   case class TicketPhoto(photos: List[Option[java.sql.Blob]])
   def getTicketPhoto(ID: Int)(implicit session: DBSession = AutoSession) = {
@@ -433,6 +457,16 @@ object Ticket {
           [monitor]=${ticket.monitor.toString}, [monitorType]=${ticket.monitorType.map { _.toString }},
           [reason]=${ticket.reason}, [execute_date]=${ticket.executeDate.toDate}, [form] = ${ticket.formJson} 
         Where ID = ${ticket.id}
+        """.update.apply
+    }
+  }
+  def extendTicket(ticketID:Int, extendDate:DateTime, extendReason:String)(implicit session: DBSession = AutoSession) = {
+    DB localTx { implicit session =>
+      val extendDateTime: java.sql.Timestamp = extendDate
+      sql"""
+        Update Ticket
+        Set [extendDate]=${extendDateTime}, [extendReason]=${extendReason}
+        Where ID = ${ticketID}
         """.update.apply
     }
   }
