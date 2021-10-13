@@ -157,8 +157,8 @@ object Maintance extends Controller {
         val userInfo = Security.getUserinfo(request).get
         val group = Group.getGroup(userInfo.groupID).get
         val adminUsers = User.getAdminUsers()
-
-        Ok(views.html.ticket(ticketOpt.get, group.privilege, adminUsers, userInfo.id))
+        val extendReasons = SystemConfig.getExtendedReasons
+        Ok(views.html.ticket(ticketOpt.get, group.privilege, adminUsers, userInfo.id, extendReasons))
       }
   }
   case class ExtendTickeParam(extendDate: Seq[String], extendReason: String)
@@ -173,7 +173,13 @@ object Maintance extends Controller {
         },
         param=>{
           val extendDate = DateTime.parse(param.extendDate(0))
+
           Ticket.extendTicket(ID, extendDate, param.extendReason)
+          val extendedReasons = SystemConfig.getExtendedReasons
+          if(!extendedReasons.contains(param.extendReason)){
+            val update = extendedReasons.+:(param.extendReason)
+            SystemConfig.setExtededReasons(update)
+          }
           Ok(Json.obj("ok" -> true))
         })
   }

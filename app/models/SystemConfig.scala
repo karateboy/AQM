@@ -2,14 +2,15 @@ package models
 import play.api._
 import play.api.mvc._
 import models.ModelHelper._
+
 import scala.collection.Map
 import scalikejdbc._
 import play.api._
 import com.github.nscala_time.time.Imports._
 import models.ModelHelper._
 import models._
-
 import EnumUtils._
+import play.api.libs.json.Json
 
 object SystemConfig {
   val AutoAuditAsNormal = "AutoAuditAsNormal"
@@ -97,6 +98,16 @@ object SystemConfig {
   val ConvertOverStdYear = "ConvertOverStdYear"
   def getConvertOverStdYear = SystemConfig.getConfig(ConvertOverStdYear, "2021").toInt
   def setConvertOverStdYear(year:Int) = SystemConfig.setConfig(ConvertOverStdYear, year.toString)
+
+  val extendedReasons = "ExtendedReason"
+  def getExtendedReasons: Seq[String] = {
+    val jsonStr = SystemConfig.getConfig(extendedReasons, """["其他"]""")
+    Json.parse(jsonStr).validate[Seq[String]].getOrElse(Seq.empty[String])
+  }
+  def setExtededReasons(selections: Seq[String]) = {
+    val ret = Json.toJson(selections).toString()
+    SystemConfig.setConfig(extendedReasons, ret)
+  }
 
   def setConfig(key: String, value: String) = {
     map = (map - key) + (key -> value)

@@ -48,16 +48,15 @@ object AggregateReport2 {
          """.execute().apply()
   }
 
-  def updateAction(reportList: Seq[AggregateReport2])(implicit session: DBSession = AutoSession) = {
-    for (report <- reportList) {
+  def updateAction(time:DateTime, monitor:Monitor.Value, monitorType: MonitorType.Value, action:String)(implicit session: DBSession = AutoSession) = {
+
       sql"""
         UPDATE [dbo].[AggregateReport2]
           SET
-              [Action] = ${report.action}
-              ,[state] = ${report.state}
-          WHERE [time] = ${report.time} and [monitorType] = ${report.monitorType}
-         """
-    }
+              [Action] = ${action}
+          WHERE [time] = ${time.toDate} and [monitorType] = ${monitorType.toString} and monitor = ${monitor.toString}
+         """.update().apply()
+
   }
 
   def upsert(reportList: Seq[AggregateReport2])(implicit session: DBSession = AutoSession) = {
@@ -123,21 +122,27 @@ object AggregateReport2 {
   def generate(m: Monitor.Value, recordList: List[HourRecord]): Unit = {
     val mCase = Monitor.map(m)
 
-    val reports =
-    for {mt <- mCase.monitorTypes
-         records = recordList.map(h =>
-           (Record.timeProjection(h).toJodaDateTime,
-             Record.monitorTypeProject2(mt)(h), Record.monitorTypeProject2(MonitorType.C211)(h),
-             Record.monitorTypeProject2(MonitorType.C212)(h)))
-         (time, (valueOpt, statusOpt), (windSpeedOpt, _), (windDirOpt, _)) <- records
-         value <- valueOpt
-         status <- statusOpt
-         stdLaw <- MonitorType.map(mt).std_law
-         windSpeed <- windSpeedOpt
-         windDir <- windDirOpt
-         } yield {
-      AggregateReport2(time, m, mt, value, stdLaw, windDir,"", windSpeed, "", "")
-
-    }
+    val reportOptList: Seq[Option[AggregateReport2]] =
+      for {mt <- mCase.monitorTypes
+           records = recordList.map(h =>
+             (Record.timeProjection(h).toJodaDateTime,
+               Record.monitorTypeProject2(mt)(h), Record.monitorTypeProject2(MonitorType.C211)(h),
+               Record.monitorTypeProject2(MonitorType.C212)(h)))
+           (time, (valueOpt, statusOpt), (windSpeedOpt, _), (windDirOpt, _)) <- records
+           value <- valueOpt
+           status <- statusOpt
+           internal <- MonitorType.map(mt).sd_internal
+           stdLaw <- MonitorType.map(mt).std_law
+           windSpeed <- windSpeedOpt
+           windDir <- windDirOpt
+           } yield {
+        if(MonitorStatus.isNormalStat(status) && (value >=internal) || (value>=stdLaw)) {
+          val dirDesc =
+            dirMap(Math.ceil((windDir - 22.5 / 2) / 22.5).toInt % 16)
+          Some(AggregateReport2(time, m, mt, value, stdLaw, windDir, dirDesc, windSpeed, "", "待確認"))
+        }else
+          None
+      }
+    upsert(reportOptList.flatten)
   }
 }

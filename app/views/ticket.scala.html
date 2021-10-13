@@ -1,8 +1,8 @@
 @* newTicket Template File *@
 @import controllers.Security.UserInfo
 @import com.github.nscala_time.time.Imports._
-@(ticket:Ticket, privilege: Privilege, adminUsers:List[User], myself:Int)
-<div class="row">
+@(ticket:Ticket, privilege: Privilege, adminUsers:List[User], myself:Int, extendReasons:Seq[String])
+<div class="row" id="ticket">
 	<div class="col-lg-12">
 		<div class="panel panel-primary" id="paramPanel">
 			<div class="panel-heading panel-title">
@@ -67,13 +67,13 @@
 							<div class="input-group date">
 								<span class="input-group-addon"><i class="fa fa-calendar"></i></span>
 								<input type="text" class="form-control" name="executeDate"
-									value="@ticket.executeDate.toString(" YYYY-MM-d")">
+									value="@ticket.executeDate.toString("YYYY-MM-d")">
 							</div>
 						</div>
 					</div>
 					<div class="form-group" id="executeDate">
 						<label class="col-lg-1 control-label">修訂預期完成日</label>
-						<div class="col-lg-5">
+						<div class="col-lg-3">
 							<div class="input-group date">
 								<span class="input-group-addon"><i class="fa fa-calendar"></i></span>
 								<input type="text" class="form-control" name="extendDate"
@@ -81,6 +81,13 @@
 							</div>
 						</div>
 						<label class="col-lg-1 control-label">原因</label>
+						<div class="col-lg-2">
+							<select id="extendReasonSelect" class="form-control">
+								@for(r<-extendReasons){ 
+									<option value="@r">@r</option>
+								}
+							</select>
+						</div>
 						<div class="col-lg-4">
 							<textarea class="form-control" rows="3" id="extendReason">@ticket.extendReason</textarea>
 						</div>
@@ -103,7 +110,6 @@
 							</div>
 						</div>
 					</div>
-
 					<div class="form-group">
 						<div class="col-lg-1 col-lg-offset-1">
 							<button type="button" class="btn btn-primary" id="updateTicket">更新</button>
@@ -176,6 +182,14 @@
 			}
 		);
 
+		$("#extendReasonSelect").change((evt)=>{
+			let val = $("#extendReasonSelect").val();
+			if(val !== "其他")
+				$("#extendReason").prop('disabled', true);
+			else
+				$("#extendReason").prop('disabled', false);	
+		})
+
 		let ticketType, monitors, monitorTypes, reason, owner, executeDate, extendDate, extendReason;
 		function validate() {
 			ticketType = $("input[name='ticketType']:checked").prop("id");
@@ -241,7 +255,10 @@
 				extendDate.push($extendDate[i].value);
 			}
 
-			extendReason = $("#extendReason").val();
+			if ($("#extendReasonSelect").val() !== "其他")
+				extendReason = $("#extendReasonSelect").val();
+			else
+				extendReason = $("#extendReason").val();
 
 			return true;
 		}
@@ -250,7 +267,7 @@
 			if (!validateExtend())
 				return;
 
-			let param = {				
+			let param = {
 				extendDate,
 				extendReason
 			};
@@ -341,5 +358,6 @@
 		});
 		//Fire change event
 		$("input[name='ticketType']:checked").change();
+		$("#extendReasonSelect").change();
 	});
 </script>

@@ -980,6 +980,30 @@ object Report extends Controller {
         });
   }
 
+  case class AggregateReportParam(time:Long, monitor:String, monitorType: String, action:String)
+  def saveAggregateReport2 = Security.Authenticated(BodyParsers.parse.json) {
+    implicit request =>
+      import AggregateReport2._
+
+      implicit val read = Json.reads[AggregateReportParam]
+      val ret = request.body.validate[Seq[AggregateReportParam]]
+
+      ret.fold(
+        error => {
+          Logger.error(JsError.toJson(error).toString())
+          BadRequest(Json.obj("ok" -> false, "msg" -> JsError.toJson(error)))
+        },
+        entries => {
+          for(entry<-entries){
+            val monitor = Monitor.withName(entry.monitor)
+            val monitorType = MonitorType.withName(entry.monitorType)
+            val time = new DateTime(entry.time)
+            updateAction(time, monitor, monitorType, entry.action)
+          }
+          Ok(Json.obj("ok" -> true, "nEntries" -> entries.length))
+        })
+  }
+
   def monitorAggregate = Security.Authenticated {
     implicit request =>
       val userInfo = Security.getUserinfo(request).get

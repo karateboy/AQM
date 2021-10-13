@@ -392,12 +392,10 @@ object ExcelUtility {
         } map { _._3 }
 
         import MonitorStatus._
-        val manualAuditList = data.filter { p =>
-          p.isDefined && {
-            val tagInfo = getTagInfo(p.get)
-            tagInfo.statusType == StatusType.Manual && tagInfo.id == "10"
-          }
+        val actOfGodList = data.filter { p =>
+          p.fold(false)(a=>a.startsWith("m"))
         }
+
         val invalidList = data.filter { p =>
           p.isDefined &&
             !isValid(p.get)
@@ -406,7 +404,7 @@ object ExcelUtility {
           p.isDefined &&
             isRepairing(p.get)
         }
-        sheet.getRow(39).getCell(col).setCellValue(manualAuditList.length)
+        sheet.getRow(39).getCell(col).setCellValue(actOfGodList.length)
         sheet.getRow(40).getCell(col).setCellValue(invalidList.length)
         sheet.getRow(42).getCell(col).setCellValue(repairList.length)
         sheet.getRow(44).getCell(col).setCellValue(nDay * 24)

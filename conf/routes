@@ -52,6 +52,7 @@ GET      /MonitorAbnormalReport/:date                                           
 GET      /PDF/MonitorAbnormalReport/:date                                                            controllers.Report.monitorAbnormalReport(date, outputTypeStr="pdf")
 GET      /Excel/MonitorAbnormalReport/:date                                                          controllers.Report.monitorAbnormalReport(date, outputTypeStr="excel")
 POST     /SaveAbnormalReport/:date                                                                   controllers.Report.saveMonitorAbnormalReport(date)
+POST     /SaveAggreagateReport2                                                                      controllers.Report.saveAggregateReport2
 
 GET      /MonitorAggregate                                                                           controllers.Report.monitorAggregate
 GET      /MonitorAggregateReport/:date                                                               controllers.Report.monitorAggregateReport(date, outputTypeStr="html")

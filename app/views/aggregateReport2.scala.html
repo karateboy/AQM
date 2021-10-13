@@ -3,76 +3,77 @@
 @(entires:Seq[AggregateReport2])
 
 <table class="table table-striped" id="abnormalTab">
-<thead>
-	<tr>
-		<th>時間</th>
-		<th>測站</th>
-		<th>測項</th>
-		<th>測值</th>
-		<th>法規值</th>
-		<th>風向</th>
-		<th>風向角度</th>
-		<th>風速</th>
-		<th>處理情形</th>
-		<th>狀態</th>
-	</tr>
-</thead>
-<tbody>
-@for(e<-entires){
-	<tr>
-		<td>@e.time.toString("yyyy/M/d HH:mm")</td>
-		<td>@Monitor.map(e.monitor).name</td>
-		<td>@MonitorType.map(e.monitorType).desp</td>
-		<td>@MonitorType.format(e.monitorType, Some(e.value))</td>
-		<td>@MonitorType.format(e.monitorType, Some(e.stdLaw))</td>
-		<td>@MonitorType.format(MonitorType.C211, Some(e.windDir))</td>
-		<td>@e.windAngle</td>
-		<td>@MonitorType.format(MonitorType.C212, Some(e.windSpeed))</td>
-		<td><input type="text" style="width:100%" id="@e.monitor" value="@e.action"></td>
-		<td>@e.state</td>
-	</tr>
-}
-</tbody>
+	<thead>
+		<tr>
+			<th>時間</th>
+			<th>測站</th>
+			<th>測項</th>
+			<th>測值</th>
+			<th>法規值</th>
+			<th>風向</th>
+			<th>風向角度</th>
+			<th>風速</th>
+			<th>處理情形</th>
+			<th>狀態</th>
+		</tr>
+	</thead>
+	<tbody>
+		@for(e<-entires){ <tr>
+			<td class="col-lg-1">@e.time.toString("yyyy/M/d HH:mm")</td>
+			<td class="col-lg-1">@Monitor.map(e.monitor).name</td>
+			<td class="col-lg-1">@MonitorType.map(e.monitorType).desp</td>
+			<td class="col-lg-1">@MonitorType.format(e.monitorType, Some(e.value))</td>
+			<td class="col-lg-1">@MonitorType.format(e.monitorType, Some(e.stdLaw))</td>
+			<td class="col-lg-1">@MonitorType.format(MonitorType.C211, Some(e.windDir))</td>
+			<td class="col-lg-1">@e.windAngle</td>
+			<td class="col-lg-1">@MonitorType.format(MonitorType.C212, Some(e.windSpeed))</td>
+			<td class="col-lg-3"><input type="text" style="width:100%" id="@e.monitor:@e.monitorType:@e.time.getMillis" value="@e.action"></td>
+			<td class="col-lg-1">@e.state</td>
+			</tr>
+			}
+	</tbody>
 </table>
-	<div class="col-lg-2 col-lg-offset-1">
-		<button type="button" class="btn btn-block btn-primary" id="save">儲存</button>
-	</div>
+<div class="col-lg-2 col-lg-offset-1">
+	<button type="button" class="btn btn-block btn-primary" id="save">儲存</button>
+</div>
 <script>
-$(document).ready(function() {
-	$("#save").click(function(){
-		var $inputs = $("#abnormalTab :input");
-		var entries = [];
-		for(var i=0;i<$inputs.length;i++){
-			var input = $inputs.eq(i);
-			var id = input.prop("id");
-			var entry = {
-				monitor:id, 
-				desc:"", 
-				explain:input.val()
-			};
-			entries.push(entry);
-		}
+	$(document).ready(function () {
+		$("#save").click(function () {
+			var $inputs = $("#abnormalTab :input");
+			var entries = [];
+			for (var i = 0; i < $inputs.length; i++) {
+				var input = $inputs.eq(i);
+				let id = input.prop("id");
+				let tokens = id.split(":")
+				var entry = {
+					time: parseInt(tokens[2]),
+					monitor: tokens[0],
+					monitorType: tokens[1],
+					action: input.val()
+				};
+				entries.push(entry);
+			}
 
-		$.ajax({
-			url: "/SaveMonitorAggregateReport/"+report_date,
-			data: JSON.stringify(entries),
-			contentType: "application/json; charset=utf-8",
-			method:"POST",			
-			dataType: "json",
-			success: function(result){
-				if(result.ok){
-					alert("成功");
-				}else{
-					alert("失敗:"+result.msg);
+			$.ajax({
+				url: "/SaveAggreagateReport2",
+				data: JSON.stringify(entries),
+				contentType: "application/json; charset=utf-8",
+				method: "POST",
+				dataType: "json",
+				success: function (result) {
+					if (result.ok) {
+						alert("成功");
+					} else {
+						alert("失敗:" + result.msg);
+					}
+				},
+				error: function (xhr, status, errorThrown) {
+					alert("失敗:" + status + "-" + errorThrown);
+				},
+
+				complete: function (xhr, status) {
 				}
-			},
-			error: function(xhr, status, errorThrown){
-				alert("失敗:" + status + "-" + errorThrown);
-			},
-
-			complete: function(xhr, status){
-			}					
-		});		
+			});
+		});
 	});
-});
 </script>
