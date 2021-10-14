@@ -23,7 +23,7 @@ class DueTicketNotifier(out: ActorRef) extends Actor {
     val notification = Value /*notification:[preticket/repairing/closePending] */
   }
 
-  val cancelable = Akka.system.scheduler.schedule(scala.concurrent.duration.Duration(1, MINUTES),
+  val cancelable = Akka.system.scheduler.schedule(scala.concurrent.duration.Duration(10, SECONDS),
     scala.concurrent.duration.Duration(1, scala.concurrent.duration.HOURS), self, DueTicketCheck)
 
   var progress: Int = _
