@@ -108,8 +108,8 @@ function postAuditCfg(){
 <script>
 var std_internal={};
 @for(mt<-MonitorType.mtvList){
-	@if(MonitorType.map(mt).std_internal_default.isDefined){
-		std_internal['@mt']=@MonitorType.map(mt).std_internal_default;
+	@if(MonitorTypeAlert.map(Monitor.mvList(0))(mt).internal.isDefined){
+		std_internal['@mt']=@MonitorTypeAlert.map(Monitor.mvList(0))(mt).internal;
 	}
 }
 </script>

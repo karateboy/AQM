@@ -85,7 +85,7 @@ object AggregateReport {
           for {
             t <- dailyReport.typeList if MonitorTypeAlert.map(m)(t.monitorType).internal.isDefined
             mCase = MonitorType.map(t.monitorType)
-            mtInternal = MonitorTypeAlert.map(m)(t.monitorType).internal.get
+            mtInternal <- MonitorTypeAlert.map(m)(t.monitorType).internal
             over_hrs = t.dataList.filter(r => r._2.isDefined && r._3.isDefined && MonitorStatus.isNormalStat(r._3.get)
               && r._2.get > mtInternal) if !over_hrs.isEmpty
           } yield {
@@ -114,10 +114,10 @@ object AggregateReport {
             }
             val header = s"${mCase.desp}於${genDesc(hours(0),hours(0)+1, hours.drop(1))}時超過內控(${mtInternal}${mCase.unit})"
             val overLaw =
-              if (mCase.std_law.isDefined) {
+              if (MonitorTypeAlert.map(m)(t.monitorType).std_law.isDefined) {
                 if (t.monitorType == MonitorType.A214 || t.monitorType == MonitorType.A213) {
-                  if (t.stat.avg.isDefined && t.stat.avg.get > mCase.std_law.get)
-                    s",日均值${t.stat.avg.get}超過法規值(${mCase.std_law.get}${mCase.unit})"
+                  if (t.stat.avg.isDefined && t.stat.avg.get > MonitorTypeAlert.map(m)(t.monitorType).std_law.get)
+                    s",日均值${t.stat.avg.get}超過法規值(${MonitorTypeAlert.map(m)(t.monitorType).std_law.get}${mCase.unit})"
                   else{
                     if(t.stat.avg.isDefined)
                       s",日均值${t.stat.avg.get}未超過法規值"
@@ -125,16 +125,16 @@ object AggregateReport {
                       s",日均值無效, 未超過法規值"
                   }
                 } else {
-                  val overLawHr = over_hrs.filter(_._2.get >= mCase.std_law.get).map{
+                  val overLawHr = over_hrs.filter(_._2.get >= MonitorTypeAlert.map(m)(t.monitorType).std_law.get).map{
                     hr=>
                       calendar.setTime(hr._1)
                       calendar.get(Calendar.HOUR_OF_DAY)
                   }
-                  
+
                   if (!overLawHr.isEmpty)
-                    s",${genDesc(overLawHr(0), overLawHr(0)+1, overLawHr.drop(1))}超過法規值(${mCase.std_law.get}${mCase.unit})"
+                    s",${genDesc(overLawHr(0), overLawHr(0)+1, overLawHr.drop(1))}超過法規值(${MonitorTypeAlert.map(m)(t.monitorType).std_law.get}${mCase.unit})"
                   else
-                    s",未超過法規值(${mCase.std_law.get}${mCase.unit})"
+                    s",未超過法規值(${MonitorTypeAlert.map(m)(t.monitorType).std_law.get}${mCase.unit})"
                 }
               } else
                 ",未超過法規值"

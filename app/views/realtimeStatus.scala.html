@@ -33,8 +33,8 @@
 		<tr>			  
 			<th>法規值</th>			
 			@for(mt <- MonitorType.realtimeList.filter(privilege.allowedMonitorTypes.contains)){
-				@if(MonitorType.map(mt).std_law.isDefined){
-					<th style="color:@OverLawColor">@MonitorType.map(mt).std_law</th>	
+				@if(MonitorTypeAlert.map(privilege.allowedMonitors(0))(mt).std_law.isDefined){
+					<th style="color:@OverLawColor">@MonitorTypeAlert.map(privilege.allowedMonitors(0))(mt).std_law.get</th>
 				}else{
 					<th style="color:@OverLawColor">-</th>
 				}				

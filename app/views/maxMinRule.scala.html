@@ -23,7 +23,7 @@
         		@for(mt<-MonitorType.mtvList){
         			<tr>
         				<th><input type="checkbox" name="monitorType" id='@mt' disabled>@MonitorType.map(mt).desp</th>
-        				<td><input name="maxValue" id='@mt' value='@MonitorType.format(mt, MonitorType.map(mt).std_internal_default)' disabled></td>
+        				<td><input name="maxValue" id='@mt' value='100' disabled></td>
         				<td><input name="minValue" id='@mt' value='0' disabled></td>
         			</tr>
         		}

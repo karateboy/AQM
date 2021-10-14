@@ -6,8 +6,6 @@ import scala.collection.Map
 import models.ModelHelper._
 
 case class MonitorType(id: String, desp: String, unit: String,
-                       std_internal_default: Option[Float], std_law: Option[Float], std_hour: Option[Float],
-                       std_day: Option[Float], std_year: Option[Float],
                        zd_internal: Option[Float], zd_law: Option[Float],
                        sd_internal: Option[Float], sd_law: Option[Float],
                        epa_mapping: Option[String],
@@ -18,8 +16,7 @@ object MonitorType extends Enumeration {
   implicit val mtWrites: Writes[MonitorType.Value] = EnumUtils.enumWrites
 
   val Other = Value("Oth")
-  val OtherCase = MonitorType("Oth", "其他", "", None, None, None, None, None,
-    None, None, None, None, None, 0, 0)
+  val OtherCase = MonitorType("Oth", "其他", "", None, None, None, None, None, 0, 0)
 
   private def mtList: List[MonitorType] =
     DB readOnly { implicit session =>
@@ -30,11 +27,6 @@ object MonitorType extends Enumeration {
         MonitorType(id = r.string(1),
           desp = r.string(2),
           unit = r.string(3),
-          std_internal_default = r.floatOpt(5),
-          std_law = r.floatOpt(6),
-          std_hour = r.floatOpt(7),
-          std_day = r.floatOpt(8),
-          std_year = r.floatOpt(9),
           zd_internal = r.floatOpt(10),
           zd_law = r.floatOpt(11),
           sd_internal = r.floatOpt(12),
@@ -44,12 +36,7 @@ object MonitorType extends Enumeration {
           order = r.int(16))
       }.list.apply
     }
-/*
-warn = r.floatOpt("Warn"),
-          eightHrAvg = r.floatOpt("EightHrAvg"),
-          twentyFourHrAvg = r.floatOpt("TwentyFourHrAvg"),
-          yearAvg = r.floatOpt("YearAvg")
- */
+
   var map: Map[Value, MonitorType] = Map(mtList.map { e => Value(e.id) -> e }: _*) ++ Map(Other -> OtherCase) - MonitorType.withName("A325")
   val mtvAllList = mtList.map(mt => MonitorType.withName(mt.id)).filter { !List(MonitorType.withName("A325")).contains(_) }
 
@@ -108,11 +95,6 @@ warn = r.floatOpt("Warn"),
           MonitorType(id = r.string(1),
             desp = r.string(2),
             unit = r.string(3),
-            std_internal_default = r.floatOpt(5),
-            std_law = r.floatOpt(6),
-            std_hour = r.floatOpt(7),
-            std_day = r.floatOpt(8),
-            std_year = r.floatOpt(9),
             zd_internal = r.floatOpt(10),
             zd_law = r.floatOpt(11),
             sd_internal = r.floatOpt(12),
@@ -236,8 +218,9 @@ warn = r.floatOpt("Warn"),
         else
           false
 
+
       val overLaw =
-        if (mtCase.std_law.isDefined && (value > mtCase.std_law.get))
+        if (MonitorTypeAlert.map(m)(mt).std_law.isDefined && (value > MonitorTypeAlert.map(m)(mt).std_law.get))
           true
         else
           false

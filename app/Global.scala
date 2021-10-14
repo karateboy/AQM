@@ -31,53 +31,20 @@ object Global extends GlobalSettings {
              """.execute().apply()
   }
 
-  def upgradeDB() {
-    DB autoCommit {
-      implicit session =>
-        def alterIfMissing(field: String) = {
-          val fieldName = SQLSyntax.createUnsafely(s"$field")
-          sql"""
-             IF COL_LENGTH('[dbo].[MonitorType]', '$fieldName') IS NULL
-             BEGIN
-                 ALTER TABLE [dbo].[MonitorType] ADD $fieldName Decimal(9,2) NULL;
-             END
-             """.execute().apply()
-        }
-
-        import com.github.nscala_time.time.Imports._
-        //Create this year Ozone 8hr table
-        val thisYear = DateTime.now().getYear
-        if (!Ozone8Hr.hasOzone8hrTab(thisYear))
-          Ozone8Hr.createTab(thisYear)
-
-        upgradeEpaDataTab()
-        if(!MonitorTypeAlert.hasTable()){
-          MonitorTypeAlert.createMonitorTypeAlert()
-          MonitorTypeAlert.initTable()
-        }
-        if(!EpaMonitorTypeAlert.hasTable()){
-          EpaMonitorTypeAlert.createMonitorTypeAlert()
-          EpaMonitorTypeAlert.initTable()
-        }
-        Ticket.upgrade()
-        EpaTicket.create()
-        AggregateReport2.createTab
-    }
-    OverStdConverter.start
-  }
-
   override def onStart(app: Application) {
     Logger.info("Application has started")
     DBs.setupAll()
     super.onStart(app)
-    upgradeDB()
 
+    OverStdConverter.start
     val alarmActor = Akka.system.actorOf(Props[AlarmMaster], name = "AlarmMaster")
 
     import AlarmMaster._
     Akka.system.scheduler.schedule(Duration(3, MINUTES), Duration(5, MINUTES), alarmActor, AlarmCheck)
     Akka.system.scheduler.schedule(Duration(3, MINUTES), Duration(10, MINUTES), alarmActor, DataCheck)
     Akka.system.scheduler.schedule(Duration(secondToTomorror1AM, SECONDS), Duration(1, DAYS), alarmActor, MaintanceTicketCheck)
+
+    AggregateReport2.createTab
 
     MonitorTypeAlert.init()
     EpaMonitorTypeAlert.init()
@@ -86,6 +53,7 @@ object Global extends GlobalSettings {
     DbUpdater.start
     OpenDataReceiver.startup()
     Ozone8HrCalculator.start
+
   }
 
   def secondToTomorror1AM = {

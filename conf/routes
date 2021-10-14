@@ -272,3 +272,4 @@ POST     /EpaMonitorTypeAlert                   controllers.Application.updateEp
 GET      /MinMonthlyReportSocket                                                                     controllers.Report.getMinMonthlySocket
 GET      /DownloadMinMonthlyReport/:n                                                                controllers.Report.downloadMinMontlyReport(n: Int)
 GET      /AlarmNotificationSocket                                                                    controllers.Realtime.alarmNofificationSocket
+GET      /DueTicketNotificationSocket                                                         controllers.Realtime.dueTicketNotificationSocket

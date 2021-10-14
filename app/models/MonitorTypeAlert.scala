@@ -70,6 +70,7 @@ object MonitorTypeAlert {
              """.execute().apply()
   }
 
+  /*
   def initTable()(implicit session: DBSession): Unit = {
     val mtaList =
       for {m <- Monitor.mvList
@@ -122,7 +123,7 @@ object MonitorTypeAlert {
            ,?)
          """.batch(paramList:_*).apply()
   }
-
+  */
   def insert(mta: MonitorTypeAlert)(implicit session: DBSession) = {
     sql"""
         INSERT INTO [dbo].[MonitorTypeAlert]

@@ -36,19 +36,20 @@ object AlarmDataType extends Enumeration {
   }
 }
 
-case class AlarmLevel(name: String, desc:String, code: Int)
+case class AlarmLevel(name: String, desc: String, code: Int)
 
 object AlarmLevel extends Enumeration {
   val Internal = Value("Internal")
   val Warn = Value("Warn")
   val Law = Value("Law")
-  val map = Map(Internal -> AlarmLevel(Internal.toString, "內控值",1),
+  val map = Map(Internal -> AlarmLevel(Internal.toString, "內控值", 1),
     Warn -> AlarmLevel(Warn.toString, "警告值", 2),
     Law -> AlarmLevel(Law.toString, "法規值", 4)
   )
 }
 
 class DataAlarmChecker extends Actor {
+
   import AlarmMaster._
 
   def receive = {
@@ -110,48 +111,80 @@ class DataAlarmChecker extends Actor {
     } {
       for (mt <- mCase.monitorTypes) {
         val records = hours.map { h => (Record.timeProjection(h), Record.monitorTypeProject2(mt)(h)) }
-        for (r <- records) {
-          if (r._2._1.isDefined && r._2._2.isDefined && MonitorTypeAlert.map(m)(mt).internal.isDefined) {
-            val v = r._2._1.get
-            val status = r._2._2.get
-            val std_internal = MonitorTypeAlert.map(m)(mt).internal.get
-            if (MonitorStatus.isNormalStat(status)
-              && v > std_internal) {
+        for ((time, (valueOpt, statusOpt)) <- records) {
+          for {
+            v <- valueOpt
+            status <- statusOpt if MonitorStatus.isNormalStat(status)
+          } {
+            for (std_internal <- MonitorTypeAlert.map(m)(mt).internal if v >= std_internal) {
               alarm = true
               val mItem = s"${mt.toString}-${AlarmDataType.Hour}-${AlarmLevel.Internal}"
-              val ar = Alarm.Alarm(m, mItem, r._1.toDateTime, v, MonitorStatus.OVER_STAT)
+              val ar = Alarm.Alarm(m, mItem, time.toDateTime, v, MonitorStatus.WARN_STAT)
               try {
                 Alarm.insertAlarm(ar)
               } catch {
                 case ex: Exception =>
-                // Skip duplicate alarm
               }
             }
-
-            if(MonitorStatus.isInvalidOrCalibration(status)){
-              val ar = Alarm.Alarm(m, mt.toString, r._1.toDateTime, v, status)
+            for (warn <- MonitorTypeAlert.map(m)(mt).warn if v >= warn) {
+              alarm = true
+              val mItem = s"${mt.toString}-${AlarmDataType.Hour}-${AlarmLevel.Warn}"
+              val ar = Alarm.Alarm(m, mItem, time.toDateTime, v, MonitorStatus.WARN_STAT)
               try {
-                if(Alarm.insertAlarm(ar)!=0){
-                  Alarm.updateAlarmTicketState(m, mt.toString, r._1.toDateTime, "YES")
-                  // Auto to ticket
-                  val reason = s"${ar.time.toString("YYYY/MM/dd HH:mm")} ${Monitor.map(ar.monitor).name}:${Alarm.getItem(ar)}-${Alarm.getReason(ar)}:觸發"
-                  val (repairType, repairSubType) =
-                    (Some("數據"), Some(MonitorType.map(mt).desp))
-
-                  val executeDate = DateTime.tomorrow().plusDays(1)
-                  implicit val w1 = Json.writes[PartFormData]
-                  implicit val write = Json.writes[RepairFormData]
-                    val ticket =
-                      Ticket(0, DateTime.now, true, TicketType.repair, 19,
-                        SystemConfig.getAlarmTicketDefaultUserId(), m, Some(mt), reason,
-                        executeDate, Json.toJson(Ticket.defaultAlarmTicketForm(ar)).toString,
-                        repairType, repairSubType, Some(false))
-                    Ticket.newTicket(ticket)
-                  }
+                Alarm.insertAlarm(ar)
               } catch {
                 case ex: Exception =>
-                // Skip duplicate alarm
               }
+            }
+            for (stdLaw <- MonitorTypeAlert.map(m)(mt).std_law if v >= stdLaw) {
+              alarm = true
+              val mItem = s"${mt.toString}-${AlarmDataType.Hour}-${AlarmLevel.Law}"
+              val ar = Alarm.Alarm(m, mItem, time.toDateTime, v, MonitorStatus.OVER_STAT)
+              try {
+                Alarm.insertAlarm(ar)
+              } catch {
+                case ex: Exception =>
+              }
+            }
+          } // Normal status
+          for {
+            v <- valueOpt
+            status <- statusOpt if MonitorStatus.isInvalidOrCalibration(status)
+          } {
+            alarm = true
+            val ar = Alarm.Alarm(m, mt.toString, time.toDateTime, v, status)
+            try {
+              Alarm.insertAlarm(ar)
+              val ar_state =
+                if (ar.mVal == 0)
+                  "恢復正常"
+                else
+                  "觸發"
+
+              var overStd = 0
+              val reason = s"${ar.time.toString("YYYY/MM/dd HH:mm")} ${Monitor.map(ar.monitor).name}:${Alarm.getItem(ar)}-${Alarm.getReason(ar)}:${ar_state}"
+              val mtOpt = try {
+                Some(MonitorType.withName(ar.mItem))
+              } catch {
+                case ex: Throwable =>
+                  None
+              }
+              val (repairType, repairSubType) = if (mtOpt.isDefined) {
+                (Some("數據"), Some(MonitorType.map(mtOpt.get).desp))
+              } else
+                (None, None)
+
+              val executeDate = DateTime.now.plusDays(2)
+              implicit val w2 = Json.writes[PartFormData]
+              implicit val w1 = Json.writes[RepairFormData]
+              val ticket =
+                Ticket(0, DateTime.now, true, TicketType.repair, 4,
+                  SystemConfig.getAlarmTicketDefaultUserId(), m, Some(mt), reason,
+                  executeDate, Json.toJson(Ticket.defaultAlarmTicketForm(ar)).toString,
+                  repairType, repairSubType, Some(false), overStd = Some(overStd))
+              Ticket.newTicket(ticket)
+            } catch {
+              case ex: Exception =>
             }
           }
         }

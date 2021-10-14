@@ -422,14 +422,16 @@ RequestHeader)
 	<script>
 		var userId = '@user.id';
 		var n_url = '@routes.Realtime.alarmNofificationSocket().webSocketURL()';
+		var d_url = '@routes.Realtime.dueTicketNotificationSocket().webSocketURL()';
 	</script>
 	<script>
 		var nAlert = 0;
 		var nPreticket = 0;
 		var nRepairing = 0;
 		var nClosePending = 0;
+		let nDue = 0;
 
-		var nSocket;
+		var nSocket, dSocket;
 		var alertBuffer = [];
 		function removeOldAlerts() {
 			while (alertBuffer.length > 10) {
@@ -508,7 +510,7 @@ RequestHeader)
 				if (bSound)
 					audio.play();
 			}
-		}
+		}		
 
 		nSocket.onopen = function (evt) {
 			console.log("Connection open...");
@@ -520,6 +522,22 @@ RequestHeader)
 		nSocket.onerror = function (evt) {
 			console.log("Error!");
 			nSocket.close();
+		}
+
+		dSocket = new WebSocket(d_url);
+		dSocket.onmessage = function (evt) {
+			var cmd = evt.data.split("!");
+			if (cmd[0] == "alert") {
+				let tokens = cmd[1].split(":");
+				let nDue = parseInt(tokens[0]);
+				if (nDue == 0)
+					$('#due_count').text('');
+				else
+					$('#due_count').text(nDue);
+			}
+		}
+		dSocket.onerror = function (evt) {
+			dSocket.close();
 		}
 
 		$('#alertButton').on('shown.bs.dropdown', function () {

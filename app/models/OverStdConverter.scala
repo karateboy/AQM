@@ -127,8 +127,8 @@ object OverStdConverter {
         mt <- Monitor.map(m).monitorTypes
         (_, statusOpt) = auditStat.getValueStat(mt)
         status <- statusOpt if status.startsWith("01")
-      }{
-        if(status == "011")
+      } {
+        if (status == "011")
           auditStat.setStat(mt, MonitorStatus.OVER_STAT)
       }
 
@@ -152,6 +152,14 @@ case class OverStdConverter() extends Actor {
 
   override def receive: Receive = {
     case ConvertStatus(year) =>
+      if (SystemConfig.getGenerateAggregate2)
+        Future {
+          blocking {
+            AggregateReport2.generatePast()
+            SystemConfig.setGenerateAggregate2(false)
+          }
+        }
+
       if (Ozone8Hr.hasHourTab(year)) {
         Future {
           blocking {
@@ -162,9 +170,9 @@ case class OverStdConverter() extends Actor {
         }
       }
     case ConvertStatus =>
-      for{tab<-Seq(TableType.Hour, TableType.Min)
-          m <- Monitor.mvList
-          }{
+      for {tab <- Seq(TableType.Hour, TableType.Min)
+           m <- Monitor.mvList
+           } {
         convertStatus(m, tab)
       }
       timer = context.system.scheduler.scheduleOnce(FiniteDuration.apply(10, scala.concurrent.duration.MINUTES),

@@ -490,11 +490,12 @@ object Query extends Controller {
 
     def getAxisLines(mt: MonitorType.Value) = {
       val mtCase = MonitorType.map(mt)
+      val m = monitors(0)
       val std_law_line =
-        if (mtCase.std_law.isEmpty)
+        if (MonitorTypeAlert.map(m)(mt).std_law.isEmpty)
           None
         else
-          Some(AxisLine("#FF0000", 2, mtCase.std_law.get, Some(AxisLineLabel("right", "法規值"))))
+          Some(AxisLine("#FF0000", 2, MonitorTypeAlert.map(m)(mt).std_law.get, Some(AxisLineLabel("right", "法規值"))))
 
       val std_internal_line = {
         val std_internals = monitors.map {
@@ -502,7 +503,7 @@ object Query extends Controller {
         }
         val min_std_internal = std_internals.min
         if (min_std_internal.isDefined)
-          Some(AxisLine("#0000FF", 2, mtCase.std_internal_default.get, Some(AxisLineLabel("left", "內控值"))))
+          Some(AxisLine("#0000FF", 2, MonitorTypeAlert.map(m)(mt).internal.get, Some(AxisLineLabel("left", "內控值"))))
         else
           None
       }
@@ -723,7 +724,7 @@ object Query extends Controller {
       val start = DateTime.parse(startStr)
       val end = DateTime.parse(endStr) + 1.day
 
-      if (mtCase.std_law.isEmpty)
+      if (MonitorTypeAlert.map(monitors(0))(monitorType).std_law.isEmpty)
         BadRequest("法規值未定義!")
       else {
         import scala.collection.mutable.ListBuffer
@@ -736,7 +737,7 @@ object Query extends Controller {
             r =>
               (r._2._1.isDefined && r._2._2.isDefined &&
                 MonitorStatus.isNormalStat(r._2._2.get) &&
-                r._2._1.get >= mtCase.std_law.get)
+                r._2._1.get >= MonitorTypeAlert.map(monitors(0))(monitorType).std_law.get)
           }
           overList = overLawRecords.map { r => OverLawStdEntry(m, r._1, r._2._1.get) }
         } {

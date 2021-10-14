@@ -491,19 +491,19 @@ object ExcelUtility {
       }
 
       for {
-        mt <- graph_list.zipWithIndex
+        (mt, idx) <- graph_list.zipWithIndex
         row = sheet.getRow(46)
       } {
-        val mtCase = MonitorType.map(mt._1)
+        val mtCase = MonitorType.map(mt)
         val title =
-          if (!Monitor.map(monitor).monitorTypes.contains(mt._1))
+          if (!Monitor.map(monitor).monitorTypes.contains(idx))
             s"${Monitor.map(monitor).name}無${mtCase.desp}測項"
-          else if (mtCase.std_law.isDefined)
-            s"${Monitor.map(monitor).name}${mtCase.desp}小時趨勢圖 (法規:${mtCase.std_law.get}${mtCase.unit})"
+          else if (MonitorTypeAlert.map(monitor)(mt).std_law.isDefined)
+            s"${Monitor.map(monitor).name}${mtCase.desp}小時趨勢圖 (法規:${MonitorTypeAlert.map(monitor)(mt).std_law.get}${mtCase.unit})"
           else
             s"${Monitor.map(monitor).name}${mtCase.desp}小時趨勢圖 "
 
-        row.getCell(mt._2).setCellValue(title)
+        row.getCell(idx).setCellValue(title)
       }
     }
 

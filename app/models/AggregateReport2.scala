@@ -1,12 +1,14 @@
 package models
 
-import com.github.nscala_time.time.Imports.DateTime
+import com.github.nscala_time.time.Imports._
 import models.ModelHelper._
-import models.Record.HourRecord
+import models.Record.{HourRecord, getHourRecords}
+import org.joda.time.format.DateTimeFormat
+import play.api.Logger
 import scalikejdbc._
 
 case class AggregateReport2(time: DateTime, monitor: Monitor.Value, monitorType: MonitorType.Value, value: Float,
-                            stdLaw: Float, windDir: Float, windAngle: String, windSpeed: Float,
+                            stdLaw: Option[Float], windDir: Option[Float], windAngle: String, windSpeed: Option[Float],
                             action: String, state: String)
 
 object AggregateReport2 {
@@ -28,16 +30,16 @@ object AggregateReport2 {
           BEGIN
             CREATE TABLE [dbo].[AggregateReport2](
 	            [time] [datetime] NOT NULL,
-	            [monitor] [nchar](10) NOT NULL,
+	            [monitor] [nvarchar](10) NOT NULL,
 	            [monitorType] [nvarchar](10) NOT NULL,
 	            [value] [float] NOT NULL,
-	            [StdLaw] [float] NOT NULL,
-	            [WindDir] [float] NOT NULL,
+	            [StdLaw] [float] NULL,
+	            [WindDir] [float] NULL,
 	            [WindAngle] [nvarchar](10) NOT NULL,
-              [WindSpeed] [float] NOT NULL,
+	            [WindSpeed] [float] NULL,
 	            [Action] [nvarchar](50) NOT NULL,
 	            [state] [nvarchar](50) NOT NULL,
-            CONSTRAINT [PK_AggregateReport2] PRIMARY KEY CLUSTERED
+              CONSTRAINT [PK_AggregateReport2] PRIMARY KEY CLUSTERED
             (
 	            [time] ASC,
 	            [monitor] ASC,
@@ -71,7 +73,7 @@ object AggregateReport2 {
             ,[WindDir] = ${report.windDir}
             ,[WindAngle] = ${report.windAngle}
             ,[WindSpeed] = ${report.windSpeed}
-          WHERE [time] = ${report.time} and [monitor] = ${report.monitor.toString} and [monitorType] = ${report.monitorType.toString}
+          WHERE [time] = ${timeT} and [monitor] = ${report.monitor.toString} and [monitorType] = ${report.monitorType.toString}
           IF(@@ROWCOUNT = 0)
           BEGIN
           INSERT INTO [dbo].[AggregateReport2]
@@ -93,11 +95,11 @@ object AggregateReport2 {
            ,${report.stdLaw}
            ,${report.windDir}
            ,${report.windAngle}
-           ,${report.windDir}
            ,${report.windSpeed}
+           ,${report.action}
            ,${report.state})
           END
-         """
+         """.update().apply()
     }
   }
 
@@ -114,8 +116,8 @@ object AggregateReport2 {
            Where time between ${startT} and ${endT} and monitor in $monitorSeq and monitorType in $monitorTypeSeq
            """.map(rs => AggregateReport2(time = rs.timestamp(1), monitor = Monitor.withName(rs.string(2)),
       monitorType = MonitorType.withName(rs.string(3)), value = rs.float(4),
-      stdLaw = rs.float(5), windDir = rs.float(6), windAngle = rs.string(7),
-      windSpeed = rs.float(8),
+      stdLaw = rs.floatOpt(5), windDir = rs.floatOpt(6), windAngle = rs.string(7),
+      windSpeed = rs.floatOpt(8),
       action = rs.string(9), state = rs.string(10))).list().apply()
   }
 
@@ -130,19 +132,28 @@ object AggregateReport2 {
                Record.monitorTypeProject2(MonitorType.C212)(h)))
            (time, (valueOpt, statusOpt), (windSpeedOpt, _), (windDirOpt, _)) <- records
            value <- valueOpt
-           status <- statusOpt
-           internal <- MonitorType.map(mt).sd_internal
-           stdLaw <- MonitorType.map(mt).std_law
-           windSpeed <- windSpeedOpt
-           windDir <- windDirOpt
+           status <- statusOpt if MonitorStatus.isNormalStat(status)
+           stdLawOpt = MonitorTypeAlert.map(m)(mt).std_law
+           internal <-MonitorTypeAlert.map(m)(mt).internal
            } yield {
-        if(MonitorStatus.isNormalStat(status) && (value >=internal) || (value>=stdLaw)) {
-          val dirDesc =
+        val dirDesc =
+          for(windDir <- windDirOpt)yield
             dirMap(Math.ceil((windDir - 22.5 / 2) / 22.5).toInt % 16)
-          Some(AggregateReport2(time, m, mt, value, stdLaw, windDir, dirDesc, windSpeed, "", "待確認"))
+
+        if((value >= internal) || (stdLawOpt.isDefined && value >= stdLawOpt.get)) {
+          Some(AggregateReport2(time, m, mt, value, stdLawOpt, windDirOpt, dirDesc.getOrElse(""), windSpeedOpt, "", "待確認"))
         }else
           None
       }
-    upsert(reportOptList.flatten)
+    val reportList = reportOptList.flatten
+    upsert(reportList)
+  }
+
+  def generatePast(): Unit ={
+    val start = DateTime.parse("2021-01-01", DateTimeFormat.forPattern("yyyy-MM-dd"))
+    for(m<-Monitor.mvList){
+      val recordList = Record.getHourRecords(m, start, DateTime.now)
+      generate(m, recordList)
+    }
   }
 }

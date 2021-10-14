@@ -23,10 +23,10 @@
 			<td class="col-lg-1">@Monitor.map(e.monitor).name</td>
 			<td class="col-lg-1">@MonitorType.map(e.monitorType).desp</td>
 			<td class="col-lg-1">@MonitorType.format(e.monitorType, Some(e.value))</td>
-			<td class="col-lg-1">@MonitorType.format(e.monitorType, Some(e.stdLaw))</td>
-			<td class="col-lg-1">@MonitorType.format(MonitorType.C211, Some(e.windDir))</td>
+			<td class="col-lg-1">@MonitorType.format(e.monitorType, e.stdLaw)</td>
+			<td class="col-lg-1">@MonitorType.format(MonitorType.C211, e.windDir)</td>
 			<td class="col-lg-1">@e.windAngle</td>
-			<td class="col-lg-1">@MonitorType.format(MonitorType.C212, Some(e.windSpeed))</td>
+			<td class="col-lg-1">@MonitorType.format(MonitorType.C212, e.windSpeed)</td>
 			<td class="col-lg-3"><input type="text" style="width:100%" id="@e.monitor:@e.monitorType:@e.time.getMillis" value="@e.action"></td>
 			<td class="col-lg-1">@e.state</td>
 			</tr>

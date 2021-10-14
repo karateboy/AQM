@@ -109,6 +109,9 @@ object SystemConfig {
     SystemConfig.setConfig(extendedReasons, ret)
   }
 
+  val GenerateAggregate2 = "GenerateAggreate2"
+  def getGenerateAggregate2 = SystemConfig.getConfig(GenerateAggregate2, true.toString).toBoolean
+  def setGenerateAggregate2(value: Boolean) = SystemConfig.setConfig(GenerateAggregate2, value.toString)
   def setConfig(key: String, value: String) = {
     map = (map - key) + (key -> value)
     DB localTx {

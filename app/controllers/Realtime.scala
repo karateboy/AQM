@@ -173,19 +173,19 @@ object Realtime extends Controller {
       }
 
       def getAxisLines(mt: MonitorType.Value) = {
-        val mtCase = MonitorType.map(mt)
+        val m = group.privilege.allowedMonitors(0)
         val std_law_line =
-          if (mtCase.std_law.isEmpty)
+          if (MonitorTypeAlert.map(m)(mt).std_law.isEmpty)
             None
           else
-            Some(AxisLine("#FF0000", 2, mtCase.std_law.get, Some(AxisLineLabel("right", "法規值"))))
+            Some(AxisLine("#FF0000", 2, MonitorTypeAlert.map(m)(mt).std_law.get, Some(AxisLineLabel("right", "法規值"))))
 
         val std_internal_line =
           {
             val std_internals = group.privilege.allowedMonitors.map { MonitorTypeAlert.map(_)(mt).internal }
             val min_std_internal = std_internals.min
             if (min_std_internal.isDefined)
-              Some(AxisLine("#0000FF", 2, mtCase.std_internal_default.get, Some(AxisLineLabel("left", "內控值"))))
+              Some(AxisLine("#0000FF", 2, min_std_internal.get, Some(AxisLineLabel("left", "內控值"))))
             else
               None
           }
@@ -270,5 +270,10 @@ object Realtime extends Controller {
   def alarmNofificationSocket  = WebSocket.acceptWithActor[String, String] { request =>
     out =>
       AlarmNotifier.props(out)
-  } 
+  }
+
+  def dueTicketNotificationSocket = WebSocket.acceptWithActor[String, String] { request =>
+    out =>
+      DueTicketNotifier.props(out)
+  }
 }

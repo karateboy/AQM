@@ -12,14 +12,6 @@ case class Monitor(id: String, name: String, lat: Double, lng: Double, url: Stri
                    calibrationSds: Seq[MonitorTypeStandard]) {
   private val stdMap = Map(monitorTypeStds.map { r => r.id -> r.std_internal }: _*)
 
-  @deprecated("use MonitorTypeAlert instead", "2021-10-8") def getStdInternal(mt: MonitorType.Value) = {
-    val monitorStd = stdMap.get(mt)
-    if (monitorStd.isDefined)
-      monitorStd
-    else
-      MonitorType.map(mt).std_internal_default
-  }
-
   def getNewStd(mt: MonitorType.Value, v: Float) = {
     if (stdMap.get(mt).isEmpty)
       MonitorTypeStandard(mt, v) :: monitorTypeStds.toList
