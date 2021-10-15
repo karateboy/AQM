@@ -101,7 +101,6 @@ object AggregateReport2 {
           END
          """.update().apply()
     }
-    Logger.debug(s"Aggregate2 #=${reportList.size} upserted")
   }
 
   def query(monitors: Seq[Monitor.Value],

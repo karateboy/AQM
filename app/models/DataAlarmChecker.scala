@@ -116,28 +116,10 @@ class DataAlarmChecker extends Actor {
             v <- valueOpt
             status <- statusOpt if MonitorStatus.isNormalStat(status)
           } {
-            for (std_internal <- MonitorTypeAlert.map(m)(mt).internal if v >= std_internal) {
-              alarm = true
-              val mItem = s"${mt.toString}-${AlarmDataType.Hour}-${AlarmLevel.Internal}"
-              val ar = Alarm.Alarm(m, mItem, time.toDateTime, v, MonitorStatus.WARN_STAT)
-              try {
-                Alarm.insertAlarm(ar)
-              } catch {
-                case ex: Exception =>
-              }
-            }
-            for (warn <- MonitorTypeAlert.map(m)(mt).warn if v >= warn) {
-              alarm = true
-              val mItem = s"${mt.toString}-${AlarmDataType.Hour}-${AlarmLevel.Warn}"
-              val ar = Alarm.Alarm(m, mItem, time.toDateTime, v, MonitorStatus.WARN_STAT)
-              try {
-                Alarm.insertAlarm(ar)
-              } catch {
-                case ex: Exception =>
-              }
-            }
+            var overStdAlarm = false
             for (stdLaw <- MonitorTypeAlert.map(m)(mt).std_law if v >= stdLaw) {
               alarm = true
+              overStdAlarm
               val mItem = s"${mt.toString}-${AlarmDataType.Hour}-${AlarmLevel.Law}"
               val ar = Alarm.Alarm(m, mItem, time.toDateTime, v, MonitorStatus.OVER_STAT)
               try {
@@ -146,6 +128,31 @@ class DataAlarmChecker extends Actor {
                 case ex: Exception =>
               }
             }
+
+            if (!overStdAlarm)
+              for (warn <- MonitorTypeAlert.map(m)(mt).warn if v >= warn) {
+                alarm = true
+                overStdAlarm = true
+                val mItem = s"${mt.toString}-${AlarmDataType.Hour}-${AlarmLevel.Warn}"
+                val ar = Alarm.Alarm(m, mItem, time.toDateTime, v, MonitorStatus.WARN_STAT)
+                try {
+                  Alarm.insertAlarm(ar)
+                } catch {
+                  case ex: Exception =>
+                }
+              }
+
+            if (!overStdAlarm)
+              for (std_internal <- MonitorTypeAlert.map(m)(mt).internal if v >= std_internal) {
+                alarm = true
+                val mItem = s"${mt.toString}-${AlarmDataType.Hour}-${AlarmLevel.Internal}"
+                val ar = Alarm.Alarm(m, mItem, time.toDateTime, v, MonitorStatus.WARN_STAT)
+                try {
+                  Alarm.insertAlarm(ar)
+                } catch {
+                  case ex: Exception =>
+                }
+              }
           } // Normal status
           for {
             v <- valueOpt
@@ -161,7 +168,6 @@ class DataAlarmChecker extends Actor {
                 else
                   "觸發"
 
-              var overStd = 0
               val reason = s"${ar.time.toString("YYYY/MM/dd HH:mm")} ${Monitor.map(ar.monitor).name}:${Alarm.getItem(ar)}-${Alarm.getReason(ar)}:${ar_state}"
               val mtOpt = try {
                 Some(MonitorType.withName(ar.mItem))
@@ -178,10 +184,10 @@ class DataAlarmChecker extends Actor {
               implicit val w2 = Json.writes[PartFormData]
               implicit val w1 = Json.writes[RepairFormData]
               val ticket =
-                Ticket(0, DateTime.now, true, TicketType.repair, 4,
+                Ticket(0, DateTime.now, true, TicketType.repair, 19,
                   SystemConfig.getAlarmTicketDefaultUserId(), m, Some(mt), reason,
                   executeDate, Json.toJson(Ticket.defaultAlarmTicketForm(ar)).toString,
-                  repairType, repairSubType, Some(false), overStd = Some(overStd))
+                  repairType, repairSubType, Some(false), overStd = None)
               Ticket.newTicket(ticket)
             } catch {
               case ex: Exception =>

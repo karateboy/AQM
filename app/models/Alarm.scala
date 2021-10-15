@@ -64,7 +64,7 @@ object Alarm {
         sql"""
         Select *
         From ${tab}
-        Where DP_NO in ${mStr} and M_DateTime>=${startT} and M_DateTime<${end} and CHK = 'NO'
+        Where DP_NO in ${mStr} and M_DateTime>=${startT} and M_DateTime<${end} and CHK = 'NO' or CHK is NULL
         ORDER BY M_DateTime ASC
         """.map {
           rs =>

@@ -383,7 +383,8 @@ object Ticket {
     sql"""
       Select *
       From Ticket
-      Where ticketType = ${TicketType.repair.id} and active = 1 and readyToClose = 0 and execute_date < ${now}
+      Where ticketType = ${TicketType.repair.id} and active = 1 and submiter_id = 19
+            and readyToClose = 0 and execute_date < ${now}
       Order by execute_date
       """.map { ticketMapper }.list().apply()
   }

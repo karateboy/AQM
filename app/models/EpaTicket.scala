@@ -16,9 +16,9 @@ object EpaTicket {
           IF @@ROWCOUNT = 0
           BEGIN
             CREATE TABLE [dbo].[EpaTickets](
-	          [M_DateTime] [smalldatetime] NOT NULL,
-	          [Monitor] [nchar](10) NOT NULL,
-	          [MonitorType] [nchar](10) NOT NULL,
+	          [M_DateTime] [datetime] NOT NULL,
+	          [Monitor] [nvarchar](50) NOT NULL,
+	          [MonitorType] [nvarchar](50) NOT NULL,
 	          [Value] [float] NOT NULL,
 	          [OverStd] [int] NOT NULL,
             CONSTRAINT [PK_EpaTickets] PRIMARY KEY CLUSTERED
@@ -46,4 +46,31 @@ object EpaTicket {
          Order by M_DateTime Desc
          """.map(mapper).list().apply()
   }
+
+  def upsert(ticket:EpaTicket)(implicit session: DBSession = AutoSession) = {
+    sql"""
+         UPDATE [dbo].[EpaTickets]
+          SET
+              [Value] = ${ticket.value}
+              ,[OverStd] = ${ticket.overStd}
+          WHERE [M_DateTime]= ${ticket.time.toDate} and [Monitor] = ${ticket.monitor.toString} and
+            [MonitorType] = ${ticket.monitorType.toString}
+         IF(@@ROWCOUNT = 0)
+          BEGIN
+            INSERT INTO [dbo].[EpaTickets]
+            ([M_DateTime]
+            ,[Monitor]
+            ,[MonitorType]
+            ,[Value]
+            ,[OverStd])
+            VALUES
+            (${ticket.time.toDate}
+              ,${ticket.monitor.toString}
+              ,${ticket.monitorType.toString}
+              ,${ticket.value}
+              ,${ticket.overStd})
+          END
+         """.update().apply()
+  }
+
 }

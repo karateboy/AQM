@@ -45,6 +45,7 @@ object Global extends GlobalSettings {
     Akka.system.scheduler.schedule(Duration(secondToTomorror1AM, SECONDS), Duration(1, DAYS), alarmActor, MaintanceTicketCheck)
 
     AggregateReport2.createTab
+    EpaTicket.create()
 
     MonitorTypeAlert.init()
     EpaMonitorTypeAlert.init()

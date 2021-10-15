@@ -1199,9 +1199,14 @@ object Maintance extends Controller {
           MonitorType.map(t.monitorType.get).desp
         else
           "-"
-        val isDue = if (t.executeDate.isBefore(DateTime.yesterday))
-          "已逾期"
-        else
+        val isDue = if (t.executeDate.isBefore(DateTime.yesterday)) {
+          if(t.extendDate.isEmpty)
+            "已逾期"
+          else{
+            val extendDate = t.extendDate.get
+            s"展延(${extendDate.toString("M/d")})${t.extendReason.getOrElse("")}"
+          }
+        } else
           "未逾期"
 
         RepairingTicketInfo(id = t.id.toString, alarmTime = alarmTime, alarmCode = alarmCode, monitor = Monitor.map(t.monitor).name, monitorType = monitorType,
