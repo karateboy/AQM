@@ -80,6 +80,7 @@
 									value="@ticket.extendDate.getOrElse(DateTime.now).toString("YYYY-MM-d")">
 							</div>
 						</div>
+						
 						<label class="col-lg-1 control-label">原因</label>
 						<div class="col-lg-2">
 							<select id="extendReasonSelect" class="form-control">
@@ -87,6 +88,7 @@
 									<option value="@r">@r</option>
 								}
 							</select>
+							<button type="button" class="btn btn-primary" id="deleteReason">刪除</button>
 						</div>
 						<div class="col-lg-4">
 							<textarea class="form-control" rows="3" id="extendReason">@ticket.extendReason</textarea>
@@ -170,7 +172,6 @@
 			function () {
 				var me = $(this)
 				var id = me.attr('id');
-				console.log("change event! " + id);
 
 				if (id == 'repair') {
 					$("#monitorType").css('display', 'block');
@@ -184,10 +185,13 @@
 
 		$("#extendReasonSelect").change((evt)=>{
 			let val = $("#extendReasonSelect").val();
-			if(val !== "其他")
+			if(val !== "其他"){
 				$("#extendReason").prop('disabled', true);
-			else
+				$("#deleteReason").prop('disabled', false);
+			}else{
 				$("#extendReason").prop('disabled', false);	
+				$("#deleteReason").prop('disabled', true);
+			}				
 		})
 
 		let ticketType, monitors, monitorTypes, reason, owner, executeDate, extendDate, extendReason;
@@ -281,6 +285,34 @@
 				success: function (result) {
 					if (result.ok) {
 						alert("成功申請");
+						$("#ticketForm").load("/Form/" + ticketId);
+					}
+				},
+				error: function (xhr, status, errorThrown) {
+					console.log("錯誤訊息:" + status + "-" + errorThrown);
+				},
+
+				complete: function (xhr, status) {
+					$("body").css("cursor", "default");
+				}
+			});
+		});
+		
+		$("#deleteReason").click(function () {
+			extendReason = $("#extendReasonSelect").val();
+			let param = {
+				extendReason
+			};
+			let url = `/DeleteExtendReason`;
+			$.ajax({
+				url: url,
+				data: JSON.stringify(param),
+				contentType: "application/json; charset=utf-8",
+				type: "POST",
+				dataType: "json",
+				success: function (result) {
+					if (result.ok) {
+						alert("成功移除");
 						$("#ticketForm").load("/Form/" + ticketId);
 					}
 				},

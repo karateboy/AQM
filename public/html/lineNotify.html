@@ -2,23 +2,10 @@
     <div class="col-lg-12">
         <div class="panel panel-primary">
             <div class="panel-heading panel-title">
-                <a data-toggle="collapse" data-parent="#accordion" href="#monitorType">測項參數</a>
+                <a data-toggle="collapse" data-parent="#accordion" href="#monitorType">測試LINE 通訊</a>
             </div>
-            <div class="panel-body">
-                <form class="form-horizontal">
-                    <div class="form-group">
-                        <label class="col-lg-2 control-label">選擇測站:</label>
-                        <div class="col-lg-10">
-                            <div class="btn-group" data-toggle="buttons">
-                                <button type="button" v-for="m in monitorList" :key="m.id"
-                                    class="btn btn-outline btn-primary" :class="{ active: selectedMonitor == m.id }"
-                                    @click="updateSelectedMonitor(m.id)">{{ m.name
-                                    }}</button>
-                            </div>
-                        </div>
-                    </div>                    
-                </form>
-                <h3>細節和業主詳細討論後定案...Line notify已通. 請按一下測試就好...我會收到訊息Orz</h3>
+            <div class="panel-body">                
+                <h3>測試LINE 通訊</h3>
                 <div class="form-group">
                     <div class="col-lg-1 col-lg-offset-1">
                         <button type="button" class="btn btn-primary" @click="testLine">測試</button>

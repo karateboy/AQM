@@ -1113,6 +1113,14 @@ object Report extends Controller {
       case OutputType.json=>
         implicit val write = Json.writes[AggregateReport2]
         Ok(Json.toJson(reports))
+      case OutputType.excel=>
+        val title="資料超限彙總表"
+        val excelFile = ExcelUtility.aggregate2List(reports, title)
+        Ok.sendFile(excelFile, fileName = _ =>
+          play.utils.UriEncoding.encodePathSegment(title + start.toString("YYYYMMdd") + ".xlsx", "UTF-8"),
+          onClose = () => {
+            Files.deleteIfExists(excelFile.toPath())
+          })
     }
 
 

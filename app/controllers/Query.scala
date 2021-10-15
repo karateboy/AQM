@@ -108,10 +108,10 @@ object Query extends Controller {
       val monitorType = MonitorType.withName(monitorTypeStr)
       val tableType = TableType.withName(recordTypeStr)
       val start =
-        DateTime.parse(startStr, DateTimeFormat.forPattern("YYYY-MM-dd HH:mm"))
+        DateTime.parse(startStr, DateTimeFormat.forPattern("YYYY-MM-dd HH:mm")).withMinuteOfHour(0)
 
       val end =
-        DateTime.parse(endStr, DateTimeFormat.forPattern("YYYY-MM-dd HH:mm"))
+        DateTime.parse(endStr, DateTimeFormat.forPattern("YYYY-MM-dd HH:mm")).withMinuteOfHour(0)
 
       val outputType = OutputType.withName(outputTypeStr)
 
@@ -187,6 +187,25 @@ object Query extends Controller {
           Ok.sendFile(creatPdfWithReportHeader(title, output),
             fileName = _ =>
               play.utils.UriEncoding.encodePathSegment(title + start.toString("YYMMdd") + "_" + end.toString("MMdd") + ".pdf", "UTF-8"))
+        case OutputType.excel =>
+          val reportUnitStr = tableType match {
+            case TableType.Min=>
+              ReportUnit.Min.toString
+
+            case TableType.Hour=>
+              ReportUnit.Hour.toString
+            case TableType.EightHour=>
+              ReportUnit.EightHour.toString
+          }
+
+          val url = if(TableType.EightHour != tableType) {
+            s"/Excel/HistoryTrend/${monitorStr}/${epaMonitorStr}/${monitorTypeStr}/${reportUnitStr}/${MonitorStatusFilter.All.toString}/${startStr}/${endStr}/${mb}"
+          }else{
+            val s= start.toString("YYYY-MM-dd")
+            val e= end.toString("YYYY-MM-dd")
+            s"/Excel/HistoryTrend/${monitorStr}/${epaMonitorStr}/${monitorTypeStr}/${reportUnitStr}/${MonitorStatusFilter.All.toString}/${s}/${e}/${mb}"
+          }
+          Redirect(url)
       }
   }
 
@@ -299,7 +318,10 @@ object Query extends Controller {
               case ReportUnit.Hour =>
                 Record.getHourRecords(m, start, end)
               case ReportUnit.EightHour=>
-                Record.get8HourRecords(m, start, end)
+                Record.get8HourRecords(m, start, end).filter(p=>{
+                  val dt = p.date.toDateTime
+                  dt.getHourOfDay>=7
+                })
             }
             calibrationMap = Calibration.getCalibrationMap(m, start, end)
             mtPairs = for {

@@ -270,9 +270,9 @@ object Alarm {
 
   def getItem(ar:Alarm) = {
     val tokens = ar.mItem.split("-")
-    if((ar.code == MonitorStatus.OVER_STAT || ar.code == MonitorStatus.WARN_STAT) && tokens.length == 3)
+    if((ar.code == MonitorStatus.OVER_STAT || ar.code == MonitorStatus.WARN_STAT) && tokens.length == 3) {
       _map.getOrElse(tokens(0), "未知的警告代碼:" + ar.mItem)
-    else
+    } else
       _map.getOrElse(ar.mItem, "未知的警告代碼:" + ar.mItem)
   }
 
@@ -281,10 +281,9 @@ object Alarm {
     (ar.code == MonitorStatus.OVER_STAT || ar.code == MonitorStatus.WARN_STAT) && tokens.length == 3
   }
 
-  def getOverStdLevel(ar:Alarm): AlarmLevel = {
+  def getOverStdLevel(ar:Alarm): AlarmLevel.Value = {
     val tokens = ar.mItem.split("-")
-    val overStdLevel = AlarmLevel.withName(tokens(2))
-    AlarmLevel.map(overStdLevel)
+    AlarmLevel.withName(tokens(2))
   }
 
   def getOverStdLevelCode(ar:Alarm): Int = {
@@ -306,7 +305,7 @@ object Alarm {
 
   def getMonitorTypeValue(ar:Alarm)={
     val tokens = ar.mItem.split("-")
-    if(ar.code == MonitorStatus.OVER_STAT && tokens.length == 3){
+    if((ar.code == MonitorStatus.OVER_STAT||ar.code == MonitorStatus.WARN_STAT) && tokens.length == 3){
       val mt = MonitorType.withName(tokens(0))
       val mtCase = MonitorType.map(mt)
       s"${MonitorType.format(mt, Some(ar.mVal))}${mtCase.unit}"
@@ -320,14 +319,15 @@ object Alarm {
 
   def getAlarmOverStdList(monitors:Seq[Monitor.Value], start: DateTime, end:DateTime)
                          (implicit session: DBSession = AutoSession): List[Alarm] = {
+    val mStr = SQLSyntax.createUnsafely(monitors.mkString("('", "','", "')"))
     val tab = getTabName(start.getYear)
     val startT: Timestamp = start
     val endT: Timestamp = end
     sql"""
         Select *
         From ${tab}
-        Where M_DateTime>=${startT} and M_DateTime<${endT} and
-        ORDER BY M_DateTime ASC
+        Where M_DateTime>=${startT} and M_DateTime<${endT} and M_ITEM like '%-%-%' and DP_NO in ${mStr}
+        ORDER BY M_DateTime Desc
         """.map {
       rs =>
         Alarm(Monitor.withName(rs.string(1)), rs.string(2), rs.timestamp(3), rs.float(4),

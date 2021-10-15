@@ -258,6 +258,7 @@ GET      /EpaTickets                                                            
 GET      /DueTicket/excel                                                       controllers.Maintance.dueTicketList(outputTypeStr="excel")
 GET      /DueTicket/json                                                        controllers.Maintance.dueTicketList(outputTypeStr="json")
 GET      /TestLineMessage                                                       controllers.Maintance.testLineNotify
+POST     /DeleteExtendReason                                                    controllers.Maintance.deleteExtendReason
 
 GET      /AggregateQuery                                                        controllers.Report.aggregateQuery
 GET      /AggregrateReport2/:monitors/:monitorTypes/:start/:end                 controllers.Report.getAggregrateReport2(monitors, monitorTypes, start, end, outputType="html")
@@ -274,3 +275,6 @@ GET      /MinMonthlyReportSocket                                                
 GET      /DownloadMinMonthlyReport/:n                                                                controllers.Report.downloadMinMontlyReport(n: Int)
 GET      /AlarmNotificationSocket                                                                    controllers.Realtime.alarmNofificationSocket
 GET      /DueTicketNotificationSocket                                                         controllers.Realtime.dueTicketNotificationSocket
+
+#TEST
+GET     /InsertStdAlarm                                                                       controllers.Maintance.insertTestStdAlarm

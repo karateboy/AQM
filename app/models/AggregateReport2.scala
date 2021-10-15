@@ -66,6 +66,16 @@ object AggregateReport2 {
 
   }
 
+  def updateState(monitor:Monitor.Value, monitorType: MonitorType.Value, start:DateTime, end:DateTime, state:String)
+                 (implicit session: DBSession = AutoSession) = {
+    sql"""
+        UPDATE [dbo].[AggregateReport2]
+          SET
+              [State] = ${state}
+          WHERE [time] >= ${start.toDate} and [time] < ${end.toDate} and [monitorType] = ${monitorType.toString} and monitor = ${monitor.toString}
+         """.update().apply()
+  }
+
   def upsert(reportList: Seq[AggregateReport2])(implicit session: DBSession = AutoSession) = {
     for (report <- reportList) {
       val timeT: java.sql.Timestamp = report.time

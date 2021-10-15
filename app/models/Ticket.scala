@@ -1,24 +1,17 @@
 package models
-import scalikejdbc._
-import play.api._
+
 import com.github.nscala_time.time.Imports._
-import ModelHelper._
-import models._
+import models.Alarm._
+import models.ModelHelper._
 import play.api.libs.json._
-import play.api.libs.functional.syntax._
-import play.api.libs.json.Json
+import scalikejdbc._
+
 import scala.concurrent.ExecutionContext.Implicits.global
-import Alarm._
 
 case class FormData(start: String, end: String, boolValues: Seq[Boolean], strValues: Seq[String], comments: Seq[String]) {
-  def getBool(idx: Int) = {
-    if (idx >= boolValues.length)
-      false
-    else
-      boolValues(idx)
-  }
-
   var idx = 0
+  var strIdx = 0
+
   def getBoolSeq() = {
     val ret = getBool(idx)
     idx += 1
@@ -26,6 +19,13 @@ case class FormData(start: String, end: String, boolValues: Seq[Boolean], strVal
       "checked"
     else
       ""
+  }
+
+  def getBool(idx: Int) = {
+    if (idx >= boolValues.length)
+      false
+    else
+      boolValues(idx)
   }
 
   def getBoolSeq(trueStr: String, falseStr: String) = {
@@ -37,18 +37,17 @@ case class FormData(start: String, end: String, boolValues: Seq[Boolean], strVal
       falseStr
   }
 
-  var strIdx = 0
+  def getStrSeq() = {
+    val ret = getStr(strIdx)
+    strIdx += 1
+    ret
+  }
+
   def getStr(idx: Int) = {
     if (idx >= strValues.length)
       ""
     else
       strValues(idx)
-  }
-
-  def getStrSeq() = {
-    val ret = getStr(strIdx)
-    strIdx += 1
-    ret
   }
 
   def getComment(idx: Int) = {
@@ -60,20 +59,21 @@ case class FormData(start: String, end: String, boolValues: Seq[Boolean], strVal
 }
 
 case class PartFormData(id: String, source: String, charged: Boolean, unit_price: String, amount: String, total: String)
+
 case class RepairFormData(start: String, end: String, equipmentId: String, parts: Seq[PartFormData], alarm: Option[Alarm],
                           explain: String, result: String, comment: String, boolValues: Seq[Boolean], strValues: Seq[String]) {
-  def getBool(idx: Int) = {
-    if (idx >= boolValues.length)
-      false
-    else
-      boolValues(idx)
-  }
-
   def getBoolStr(idx: Int, trueStr: String, falseStr: String) = {
     if (getBool(idx))
       trueStr
     else
       falseStr
+  }
+
+  def getBool(idx: Int) = {
+    if (idx >= boolValues.length)
+      false
+    else
+      boolValues(idx)
   }
 
   def getChecked(idx: Int) = {
@@ -91,8 +91,8 @@ case class RepairFormData(start: String, end: String, equipmentId: String, parts
     else
       strValues(idx)
   }
-  
-  def replaceAlarm(alarmOpt:Option[Alarm])=
+
+  def replaceAlarm(alarmOpt: Option[Alarm]) =
     RepairFormData(start, end, equipmentId, parts, alarmOpt, explain, result, comment, boolValues, strValues)
 
 }
@@ -136,7 +136,7 @@ case class Ticket(id: Int, submit_date: DateTime, active: Boolean, ticketType: T
                   monitorType: Option[MonitorType.Value], reason: String, executeDate: DateTime, formJson: String,
                   repairType: Option[String], repairSubType: Option[String], readyToClose: Option[Boolean],
                   rejectReason: Option[String] = None, overStd: Option[Int] = None,
-                  extendDate: Option[DateTime] = None, extendReason: Option[String]= None) {
+                  extendDate: Option[DateTime] = None, extendReason: Option[String] = None) {
 
   implicit val formDataRead = Json.reads[FormData]
   implicit val formDataWrite = Json.writes[FormData]
@@ -145,7 +145,7 @@ case class Ticket(id: Int, submit_date: DateTime, active: Boolean, ticketType: T
   implicit val repairDataRead = Json.reads[RepairFormData]
   implicit val repairDataWrite = Json.writes[RepairFormData]
 
-  def getRepairForm = {
+  def getRepairForm: RepairFormData = {
     val result = Json.parse(formJson).validate[RepairFormData]
     result.fold(
       error =>
@@ -153,7 +153,7 @@ case class Ticket(id: Int, submit_date: DateTime, active: Boolean, ticketType: T
       success => success)
   }
 
-  def getForm = {
+  def getForm: FormData = {
     val result = Json.parse(formJson).validate[FormData]
     result.fold(
       error =>
@@ -161,17 +161,19 @@ case class Ticket(id: Int, submit_date: DateTime, active: Boolean, ticketType: T
       success => success)
   }
 }
+
 /**
  * @author user
  */
 object Ticket {
-  import scala.collection.mutable.ArrayBuffer
   implicit val formDataRead = Json.reads[FormData]
   implicit val formDataWrite = Json.writes[FormData]
   implicit val partDataRead = Json.reads[PartFormData]
   implicit val partDataWrite = Json.writes[PartFormData]
   implicit val repairDataRead = Json.reads[RepairFormData]
   implicit val repairDataWrite = Json.writes[RepairFormData]
+  val defaultFormData = FormData("", "", Seq.empty[Boolean], Seq.empty[String], Seq.empty[String])
+  val defaultRepairFormData = RepairFormData("", "", "", Seq.empty[PartFormData], None, "", "", "", Seq.empty[Boolean], Seq.empty[String])
 
   def upgrade()(implicit session: DBSession = AutoSession) = {
     sql"""
@@ -191,11 +193,11 @@ object Ticket {
   }
 
   def newTicket(ticket: Ticket)(implicit session: DBSession = AutoSession) = {
-    DB localTx { implicit session =>
-      val submit_tt: java.sql.Timestamp = ticket.submit_date
-      val execute_date: java.sql.Date = ticket.executeDate
+    val submit_tt: java.sql.Timestamp = ticket.submit_date
+    val execute_date = ticket.executeDate.toDate
 
-      val ret = sql"""
+    val ret =
+      sql"""
         Insert into Ticket(
         [submit_date]
         ,[active]
@@ -212,7 +214,11 @@ object Ticket {
         ,[readyToClose]
         ,[overStd])
         values(${submit_tt}, ${ticket.active}, ${ticket.ticketType.id}, ${ticket.submiter_id}, ${ticket.owner_id}, ${ticket.monitor.toString},
-          ${ticket.monitorType.map { _.toString }}, ${ticket.reason}, ${execute_date}, 
+          ${
+        ticket.monitorType.map {
+          _.toString
+        }
+      }, ${ticket.reason}, ${execute_date},
           ${ticket.formJson},
           ${ticket.repairType},
           ${ticket.repairSubType},
@@ -220,114 +226,94 @@ object Ticket {
           ${ticket.overStd})
         """.update.apply
 
-      if (ticket.ticketType == TicketType.repair) {
-        import scala.concurrent._
-        Future {
-          blocking {
-            import controllers.ExcelUtility
-            val excel = ExcelUtility.epbNotification(List(ticket))
-            val title = s"環保局通報單_${Monitor.map(ticket.monitor).name}${ticket.submit_date.toString("MMdd_HHmm")}"
+    if (ticket.ticketType == TicketType.repair) {
+      import scala.concurrent._
+      Future {
+        blocking {
+          import controllers.ExcelUtility
+          val excel = ExcelUtility.epbNotification(List(ticket))
+          val title = s"環保局通報單_${Monitor.map(ticket.monitor).name}${ticket.submit_date.toString("MMdd_HHmm")}"
 
-            import play.api.Play.current
-            import java.nio.file.StandardCopyOption._
-            import java.nio.file.Paths
-            import java.nio.file.Files
+          import play.api.Play.current
 
-            val targetPath = Paths.get(current.path.getAbsolutePath + s"/notification/${title}.xlsx")
-            Files.move(excel.toPath, targetPath, REPLACE_EXISTING)
+          import java.nio.file.{Files, Paths}
+          import java.nio.file.StandardCopyOption._
 
-            import play.api.libs.mailer._
-            import play.api.Play.current
-            val userOpt = User.getUserById(ticket.owner_id)
-            if (userOpt.isDefined) {
-              val user = userOpt.get
-              val ticketTypeStr = TicketType.map(ticket.ticketType)
-              val mtType = ticket.monitorType.map(MonitorType.map(_).desp)
-              val msg = s"維修案件  : ${Monitor.map(ticket.monitor).name}-${ModelHelper.formatOptStr(mtType)}"
-              val htmlMsg = s"<html><body><p><b>$msg</b></p></body></html>"
+          val targetPath = Paths.get(current.path.getAbsolutePath + s"/notification/${title}.xlsx")
+          Files.move(excel.toPath, targetPath, REPLACE_EXISTING)
 
-              val email = Email(
-                s"維修案件: ${Monitor.map(ticket.monitor).name}-${ModelHelper.formatOptStr(mtType)}",
-                "案件通報 <karateboy.huang@gmail.com>",
-                List(user.email),
-                // adds attachment
-                attachments = Seq(),
-                // sends text, HTML or both...
-                bodyText = Some(msg),
-                bodyHtml = Some(htmlMsg))
+          import play.api.libs.mailer._
+          val userOpt = User.getUserById(ticket.owner_id)
+          if (userOpt.isDefined) {
+            val user = userOpt.get
+            val ticketTypeStr = TicketType.map(ticket.ticketType)
+            val mtType = ticket.monitorType.map(MonitorType.map(_).desp)
+            val msg = s"維修案件  : ${Monitor.map(ticket.monitor).name}-${ModelHelper.formatOptStr(mtType)}"
+            val htmlMsg = s"<html><body><p><b>$msg</b></p></body></html>"
 
-              MailerPlugin.send(email)
-              SmsSender.send(List(user), msg)
-            }
+            val email = Email(
+              s"維修案件: ${Monitor.map(ticket.monitor).name}-${ModelHelper.formatOptStr(mtType)}",
+              "案件通報 <karateboy.huang@gmail.com>",
+              List(user.email),
+              // adds attachment
+              attachments = Seq(),
+              // sends text, HTML or both...
+              bodyText = Some(msg),
+              bodyHtml = Some(htmlMsg))
+
+            MailerPlugin.send(email)
+            SmsSender.send(List(user), msg)
           }
         }
       }
-
-      ret
     }
+
+    ret
   }
-
-  def ticketMapper: WrappedResultSet => Ticket =
-    { r: WrappedResultSet =>
-      val ticketType = TicketType.withId(r.int(4))
-      Ticket(r.int(1), r.timestamp(2), r.boolean(3), ticketType,
-        r.int(5), r.int(6), Monitor.withName(r.string(7)),
-        if (r.stringOpt(8).isEmpty)
-          None
-        else
-          Some(MonitorType.withName(r.string(8))),
-        r.string(9), r.date(10),
-        if (r.stringOpt(11).isEmpty) {
-          if (ticketType == TicketType.repair)
-            Json.toJson(defaultRepairFormData).toString
-          else
-            Json.toJson(Ticket.defaultFormData).toString
-        } else
-          r.stringOpt(11).get,
-        r.stringOpt(12),
-        r.stringOpt(13),
-        r.booleanOpt(14),
-        r.stringOpt(17),
-        r.intOpt(18),
-        r.jodaDateTimeOpt(19),
-        r.stringOpt(20))
-    }
 
   def queryTickets(start: DateTime, end: DateTime)(implicit session: DBSession = AutoSession) = {
     sql"""
       Select *
       From Ticket
       Where execute_date between ${start} and ${end}
-      Order by submit_date      
-      """.map { ticketMapper }.list().apply()
+      Order by submit_date
+      """.map {
+      ticketMapper
+    }.list().apply()
   }
 
-  def queryOverStdTickets(start: DateTime, end: DateTime, stdCodes:Seq[Int])(implicit session: DBSession = AutoSession) = {
+  def queryOverStdTickets(start: DateTime, end: DateTime, stdCodes: Seq[Int])(implicit session: DBSession = AutoSession) = {
     val stdCodeStr = SQLSyntax.createUnsafely(stdCodes.mkString("('", "','", "')"))
     sql"""
       Select *
       From Ticket
       Where submit_date between ${start} and ${end} and OverStd in ${stdCodeStr}
       Order by submit_date desc
-      """.map { ticketMapper }.list().apply()
+      """.map {
+      ticketMapper
+    }.list().apply()
   }
 
-  def queryMonitorTickets(m:Monitor.Value, start: DateTime, end: DateTime)(implicit session: DBSession = AutoSession) = {
+  def queryMonitorTickets(m: Monitor.Value, start: DateTime, end: DateTime)(implicit session: DBSession = AutoSession) = {
     sql"""
       Select *
       From Ticket
       Where execute_date between ${start} and ${end} and monitor = ${m.toString}
-      Order by submit_date      
-      """.map { ticketMapper }.list().apply()
+      Order by submit_date
+      """.map {
+      ticketMapper
+    }.list().apply()
   }
-    
+
   def queryClosedRepairTickets(start: DateTime, end: DateTime)(implicit session: DBSession = AutoSession) = {
     sql"""
       Select *
       From Ticket
       Where execute_date between ${start} and ${end} and ticketType = ${TicketType.repair.id} and active = 0
-      Order by submit_date      
-      """.map { ticketMapper }.list().apply()
+      Order by submit_date
+      """.map {
+      ticketMapper
+    }.list().apply()
   }
 
   def queryActiveTickets(start: DateTime, end: DateTime)(implicit session: DBSession = AutoSession) = {
@@ -335,8 +321,10 @@ object Ticket {
       Select *
       From Ticket
       Where execute_date between ${start} and ${end} and active = 1 and submiter_id != 19
-      Order by execute_date      
-      """.map { ticketMapper }.list().apply()
+      Order by execute_date
+      """.map {
+      ticketMapper
+    }.list().apply()
   }
 
   def queryActiveMaintanceTickets(start: DateTime)(implicit session: DBSession = AutoSession) = {
@@ -344,8 +332,10 @@ object Ticket {
       Select *
       From Ticket
       Where execute_date >= ${start} and execute_date < ${start + 1.day} and ticketType != ${TicketType.repair.id} and active = 1
-      Order by execute_date      
-      """.map { ticketMapper }.list().apply()
+      Order by execute_date
+      """.map {
+      ticketMapper
+    }.list().apply()
   }
 
   def queryAllMaintanceTickets(start: DateTime, end: DateTime)(implicit session: DBSession = AutoSession) = {
@@ -353,8 +343,10 @@ object Ticket {
       Select *
       From Ticket
       Where execute_date between ${start} and ${end} and ticketType != ${TicketType.repair.id}
-      Order by execute_date      
-      """.map { ticketMapper }.list().apply()
+      Order by execute_date
+      """.map {
+      ticketMapper
+    }.list().apply()
   }
 
   def queryActiveRepairTickets()(implicit session: DBSession = AutoSession) = {
@@ -362,31 +354,40 @@ object Ticket {
       Select *
       From Ticket
       Where ticketType = ${TicketType.repair.id} and active = 1
-      Order by execute_date      
-      """.map { ticketMapper }.list().apply()
+      Order by execute_date
+      """.map {
+      ticketMapper
+    }.list().apply()
   }
 
-  def getActiveRepairTicketsByGroup(groupId:Int)(implicit session: DBSession = AutoSession) = {
+  def getActiveRepairTicketsByGroup(groupId: Int)(implicit session: DBSession = AutoSession) = {
     val users = User.getUserByGroup(groupId)
-    val userIdList = users.map { _.id.get }
+    val userIdList = users.map {
+      _.id.get
+    }
     val userIdStr = SQLSyntax.createUnsafely(userIdList.mkString("('", "','", "')"))
     sql"""
       Select *
       From Ticket
       Where ticketType = ${TicketType.repair.id} and active = 1 and submiter_id in $userIdStr and readyToClose = 0
-      Order by execute_date      
-      """.map { ticketMapper }.list().apply()
+      Order by execute_date
+      """.map {
+      ticketMapper
+    }.list().apply()
   }
 
   def getActiveRepairDueTicketsByGroup(implicit session: DBSession = AutoSession) = {
-    val now: java.sql.Timestamp = DateTime.now()
+    val yesterday: java.sql.Timestamp = DateTime.yesterday()
     sql"""
       Select *
       From Ticket
       Where ticketType = ${TicketType.repair.id} and active = 1 and submiter_id = 19
-            and readyToClose = 0 and execute_date < ${now}
+            and readyToClose = 0 and
+            (ExtendDate < ${yesterday} or (ExtendDate is null and execute_date < ${yesterday}))
       Order by execute_date
-      """.map { ticketMapper }.list().apply()
+      """.map {
+      ticketMapper
+    }.list().apply()
   }
 
   def myTickets(ID: Int)(implicit session: DBSession = AutoSession) = {
@@ -394,11 +395,13 @@ object Ticket {
       Select *
       From Ticket
       Where owner_id = ${ID} and active = 1 and readyToClose = 0
-      Order by submit_date      
-      """.map { ticketMapper }.list().apply()
+      Order by submit_date
+      """.map {
+      ticketMapper
+    }.list().apply()
   }
 
-  def overStdAlarmTickets(alarmLevels: Seq[AlarmLevel.Value], monitors: Seq[Monitor.Value], start:DateTime, end:DateTime)(implicit session: DBSession = AutoSession) = {
+  def overStdAlarmTickets(alarmLevels: Seq[AlarmLevel.Value], monitors: Seq[Monitor.Value], start: DateTime, end: DateTime)(implicit session: DBSession = AutoSession) = {
     val startT: java.sql.Timestamp = start
     val endT: java.sql.Timestamp = end
     val monitorStr = monitors.map(_.toString)
@@ -407,7 +410,9 @@ object Ticket {
       From Ticket
       Where monitor
       Order by submit_date desc
-      """.map { ticketMapper }.list().apply()
+      """.map {
+      ticketMapper
+    }.list().apply()
   }
 
   def ticketSubmittedByMe(ID: Int, readyToClose: Boolean = true)(implicit session: DBSession = AutoSession) = {
@@ -416,8 +421,35 @@ object Ticket {
       Select *
       From Ticket
       Where submiter_id = ${ID} and active = 1 and readyToClose = $bit
-      Order by submit_date      
-      """.map { ticketMapper }.list().apply()
+      Order by submit_date
+      """.map {
+      ticketMapper
+    }.list().apply()
+  }
+
+  def ticketMapper: WrappedResultSet => Ticket = { r: WrappedResultSet =>
+    val ticketType = TicketType.withId(r.int(4))
+    Ticket(r.int(1), r.timestamp(2), r.boolean(3), ticketType,
+      r.int(5), r.int(6), Monitor.withName(r.string(7)),
+      if (r.stringOpt(8).isEmpty)
+        None
+      else
+        Some(MonitorType.withName(r.string(8))),
+      r.string(9), r.date(10),
+      if (r.stringOpt(11).isEmpty) {
+        if (ticketType == TicketType.repair)
+          Json.toJson(defaultRepairFormData).toString
+        else
+          Json.toJson(Ticket.defaultFormData).toString
+      } else
+        r.stringOpt(11).get,
+      r.stringOpt(12),
+      r.stringOpt(13),
+      r.booleanOpt(14),
+      r.stringOpt(17),
+      r.intOpt(18),
+      r.jodaDateTimeOpt(19),
+      r.stringOpt(20))
   }
 
   def getTicket(ID: Int)(implicit session: DBSession = AutoSession) = {
@@ -425,12 +457,11 @@ object Ticket {
       Select *
       From Ticket
       Where id = ${ID}
-      """.map { ticketMapper }.single().apply()
+      """.map {
+      ticketMapper
+    }.single().apply()
   }
 
-
-
-  case class TicketPhoto(photos: List[Option[java.sql.Blob]])
   def getTicketPhoto(ID: Int)(implicit session: DBSession = AutoSession) = {
     sql"""
       Select Photo1, Photo2
@@ -447,7 +478,9 @@ object Ticket {
       From Ticket
       Where ticketType=${ticket.ticketType.id} and monitor=${ticket.monitor.toString()} and execute_date < ${ticket.executeDate.toDate()}
       Order by execute_date desc
-      """.map { ticketMapper }.single().apply()
+      """.map {
+      ticketMapper
+    }.single().apply()
   }
 
   def updateTicket(ticket: Ticket)(implicit session: DBSession = AutoSession) = {
@@ -455,13 +488,34 @@ object Ticket {
       sql"""
         Update Ticket
         Set [ticketType]=${ticket.ticketType.id}, [owner_id]=${ticket.owner_id},
-          [monitor]=${ticket.monitor.toString}, [monitorType]=${ticket.monitorType.map { _.toString }},
-          [reason]=${ticket.reason}, [execute_date]=${ticket.executeDate.toDate}, [form] = ${ticket.formJson} 
+          [monitor]=${ticket.monitor.toString}, [monitorType]=${
+        ticket.monitorType.map {
+          _.toString
+        }
+      },
+          [reason]=${ticket.reason}, [execute_date]=${ticket.executeDate.toDate}, [form] = ${ticket.formJson}
         Where ID = ${ticket.id}
         """.update.apply
     }
+    if(ticket.ticketType == TicketType.repair){
+      val repairFormData: RepairFormData = Json.parse(ticket.formJson).validate[RepairFormData].get
+      // 儀器異常
+      if(ticket.monitorType.isDefined){
+        val mt = ticket.monitorType.get
+        val now = DateTime.now
+        if(repairFormData.getBool(3)){
+          AggregateReport2.updateState(ticket.monitor, mt, now.minusDays(2), now, AggregateReport2.stateList(2))
+        }else if(repairFormData.getBool(4)){
+          // 儀器正常
+          AggregateReport2.updateState(ticket.monitor, mt, now.minusDays(2), now, AggregateReport2.stateList(3))
+        }
+      }
+    }
   }
-  def extendTicket(ticketID:Int, extendDate:DateTime, extendReason:String)(implicit session: DBSession = AutoSession) = {
+
+  import java.io.File
+
+  def extendTicket(ticketID: Int, extendDate: DateTime, extendReason: String)(implicit session: DBSession = AutoSession) = {
     DB localTx { implicit session =>
       val extendDateTime: java.sql.Timestamp = extendDate
       sql"""
@@ -472,9 +526,7 @@ object Ticket {
     }
   }
 
-  import java.io.File
   def attachPhoto1(id: Int, photo: File)(implicit session: DBSession = AutoSession) = {
-    import java.io.InputStream
     import java.io.FileInputStream
     import java.sql._
 
@@ -491,7 +543,6 @@ object Ticket {
   }
 
   def attachPhoto2(id: Int, photo: File)(implicit session: DBSession = AutoSession) = {
-    import java.io.InputStream
     import java.io.FileInputStream
     import java.sql._
 
@@ -569,9 +620,7 @@ object Ticket {
     }
   }
 
-  val defaultFormData = FormData("", "", Seq.empty[Boolean], Seq.empty[String], Seq.empty[String])
-  val defaultRepairFormData = RepairFormData("", "", "", Seq.empty[PartFormData], None, "", "", "", Seq.empty[Boolean], Seq.empty[String])
-  def defaultAlarmTicketForm(alarm:Alarm) = RepairFormData("", "", "", Seq.empty[PartFormData], Some(alarm), "", "", "", Seq.empty[Boolean], Seq.empty[String])
+  def defaultAlarmTicketForm(alarm: Alarm) = RepairFormData("", "", "", Seq.empty[PartFormData], Some(alarm), "", "", "", Seq.empty[Boolean], Seq.empty[String])
 
   def updateTicketFormData(ID: Int, form: FormData)(implicit session: DBSession = AutoSession) = {
     DB localTx { implicit session =>
@@ -592,4 +641,6 @@ object Ticket {
         """.update.apply
     }
   }
+
+  case class TicketPhoto(photos: List[Option[java.sql.Blob]])
 }

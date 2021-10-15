@@ -20,6 +20,7 @@ import com.google.inject.Inject
 import models.Alarm.getOverStdLevel
 import play.api.libs.json.Json.reads
 import play.api.libs.ws.{WS, WSClient}
+import scalikejdbc.DB
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import java.nio.file.Files
@@ -362,7 +363,7 @@ object Maintance extends Controller {
         val userInfo = userInfoOpt.get
         val group = Group.getGroup(userInfo.groupID).get
         val tickets = Ticket.ticketSubmittedByMe(userInfo.id)
-        //val ticketsOwnedByMe = 
+        //val ticketsOwnedByMe =
         val adminUsers = User.getAllUsers()
         val usrMap = Map(adminUsers.map { u => (u.id.get -> u) }: _*)
 
@@ -390,7 +391,7 @@ object Maintance extends Controller {
         val userInfo = userInfoOpt.get
         val group = Group.getGroup(userInfo.groupID).get
         val tickets = Ticket.ticketSubmittedByMe(userInfo.id)
-        //val ticketsOwnedByMe = 
+        //val ticketsOwnedByMe =
         val users = User.getAllUsers()
         val usrMap = Map(users.map { u => (u.id.get -> u) }: _*)
 
@@ -655,12 +656,12 @@ object Maintance extends Controller {
               entry =>
                 val matchedOpt = abnormalEntries.find { updatedEntry => updatedEntry.monitor == entry.monitor &&
                   updatedEntry.monitorType == entry.monitorType}
-                
+
                 matchedOpt.getOrElse(entry)
             }
             AbnormalReport.updateReport(date, updatedExplain)
           }
-          
+
           Ok(Json.obj("ok" -> true))
         });
   }
@@ -999,11 +1000,11 @@ object Maintance extends Controller {
             val dateStr = t.executeDate.toString("MM/dd")
             if (t.executeDate < today && t.active)
               s"""
-               <a href="#" onClick="loadPage('/Ticket/${t.id}','維修保養','案件細節')"><font color="red">${dateStr}</font></a>                              
+               <a href="#" onClick="loadPage('/Ticket/${t.id}','維修保養','案件細節')"><font color="red">${dateStr}</font></a>
                """
             else
               s"""
-               <a href="#" onClick="loadPage('/Ticket/${t.id}','維修保養','案件細節')">${dateStr}</a>                              
+               <a href="#" onClick="loadPage('/Ticket/${t.id}','維修保養','案件細節')">${dateStr}</a>
                """
           }
           val ttMap =
@@ -1091,49 +1092,52 @@ object Maintance extends Controller {
           BadRequest(Json.obj("ok" -> false, "msg" -> JsError.toJson(error)))
         },
         param => {
-          val defaultTicketOwner = SystemConfig.getAlarmTicketDefaultUserId()
-          for (alarmId <- param.alarmToTicketList) {
-            Alarm.updateAlarmTicketState(alarmId.monitor, alarmId.mItem, new DateTime(alarmId.time), param.status)
-            val arOpt = Alarm.getAlarmOpt(alarmId.monitor, alarmId.mItem, new DateTime(alarmId.time))
-            if (arOpt.isDefined) {
-              val ar = arOpt.get
-              val ar_state =
-                if (ar.mVal == 0)
-                  "恢復正常"
-                else
-                  "觸發"
+          val ticketOptList: Seq[Option[Ticket]] =
+              for (alarmId <- param.alarmToTicketList) yield {
+                Alarm.updateAlarmTicketState(alarmId.monitor, alarmId.mItem, new DateTime(alarmId.time), param.status)
+                val arOpt = Alarm.getAlarmOpt(alarmId.monitor, alarmId.mItem, new DateTime(alarmId.time))
+                if (arOpt.isDefined) {
+                  val ar = arOpt.get
+                  val ar_state =
+                    if (ar.mVal == 0)
+                      "恢復正常"
+                    else
+                      "觸發"
 
-              var overStd = 0
-              if(Alarm.isOverStd(ar)){
-                overStd = Alarm.getOverStdLevelCode(ar)
-              }
-              val reason = s"${ar.time.toString("YYYY/MM/dd HH:mm")} ${Monitor.map(ar.monitor).name}:${Alarm.getItem(ar)}-${Alarm.getReason(ar)}:${ar_state}"
-              val mtOpt = try {
-                val tokens = ar.mItem.split("-")
-                if(ar.code == MonitorStatus.OVER_STAT && tokens.length == 3){
-                  Some(MonitorType.withName(tokens(0)))
+                  var overStd = 0
+                  if(Alarm.isOverStd(ar)){
+                    overStd = Alarm.getOverStdLevelCode(ar)
+                  }
+                  val reason = s"${ar.time.toString("YYYY/MM/dd HH:mm")} ${Monitor.map(ar.monitor).name}:${Alarm.getItem(ar)}-${Alarm.getReason(ar)}:${ar_state}"
+                  val mtOpt = try {
+                    val tokens = ar.mItem.split("-")
+                    if(ar.code == MonitorStatus.OVER_STAT && tokens.length == 3){
+                      Some(MonitorType.withName(tokens(0)))
+                    }else
+                      Some(MonitorType.withName(ar.mItem))
+                  } catch {
+                    case ex: Throwable =>
+                      None
+                  }
+                  val (repairType, repairSubType) = if (mtOpt.isDefined) {
+                    (Some("數據"), Some(MonitorType.map(mtOpt.get).desp))
+                  } else
+                    (None, None)
+
+                  val executeDate = DateTime.parse(alarmId.executeDate)
+                  if (param.status == "YES") {
+                      Some(Ticket(0, DateTime.now, true, TicketType.repair, user.id,
+                        SystemConfig.getAlarmTicketDefaultUserId(), alarmId.monitor, mtOpt, reason,
+                        executeDate, Json.toJson(Ticket.defaultAlarmTicketForm(ar)).toString,
+                        repairType, repairSubType, Some(false), overStd = Some(overStd)))
+                  }else
+                    None
                 }else
-                  Some(MonitorType.withName(ar.mItem))
-              } catch {
-                case ex: Throwable =>
                   None
               }
-              val (repairType, repairSubType) = if (mtOpt.isDefined) {
-                (Some("數據"), Some(MonitorType.map(mtOpt.get).desp))
-              } else
-                (None, None)
-
-              val executeDate = DateTime.parse(alarmId.executeDate)
-              if (param.status == "YES") {
-                val ticket =
-                  Ticket(0, DateTime.now, true, TicketType.repair, user.id,
-                    SystemConfig.getAlarmTicketDefaultUserId(), alarmId.monitor, mtOpt, reason,
-                    executeDate, Json.toJson(Ticket.defaultAlarmTicketForm(ar)).toString,
-                    repairType, repairSubType, Some(false), overStd = Some(overStd))
-                Ticket.newTicket(ticket)
-              }
-            }
-          }
+          val ticketList = ticketOptList.flatten
+          for(ticket<-ticketList)
+            Ticket.newTicket(ticket)
 
           Ok(Json.obj("ok" -> true, "count" -> param.alarmToTicketList.length))
         })
@@ -1304,25 +1308,25 @@ object Maintance extends Controller {
       val end = DateTime.parse(endStr, DateTimeFormat.forPattern("yyyy-M-d"))
       val outputType = OutputType.withName(outputTypeStr)
 
-      val list = Alarm.getAlarm(monitors, None, start, end)
-        .filter(ar=>{
+      val list = Alarm.getAlarmOverStdList(monitors, start, end.plusDays(1))
+      val list2 = list.filter(ar=>{
           if(Alarm.isOverStd(ar)){
             val level = getOverStdLevel(ar)
             levels.contains(level)
           }else
             false
         })
+
       outputType match {
         case OutputType.html=>
-          Ok(views.html.overStdAlarm(list))
+          Ok(views.html.overStdAlarm(list2))
         case OutputType.excel=>
-          val excelFile = ExcelUtility.alarmList(list, s"超限警報查詢(${startStr}~${endStr})")
+          val excelFile = ExcelUtility.overStdAlarmList(list, s"超限警報查詢(${startStr}~${endStr})")
           Ok.sendFile(excelFile, fileName = _ =>
             play.utils.UriEncoding.encodePathSegment("超限警報查詢" + ".xlsx", "UTF-8"),
             onClose = () => { Files.deleteIfExists(excelFile.toPath()) })
 
       }
-
   }
 
   def closedRepairTicketReport(monitorStr: String, startStr: String, endStr: String, outputTypeStr: String) = Security.Authenticated {
@@ -1428,4 +1432,56 @@ object Maintance extends Controller {
     }
   }
 
+  def insertTestStdAlarm() = Security.Authenticated {
+    implicit request=>
+    val v = 100f
+    for(m<-Monitor.mvList){
+      for(mt<-Monitor.map(m).monitorTypes){
+        val mItem = s"${mt.toString}-${AlarmDataType.Hour}-${AlarmLevel.Law}"
+        val ar = Alarm.Alarm(m, mItem, DateTime.now, v, MonitorStatus.OVER_STAT)
+        try {
+          Alarm.insertAlarm(ar)
+        } catch {
+          case ex: Exception =>
+        }
+      }
+      for(mt<-Monitor.map(m).monitorTypes){
+        val mItem = s"${mt.toString}-${AlarmDataType.Hour}-${AlarmLevel.Warn}"
+        val ar = Alarm.Alarm(m, mItem, DateTime.now, v, MonitorStatus.WARN_STAT)
+        try {
+          Alarm.insertAlarm(ar)
+        } catch {
+          case ex: Exception =>
+        }
+      }
+      for(mt<-Monitor.map(m).monitorTypes){
+        val mItem = s"${mt.toString}-${AlarmDataType.Hour}-${AlarmLevel.Internal}"
+        val ar = Alarm.Alarm(m, mItem,  DateTime.now, v, MonitorStatus.WARN_STAT)
+        try {
+          Alarm.insertAlarm(ar)
+        } catch {
+          case ex: Exception =>
+        }
+      }
+    }
+    Ok(Json.obj("ok"->true))
+  }
+
+  case class DeleteExtendReasonParam(extendReason: String)
+  def deleteExtendReason = Security.Authenticated(BodyParsers.parse.json) {
+    implicit request =>
+      implicit val reads = Json.reads[DeleteExtendReasonParam]
+      val ret = request.body.validate[DeleteExtendReasonParam]
+      ret.fold(
+        error => {
+          Logger.error(JsError.toJson(error).toString())
+          BadRequest(Json.obj("ok" -> false, "msg" -> JsError.toJson(error)))
+        },
+        param=>{
+          val extendReason = SystemConfig.getExtendedReasons
+          val reasons = extendReason.filter(p=>p != param.extendReason)
+          SystemConfig.setExtededReasons(reasons)
+          Ok(Json.obj("ok" -> true))
+        })
+  }
 }

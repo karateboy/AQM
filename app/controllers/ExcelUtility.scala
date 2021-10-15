@@ -2257,6 +2257,53 @@ object ExcelUtility {
     finishExcel(reportFilePath, pkg, wb)
   }
 
+  def overStdAlarmList(arList: List[Alarm.Alarm], title: String) = {
+    val (reportFilePath, pkg, wb) = prepareTemplate("overStdAlarm.xlsx")
+    val evaluator = wb.getCreationHelper().createFormulaEvaluator()
+    val sheet = wb.getSheetAt(0)
+
+    sheet.getRow(0).getCell(0).setCellValue(title)
+    for {
+      ar_idx <- arList.zipWithIndex
+      ar = ar_idx._1
+      rowN = ar_idx._2 + 2
+    } {
+      val row = sheet.createRow(rowN)
+      row.createCell(0).setCellValue(ar.time.toString("YYYY/MM/dd HH:mm"))
+      row.createCell(1).setCellValue(Monitor.map(ar.monitor).name)
+      row.createCell(2).setCellValue(Alarm.getItem(ar))
+      row.createCell(3).setCellValue(Alarm.getMonitorTypeValue(ar))
+      row.createCell(4).setCellValue(Alarm.getReason(ar))
+    }
+    finishExcel(reportFilePath, pkg, wb)
+  }
+
+  def aggregate2List(arList: List[AggregateReport2], title: String) = {
+    val (reportFilePath, pkg, wb) = prepareTemplate("aggregate2.xlsx")
+    val evaluator = wb.getCreationHelper().createFormulaEvaluator()
+    val sheet = wb.getSheetAt(0)
+
+    sheet.getRow(0).getCell(0).setCellValue(title)
+    for {
+      ar_idx <- arList.zipWithIndex
+      ar = ar_idx._1
+      rowN = ar_idx._2 + 2
+    } {
+      val row = sheet.createRow(rowN)
+      row.createCell(0).setCellValue(ar.time.toString("YYYY/MM/dd HH:mm"))
+      row.createCell(1).setCellValue(Monitor.map(ar.monitor).name)
+      row.createCell(2).setCellValue(MonitorType.map(ar.monitorType).desp)
+      row.createCell(3).setCellValue(MonitorType.format(ar.monitorType, Some(ar.value)))
+      row.createCell(4).setCellValue(MonitorType.format(ar.monitorType, ar.stdLaw))
+      row.createCell(5).setCellValue(MonitorType.format(MonitorType.C212, ar.windDir))
+      row.createCell(6).setCellValue(ar.windAngle)
+      row.createCell(7).setCellValue(MonitorType.format(MonitorType.C211, ar.windSpeed))
+      row.createCell(8).setCellValue(ar.action)
+      row.createCell(9).setCellValue(ar.state)
+    }
+    finishExcel(reportFilePath, pkg, wb)
+  }
+
   def repairingTickets(tickets: List[(Ticket, Option[Alarm.Alarm])], title: String, userMap: Map[Int, User]) = {
     val (reportFilePath, pkg, wb) = prepareTemplate("repairingTicket.xlsx")
     val evaluator = wb.getCreationHelper().createFormulaEvaluator()

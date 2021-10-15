@@ -1,30 +1,27 @@
 package models
-import scalikejdbc._
-import play.api._
-import com.github.nscala_time.time.Imports._
-import ModelHelper._
-import models._
-import play.api.libs.json._
-import play.api.libs.functional.syntax._
-import play.api.libs.json.Json
 
-case class EventLog(evtTime:DateTime, evtType:Int, evtDesc:String)
+import com.github.nscala_time.time.Imports._
+import models.ModelHelper._
+import scalikejdbc._
+
+case class EventLog(evtTime: DateTime, evtType: Int, evtDesc: String)
+
 object EventLog {
   val evtTypeManualAudit = 1
   val evtTypeInformAlarm = 2
   val evtTypeDueAlarm = 3
-  
+
   val map = Map(
-      evtTypeManualAudit -> "人工註記",
-      evtTypeInformAlarm -> "警報通報",
-      evtTypeDueAlarm -> "逾期案件"
+    evtTypeManualAudit -> "人工註記",
+    evtTypeInformAlarm -> "警報通報",
+    evtTypeDueAlarm -> "逾期案件"
   )
 
-  def evtTypeToStr(evtType:Int) = {
+  def evtTypeToStr(evtType: Int) = {
     map.getOrElse(evtType, s"未知事件類別:${evtType}")
   }
-  
-  def getList(eventTypes:Seq[Int], start:DateTime, end:DateTime) = {
+
+  def getList(eventTypes: Seq[Int], start: DateTime, end: DateTime) = {
     DB readOnly { implicit session =>
       val eventTypeStr = SQLSyntax.createUnsafely(eventTypes.mkString("('", "','", "')"))
       sql"""
@@ -38,17 +35,10 @@ object EventLog {
     }
   }
 
-  def create(evt: EventLog) = {
-    try {
-      DB localTx { implicit session =>
-        sql"""
+  def create(evt: EventLog)(implicit session: DBSession = AutoSession) = {
+    sql"""
         Insert into eventLog(evtTime, evtType, evtDesc)
         Values(${DateTime.now}, ${evt.evtType}, ${evt.evtDesc})
         """.update.apply
-      }
-    } catch {
-      case ex: Exception =>
-        //Ignore logging error
-    }
   }
 }

@@ -3,6 +3,9 @@ package models
 import akka.actor._
 import com.github.nscala_time.time.Imports._
 
+import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.{Future, blocking}
+
 object AlarmMaster {
   case object AlarmCheck
 
@@ -10,6 +13,7 @@ object AlarmMaster {
 
   case object MaintanceTicketCheck
 
+  case object DueTicketNotify
 }
 
 class AlarmMaster extends Actor {
@@ -38,5 +42,15 @@ class AlarmMaster extends Actor {
       }
     case DataCheckFinish =>
       sender ! PoisonPill
+
+    case DueTicketNotify=>
+      Future{
+        blocking{
+          val dueTickets = Ticket.getActiveRepairDueTicketsByGroup
+          val msg = s"${dueTickets.size}案件逾期!"
+          LineNotify.notify(msg)
+          EventLog.create(EventLog(DateTime.now, EventLog.evtTypeInformAlarm, msg))
+        }
+      }
   }
 }

@@ -43,6 +43,8 @@ object Global extends GlobalSettings {
     Akka.system.scheduler.schedule(Duration(3, MINUTES), Duration(5, MINUTES), alarmActor, AlarmCheck)
     Akka.system.scheduler.schedule(Duration(3, MINUTES), Duration(10, MINUTES), alarmActor, DataCheck)
     Akka.system.scheduler.schedule(Duration(secondToTomorror1AM, SECONDS), Duration(1, DAYS), alarmActor, MaintanceTicketCheck)
+    Akka.system.scheduler.schedule(Duration(secondToTomorror9AM, SECONDS), Duration(1, DAYS), alarmActor, DueTicketNotify)
+
 
     AggregateReport2.createTab
     EpaTicket.create()
@@ -60,6 +62,13 @@ object Global extends GlobalSettings {
   def secondToTomorror1AM = {
     import com.github.nscala_time.time.Imports._
     val tomorrow_1AM = DateTime.tomorrow().withMillisOfDay(0).withHourOfDay(1)
+    val duration = new Duration(DateTime.now(), tomorrow_1AM)
+    duration.getStandardSeconds
+  }
+
+  def secondToTomorror9AM = {
+    import com.github.nscala_time.time.Imports._
+    val tomorrow_1AM = DateTime.tomorrow().withMillisOfDay(0).withHourOfDay(9)
     val duration = new Duration(DateTime.now(), tomorrow_1AM)
     duration.getStandardSeconds
   }
