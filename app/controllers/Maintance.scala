@@ -1396,13 +1396,9 @@ object Maintance extends Controller {
   def testLineNotify = Security.Authenticated.async {
     implicit request=>
     val userInfo = Security.getUserinfo(request).get
-    implicit val write = Json.writes[LinePayload]
-    val f = WS.url("https://notify-api.line.me/api/notify").
-      withHeaders("Authorization"-> s"Bearer gKt23Rc3ApWo2h8tqOrEeZEHFB88WjIcbO6n8QZbBHW",
-      "Content-Type"->"application/x-www-form-urlencoded")
-      .post(Map("message" -> Seq(s"${userInfo.name}測試line訊息")))
+    val f = LineNotify.notify(s"${userInfo.name}測試line訊息")
+
     for(ret<-f) yield {
-      Logger.info(ret.body)
       Ok(Json.obj("ok"->true))
     }
   }
