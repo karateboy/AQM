@@ -980,7 +980,7 @@ object Report extends Controller {
         });
   }
 
-  case class AggregateReportParam(time:Long, monitor:String, monitorType: String, action:String)
+  case class AggregateReportParam(time:Long, monitor:String, monitorType: String, action:String, state:String)
   def saveAggregateReport2 = Security.Authenticated(BodyParsers.parse.json) {
     implicit request =>
       import AggregateReport2._
@@ -998,7 +998,7 @@ object Report extends Controller {
             val monitor = Monitor.withName(entry.monitor)
             val monitorType = MonitorType.withName(entry.monitorType)
             val time = new DateTime(entry.time)
-            updateAction(time, monitor, monitorType, entry.action)
+            updateAction(time, monitor, monitorType, entry.action, entry.state)
           }
           Ok(Json.obj("ok" -> true, "nEntries" -> entries.length))
         })

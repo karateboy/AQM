@@ -258,7 +258,6 @@ class OpenDataReceiver extends Actor with ActorLogging {
         },
         results => {
           try {
-            Logger.info(s"get EPA current Data #=${results.records.size}")
             handleEpaRecords(results.records)
           } catch {
             case ex: Exception =>

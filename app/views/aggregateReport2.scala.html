@@ -27,8 +27,17 @@
 			<td class="col-lg-1">@MonitorType.format(MonitorType.C211, e.windDir)</td>
 			<td class="col-lg-1">@e.windAngle</td>
 			<td class="col-lg-1">@MonitorType.format(MonitorType.C212, e.windSpeed)</td>
-			<td class="col-lg-3"><input type="text" style="width:100%" id="@e.monitor:@e.monitorType:@e.time.getMillis" value="@e.action"></td>
-			<td class="col-lg-1">@e.state</td>
+			<td class="col-lg-3"><input type="text" style="width:100%" id="@{e.monitor}_@{e.monitorType}_@e.time.getMillis"
+					value="@e.action"></td>
+			<td class="col-lg-1"><select id="state_@{e.monitor}_@{e.monitorType}_@e.time.getMillis" class="form-control">
+					@for(state<-AggregateReport2.stateList){
+						@if(e.state == state){
+							<option value="@state" selected>@state</option>
+						}else{
+							<option value="@state">@state</option>
+						} 
+					}
+				</select></td>
 			</tr>
 			}
 	</tbody>
@@ -39,18 +48,23 @@
 <script>
 	$(document).ready(function () {
 		$("#save").click(function () {
-			var $inputs = $("#abnormalTab :input");
+			var $inputs = $("#abnormalTab :text");
 			var entries = [];
 			for (var i = 0; i < $inputs.length; i++) {
 				var input = $inputs.eq(i);
 				let id = input.prop("id");
-				let tokens = id.split(":")
-				var entry = {
+				let tokens = id.split("_")
+				let stateId = `#state_${id}`;
+				console.log(`stateID=${stateId}`);
+				let state = $(stateId).val();
+				let entry = {
 					time: parseInt(tokens[2]),
 					monitor: tokens[0],
 					monitorType: tokens[1],
-					action: input.val()
+					action: input.val(),
+					state
 				};
+				console.log(entry)
 				entries.push(entry);
 			}
 

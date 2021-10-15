@@ -116,23 +116,23 @@ class DataAlarmChecker extends Actor {
             v <- valueOpt
             status <- statusOpt if MonitorStatus.isNormalStat(status)
           } {
-            var overStdAlarm = false
-            for (stdLaw <- MonitorTypeAlert.map(m)(mt).std_law if v >= stdLaw) {
-              alarm = true
-              overStdAlarm
-              val mItem = s"${mt.toString}-${AlarmDataType.Hour}-${AlarmLevel.Law}"
-              val ar = Alarm.Alarm(m, mItem, time.toDateTime, v, MonitorStatus.OVER_STAT)
-              try {
-                Alarm.insertAlarm(ar)
-              } catch {
-                case ex: Exception =>
-              }
-            }
 
-            if (!overStdAlarm)
-              for (warn <- MonitorTypeAlert.map(m)(mt).warn if v >= warn) {
+            def checkStdLaw(): Option[Boolean] =
+              for (stdLaw <- MonitorTypeAlert.map(m)(mt).std_law if v >= stdLaw) yield {
                 alarm = true
-                overStdAlarm = true
+                val mItem = s"${mt.toString}-${AlarmDataType.Hour}-${AlarmLevel.Law}"
+                val ar = Alarm.Alarm(m, mItem, time.toDateTime, v, MonitorStatus.OVER_STAT)
+                try {
+                  Alarm.insertAlarm(ar)
+                } catch {
+                  case ex: Exception =>
+                }
+                true
+              }
+
+            def checkWarn(): Option[Boolean] =
+              for (warn <- MonitorTypeAlert.map(m)(mt).warn if v >= warn) yield {
+                alarm = true
                 val mItem = s"${mt.toString}-${AlarmDataType.Hour}-${AlarmLevel.Warn}"
                 val ar = Alarm.Alarm(m, mItem, time.toDateTime, v, MonitorStatus.WARN_STAT)
                 try {
@@ -140,10 +140,11 @@ class DataAlarmChecker extends Actor {
                 } catch {
                   case ex: Exception =>
                 }
+                true
               }
 
-            if (!overStdAlarm)
-              for (std_internal <- MonitorTypeAlert.map(m)(mt).internal if v >= std_internal) {
+            def checkInternal(): Option[Boolean] =
+              for (std_internal <- MonitorTypeAlert.map(m)(mt).internal if v >= std_internal) yield {
                 alarm = true
                 val mItem = s"${mt.toString}-${AlarmDataType.Hour}-${AlarmLevel.Internal}"
                 val ar = Alarm.Alarm(m, mItem, time.toDateTime, v, MonitorStatus.WARN_STAT)
@@ -152,8 +153,16 @@ class DataAlarmChecker extends Actor {
                 } catch {
                   case ex: Exception =>
                 }
+                true
               }
+
+            val checkSeq: Seq[(Option[Float], Option[Boolean])] = Seq((MonitorTypeAlert.map(m)(mt).std_law, checkStdLaw),
+              (MonitorTypeAlert.map(m)(mt).warn, checkWarn),
+              (MonitorTypeAlert.map(m)(mt).internal, checkInternal)).sortBy(_._1).reverse
+
+            checkSeq.find(t => t._2 == Some(true))
           } // Normal status
+
           for {
             v <- valueOpt
             status <- statusOpt if MonitorStatus.isInvalidOrCalibration(status)

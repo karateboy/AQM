@@ -11,7 +11,10 @@ case class AggregateReport2(time: DateTime, monitor: Monitor.Value, monitorType:
                             stdLaw: Option[Float], windDir: Option[Float], windAngle: String, windSpeed: Option[Float],
                             action: String, state: String)
 
+
 object AggregateReport2 {
+  val stateList= Seq("待確認", "儀器異常", "儀器無異常")
+
   val dirMap =
     Map(
       (0 -> "北"), (1 -> "北北東"), (2 -> "東北"), (3 -> "東北東"), (4 -> "東"),
@@ -50,12 +53,14 @@ object AggregateReport2 {
          """.execute().apply()
   }
 
-  def updateAction(time:DateTime, monitor:Monitor.Value, monitorType: MonitorType.Value, action:String)(implicit session: DBSession = AutoSession) = {
+  def updateAction(time:DateTime, monitor:Monitor.Value, monitorType: MonitorType.Value,
+                   action:String, state:String)(implicit session: DBSession = AutoSession) = {
 
       sql"""
         UPDATE [dbo].[AggregateReport2]
           SET
-              [Action] = ${action}
+              [Action] = ${action},
+              [State] = ${state}
           WHERE [time] = ${time.toDate} and [monitorType] = ${monitorType.toString} and monitor = ${monitor.toString}
          """.update().apply()
 

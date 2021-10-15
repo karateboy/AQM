@@ -281,7 +281,13 @@ object Alarm {
     (ar.code == MonitorStatus.OVER_STAT || ar.code == MonitorStatus.WARN_STAT) && tokens.length == 3
   }
 
-  def getOverStdLevel(ar:Alarm): Int = {
+  def getOverStdLevel(ar:Alarm): AlarmLevel = {
+    val tokens = ar.mItem.split("-")
+    val overStdLevel = AlarmLevel.withName(tokens(2))
+    AlarmLevel.map(overStdLevel)
+  }
+
+  def getOverStdLevelCode(ar:Alarm): Int = {
     val tokens = ar.mItem.split("-")
     val overStdLevel = AlarmLevel.withName(tokens(2))
     AlarmLevel.map(overStdLevel).code
@@ -310,5 +316,22 @@ object Alarm {
       else
         "觸發"
     }
+  }
+
+  def getAlarmOverStdList(monitors:Seq[Monitor.Value], start: DateTime, end:DateTime)
+                         (implicit session: DBSession = AutoSession): List[Alarm] = {
+    val tab = getTabName(start.getYear)
+    val startT: Timestamp = start
+    val endT: Timestamp = end
+    sql"""
+        Select *
+        From ${tab}
+        Where M_DateTime>=${startT} and M_DateTime<${endT} and
+        ORDER BY M_DateTime ASC
+        """.map {
+      rs =>
+        Alarm(Monitor.withName(rs.string(1)), rs.string(2), rs.timestamp(3), rs.float(4),
+          MonitorStatus.getTagInfo(rs.string(5).trim()).toString, rs.stringOpt(6))
+    }.list.apply
   }
 }

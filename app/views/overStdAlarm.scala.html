@@ -1,0 +1,65 @@
+@* alarmNoTicket Template File *@
+@import com.github.nscala_time.time.Imports._
+@import MonitorStatus._
+@import models.Alarm._
+@(report:List[Alarm])
+<div class="row">
+<div class="col-lg-12">
+<div class="panel panel-success">
+<div class="panel-body">
+<div align="right">            			
+	<label class="btn btn-outline" data-toggle="tooltip" data-placement="bottom" title="Excel"><a id="downloadExcel"><i class="fa fa-file-excel-o fa-2x"></i></a></label>            			
+</div>            	
+<div id="reportDiv" align="center">
+<form class="form-horizontal">
+<table id="alarmReport" class="table table-striped table-condensed">
+<thead>
+	<tr>
+		<th></th>
+		<th>時間</th>
+		<th>測站</th>
+		<th>項目</th>
+		<th>測值</th>
+		<th>警報</th>
+	</tr>
+</thead>
+<tbody>
+	@for(a <- report){
+		<tr>
+			<td><input type="checkbox" id="@a.monitor:@a.mItem:@a.time.getMillis"></td>
+			<td>@a.time.toString("YYYY/MM/dd HH:mm")</td>
+			<td>@Monitor.map(a.monitor).name</td>			
+			<td>@models.Alarm.getItem(a)</td>
+			<td>@models.Alarm.getMonitorTypeValue(a)</td>
+			<td>@models.Alarm.getReason(a)</td>
+		</tr>
+	}
+</tbody>
+</table>
+</form>
+</div>
+</div>
+</div>   	
+</div>
+</div>
+
+<script>
+	var localized_url = '@routes.Assets.at("localization/zh_tw.json")';
+</script>
+<script>
+$( document ).ready(function() {
+	var table = $('#alarmReport').DataTable( {
+		responsive: true,
+		language: {
+			url: localized_url,							
+		},
+		searching: false,
+		paging: true
+	} );
+
+	table
+    .column(1)
+    .order( 'desc' )
+    .draw();
+});
+</script>

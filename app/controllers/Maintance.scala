@@ -17,10 +17,11 @@ import play.api.libs.json._
 import play.api.libs.functional.syntax._
 import Ticket._
 import com.google.inject.Inject
+import models.Alarm.getOverStdLevel
 import play.api.libs.json.Json.reads
 import play.api.libs.ws.{WS, WSClient}
-import scala.concurrent.ExecutionContext.Implicits.global
 
+import scala.concurrent.ExecutionContext.Implicits.global
 import java.nio.file.Files
 
 object PartReplaceFilter extends Enumeration {
@@ -1104,7 +1105,7 @@ object Maintance extends Controller {
 
               var overStd = 0
               if(Alarm.isOverStd(ar)){
-                overStd = Alarm.getOverStdLevel(ar)
+                overStd = Alarm.getOverStdLevelCode(ar)
               }
               val reason = s"${ar.time.toString("YYYY/MM/dd HH:mm")} ${Monitor.map(ar.monitor).name}:${Alarm.getItem(ar)}-${Alarm.getReason(ar)}:${ar_state}"
               val mtOpt = try {
@@ -1293,7 +1294,7 @@ object Maintance extends Controller {
 
       Ok(views.html.overStdAlarmTicketQuery(group.privilege))
   }
-  def overStdAlarmTicketReport(levelStr:String, monitorStr:String, startStr:String, endStr:String) = Security.Authenticated {
+  def overStdAlarmTicketReport(levelStr:String, monitorStr:String, startStr:String, endStr:String, outputTypeStr:String) = Security.Authenticated {
     implicit request =>
       val userInfo = Security.getUserinfo(request).get
       val group = Group.getGroup(userInfo.groupID).get
@@ -1301,8 +1302,27 @@ object Maintance extends Controller {
       val monitors = monitorStr.split(":").map(Monitor.withName)
       val start = DateTime.parse(startStr, DateTimeFormat.forPattern("yyyy-M-d"))
       val end = DateTime.parse(endStr, DateTimeFormat.forPattern("yyyy-M-d"))
+      val outputType = OutputType.withName(outputTypeStr)
 
-      Ok(views.html.overStdAlarmTicketQuery(group.privilege))
+      val list = Alarm.getAlarm(monitors, None, start, end)
+        .filter(ar=>{
+          if(Alarm.isOverStd(ar)){
+            val level = getOverStdLevel(ar)
+            levels.contains(level)
+          }else
+            false
+        })
+      outputType match {
+        case OutputType.html=>
+          Ok(views.html.overStdAlarm(list))
+        case OutputType.excel=>
+          val excelFile = ExcelUtility.alarmList(list, s"超限警報查詢(${startStr}~${endStr})")
+          Ok.sendFile(excelFile, fileName = _ =>
+            play.utils.UriEncoding.encodePathSegment("超限警報查詢" + ".xlsx", "UTF-8"),
+            onClose = () => { Files.deleteIfExists(excelFile.toPath()) })
+
+      }
+
   }
 
   def closedRepairTicketReport(monitorStr: String, startStr: String, endStr: String, outputTypeStr: String) = Security.Authenticated {
