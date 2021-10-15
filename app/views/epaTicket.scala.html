@@ -28,7 +28,7 @@
 									<td>@EpaMonitor.map(a.monitor).name</td>
 									<td>@MonitorType.map(a.monitorType).desp</td>
 									<td>@MonitorType.format(a.monitorType, Some(a.value))</td>
-									<td>@a.overStd</td>
+									<td>超過@AlarmLevel.idMap(a.overStd).desc</td>
 									</tr>
 									}
 							</tbody>

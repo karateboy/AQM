@@ -3,8 +3,8 @@ package models
 import com.github.nscala_time.time.Imports._
 import models.ModelHelper._
 import models.Record.{HourRecord, getHourRecords}
-import org.joda.time.format.DateTimeFormat
 import play.api.Logger
+import play.api.libs.json.Json
 import scalikejdbc._
 
 case class AggregateReport2(time: DateTime, monitor: Monitor.Value, monitorType: MonitorType.Value, value: Float,
@@ -74,6 +74,36 @@ object AggregateReport2 {
               [State] = ${state}
           WHERE [time] >= ${start.toDate} and [time] < ${end.toDate} and [monitorType] = ${monitorType.toString} and monitor = ${monitor.toString}
          """.update().apply()
+  }
+
+  def updateStateByTicket(ticket:Ticket)(implicit session: DBSession = AutoSession)={
+    try{
+      if(ticket.ticketType == TicketType.repair){
+        implicit val r1 = Json.reads[PartFormData]
+        implicit val read = Json.reads[RepairFormData]
+        val repairFormData: RepairFormData = Json.parse(ticket.formJson).validate[RepairFormData].get
+        val repairTime = try {
+          DateTime.parse(repairFormData.end, DateTimeFormat.forPattern("yyyy-MM-dd HH:mm"))
+        }catch{
+          case _:Throwable=>
+            ticket.executeDate
+        }
+        // 儀器異常
+        if(ticket.monitorType.isDefined){
+          val mt = ticket.monitorType.get
+          if(repairFormData.getBool(3)){
+            AggregateReport2.updateState(ticket.monitor, mt, repairTime.minusDays(7), repairTime, AggregateReport2.stateList(1))
+          }else if(repairFormData.getBool(4)){
+            // 儀器正常
+            AggregateReport2.updateState(ticket.monitor, mt, repairTime.minusDays(7), repairTime, AggregateReport2.stateList(2))
+          }
+        }
+      }
+    }catch{
+      case ex:Exception=>
+        Logger.error("failed to update", ex)
+    }
+
   }
 
   def upsert(reportList: Seq[AggregateReport2])(implicit session: DBSession = AutoSession) = {
@@ -178,5 +208,13 @@ object AggregateReport2 {
       val recordList = Record.getHourRecords(m, start, DateTime.now)
       generate(m, recordList)
     }
+  }
+
+  def updatePastState() = {
+    val start = DateTime.parse("2021-01-01", DateTimeFormat.forPattern("yyyy-MM-dd"))
+    val ticketList = Ticket.queryTickets(start, DateTime.now)
+    Logger.info(s"ticket #=${ticketList.size}")
+    for(t<-ticketList)
+      updateStateByTicket(t)
   }
 }

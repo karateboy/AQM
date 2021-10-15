@@ -282,6 +282,17 @@ object Ticket {
     }.list().apply()
   }
 
+  def gerRepairTickets(start: DateTime, end: DateTime)(implicit session: DBSession = AutoSession) = {
+    sql"""
+      Select *
+      From Ticket
+      Where execute_date between ${start.toDate} and ${end.toDate} and ticketType = ${TicketType.repair.id}
+      Order by submit_date
+      """.map {
+      ticketMapper
+    }.list().apply()
+  }
+
   def queryOverStdTickets(start: DateTime, end: DateTime, stdCodes: Seq[Int])(implicit session: DBSession = AutoSession) = {
     val stdCodeStr = SQLSyntax.createUnsafely(stdCodes.mkString("('", "','", "')"))
     sql"""
@@ -498,20 +509,7 @@ object Ticket {
         """.update.apply
     }
 
-    if(ticket.ticketType == TicketType.repair){
-      val repairFormData: RepairFormData = Json.parse(ticket.formJson).validate[RepairFormData].get
-      val repairTime = DateTime.parse(repairFormData.end, DateTimeFormat.forPattern("yyyy-MM-dd HH:mm"))
-      // 儀器異常
-      if(ticket.monitorType.isDefined){
-        val mt = ticket.monitorType.get
-        if(repairFormData.getBool(3)){
-          AggregateReport2.updateState(ticket.monitor, mt, repairTime.minusDays(7), repairTime, AggregateReport2.stateList(2))
-        }else if(repairFormData.getBool(4)){
-          // 儀器正常
-          AggregateReport2.updateState(ticket.monitor, mt, repairTime.minusDays(7), repairTime, AggregateReport2.stateList(3))
-        }
-      }
-    }
+    AggregateReport2.updateStateByTicket(ticket)
   }
 
   import java.io.File

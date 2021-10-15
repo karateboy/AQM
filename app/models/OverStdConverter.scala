@@ -159,6 +159,13 @@ case class OverStdConverter() extends Actor {
             SystemConfig.setGenerateAggregate2(false)
           }
         }
+      if(SystemConfig.getUpdatePastAggregate2) {
+      Future{
+        blocking{
+          AggregateReport2.updatePastState()
+          SystemConfig.setUpdatePastAggregate2(false)
+        }
+      }
 
       if (Ozone8Hr.hasHourTab(year)) {
         Future {
@@ -168,6 +175,7 @@ case class OverStdConverter() extends Actor {
             self ! ConvertStatus(year - 1)
           }
         }
+      }
       }
     case ConvertStatus =>
       for {tab <- Seq(TableType.Hour, TableType.Min)

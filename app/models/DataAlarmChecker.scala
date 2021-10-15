@@ -36,16 +36,20 @@ object AlarmDataType extends Enumeration {
   }
 }
 
-case class AlarmLevel(name: String, desc: String, code: Int)
+case class AlarmLevel(level:AlarmLevel.Value, desc: String, code: Int)
 
 object AlarmLevel extends Enumeration {
   val Internal = Value("Internal")
   val Warn = Value("Warn")
   val Law = Value("Law")
-  val map = Map(Internal -> AlarmLevel(Internal.toString, "內控值", 1),
-    Warn -> AlarmLevel(Warn.toString, "警告值", 2),
-    Law -> AlarmLevel(Law.toString, "法規值", 4)
-  )
+
+  val list = Seq(AlarmLevel(Internal, "內控值", 1),
+    AlarmLevel(Warn, "警告值", 2),
+    AlarmLevel(Law, "法規值", 4))
+
+  val map: Map[AlarmLevel.Value, AlarmLevel] = list.map(p=>p.level->p).toMap
+
+  val idMap: Map[Int, AlarmLevel] = list.map(p=>p.code->p).toMap
 }
 
 class DataAlarmChecker extends Actor {
@@ -205,6 +209,7 @@ class DataAlarmChecker extends Actor {
           }
         }
       }
+
       //Auto audit
       Auditor.auditHourData(m, mCase.autoAudit, currentHour.toDateTime - 1.day, currentHour.toDateTime + 1.hour)
       AggregateReport2.generate(m, hours)
