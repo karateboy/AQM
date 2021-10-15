@@ -21,18 +21,16 @@ object EventLog {
     map.getOrElse(evtType, s"未知事件類別:${evtType}")
   }
 
-  def getList(eventTypes: Seq[Int], start: DateTime, end: DateTime) = {
-    DB readOnly { implicit session =>
-      val eventTypeStr = SQLSyntax.createUnsafely(eventTypes.mkString("('", "','", "')"))
-      sql"""
+  def getList(eventTypes: Seq[Int], start: DateTime, end: DateTime)(implicit session: DBSession = AutoSession) = {
+    val eventTypeStr = SQLSyntax.createUnsafely(eventTypes.mkString("('", "','", "')"))
+    sql"""
         Select * 
         From eventLog
         Where evtTime Between ${start} and ${end} and evtType in $eventTypeStr
         ORDER BY evtTime DESC
         """.map { r =>
-        EventLog(r.timestamp(1), r.int(2), r.string(3))
-      }.list.apply
-    }
+      EventLog(r.timestamp(1), r.int(2), r.string(3))
+    }.list.apply
   }
 
   def create(evt: EventLog)(implicit session: DBSession = AutoSession) = {

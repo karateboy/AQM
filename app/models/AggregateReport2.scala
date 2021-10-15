@@ -171,4 +171,12 @@ object AggregateReport2 {
       generate(m, recordList)
     }
   }
+
+  def generateOneWeek()={
+    val start = DateTime.now.minusDays(7)
+    for(m<-Monitor.mvList){
+      val recordList = Record.getHourRecords(m, start, DateTime.now)
+      generate(m, recordList)
+    }
+  }
 }

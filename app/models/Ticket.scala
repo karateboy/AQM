@@ -497,17 +497,18 @@ object Ticket {
         Where ID = ${ticket.id}
         """.update.apply
     }
+
     if(ticket.ticketType == TicketType.repair){
       val repairFormData: RepairFormData = Json.parse(ticket.formJson).validate[RepairFormData].get
+      val repairTime = DateTime.parse(repairFormData.end, DateTimeFormat.forPattern("yyyy-MM-dd HH:mm"))
       // 儀器異常
       if(ticket.monitorType.isDefined){
         val mt = ticket.monitorType.get
-        val now = DateTime.now
         if(repairFormData.getBool(3)){
-          AggregateReport2.updateState(ticket.monitor, mt, now.minusDays(2), now, AggregateReport2.stateList(2))
+          AggregateReport2.updateState(ticket.monitor, mt, repairTime.minusDays(7), repairTime, AggregateReport2.stateList(2))
         }else if(repairFormData.getBool(4)){
           // 儀器正常
-          AggregateReport2.updateState(ticket.monitor, mt, now.minusDays(2), now, AggregateReport2.stateList(3))
+          AggregateReport2.updateState(ticket.monitor, mt, repairTime.minusDays(7), repairTime, AggregateReport2.stateList(3))
         }
       }
     }

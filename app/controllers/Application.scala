@@ -772,10 +772,7 @@ object Application extends Controller {
           BadRequest(Json.obj("ok" -> false, "msg" -> JsError.toJson(error)))
         },
         mta => {
-          DB autoCommit {
-            implicit session=>
-              MonitorTypeAlert.save(mta)
-          }
+          MonitorTypeAlert.save(mta)
           Ok(Json.obj("ok" -> true))
         })
   }

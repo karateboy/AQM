@@ -14,6 +14,8 @@ object AlarmMaster {
   case object MaintanceTicketCheck
 
   case object DueTicketNotify
+
+  case object GenerateAggreateReport
 }
 
 class AlarmMaster extends Actor {
@@ -35,21 +37,32 @@ class AlarmMaster extends Actor {
       worker ! Start(DateTime.now)
 
     case MaintanceTicketCheck =>
-      val activeMaintanceTickets = Ticket.queryActiveMaintanceTickets(DateTime.yesterday().withMillisOfDay(0))
-      for (ticket <- activeMaintanceTickets) {
-        val ar = Alarm.Alarm(ticket.monitor, ticket.ticketType.toString(), DateTime.now, 1, "038")
-        Alarm.insertAlarm(ar)
+      Future {
+        blocking {
+          val activeMaintanceTickets = Ticket.queryActiveMaintanceTickets(DateTime.yesterday().withMillisOfDay(0))
+          for (ticket <- activeMaintanceTickets) {
+            val ar = Alarm.Alarm(ticket.monitor, ticket.ticketType.toString(), DateTime.now, 1, "038")
+            Alarm.insertAlarm(ar)
+          }
+        }
       }
     case DataCheckFinish =>
       sender ! PoisonPill
 
-    case DueTicketNotify=>
-      Future{
-        blocking{
+    case DueTicketNotify =>
+      Future {
+        blocking {
           val dueTickets = Ticket.getActiveRepairDueTicketsByGroup
           val msg = s"${dueTickets.size}案件逾期!"
           LineNotify.notify(msg)
           EventLog.create(EventLog(DateTime.now, EventLog.evtTypeInformAlarm, msg))
+        }
+      }
+
+    case GenerateAggreateReport =>
+      Future {
+        blocking {
+          AggregateReport2.generateOneWeek()
         }
       }
   }

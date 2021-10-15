@@ -42,8 +42,10 @@ object Global extends GlobalSettings {
     import AlarmMaster._
     Akka.system.scheduler.schedule(Duration(3, MINUTES), Duration(5, MINUTES), alarmActor, AlarmCheck)
     Akka.system.scheduler.schedule(Duration(3, MINUTES), Duration(10, MINUTES), alarmActor, DataCheck)
+    Akka.system.scheduler.schedule(Duration(3, MINUTES), Duration(1, DAYS), alarmActor, GenerateAggreateReport)
     Akka.system.scheduler.schedule(Duration(secondToTomorror1AM, SECONDS), Duration(1, DAYS), alarmActor, MaintanceTicketCheck)
     Akka.system.scheduler.schedule(Duration(secondToTomorror9AM, SECONDS), Duration(1, DAYS), alarmActor, DueTicketNotify)
+
 
 
     AggregateReport2.createTab

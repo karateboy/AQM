@@ -200,6 +200,7 @@ class DataAlarmChecker extends Actor {
               Ticket.newTicket(ticket)
             } catch {
               case ex: Exception =>
+                Logger.error("failed to insert new ticket", ex)
             }
           }
         }

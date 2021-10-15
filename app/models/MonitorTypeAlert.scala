@@ -151,7 +151,7 @@ object MonitorTypeAlert {
          """.update().apply()
   }
 
-  def save(mta: MonitorTypeAlertInfo)(implicit session: DBSession) = {
+  def save(mta: MonitorTypeAlertInfo)(implicit session: DBSession = AutoSession) = {
     sql"""
      UPDATE [dbo].[MonitorTypeAlert]
         SET
