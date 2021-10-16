@@ -58,19 +58,15 @@ object Calibration {
     }
 
     def canCalibrate = {
-      s_std != 0 && s_sval != 0
+      s_std != 0 && (s_sval -z_val) != 0
     }
 
     def calibrate(valueOpt: Option[Float]) = {
       if (canCalibrate)
         for {
           value <- valueOpt
-        } yield{
-          val zero = z_val
-          val standard_span = s_std
-          val calibration_span = s_sval
-          (value - zero) * (standard_span / calibration_span)
-        }
+        } yield
+          (value - z_val) * (s_std / s_sval -z_val)
       else
         valueOpt
     }
