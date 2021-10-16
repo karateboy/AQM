@@ -66,7 +66,7 @@ object Calibration {
         for {
           value <- valueOpt
         } yield
-          (value - z_val) * (s_std / s_sval -z_val)
+          (value - z_val) * s_std / (s_sval -z_val)
       else
         valueOpt
     }
