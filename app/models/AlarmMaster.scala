@@ -55,7 +55,7 @@ class AlarmMaster extends Actor {
           val dueTickets = Ticket.getActiveRepairDueTicketsByGroup
           val msg = s"${dueTickets.size}案件逾期!"
           LineNotify.notify(msg)
-          EventLog.create(EventLog(DateTime.now, EventLog.evtTypeInformAlarm, msg))
+          EventLog.create(EventLog(DateTime.now, EventLog.evtTypeDueAlarm, msg))
         }
       }
 

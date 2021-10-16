@@ -43,10 +43,8 @@ object Global extends GlobalSettings {
     Akka.system.scheduler.schedule(Duration(3, MINUTES), Duration(5, MINUTES), alarmActor, AlarmCheck)
     Akka.system.scheduler.schedule(Duration(3, MINUTES), Duration(10, MINUTES), alarmActor, DataCheck)
     Akka.system.scheduler.schedule(Duration(3, MINUTES), Duration(1, DAYS), alarmActor, GenerateAggreateReport)
-    Akka.system.scheduler.schedule(Duration(secondToTomorror1AM, SECONDS), Duration(1, DAYS), alarmActor, MaintanceTicketCheck)
-    Akka.system.scheduler.schedule(Duration(3, MINUTES), Duration(1, HOURS), alarmActor, DueTicketNotify)
-
-
+    Akka.system.scheduler.schedule(Duration(secondTo1AM, SECONDS), Duration(1, DAYS), alarmActor, MaintanceTicketCheck)
+    Akka.system.scheduler.schedule(Duration(secondTo9AM, SECONDS), Duration(1, DAYS), alarmActor, DueTicketNotify)
 
     AggregateReport2.createTab
     EpaTicket.create()
@@ -61,17 +59,28 @@ object Global extends GlobalSettings {
 
   }
 
-  def secondToTomorror1AM = {
+  def secondTo1AM = {
     import com.github.nscala_time.time.Imports._
-    val tomorrow_1AM = DateTime.tomorrow().withMillisOfDay(0).withHourOfDay(1)
-    val duration = new Duration(DateTime.now(), tomorrow_1AM)
+    val tomorrow1AM = DateTime.tomorrow().withMillisOfDay(0).withHourOfDay(1)
+    val today1AM = DateTime.now.withMillisOfDay(0).withHourOfDay(1)
+    val fireTime = if(today1AM > DateTime.now)
+      today1AM
+    else
+      tomorrow1AM
+    val duration = new Duration(DateTime.now(), fireTime)
     duration.getStandardSeconds
   }
 
-  def secondToTomorror9AM = {
+  def secondTo9AM = {
     import com.github.nscala_time.time.Imports._
-    val tomorrow_1AM = DateTime.tomorrow().withMillisOfDay(0).withHourOfDay(9)
-    val duration = new Duration(DateTime.now(), tomorrow_1AM)
+    val tomorrow9AM = DateTime.tomorrow().withMillisOfDay(0).withHourOfDay(9)
+    val today9AM = DateTime.now.withMillisOfDay(0).withHourOfDay(9)
+    val fireTime = if(today9AM > DateTime.now)
+      today9AM
+    else
+      tomorrow9AM
+
+    val duration = new Duration(DateTime.now(), fireTime)
     duration.getStandardSeconds
   }
 
