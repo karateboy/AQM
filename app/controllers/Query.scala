@@ -199,11 +199,11 @@ object Query extends Controller {
           }
 
           val url = if(TableType.EightHour != tableType) {
-            s"/Excel/HistoryTrend/${monitorStr}/${epaMonitorStr}/${monitorTypeStr}/${reportUnitStr}/${MonitorStatusFilter.All.toString}/${startStr}/${endStr}/${mb}"
+            s"/Excel/HistoryTrend/${monitorStr}/${play.utils.UriEncoding.encodePathSegment(epaMonitorStr, "UTF-8")}/${monitorTypeStr}/${reportUnitStr}/${MonitorStatusFilter.All.toString}/${startStr}/${endStr}/${mb}"
           }else{
             val s= start.toString("YYYY-MM-dd")
             val e= end.toString("YYYY-MM-dd")
-            s"/Excel/HistoryTrend/${monitorStr}/${epaMonitorStr}/${monitorTypeStr}/${reportUnitStr}/${MonitorStatusFilter.All.toString}/${s}/${e}/${mb}"
+            s"/Excel/HistoryTrend/${monitorStr}/${play.utils.UriEncoding.encodePathSegment(epaMonitorStr, "UTF-8")}/${monitorTypeStr}/${reportUnitStr}/${MonitorStatusFilter.All.toString}/${s}/${e}/${mb}"
           }
           Redirect(url)
       }

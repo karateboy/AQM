@@ -112,7 +112,7 @@ object MonitorStatus {
 
   def isInvalidOrCalibration(s: String) = {
     val tagInfo = getTagInfo(s)
-    val targetStats = List("030", "035", "026")
+    val targetStats = List("030", "035", "026").map(getTagInfo)
     tagInfo.statusType match {
       case StatusType.Internal =>
         targetStats.contains(getTagInfo(s))
