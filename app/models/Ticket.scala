@@ -393,8 +393,7 @@ object Ticket {
       Select *
       From Ticket
       Where ticketType = ${TicketType.repair.id} and active = 1 and submiter_id = 19
-            and readyToClose = 0 and
-            (ExtendDate < ${yesterday} or (ExtendDate is null and execute_date < ${yesterday}))
+            and readyToClose = 0 and execute_date < ${yesterday}
       Order by execute_date
       """.map {
       ticketMapper
