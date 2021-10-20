@@ -341,7 +341,6 @@
 				  param.freqType=this.freqType
 				  param.days=this.days
 				  param.alarm=this.alarm
-				  console.log(param);
 				  axios.put("/Part", param).then((resp)=>{					  
 					  if(resp.status != 200){
 						  alert(resp.statusText)
