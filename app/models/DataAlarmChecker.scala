@@ -160,11 +160,11 @@ class DataAlarmChecker extends Actor {
                 true
               }
 
-            val checkSeq: Seq[(Option[Float], Option[Boolean])] = Seq((MonitorTypeAlert.map(m)(mt).std_law, checkStdLaw),
+            val checkSeq: Seq[(Option[Float], ()=>Option[Boolean])] = Seq((MonitorTypeAlert.map(m)(mt).std_law, checkStdLaw),
               (MonitorTypeAlert.map(m)(mt).warn, checkWarn),
-              (MonitorTypeAlert.map(m)(mt).internal, checkInternal)).sortBy(_._1).reverse
-
-            checkSeq.find(t => t._2 == Some(true))
+              (MonitorTypeAlert.map(m)(mt).internal, checkInternal))
+            val sorted: Seq[(Option[Float], () => Option[Boolean])] = checkSeq.sortBy(_._1).reverse
+            sorted.find(t => t._2() == Some(true))
           } // Normal status
 
           for {
