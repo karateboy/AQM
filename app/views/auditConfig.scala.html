@@ -87,6 +87,9 @@ function postAuditCfg(){
 	<li>
 		<a data-toggle="tab" href="#dataReadyMinRule"> <span class="glyphicons glyphicons-hotspot">分鐘值回傳超時</span></a>
 	</li>
+	<li>
+		<a data-toggle="tab" href="#otherRule"> <span class="glyphicons glyphicons-hotspot">其他</span></a>
+	</li>
 </ul>
 <div class="tab-content ibox-content">
 @maxMinRule()
@@ -100,6 +103,7 @@ function postAuditCfg(){
 @fourHourRule()
 @overInternalStdMinRule()
 @dataReadyMinRule()
+@otherRule()
 </div>
 </div>
 </div>
@@ -127,6 +131,7 @@ $( document ).ready(function(){
 		updatefourHourForm();
 		updateOverInternalStdMinForm();
 		updateDataReadyMinForm();
+		updateOtherForm();
 	}
 	
 	function refreshAuditConfig(monitor){

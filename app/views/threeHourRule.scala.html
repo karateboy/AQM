@@ -5,11 +5,19 @@
 	<p>連續三小時測值差距如超過系統設定之絕對值及比例, 該測項小時值註記為異常值</p>
 	<form id="threeHourForm" class="form-horizontal">	
 		<div class="form-group">
-			<label class="col-lg-1 control-label">啟用</label>
+			<label class="col-lg-4 control-label">觸發警報 (警報案件) 啟用</label>
         	<div class="col-lg-1">        		
             	<input type="checkbox" name="enabled" class="form-control">
             </div>
         </div>
+		<div class="form-group">
+			<label class="col-lg-4 control-label">自動立案 (處理中案件) 啟用<br/>
+				啟動後系統自動立案並通知Line群組</label>
+        	<div class="col-lg-1">        		
+            	<input type="checkbox" name="autoTicket" class="form-control">
+            </div>
+        </div>
+        
         <div id='threeHourParameter'>        
         <table class="table">
         	<thead>
@@ -45,7 +53,9 @@ function updatethreeHourForm (){
 	var config = auditConfig.threeHourRule;
 	var $enabled = $('#threeHourForm :input[name="enabled"]');
 	$enabled.prop('checked', config.enabled);
-	
+	var $autoTicket = $('#threeHourForm :input[name="autoTicket"]')
+	$autoTicket.prop('checked', config.autoTicket)
+
 	var $inputs = $('#threeHourParameter :input');
 	function findthreeHourCfg(array, id){
 		for(var i=0;i<array.length;i++){
@@ -94,6 +104,9 @@ $('#threeHourForm').submit(function(){
 	var $enabled = $('#threeHourForm :input[name="enabled"]')
 	var $inputs = $('#threeHourParameter :input');
 	param.enabled = $enabled.prop("checked");
+	var $autoTicket = $('#threeHourForm :input[name="autoTicket"]')
+	param.autoTicket = $autoTicket.prop("checked");
+	
 	param.monitorTypes=[];
 	for(var i=0;i<$inputs.length;i++){
 		var $check = $inputs.eq(i);

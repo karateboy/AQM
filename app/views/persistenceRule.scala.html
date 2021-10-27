@@ -5,9 +5,16 @@
 	<p>連續多筆值相等, 視為連續性數值</p>
 	<form id="persistenceForm" class="form-horizontal">
         <div class="form-group">
-			<label class="col-lg-1 control-label">啟用</label>
+			<label class="col-lg-4 control-label">觸發警報 (警報案件) 啟用</label>
         	<div class="col-lg-1">        		
             	<input type="checkbox" name="enabled" class="form-control">
+            </div>
+        </div>
+		<div class="form-group">
+			<label class="col-lg-4 control-label">自動立案 (處理中案件) 啟用<br/>
+				啟動後系統自動立案並通知Line群組</label>
+        	<div class="col-lg-1">        		
+            	<input type="checkbox" name="autoTicket" class="form-control">
             </div>
         </div>
 		<div id='persistenceParameter'>
@@ -49,6 +56,9 @@ function updatePersistenceForm(){
 	
 	var $enabled = $('#persistenceForm :input[name="enabled"]');
 	$enabled.prop('checked', config.enabled);
+	var $autoTicket = $('#persistenceForm :input[name="autoTicket"]')
+	$autoTicket.prop('checked', config.autoTicket)
+
 	var $same = $('#persistenceForm :input[name="same"]');
 	$same.val(config.same);
 	$same.prop('disabled', !config.enabled);
@@ -76,6 +86,9 @@ $('#persistenceForm :input[name="enabled"]').click(function(){
 $('#persistenceForm').submit(function(){
 	var param={};
 	var $enabled = $('#persistenceForm :input[name="enabled"]');
+	var $autoTicket = $('#persistenceForm :input[name="autoTicket"]')
+	param.autoTicket = $autoTicket.prop("checked");
+	
 	var $same = $('#persistenceForm :input[name="same"]');
 	var $inputs = $('#persistenceForm :input[name="monitorType"]');
 	param.enabled = $enabled.prop("checked");

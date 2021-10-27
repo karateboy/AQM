@@ -64,6 +64,9 @@ object Monitor extends Enumeration {
         """.map { r =>
         val autoAuditJson = r.stringOpt(9).getOrElse(Json.toJson(AutoAudit.default).toString())
         val autoAudit = Json.parse(autoAuditJson).validate[AutoAudit].get
+        if(autoAudit.otherRule == None)
+          autoAudit.otherRule = Some(OtherRule())
+
         val monitorTypesJson = r.stringOpt(10).getOrElse(Json.toJson(Seq.empty[MonitorType.Value]).toString())
         val monitorTypes = Json.parse(monitorTypesJson).validate[Seq[MonitorType.Value]].get
         val monitorTypeStdJson = r.stringOpt(11).getOrElse(Json.toJson(Seq.empty[MonitorTypeStandard]).toString())

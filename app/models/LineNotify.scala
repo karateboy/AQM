@@ -29,4 +29,13 @@ object LineNotify {
     val msg = s"${Monitor.map(alarm.monitor).name}-${alarm.time.toString("MM/dd HH:mm")}:${Alarm.getItem(alarm)}:${Alarm.getReason(alarm)}:${ar_state}"
     notify(msg)
   }
+
+  def notifyTicket(ticket:Ticket): Unit ={
+    val ticketType = TicketType.map(ticket.ticketType)
+    val monitor = Monitor.map(ticket.monitor).name
+    val monitorType = ticket.monitorType.map(mt=>MonitorType.map(mt).desp).getOrElse("")
+
+    val msg = s"新增案件: ${ticketType}-${monitor}${monitorType}-${ticket.reason}"
+    notify(msg)
+  }
 }

@@ -5,9 +5,16 @@
 	<p>連續數小時之最高值與最低值之差小於系統設定值, 該測項小時值註記為異常</p>
 	<form id="monoForm" class="form-horizontal">
         <div class="form-group">
-			<label class="col-lg-1 control-label">啟用</label>
+			<label class="col-lg-4 control-label">觸發警報 (警報案件) 啟用</label>
         	<div class="col-lg-1">        		
             	<input type="checkbox" name="enabled" class="form-control">
+            </div>
+        </div>
+		<div class="form-group">
+			<label class="col-lg-4 control-label">自動立案 (處理中案件) 啟用<br/>
+				啟動後系統自動立案並通知Line群組</label>
+        	<div class="col-lg-1">        		
+            	<input type="checkbox" name="autoTicket" class="form-control">
             </div>
         </div>
 		<div id='monoParameter'>
@@ -47,6 +54,8 @@ function updateMonoForm(){
 	var config = auditConfig.monoRule;
 	var $enabled = $('#monoForm :input[name="enabled"]');
 	$enabled.prop('checked', config.enabled);
+	var $autoTicket = $('#monoForm :input[name="autoTicket"]')
+	$autoTicket.prop('checked', config.autoTicket)
 	var $count = $('#monoForm :input[name="count"]');
 	$count.val(config.count);
 	$count.prop('disabled', !config.enabled);
@@ -91,6 +100,8 @@ $('#monoForm :input[name="enabled"]').click(function(){
 $('#monoForm').submit(function(){
 	var param={};
 	var $enabled = $('#monoForm :input[name="enabled"]')
+	var $autoTicket = $('#monoForm :input[name="autoTicket"]')
+	param.autoTicket = $autoTicket.prop("checked");
 	var $inputs = $('#monoParameter :input[name="monitorType"]');
 	var $count = $('#monoForm :input[name="count"]');
 	param.enabled = $enabled.prop("checked");

@@ -226,6 +226,7 @@ object Ticket {
           ${ticket.overStd})
         """.update.apply
 
+    LineNotify.notifyTicket(ticket)
     if (ticket.ticketType == TicketType.repair) {
       import scala.concurrent._
       Future {
