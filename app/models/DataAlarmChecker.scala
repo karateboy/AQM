@@ -36,7 +36,7 @@ object AlarmDataType extends Enumeration {
   }
 }
 
-case class AlarmLevel(level:AlarmLevel.Value, desc: String, code: Int)
+case class AlarmLevel(level: AlarmLevel.Value, desc: String, code: Int)
 
 object AlarmLevel extends Enumeration {
   val Internal = Value("Internal")
@@ -47,9 +47,9 @@ object AlarmLevel extends Enumeration {
     AlarmLevel(Warn, "警告值", 2),
     AlarmLevel(Law, "法規值", 4))
 
-  val map: Map[AlarmLevel.Value, AlarmLevel] = list.map(p=>p.level->p).toMap
+  val map: Map[AlarmLevel.Value, AlarmLevel] = list.map(p => p.level -> p).toMap
 
-  val idMap: Map[Int, AlarmLevel] = list.map(p=>p.code->p).toMap
+  val idMap: Map[Int, AlarmLevel] = list.map(p => p.code -> p).toMap
 }
 
 class DataAlarmChecker extends Actor {
@@ -128,6 +128,10 @@ class DataAlarmChecker extends Actor {
                 val ar = Alarm.Alarm(m, mItem, time.toDateTime, v, MonitorStatus.OVER_STAT)
                 try {
                   Alarm.insertAlarm(ar)
+                  for {otherRule <- Monitor.map(m).autoAudit.otherRule
+                       autoTicket <- otherRule.autoTicket if autoTicket == true && otherRule.overStd
+                       }
+                    Alarm.newTicketFromAlarm(ar, DateTime.now.plusDays(2))
                 } catch {
                   case ex: Exception =>
                 }
@@ -141,6 +145,10 @@ class DataAlarmChecker extends Actor {
                 val ar = Alarm.Alarm(m, mItem, time.toDateTime, v, MonitorStatus.WARN_STAT)
                 try {
                   Alarm.insertAlarm(ar)
+                  for {otherRule <- Monitor.map(m).autoAudit.otherRule
+                       autoTicket <- otherRule.autoTicket if autoTicket == true && otherRule.overStd
+                       }
+                    Alarm.newTicketFromAlarm(ar, DateTime.now.plusDays(2))
                 } catch {
                   case ex: Exception =>
                 }
@@ -154,13 +162,17 @@ class DataAlarmChecker extends Actor {
                 val ar = Alarm.Alarm(m, mItem, time.toDateTime, v, MonitorStatus.WARN_STAT)
                 try {
                   Alarm.insertAlarm(ar)
+                  for {otherRule <- Monitor.map(m).autoAudit.otherRule
+                       autoTicket <- otherRule.autoTicket if autoTicket == true && otherRule.overStd
+                       }
+                    Alarm.newTicketFromAlarm(ar, DateTime.now.plusDays(2))
                 } catch {
                   case ex: Exception =>
                 }
                 true
               }
 
-            val checkSeq: Seq[(Option[Float], ()=>Option[Boolean])] = Seq((MonitorTypeAlert.map(m)(mt).std_law, checkStdLaw),
+            val checkSeq: Seq[(Option[Float], () => Option[Boolean])] = Seq((MonitorTypeAlert.map(m)(mt).std_law, checkStdLaw),
               (MonitorTypeAlert.map(m)(mt).warn, checkWarn),
               (MonitorTypeAlert.map(m)(mt).internal, checkInternal))
             val sorted: Seq[(Option[Float], () => Option[Boolean])] = checkSeq.sortBy(_._1).reverse
@@ -175,33 +187,10 @@ class DataAlarmChecker extends Actor {
             val ar = Alarm.Alarm(m, mt.toString, time.toDateTime, v, status)
             try {
               Alarm.insertAlarm(ar)
-              val ar_state =
-                if (ar.mVal == 0)
-                  "恢復正常"
-                else
-                  "觸發"
-
-              val reason = s"${ar.time.toString("YYYY/MM/dd HH:mm")} ${Monitor.map(ar.monitor).name}:${Alarm.getItem(ar)}-${Alarm.getReason(ar)}:${ar_state}"
-              val mtOpt = try {
-                Some(MonitorType.withName(ar.mItem))
-              } catch {
-                case ex: Throwable =>
-                  None
-              }
-              val (repairType, repairSubType) = if (mtOpt.isDefined) {
-                (Some("數據"), Some(MonitorType.map(mtOpt.get).desp))
-              } else
-                (None, None)
-
-              val executeDate = DateTime.now.plusDays(2)
-              implicit val w2 = Json.writes[PartFormData]
-              implicit val w1 = Json.writes[RepairFormData]
-              val ticket =
-                Ticket(0, DateTime.now, true, TicketType.repair, 19,
-                  SystemConfig.getAlarmTicketDefaultUserId(), m, Some(mt), reason,
-                  executeDate, Json.toJson(Ticket.defaultAlarmTicketForm(ar)).toString,
-                  repairType, repairSubType, Some(false), overStd = None)
-              Ticket.newTicket(ticket)
+              for {otherRule <- Monitor.map(m).autoAudit.otherRule
+                   autoTicket <- otherRule.autoTicket if autoTicket == true && (otherRule.calibrate || otherRule.invalidData)
+                   }
+                Alarm.newTicketFromAlarm(ar, DateTime.now.plusDays(2))
             } catch {
               case ex: Exception =>
                 Logger.error("failed to insert new ticket", ex)

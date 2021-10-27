@@ -38,6 +38,9 @@ case class MinMaxRule(
           val ar = Alarm.Alarm(Monitor.withName(record.name), MonitorType.map(mt).id, record.date, 1.0f, lead + "10")
           try {
             Alarm.insertAlarm(ar)
+            val m = Monitor.withName(record.name)
+            for(autoTicket<-Monitor.map(m).autoAudit.minMaxRule.autoTicket if autoTicket)
+              Alarm.newTicketFromAlarm(ar, DateTime.now().plusDays(2))
           } catch {
             case ex: Exception =>
             // Skip duplicate alarm
@@ -80,6 +83,9 @@ case class CompareRule(
         val ar = Alarm.Alarm(Monitor.withName(record.name), MonitorType.map(A226).id, record.date, 1.0f, lead + "10")
         try {
           Alarm.insertAlarm(ar)
+          val m = Monitor.withName(record.name)
+          for(autoTicket<-Monitor.map(m).autoAudit.compareRule.autoTicket if autoTicket)
+            Alarm.newTicketFromAlarm(ar, DateTime.now().plusDays(2))
         } catch {
           case ex: Exception =>
           // Skip duplicate alarm
@@ -100,6 +106,9 @@ case class CompareRule(
         val ar = Alarm.Alarm(Monitor.withName(record.name), MonitorType.map(A223).id, record.date, 1.0f, lead + "10")
         try {
           Alarm.insertAlarm(ar)
+          val m = Monitor.withName(record.name)
+          for(autoTicket<-Monitor.map(m).autoAudit.compareRule.autoTicket if autoTicket)
+            Alarm.newTicketFromAlarm(ar, DateTime.now().plusDays(2))
         } catch {
           case ex: Exception =>
           // Skip duplicate alarm
@@ -121,6 +130,9 @@ case class CompareRule(
         val ar = Alarm.Alarm(Monitor.withName(record.name), "Z206", record.date, 1.0f, "056")
         try {
           Alarm.insertAlarm(ar)
+          val m = Monitor.withName(record.name)
+          for(autoTicket<-Monitor.map(m).autoAudit.compareRule.autoTicket if autoTicket)
+            Alarm.newTicketFromAlarm(ar, DateTime.now().plusDays(2))
         } catch {
           case ex: Exception =>
           // Skip duplicate alarm
@@ -135,6 +147,9 @@ case class CompareRule(
         val ar = Alarm.Alarm(Monitor.withName(record.name), "Z216", record.date, 1.0f, "058")
         try {
           Alarm.insertAlarm(ar)
+          val m = Monitor.withName(record.name)
+          for(autoTicket<-Monitor.map(m).autoAudit.compareRule.autoTicket if autoTicket)
+            Alarm.newTicketFromAlarm(ar, DateTime.now().plusDays(2))
         } catch {
           case ex: Exception =>
           // Skip duplicate alarm
@@ -149,6 +164,9 @@ case class CompareRule(
         val ar = Alarm.Alarm(Monitor.withName(record.name), "Z226", record.date, 1.0f, "059")
         try {
           Alarm.insertAlarm(ar)
+          val m = Monitor.withName(record.name)
+          for(autoTicket<-Monitor.map(m).autoAudit.compareRule.autoTicket if autoTicket)
+            Alarm.newTicketFromAlarm(ar, DateTime.now().plusDays(2))
         } catch {
           case ex: Exception =>
           // Skip duplicate alarm
@@ -162,6 +180,9 @@ case class CompareRule(
         val ar = Alarm.Alarm(Monitor.withName(record.name), "Z215", record.date, 1.0f, "059")
         try {
           Alarm.insertAlarm(ar)
+          val m = Monitor.withName(record.name)
+          for(autoTicket<-Monitor.map(m).autoAudit.compareRule.autoTicket if autoTicket)
+            Alarm.newTicketFromAlarm(ar, DateTime.now().plusDays(2))
         } catch {
           case ex: Exception =>
         }
@@ -212,6 +233,9 @@ case class DifferenceRule(
         val ar = Alarm.Alarm(Monitor.withName(record.name), MonitorType.map(mt).id, record.date, 1.0f, lead + "10")
         try {
           Alarm.insertAlarm(ar)
+          val m = Monitor.withName(record.name)
+          for(autoTicket<-Monitor.map(m).autoAudit.differenceRule.autoTicket if autoTicket)
+            Alarm.newTicketFromAlarm(ar, DateTime.now().plusDays(2))
         } catch {
           case ex: Exception =>
           // Skip duplicate alarm
@@ -254,6 +278,9 @@ case class SpikeRule(
           val ar = Alarm.Alarm(Monitor.withName(record.name), MonitorType.map(mtcfg.id).id, record.date, 1.0f, lead + "10")
           try {
             Alarm.insertAlarm(ar)
+            val m = Monitor.withName(record.name)
+            for(autoTicket<-Monitor.map(m).autoAudit.spikeRule.autoTicket if autoTicket)
+              Alarm.newTicketFromAlarm(ar, DateTime.now().plusDays(2))
           } catch {
             case ex: Exception =>
             // Skip duplicate alarm
@@ -298,6 +325,9 @@ case class PersistenceRule(
           val ar = Alarm.Alarm(Monitor.withName(record.name), MonitorType.map(mt).id, record.date, 1.0f, lead + "10")
           try {
             Alarm.insertAlarm(ar)
+            val m = Monitor.withName(record.name)
+            for(autoTicket<-Monitor.map(m).autoAudit.persistenceRule.autoTicket if autoTicket)
+              Alarm.newTicketFromAlarm(ar, DateTime.now().plusDays(2))
           } catch {
             case ex: Exception =>
             // Skip duplicate alarm
@@ -345,6 +375,9 @@ case class MonoRule(enabled: Boolean = false,
           val ar = Alarm.Alarm(Monitor.withName(record.name), MonitorType.map(mtcfg.id).id, record.date, 1.0f, lead + "10")
           try {
             Alarm.insertAlarm(ar)
+            val m = Monitor.withName(record.name)
+            for(autoTicket<-Monitor.map(m).autoAudit.monoRule.autoTicket if autoTicket)
+              Alarm.newTicketFromAlarm(ar, DateTime.now().plusDays(2))
           } catch {
             case ex: Exception =>
             // Skip duplicate alarm
@@ -386,6 +419,9 @@ case class TwoHourRule(enabled: Boolean = false,
           val ar = Alarm.Alarm(Monitor.withName(record.name), MonitorType.map(mtcfg.id).id, record.date, 1.0f, lead + "10")
           try {
             Alarm.insertAlarm(ar)
+            val m = Monitor.withName(record.name)
+            for(autoTicket<-Monitor.map(m).autoAudit.twoHourRule.autoTicket if autoTicket)
+              Alarm.newTicketFromAlarm(ar, DateTime.now().plusDays(2))
           } catch {
             case ex: Exception =>
             // Skip duplicate alarm
@@ -436,6 +472,9 @@ case class ThreeHourRule(enabled: Boolean = false,
           val ar = Alarm.Alarm(Monitor.withName(record.name), MonitorType.map(mtcfg.id).id, record.date, 1.0f, lead + "10")
           try {
             Alarm.insertAlarm(ar)
+            val m = Monitor.withName(record.name)
+            for(autoTicket<-Monitor.map(m).autoAudit.threeHourRule.autoTicket if autoTicket)
+              Alarm.newTicketFromAlarm(ar, DateTime.now().plusDays(2))
           } catch {
             case ex: Exception =>
             // Skip duplicate alarm
@@ -481,6 +520,9 @@ case class FourHourRule(enabled: Boolean = false,
           val ar = Alarm.Alarm(Monitor.withName(record.name), MonitorType.map(mtcfg.id).id, record.date, 1.0f, lead + "10")
           try {
             Alarm.insertAlarm(ar)
+            val m = Monitor.withName(record.name)
+            for(autoTicket<-Monitor.map(m).autoAudit.fourHourRule.autoTicket if autoTicket)
+              Alarm.newTicketFromAlarm(ar, DateTime.now().plusDays(2))
           } catch {
             case ex: Exception =>
             // Skip duplicate alarm
@@ -528,6 +570,9 @@ case class OverInternalStdMinRule(enabled: Boolean = false,
         val ar = Alarm.Alarm(m, mt.toString, DateTime.now, 1.0f, lead + "10")
         try {
           Alarm.insertAlarm(ar)
+          for{ overInternal <- Monitor.map(m).autoAudit.overInternalStdMinRule
+            autoTicket<-overInternal.autoTicket if autoTicket}
+            Alarm.newTicketFromAlarm(ar, DateTime.now().plusDays(2))
         } catch {
           case ex: Exception =>
           // Skip duplicate alarm
@@ -560,6 +605,9 @@ case class DataReadyMinRule(enabled: Boolean = false,
           val ar = Alarm.Alarm(m, mt.toString, DateTime.now, 1.0f, lead + "10")
           try {
             Alarm.insertAlarm(ar)
+            for{ dataReadyRule <- Monitor.map(m).autoAudit.dataReadyMinRule
+                 autoTicket<-dataReadyRule.autoTicket if autoTicket}
+              Alarm.newTicketFromAlarm(ar, DateTime.now().plusDays(2))
           } catch {
             case ex: Exception =>
             // Skip duplicate alarm

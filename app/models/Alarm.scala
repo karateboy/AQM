@@ -152,14 +152,8 @@ object Alarm {
         """.map { rs => rs.int(1) }.single.apply()
   }
 
-  def updateAlarmTicketState(monitor: Monitor.Value, mItem: String, time: DateTime, state: String)(implicit session: DBSession = AutoSession) = {
-    val tab = getTabName(time.getYear)
-    val timeT: Timestamp = time
-    sql"""
-        Update ${tab}
-        Set CHK = $state
-        Where DP_NO = ${monitor.toString()} and M_DateTime = ${timeT} and M_ITEM = ${mItem}
-        """.update.apply
+  def getTabName(year: Int) = {
+    SQLSyntax.createUnsafely(s"[P1234567_Alm_${year}]")
   }
 
   def insertAlarm(ar: Alarm)(implicit session: DBSession = AutoSession): Int = {
@@ -181,7 +175,7 @@ object Alarm {
     if (arOpt.isDefined)
       0
     else {
-        sql"""
+      sql"""
       INSERT INTO ${tab}
            ([DP_NO]
            ,[M_ITEM]
@@ -200,10 +194,6 @@ object Alarm {
     }
   }
 
-  def getTabName(year: Int) = {
-    SQLSyntax.createUnsafely(s"[P1234567_Alm_${year}]")
-  }
-
   def updateMap(ar: AlarmItem) = {
     if (!_map.contains(ar.id)) {
       insertAlarmCode(ar)
@@ -212,7 +202,7 @@ object Alarm {
   }
 
   private def insertAlarmCode(ar: AlarmItem)(implicit session: DBSession = AutoSession) = {
-        sql"""
+    sql"""
           INSERT INTO [dbo].[alarmCode]
            ([ITEM]
            ,[DESP])
@@ -235,7 +225,7 @@ object Alarm {
 
   private def deletePartAlarmCode(id: String)(implicit session: DBSession = AutoSession) = {
     val pattern = s"${id}_%"
-        sql"""
+    sql"""
           DELETE FROM [dbo].[alarmCode]
           WHERE ITEM like ${pattern}
           """.update.apply
@@ -250,20 +240,9 @@ object Alarm {
       _map.getOrElse(ar.mItem, "未知的警告代碼:" + ar.mItem)
   }
 
-  def isOverStd(ar: Alarm): Boolean = {
-    val tokens = ar.mItem.split("-")
-    (ar.code == MonitorStatus.OVER_STAT || ar.code == MonitorStatus.WARN_STAT) && tokens.length == 3
-  }
-
   def getOverStdLevel(ar: Alarm): AlarmLevel.Value = {
     val tokens = ar.mItem.split("-")
     AlarmLevel.withName(tokens(2))
-  }
-
-  def getOverStdLevelCode(ar: Alarm): Int = {
-    val tokens = ar.mItem.split("-")
-    val overStdLevel = AlarmLevel.withName(tokens(2))
-    AlarmLevel.map(overStdLevel).code
   }
 
   def getReason(ar: Alarm) = {
@@ -307,6 +286,67 @@ object Alarm {
         Alarm(Monitor.withName(rs.string(1)), rs.string(2), rs.timestamp(3), rs.float(4),
           MonitorStatus.getTagInfo(rs.string(5).trim()).toString, rs.stringOpt(6))
     }.list.apply
+  }
+
+  def newTicketFromAlarm(ar: Alarm, executeDate:DateTime) = {
+    val status = "YES"
+    updateAlarmTicketState(ar.monitor, ar.mItem, new DateTime(ar.time), status)
+    val ar_state =
+      if (ar.mVal == 0)
+        "恢復正常"
+      else
+        "觸發"
+
+    var overStd = 0
+    if (isOverStd(ar))
+      overStd = getOverStdLevelCode(ar)
+
+    val reason = s"${ar.time.toString("YYYY/MM/dd HH:mm")} ${Monitor.map(ar.monitor).name}:${getItem(ar)}-${getReason(ar)}:${ar_state}"
+    val mtOpt = try {
+      val tokens = ar.mItem.split("-")
+      if (ar.code == MonitorStatus.OVER_STAT && tokens.length == 3) {
+        Some(MonitorType.withName(tokens(0)))
+      } else
+        Some(MonitorType.withName(ar.mItem))
+    } catch {
+      case ex: Throwable =>
+        None
+    }
+    val (repairType, repairSubType) = if (mtOpt.isDefined) {
+      (Some("數據"), Some(MonitorType.map(mtOpt.get).desp))
+    } else
+      (None, None)
+
+    implicit val w2 = Json.writes[PartFormData]
+    implicit val w1 = Json.writes[RepairFormData]
+
+    val ticket = Ticket(0, DateTime.now, true, TicketType.repair, 19,
+      SystemConfig.getAlarmTicketDefaultUserId(), ar.monitor, mtOpt, reason,
+      executeDate, Json.toJson(Ticket.defaultAlarmTicketForm(ar)).toString,
+      repairType, repairSubType, Some(false), overStd = Some(overStd))
+
+    Ticket.newTicket(ticket)
+  }
+
+  def updateAlarmTicketState(monitor: Monitor.Value, mItem: String, time: DateTime, state: String)(implicit session: DBSession = AutoSession) = {
+    val tab = getTabName(time.getYear)
+    val timeT: Timestamp = time
+    sql"""
+        Update ${tab}
+        Set CHK = $state
+        Where DP_NO = ${monitor.toString()} and M_DateTime = ${timeT} and M_ITEM = ${mItem}
+        """.update.apply
+  }
+
+  def isOverStd(ar: Alarm): Boolean = {
+    val tokens = ar.mItem.split("-")
+    (ar.code == MonitorStatus.OVER_STAT || ar.code == MonitorStatus.WARN_STAT) && tokens.length == 3
+  }
+
+  def getOverStdLevelCode(ar: Alarm): Int = {
+    val tokens = ar.mItem.split("-")
+    val overStdLevel = AlarmLevel.withName(tokens(2))
+    AlarmLevel.map(overStdLevel).code
   }
 
   private def arList: List[AlarmItem] =
