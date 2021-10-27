@@ -395,8 +395,6 @@ class OpenDataReceiver extends Actor with ActorLogging {
             """.update.apply
           }
         }
-      if (updateCounts.sum != 0)
-        Logger.debug(s"EPA ${updateCounts.sum} records have been upserted.")
 
       qualifiedData.size
     }

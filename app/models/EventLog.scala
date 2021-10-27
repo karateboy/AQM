@@ -34,9 +34,14 @@ object EventLog {
   }
 
   def create(evt: EventLog)(implicit session: DBSession = AutoSession) = {
-    sql"""
+    try{
+      sql"""
         Insert into eventLog(evtTime, evtType, evtDesc)
         Values(${DateTime.now}, ${evt.evtType}, ${evt.evtDesc})
         """.update.apply
+    }catch{
+      case _:Throwable =>
+        //ignore duplicate exception...
+    }
   }
 }
