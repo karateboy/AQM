@@ -1,26 +1,23 @@
 package models
-import play.api._
-import play.api.libs.json._
-import play.api.libs.functional.syntax._
-import scalikejdbc._
-import scalikejdbc.config._
-import Record._
-import Auditor._
-import MonitorType._
+
 import com.github.nscala_time.time.Imports._
+import models.Auditor._
 import models.ModelHelper._
+import models.MonitorType._
+import models.Record._
+import play.api.libs.json._
 
 abstract class Rule(val lead: Char)
 
 case class MinMaxCfg(
-  id: MonitorType.Value,
-  min: Float,
-  max: Float)
+                      id: MonitorType.Value,
+                      min: Float,
+                      max: Float)
 
 case class MinMaxRule(
-    enabled: Boolean = false,
-    autoTicket: Option[Boolean] = None,
-    monitorTypes: Seq[MinMaxCfg] = Seq.empty[MinMaxCfg]) extends Rule('a') {
+                       enabled: Boolean = false,
+                       autoTicket: Option[Boolean] = None,
+                       monitorTypes: Seq[MinMaxCfg] = Seq.empty[MinMaxCfg]) extends Rule('a') {
   def checkInvalid(record: HourRecord, targetStat: AuditStat): Boolean = {
     if (!enabled)
       return false
@@ -39,7 +36,7 @@ case class MinMaxRule(
           try {
             Alarm.insertAlarm(ar)
             val m = Monitor.withName(record.name)
-            for(autoTicket<-Monitor.map(m).autoAudit.minMaxRule.autoTicket if autoTicket)
+            for (autoTicket <- Monitor.map(m).autoAudit.minMaxRule.autoTicket if autoTicket)
               Alarm.newTicketFromAlarm(ar, DateTime.now().plusDays(2))
           } catch {
             case ex: Exception =>
@@ -62,12 +59,16 @@ object MinMaxRule {
 }
 
 case class CompareRule(
-    enabled: Boolean = false,
-    autoTicket: Option[Boolean] = None,
-    thc: Option[Boolean] = Some(true),
-    nox: Option[Boolean] =Some(true),
-    pm10: Option[Boolean] = Some(true),
-    humid: Option[Boolean] = Some(true)) extends Rule('b') {
+                        enabled: Boolean = false,
+                        autoTicket: Option[Boolean] = None,
+                        thc: Option[Boolean] = Some(true),
+                        nox: Option[Boolean] = Some(true),
+                        pm10: Option[Boolean] = Some(true),
+                        humid: Option[Boolean] = Some(true),
+                        thc2: Option[Boolean] = Some(true),
+                        nox2: Option[Boolean] = Some(true),
+                        pm102: Option[Boolean] = Some(true),
+                        humid2: Option[Boolean] = Some(true)) extends Rule('b') {
   def checkInvalid(record: HourRecord, targetStat: AuditStat): Boolean = {
     if (!enabled)
       return false
@@ -75,22 +76,22 @@ case class CompareRule(
     var invalid = false
     val thc_rec = Record.monitorTypeProject2(A226)(record)
     val ch4_rec = Record.monitorTypeProject2(A286)(record)
-    if (thc.getOrElse(true) && isOk(thc_rec) && isOk(ch4_rec)) {
-      val thc = thc_rec._1.get
+    if ((thc.getOrElse(true) || thc2.getOrElse(true)) && isOk(thc_rec) && isOk(ch4_rec)) {
+      val thcValue = thc_rec._1.get
       val ch4 = ch4_rec._1.get
-      if (ch4 > thc) {
+      if (ch4 > thcValue) {
         invalid = true
         val ar = Alarm.Alarm(Monitor.withName(record.name), MonitorType.map(A226).id, record.date, 1.0f, lead + "10")
         try {
-          Alarm.insertAlarm(ar)
+          if (thc.getOrElse(true))
+            Alarm.insertAlarm(ar)
+
           val m = Monitor.withName(record.name)
-          for(autoTicket<-Monitor.map(m).autoAudit.compareRule.autoTicket if autoTicket)
+          for (autoTicket <- Monitor.map(m).autoAudit.compareRule.autoTicket if autoTicket && thc2.getOrElse(true))
             Alarm.newTicketFromAlarm(ar, DateTime.now().plusDays(2))
         } catch {
-          case ex: Exception =>
-          // Skip duplicate alarm
+          case _: Exception =>
         }
-
         targetStat.setAuditStat(A226, lead)
         targetStat.setAuditStat(A286, lead)
       }
@@ -98,90 +99,97 @@ case class CompareRule(
 
     val nox_rec = Record.monitorTypeProject2(A223)(record)
     val no2_rec = Record.monitorTypeProject2(A293)(record)
-    if (nox.getOrElse(true) && isOk(nox_rec) && isOk(no2_rec)) {
-      val nox = nox_rec._1.get
-      val no2 = no2_rec._1.get
-      if (nox < no2) {
+    if ((nox.getOrElse(true) || nox2.getOrElse(true)) && isOk(nox_rec) && isOk(no2_rec)) {
+      val noxValue = nox_rec._1.get
+      val no2Value = no2_rec._1.get
+      if (noxValue < no2Value) {
         invalid = true
         val ar = Alarm.Alarm(Monitor.withName(record.name), MonitorType.map(A223).id, record.date, 1.0f, lead + "10")
         try {
-          Alarm.insertAlarm(ar)
+          if (nox.getOrElse(true))
+            Alarm.insertAlarm(ar)
           val m = Monitor.withName(record.name)
-          for(autoTicket<-Monitor.map(m).autoAudit.compareRule.autoTicket if autoTicket)
+          for (autoTicket <- Monitor.map(m).autoAudit.compareRule.autoTicket if autoTicket && nox2.getOrElse(true))
             Alarm.newTicketFromAlarm(ar, DateTime.now().plusDays(2))
         } catch {
-          case ex: Exception =>
-          // Skip duplicate alarm
+          case _: Exception =>
         }
-
         targetStat.setAuditStat(A223, lead)
         targetStat.setAuditStat(A293, lead)
       }
     }
-    val pm25 = Record.monitorTypeProject2(A215)(record)
+
+    val pm25Record = Record.monitorTypeProject2(A215)(record)
     val pm10Record = Record.monitorTypeProject2(A214)(record)
-    val tsp = Record.monitorTypeProject2(A213)(record)
+    val tspRecord = Record.monitorTypeProject2(A213)(record)
     val humidRecord = Record.monitorTypeProject2(C215)(record)
-    if (pm10.getOrElse(true) && isOk(tsp) && isOk(pm10Record)) {
-      if (pm10Record._1.get > tsp._1.get) {
+    if ((pm10.getOrElse(true) || pm102.getOrElse(true)) && isOk(tspRecord) && isOk(pm10Record)) {
+      if (pm10Record._1.get > tspRecord._1.get) {
         invalid = true
         targetStat.setAuditStat(A214, lead)
         targetStat.setAuditStat(A213, lead)
         val ar = Alarm.Alarm(Monitor.withName(record.name), "Z206", record.date, 1.0f, "056")
         try {
-          Alarm.insertAlarm(ar)
+          if (pm10.getOrElse(true))
+            Alarm.insertAlarm(ar)
+
           val m = Monitor.withName(record.name)
-          for(autoTicket<-Monitor.map(m).autoAudit.compareRule.autoTicket if autoTicket)
+          for (autoTicket <- Monitor.map(m).autoAudit.compareRule.autoTicket if autoTicket && pm102.getOrElse(true))
             Alarm.newTicketFromAlarm(ar, DateTime.now().plusDays(2))
         } catch {
-          case ex: Exception =>
-          // Skip duplicate alarm
+          case _: Exception =>
         }
       }
     }
-    if (pm10.getOrElse(true) && isOk(pm25) && isOk(tsp)) {
-      if (pm25._1.get > tsp._1.get) {
+    if ((pm10.getOrElse(true) || pm102.getOrElse(true)) && isOk(pm25Record) && isOk(tspRecord)) {
+      if (pm25Record._1.get > tspRecord._1.get) {
         invalid = true
         targetStat.setAuditStat(A215, lead)
         targetStat.setAuditStat(A213, lead)
         val ar = Alarm.Alarm(Monitor.withName(record.name), "Z216", record.date, 1.0f, "058")
         try {
-          Alarm.insertAlarm(ar)
+          if(pm10.getOrElse(true))
+            Alarm.insertAlarm(ar)
+
           val m = Monitor.withName(record.name)
-          for(autoTicket<-Monitor.map(m).autoAudit.compareRule.autoTicket if autoTicket)
+          for (autoTicket <- Monitor.map(m).autoAudit.compareRule.autoTicket if autoTicket && pm102.getOrElse(true))
             Alarm.newTicketFromAlarm(ar, DateTime.now().plusDays(2))
         } catch {
-          case ex: Exception =>
-          // Skip duplicate alarm
+          case _: Exception =>
         }
       }
     }
-    if (pm10.getOrElse(true) && isOk(pm25) && isOk(pm10Record)) {
-      if (pm25._1.get > pm10Record._1.get) {
+
+    if ((pm10.getOrElse(true) || pm102.getOrElse(true)) && isOk(pm25Record) && isOk(pm10Record)) {
+      if (pm25Record._1.get > pm10Record._1.get) {
         invalid = true
         targetStat.setAuditStat(A214, lead)
         targetStat.setAuditStat(A215, lead)
         val ar = Alarm.Alarm(Monitor.withName(record.name), "Z226", record.date, 1.0f, "059")
         try {
-          Alarm.insertAlarm(ar)
+          if(pm10.getOrElse(true))
+            Alarm.insertAlarm(ar)
+
           val m = Monitor.withName(record.name)
-          for(autoTicket<-Monitor.map(m).autoAudit.compareRule.autoTicket if autoTicket)
+          for (autoTicket <- Monitor.map(m).autoAudit.compareRule.autoTicket if autoTicket && pm102.getOrElse(true))
             Alarm.newTicketFromAlarm(ar, DateTime.now().plusDays(2))
         } catch {
-          case ex: Exception =>
-          // Skip duplicate alarm
+          case _: Exception =>
         }
       }
     }
-    if(humid.getOrElse(true) && isOk(humidRecord)){
-      for(v <- humidRecord._1 if v > 100){
+
+    if ((humid.getOrElse(true)||humid2.getOrElse(true)) && isOk(humidRecord)) {
+      for (v <- humidRecord._1 if v > 100) {
         invalid = true
         targetStat.setAuditStat(C215, lead)
         val ar = Alarm.Alarm(Monitor.withName(record.name), "Z215", record.date, 1.0f, "059")
         try {
-          Alarm.insertAlarm(ar)
+          if(humid.getOrElse(true))
+            Alarm.insertAlarm(ar)
+
           val m = Monitor.withName(record.name)
-          for(autoTicket<-Monitor.map(m).autoAudit.compareRule.autoTicket if autoTicket)
+          for (autoTicket <- Monitor.map(m).autoAudit.compareRule.autoTicket if autoTicket && humid2.getOrElse(true))
             Alarm.newTicketFromAlarm(ar, DateTime.now().plusDays(2))
         } catch {
           case ex: Exception =>
@@ -199,10 +207,10 @@ object CompareRule {
 }
 
 case class DifferenceRule(
-    enabled: Boolean = false,
-    autoTicket: Option[Boolean] = None,
-    multiplier: Float =3.0f,
-    monitorTypes: Seq[MonitorType.Value] = Seq.empty[MonitorType.Value]) extends Rule('c') {
+                           enabled: Boolean = false,
+                           autoTicket: Option[Boolean] = None,
+                           multiplier: Float = 3.0f,
+                           monitorTypes: Seq[MonitorType.Value] = Seq.empty[MonitorType.Value]) extends Rule('c') {
   def checkInvalid(record: HourRecord, targetStat: AuditStat, monitor: Monitor.Value, start: DateTime): Boolean = {
     if (!enabled)
       return false
@@ -212,7 +220,9 @@ case class DifferenceRule(
     val mtAvgStdPairs =
       for {
         mt <- monitorTypes
-        mt_records = records.map { Record.monitorTypeProject2(mt) }.filter(isOk).map { r => r._1.get } if (mt_records.length != 0)
+        mt_records = records.map {
+          Record.monitorTypeProject2(mt)
+        }.filter(isOk).map { r => r._1.get } if (mt_records.length != 0)
       } yield {
         val count = mt_records.length
         val avg = mt_records.sum / count
@@ -234,7 +244,7 @@ case class DifferenceRule(
         try {
           Alarm.insertAlarm(ar)
           val m = Monitor.withName(record.name)
-          for(autoTicket<-Monitor.map(m).autoAudit.differenceRule.autoTicket if autoTicket)
+          for (autoTicket <- Monitor.map(m).autoAudit.differenceRule.autoTicket if autoTicket)
             Alarm.newTicketFromAlarm(ar, DateTime.now().plusDays(2))
         } catch {
           case ex: Exception =>
@@ -255,12 +265,13 @@ object DifferenceRule {
 }
 
 case class SpikeCfg(
-  id: MonitorType.Value,
-  abs: Float)
+                     id: MonitorType.Value,
+                     abs: Float)
+
 case class SpikeRule(
-    enabled: Boolean = false,
-    autoTicket: Option[Boolean] = None,
-    monitorTypes: Seq[SpikeCfg] = Seq.empty[SpikeCfg]) extends Rule('d') {
+                      enabled: Boolean = false,
+                      autoTicket: Option[Boolean] = None,
+                      monitorTypes: Seq[SpikeCfg] = Seq.empty[SpikeCfg]) extends Rule('d') {
   def checkInvalid(record: HourRecord, targetStat: AuditStat, monitor: Monitor.Value, start: DateTime): Boolean = {
     if (!enabled)
       return false
@@ -279,7 +290,7 @@ case class SpikeRule(
           try {
             Alarm.insertAlarm(ar)
             val m = Monitor.withName(record.name)
-            for(autoTicket<-Monitor.map(m).autoAudit.spikeRule.autoTicket if autoTicket)
+            for (autoTicket <- Monitor.map(m).autoAudit.spikeRule.autoTicket if autoTicket)
               Alarm.newTicketFromAlarm(ar, DateTime.now().plusDays(2))
           } catch {
             case ex: Exception =>
@@ -303,10 +314,10 @@ object SpikeRule {
 }
 
 case class PersistenceRule(
-    enabled: Boolean = false,
-    autoTicket: Option[Boolean] = None,
-    same: Int = 3,
-    monitorTypes: Option[Seq[MonitorType.Value]] = Some(Seq.empty[MonitorType.Value])) extends Rule('e') {
+                            enabled: Boolean = false,
+                            autoTicket: Option[Boolean] = None,
+                            same: Int = 3,
+                            monitorTypes: Option[Seq[MonitorType.Value]] = Some(Seq.empty[MonitorType.Value])) extends Rule('e') {
   def checkInvalid(record: HourRecord, targetStat: AuditStat, monitor: Monitor.Value, start: DateTime): Boolean = {
     if (!enabled)
       return false
@@ -315,7 +326,7 @@ case class PersistenceRule(
     val pre_records = getHourRecords(monitor, start - (same - 1).hour, start).toArray
 
     val mtList = monitorTypes.getOrElse(Seq.empty[MonitorType.Value])
-    
+
     for (mt <- mtList) {
       val mt_rec = Record.monitorTypeProject2(mt)(record)
       if (isOk(mt_rec)) {
@@ -326,7 +337,7 @@ case class PersistenceRule(
           try {
             Alarm.insertAlarm(ar)
             val m = Monitor.withName(record.name)
-            for(autoTicket<-Monitor.map(m).autoAudit.persistenceRule.autoTicket if autoTicket)
+            for (autoTicket <- Monitor.map(m).autoAudit.persistenceRule.autoTicket if autoTicket)
               Alarm.newTicketFromAlarm(ar, DateTime.now().plusDays(2))
           } catch {
             case ex: Exception =>
@@ -349,8 +360,8 @@ object PersistenceRule {
 }
 
 case class MonoCfg(
-  id: MonitorType.Value,
-  abs: Float)
+                    id: MonitorType.Value,
+                    abs: Float)
 
 case class MonoRule(enabled: Boolean = false,
                     autoTicket: Option[Boolean] = None,
@@ -376,7 +387,7 @@ case class MonoRule(enabled: Boolean = false,
           try {
             Alarm.insertAlarm(ar)
             val m = Monitor.withName(record.name)
-            for(autoTicket<-Monitor.map(m).autoAudit.monoRule.autoTicket if autoTicket)
+            for (autoTicket <- Monitor.map(m).autoAudit.monoRule.autoTicket if autoTicket)
               Alarm.newTicketFromAlarm(ar, DateTime.now().plusDays(2))
           } catch {
             case ex: Exception =>
@@ -420,7 +431,7 @@ case class TwoHourRule(enabled: Boolean = false,
           try {
             Alarm.insertAlarm(ar)
             val m = Monitor.withName(record.name)
-            for(autoTicket<-Monitor.map(m).autoAudit.twoHourRule.autoTicket if autoTicket)
+            for (autoTicket <- Monitor.map(m).autoAudit.twoHourRule.autoTicket if autoTicket)
               Alarm.newTicketFromAlarm(ar, DateTime.now().plusDays(2))
           } catch {
             case ex: Exception =>
@@ -437,15 +448,17 @@ case class TwoHourRule(enabled: Boolean = false,
 }
 
 object TwoHourRule {
-  import MonoRule._
+  implicit val monoCfgRead = Json.reads[MonoCfg]
+  implicit val monoCfgWrite = Json.writes[MonoCfg]
   implicit val read = Json.reads[TwoHourRule]
   implicit val write = Json.writes[TwoHourRule]
 }
 
 case class ThreeHourCfg(
-  id: MonitorType.Value,
-  abs: Float,
-  percent: Float)
+                         id: MonitorType.Value,
+                         abs: Float,
+                         percent: Float)
+
 case class ThreeHourRule(enabled: Boolean = false,
                          autoTicket: Option[Boolean] = None,
                          monitorTypes: Seq[ThreeHourCfg] = Seq.empty[ThreeHourCfg]) extends Rule('h') {
@@ -473,7 +486,7 @@ case class ThreeHourRule(enabled: Boolean = false,
           try {
             Alarm.insertAlarm(ar)
             val m = Monitor.withName(record.name)
-            for(autoTicket<-Monitor.map(m).autoAudit.threeHourRule.autoTicket if autoTicket)
+            for (autoTicket <- Monitor.map(m).autoAudit.threeHourRule.autoTicket if autoTicket)
               Alarm.newTicketFromAlarm(ar, DateTime.now().plusDays(2))
           } catch {
             case ex: Exception =>
@@ -488,6 +501,7 @@ case class ThreeHourRule(enabled: Boolean = false,
     invalid
   }
 }
+
 object ThreeHourRule {
   implicit val thcfgRead = Json.reads[ThreeHourCfg]
   implicit val thcfgWrite = Json.writes[ThreeHourCfg]
@@ -496,8 +510,8 @@ object ThreeHourRule {
 }
 
 case class FourHourCfg(
-  id: MonitorType.Value,
-  abs: Float)
+                        id: MonitorType.Value,
+                        abs: Float)
 
 case class FourHourRule(enabled: Boolean = false,
                         autoTicket: Option[Boolean] = None,
@@ -521,7 +535,7 @@ case class FourHourRule(enabled: Boolean = false,
           try {
             Alarm.insertAlarm(ar)
             val m = Monitor.withName(record.name)
-            for(autoTicket<-Monitor.map(m).autoAudit.fourHourRule.autoTicket if autoTicket)
+            for (autoTicket <- Monitor.map(m).autoAudit.fourHourRule.autoTicket if autoTicket)
               Alarm.newTicketFromAlarm(ar, DateTime.now().plusDays(2))
           } catch {
             case ex: Exception =>
@@ -551,7 +565,7 @@ case class OverInternalStdMinRule(enabled: Boolean = false,
   def checkInvalid(m: Monitor.Value): Boolean = {
     if (!enabled)
       return false
-  
+
     var invalid = false
     val mCase = Monitor.map(m)
 
@@ -559,7 +573,9 @@ case class OverInternalStdMinRule(enabled: Boolean = false,
     for {
       mt <- mCase.monitorTypes
       std_internal <- MonitorTypeAlert.map(m)(mt).internal
-      mtRecords = records.map { Record.monitorTypeProject2(mt) }
+      mtRecords = records.map {
+        Record.monitorTypeProject2(mt)
+      }
     } {
       val over = mtRecords.count(r => r._1.isDefined && r._2.isDefined
         && MonitorStatus.isNormalStat(r._2.get)
@@ -570,8 +586,8 @@ case class OverInternalStdMinRule(enabled: Boolean = false,
         val ar = Alarm.Alarm(m, mt.toString, DateTime.now, 1.0f, lead + "10")
         try {
           Alarm.insertAlarm(ar)
-          for{ overInternal <- Monitor.map(m).autoAudit.overInternalStdMinRule
-            autoTicket<-overInternal.autoTicket if autoTicket}
+          for {overInternal <- Monitor.map(m).autoAudit.overInternalStdMinRule
+               autoTicket <- overInternal.autoTicket if autoTicket}
             Alarm.newTicketFromAlarm(ar, DateTime.now().plusDays(2))
         } catch {
           case ex: Exception =>
@@ -605,8 +621,8 @@ case class DataReadyMinRule(enabled: Boolean = false,
           val ar = Alarm.Alarm(m, mt.toString, DateTime.now, 1.0f, lead + "10")
           try {
             Alarm.insertAlarm(ar)
-            for{ dataReadyRule <- Monitor.map(m).autoAudit.dataReadyMinRule
-                 autoTicket<-dataReadyRule.autoTicket if autoTicket}
+            for {dataReadyRule <- Monitor.map(m).autoAudit.dataReadyMinRule
+                 autoTicket <- dataReadyRule.autoTicket if autoTicket}
               Alarm.newTicketFromAlarm(ar, DateTime.now().plusDays(2))
           } catch {
             case ex: Exception =>
@@ -630,26 +646,32 @@ case class OtherRule(enabled: Boolean = false,
                      autoTicket: Option[Boolean] = Some(false),
                      calibrate: Boolean = true,
                      invalidData: Boolean = true,
-                    instAbnormal:Boolean = true,
-                     overStd:Boolean = true
+                     instAbnormal: Boolean = true,
+                     overStd: Boolean = true,
+                     calibrate2: Option[Boolean] = Some(true),
+                     invalidData2: Option[Boolean] = Some(true),
+                     instAbnormal2: Option[Boolean] = Some(true),
+                     overStd2: Option[Boolean] = Some(true)
                     )
+
 object OtherRule {
   implicit val reads = Json.reads[OtherRule]
   implicit val writes = Json.writes[OtherRule]
 }
+
 case class AutoAudit(
-  minMaxRule: MinMaxRule,
-  compareRule: CompareRule,
-  differenceRule: DifferenceRule,
-  spikeRule: SpikeRule,
-  persistenceRule: PersistenceRule,
-  monoRule: MonoRule,
-  twoHourRule: TwoHourRule,
-  threeHourRule: ThreeHourRule,
-  fourHourRule: FourHourRule,
-  overInternalStdMinRule: Option[OverInternalStdMinRule] = Some(OverInternalStdMinRule()),
-  dataReadyMinRule: Option[DataReadyMinRule] = Some(DataReadyMinRule()),
-  var otherRule: Option[OtherRule] = Some(OtherRule()))
+                      minMaxRule: MinMaxRule,
+                      compareRule: CompareRule,
+                      differenceRule: DifferenceRule,
+                      spikeRule: SpikeRule,
+                      persistenceRule: PersistenceRule,
+                      monoRule: MonoRule,
+                      twoHourRule: TwoHourRule,
+                      threeHourRule: ThreeHourRule,
+                      fourHourRule: FourHourRule,
+                      overInternalStdMinRule: Option[OverInternalStdMinRule] = Some(OverInternalStdMinRule()),
+                      dataReadyMinRule: Option[DataReadyMinRule] = Some(DataReadyMinRule()),
+                      var otherRule: Option[OtherRule] = Some(OtherRule()))
 
 /**
  * @author user

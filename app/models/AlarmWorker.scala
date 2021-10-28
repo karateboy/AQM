@@ -22,7 +22,6 @@ class AlarmWorker extends Actor{
     else{
       val adminUserList = User.getAdminUsers()
       for (ar <- alarms) {
-        LineNotify.notifyAlarm(ar)
         val matchedUser = adminUserList.filter { user =>
           user.alarmConfig.isDefined && {
             val alarmConfig = user.alarmConfig.get

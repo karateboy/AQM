@@ -226,7 +226,10 @@ object Ticket {
           ${ticket.overStd})
         """.update.apply
 
-    LineNotify.notifyTicket(ticket)
+    // only notify alarming ticket by 監控中心
+    if(ticket.ticketType == TicketType.repair && ticket.active && ticket.submiter_id == 19)
+      LineNotify.notifyTicket(ticket)
+
     if (ticket.ticketType == TicketType.repair) {
       import scala.concurrent._
       Future {

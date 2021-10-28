@@ -8,7 +8,14 @@
         	<div class="col-lg-1">        		
             	<input type="checkbox" name="enabled" class="form-control">
             </div>
-        </div>
+        </div>		            	
+        <h3>觸發規則:</h3>
+ 		<ul>
+			<li><input type="checkbox" name="calibrate" />小時資料校正中</li>
+			<li><input type="checkbox" name="invalidData" />無效數據</li>
+			<li><input type="checkbox" name="instAbnormal" />儀器異常</li>
+			<li><input type="checkbox" name="overStd" />超限(內控,警告,法規)</li>
+		</ul>
 		<div class="form-group">
 			<label class="col-lg-4 control-label">自動立案 (處理中案件) 啟用<br/>
 				啟動後系統自動立案並通知Line群組</label>
@@ -16,13 +23,11 @@
             	<input type="checkbox" name="autoTicket" class="form-control">
             </div>
         </div>
-                    	
-        <h3>觸發規則:</h3>
- 		<ul>
-			<li><input type="checkbox" name="calibrate" />小時資料校正中</li>
-			<li><input type="checkbox" name="invalidData" />無效數據</li>
-			<li><input type="checkbox" name="instAbnormal" />儀器異常</li>
-			<li><input type="checkbox" name="overStd" />超限(內控,警告,法規)</li>
+        <ul>
+			<li><input type="checkbox" name="calibrate2" />小時資料校正中</li>
+			<li><input type="checkbox" name="invalidData2" />無效數據</li>
+			<li><input type="checkbox" name="instAbnormal2" />儀器異常</li>
+			<li><input type="checkbox" name="overStd2" />超限(內控,警告,法規)</li>
 		</ul>
 		<div class="form-group">
         	<div class="col-lg-offset-2 col-lg-10">
@@ -38,7 +43,7 @@ function updateOtherForm(){
 	$enabled.prop('checked', config.enabled);
 	var $autoTicket = $('#otherForm :input[name="autoTicket"]')
 	$autoTicket.prop('checked', config.autoTicket)
-	let mtlist = ['calibrate','invalidData', 'instAbnormal', 'overStd']
+	let mtlist = ['calibrate','invalidData', 'instAbnormal', 'overStd', 'calibrate2','invalidData2', 'instAbnormal2', 'overStd2']
 	for(let mt of mtlist){
 		let $chk = $(`#otherForm :input[name="${mt}"]`);
 		if(config[mt] === false)
@@ -54,7 +59,7 @@ $('#otherForm').submit(function(){
 	param.enabled = $enabled.prop("checked");
 	var $autoTicket = $('#otherForm :input[name="autoTicket"]')
 	param.autoTicket = $autoTicket.prop("checked");
-	let mtlist = ['calibrate','invalidData', 'instAbnormal', 'overStd']
+	let mtlist = ['calibrate','invalidData', 'instAbnormal', 'overStd', 'calibrate2','invalidData2', 'instAbnormal2', 'overStd2']
 	for(let mt of mtlist){
 		let $chk = $(`#otherForm :input[name="${mt}"]`)
 		param[mt] = $chk.prop("checked");

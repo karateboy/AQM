@@ -5,7 +5,6 @@ import com.github.nscala_time.time.Imports._
 import models.ModelHelper._
 import models.Ozone8HrCalculator.updateCurrentOzone8Hr
 import play.api._
-import play.api.libs.json.Json
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent._
@@ -113,6 +112,7 @@ class DataAlarmChecker extends Actor {
       hours = Record.getUncheckedHourRecords(m, currentHour, currentHour.toDateTime + 1.hour) if hours.length >= 0
       mCase = Monitor.map(m)
     } {
+      val otherRule = mCase.autoAudit.otherRule.getOrElse(OtherRule())
       for (mt <- mCase.monitorTypes) {
         val records = hours.map { h => (Record.timeProjection(h), Record.monitorTypeProject2(mt)(h)) }
         for ((time, (valueOpt, statusOpt)) <- records) {
@@ -120,20 +120,19 @@ class DataAlarmChecker extends Actor {
             v <- valueOpt
             status <- statusOpt if MonitorStatus.isNormalStat(status)
           } {
-
             def checkStdLaw(): Option[Boolean] =
               for (stdLaw <- MonitorTypeAlert.map(m)(mt).std_law if v >= stdLaw) yield {
                 alarm = true
                 val mItem = s"${mt.toString}-${AlarmDataType.Hour}-${AlarmLevel.Law}"
                 val ar = Alarm.Alarm(m, mItem, time.toDateTime, v, MonitorStatus.OVER_STAT)
                 try {
-                  Alarm.insertAlarm(ar)
-                  for {otherRule <- Monitor.map(m).autoAudit.otherRule
-                       autoTicket <- otherRule.autoTicket if autoTicket == true && otherRule.overStd
-                       }
+                  if (otherRule.overStd)
+                    Alarm.insertAlarm(ar)
+
+                  for (autoTicket <- otherRule.autoTicket if autoTicket == true && otherRule.overStd2.getOrElse(true))
                     Alarm.newTicketFromAlarm(ar, DateTime.now.plusDays(2))
                 } catch {
-                  case ex: Exception =>
+                  case _: Exception =>
                 }
                 true
               }
@@ -144,13 +143,13 @@ class DataAlarmChecker extends Actor {
                 val mItem = s"${mt.toString}-${AlarmDataType.Hour}-${AlarmLevel.Warn}"
                 val ar = Alarm.Alarm(m, mItem, time.toDateTime, v, MonitorStatus.WARN_STAT)
                 try {
-                  Alarm.insertAlarm(ar)
-                  for {otherRule <- Monitor.map(m).autoAudit.otherRule
-                       autoTicket <- otherRule.autoTicket if autoTicket == true && otherRule.overStd
-                       }
+                  if (otherRule.overStd)
+                    Alarm.insertAlarm(ar)
+
+                  for (autoTicket <- otherRule.autoTicket if autoTicket == true && otherRule.overStd2.getOrElse(true))
                     Alarm.newTicketFromAlarm(ar, DateTime.now.plusDays(2))
                 } catch {
-                  case ex: Exception =>
+                  case _: Exception =>
                 }
                 true
               }
@@ -161,13 +160,13 @@ class DataAlarmChecker extends Actor {
                 val mItem = s"${mt.toString}-${AlarmDataType.Hour}-${AlarmLevel.Internal}"
                 val ar = Alarm.Alarm(m, mItem, time.toDateTime, v, MonitorStatus.WARN_STAT)
                 try {
-                  Alarm.insertAlarm(ar)
-                  for {otherRule <- Monitor.map(m).autoAudit.otherRule
-                       autoTicket <- otherRule.autoTicket if autoTicket == true && otherRule.overStd
-                       }
+                  if (otherRule.overStd)
+                    Alarm.insertAlarm(ar)
+
+                  for (autoTicket <- otherRule.autoTicket if autoTicket == true && otherRule.overStd2.getOrElse(true))
                     Alarm.newTicketFromAlarm(ar, DateTime.now.plusDays(2))
                 } catch {
-                  case ex: Exception =>
+                  case _: Exception =>
                 }
                 true
               }
@@ -185,15 +184,20 @@ class DataAlarmChecker extends Actor {
           } {
             alarm = true
             val ar = Alarm.Alarm(m, mt.toString, time.toDateTime, v, status)
+
             try {
-              Alarm.insertAlarm(ar)
-              for {otherRule <- Monitor.map(m).autoAudit.otherRule
-                   autoTicket <- otherRule.autoTicket if autoTicket == true && (otherRule.calibrate || otherRule.invalidData)
-                   }
+              if ((status == "030" && otherRule.invalidData) ||
+                (status == "026" && otherRule.calibrate) ||
+                (status == "035" && otherRule.instAbnormal))
+                Alarm.insertAlarm(ar)
+
+              for (autoTicket <- otherRule.autoTicket if autoTicket == true &&
+                ((status == "030" && otherRule.invalidData2.getOrElse(true)) ||
+                  (status == "026" && otherRule.calibrate2.getOrElse(true)) ||
+                  (status == "035" && otherRule.instAbnormal2.getOrElse(true))))
                 Alarm.newTicketFromAlarm(ar, DateTime.now.plusDays(2))
             } catch {
-              case ex: Exception =>
-                Logger.error("failed to insert new ticket", ex)
+              case _: Exception =>
             }
           }
         }

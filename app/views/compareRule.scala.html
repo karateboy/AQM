@@ -9,7 +9,14 @@
         	<div class="col-lg-1">        		
             	<input type="checkbox" name="enabled" class="form-control">
             </div>
-        </div>
+        </div>		                    	
+        <h3>測項比較規則:</h3>
+ 		<ul>
+			<li><input type="checkbox" name="thc" />THC > CH4 且  THC>NMHC </li>
+			<li><input type="checkbox" name="nox" />NOx >= NO2 且NOx >= NO</li>
+			<li><input type="checkbox" name="pm10" />PM10 <= TSP 且 PM25 <= PM10</li>
+			<li><input type="checkbox" name="humid" />相對溼度<=100%</li>
+		</ul>
 		<div class="form-group">
 			<label class="col-lg-4 control-label">自動立案 (處理中案件) 啟用<br/>
 				啟動後系統自動立案並通知Line群組</label>
@@ -17,13 +24,11 @@
             	<input type="checkbox" name="autoTicket" class="form-control">
             </div>
         </div>
-                    	
-        <h3>測項比較規則:</h3>
- 		<ul>
-			<li><input type="checkbox" name="thc" />THC > CH4 且  THC>NMHC </li>
-			<li><input type="checkbox" name="nox" />NOx >= NO2 且NOx >= NO</li>
-			<li><input type="checkbox" name="pm10" />PM10 <= TSP 且 PM25 <= PM10</li>
-			<li><input type="checkbox" name="humid" />相對溼度<=100%</li>
+		<ul>
+			<li><input type="checkbox" name="thc2" />THC > CH4 且  THC>NMHC </li>
+			<li><input type="checkbox" name="nox2" />NOx >= NO2 且NOx >= NO</li>
+			<li><input type="checkbox" name="pm102" />PM10 <= TSP 且 PM25 <= PM10</li>
+			<li><input type="checkbox" name="humid2" />相對溼度<=100%</li>
 		</ul>
 		<div class="form-group">
         	<div class="col-lg-offset-2 col-lg-10">
@@ -39,7 +44,7 @@ function updateCompareForm(){
 	$enabled.prop('checked', config.enabled);
 	var $autoTicket = $('#compareForm :input[name="autoTicket"]')
 	$autoTicket.prop('checked', config.autoTicket)
-	let mtlist = ['thc','nox', 'pm10', 'humid']
+	let mtlist = ['thc','nox', 'pm10', 'humid', 'thc2', 'nox2','pm102', 'humid2']
 	for(let mt of mtlist){
 		let $chk = $(`#compareForm :input[name="${mt}"]`);
 		if(config[mt] === false)
@@ -59,7 +64,7 @@ $('#compareForm').submit(function(){
 	param.enabled = $enabled.prop("checked");
 	var $autoTicket = $('#compareForm :input[name="autoTicket"]')
 	param.autoTicket = $autoTicket.prop("checked");
-	let mtlist = ['thc','nox', 'pm10', 'humid']
+	let mtlist = ['thc','nox', 'pm10', 'humid', 'thc2', 'nox2','pm102', 'humid2']
 	for(let mt of mtlist){
 		let $chk = $(`#compareForm :input[name="${mt}"]`)
 		param[mt] = $chk.prop("checked");
