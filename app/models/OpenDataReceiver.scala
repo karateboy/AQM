@@ -119,6 +119,74 @@ class OpenDataReceiver extends Actor with ActorLogging {
   }
 
 
+  def getCurrentDataXML(limit: Int) = {
+    import com.github.nscala_time.time.Imports._
+    val url = s"https://data.epa.gov.tw/api/v1/aqx_p_432?format=xml&limit=${limit}&api_key=9be7b239-557b-4c10-9775-78cadfc555e9"
+
+    val f = WS.url(url).get()
+    f onFailure (errorHandler(""))
+    for (response <- f) yield {
+      var latestRecordTime = DateTime.now() - 1.day
+
+      val epaResult = response.xml
+
+      def handleEpaRecords(records: NodeSeq) {
+        val filtered = records.filter(r => {
+          try {
+            val id = (r \ "SiteId").text
+            EpaMonitor.idMap.contains(id.toInt)
+          } catch {
+            case _: Throwable =>
+              false
+          }
+        })
+        filtered.
+          foreach({
+            record =>
+              val id = record \ "SiteId"
+              val time = record \ "PublishTime"
+              val epaMonitor = EpaMonitor.idMap(id.text.toInt)
+              val dt = DateTime.parse(time.text.trim(), DateTimeFormat.forPattern("YYYY/MM/dd HH:mm:ss"))
+              if (latestRecordTime < dt)
+                latestRecordTime = dt
+
+              val overStdCode: Int = AlarmLevel.map(AlarmLevel.Internal).code
+
+              def handle(epaTag:String, mt: MonitorType.Value): Unit ={
+                for (mtValueStr <- record \ epaTag)
+                  try {
+                    val v = mtValueStr.text.toFloat
+                    upsertEpaRecord(epaMonitor, mt, dt, v)
+                    for (internal <- EpaMonitorTypeAlert.map(epaMonitor)(mt).internal if v >= internal)
+                      EpaTicket.upsert(EpaTicket(dt, epaMonitor, mt, v, overStdCode))
+                  } catch {
+                    case _: Throwable =>
+                  }
+              }
+              handle("PM2.5", MonitorType.A215)
+              handle("PM10_AVG", MonitorType.A214)
+              handle("SO2_AVG", MonitorType.A222)
+              handle("CO", MonitorType.A224)
+              handle("O3", MonitorType.A225)
+              handle("NO2", MonitorType.A293)
+              handle("NO", MonitorType.A283)
+              handle("WindSpeed", MonitorType.C211)
+              handle("WindDir", MonitorType.C212)
+
+          })
+      }
+
+      val data: NodeSeq = response.xml \ "data"
+
+      try {
+        handleEpaRecords(data)
+      } catch {
+        case ex: Exception =>
+          Logger.error("failed to handled epaRecord", ex)
+      }
+    }
+  }
+
   def getCurrentData(limit: Int) = {
     import com.github.nscala_time.time.Imports._
     val url = s"https://data.epa.gov.tw/api/v1/aqx_p_432?format=json&limit=${limit}&api_key=9be7b239-557b-4c10-9775-78cadfc555e9"
@@ -452,6 +520,11 @@ class OpenDataReceiver extends Actor with ActorLogging {
     }
   }
 
+
+  // NMHC https://data.epa.gov.tw/dataset/aqx_p_313
+  // THC https://data.epa.gov.tw/dataset/aqx_p_312
+  // 溫度 相對濕度 https://data.epa.gov.tw/dataset/aqx_p_35/resource/682534c9-85f8-4525-a6ca-1a3699d892a0
+  // 雨量 https://data.epa.gov.tw/dataset/aqx_p_35/resource/682534c9-85f8-4525-a6ca-1a3699d892a0
 
   override def postStop = {
     timer.cancel()
