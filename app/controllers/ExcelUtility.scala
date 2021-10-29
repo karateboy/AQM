@@ -2045,6 +2045,22 @@ object ExcelUtility {
     finishExcel(reportFilePath, pkg, wb)
   }
 
+  def abnormalSummary(summaries: Seq[AbnormalSummary]) = {
+    val (reportFilePath, pkg, wb) = prepareTemplate("abnormalSummary.xlsx")
+    val evaluator = wb.getCreationHelper().createFormulaEvaluator()
+
+    val sheet = wb.getSheetAt(0)
+    for((summary, idx) <- summaries.zipWithIndex){
+      val rowNum = idx + 2
+      val row = sheet.createRow(rowNum)
+      row.createCell(0).setCellValue(Monitor.map(summary.monitor).name)
+      row.createCell(1).setCellValue(MonitorType.map(summary.monitorType).desp)
+      row.createCell(2).setCellValue(summary.abnormalType)
+      row.createCell(3).setCellValue(summary.duration)
+      row.createCell(4).setCellValue(summary.count)
+    }
+    finishExcel(reportFilePath, pkg, wb)
+  }
   def monitorAggregateReport(date: DateTime, report: Seq[MonitorSummary]) = {
     val (reportFilePath, pkg, wb) = prepareTemplate("aggregateReport.xlsx")
     val evaluator = wb.getCreationHelper().createFormulaEvaluator()

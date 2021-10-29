@@ -161,7 +161,7 @@ object MonitorStatus {
     getTagInfo(CALBRATION_DIVERSION_STAT) == getTagInfo(s)
   }
 
-  def getTagInfo(tag: String) = {
+  def getTagInfo(tag: String): TagInfo = {
     if (tag.length() == 2)
       TagInfo(StatusType.Internal, None, tag)
     else {

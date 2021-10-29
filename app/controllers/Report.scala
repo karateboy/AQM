@@ -258,19 +258,131 @@ object Report extends Controller {
     }
   }
 
-  def getDays(start: DateTime, end: DateTime) = getPeriods(start, end, 1.day)
-
-  def getPeriods(start: DateTime, endTime: DateTime, d: Period): List[DateTime] = {
+  def get8hrPeriods(start: DateTime, end: DateTime): List[DateTime] = {
     import scala.collection.mutable.ListBuffer
 
     val buf = ListBuffer[DateTime]()
     var current = start
-    while (current < endTime) {
-      buf.append(current)
-      current += d
+
+    def appendBuffer() = {
+      while (current < end) {
+        buf.append(current)
+        if ((current + 1.hour).getDayOfWeek == current.getDayOfWeek)
+          current += 1.hour
+        else
+          current = current.withMillisOfDay(0).withHourOfDay(7).plusDays(1)
+      }
+      buf.toList
     }
 
-    buf.toList
+    if (current < start.withMillisOfDay(0).withHourOfDay(7)) {
+      current = start.withMillisOfDay(0).withHourOfDay(7)
+      appendBuffer
+    } else {
+      current = start
+      appendBuffer
+    }
+  }
+
+  def getPeriodReportMap(monitor: Monitor.Value, start: DateTime, end: DateTime, filter: MonitorStatusFilter.Value, period: Period) = {
+    val adjustStart = DateTime.parse(start.toString("YYYY-MM-dd"))
+    val adjustEnd = DateTime.parse(end.toString("YYYY-MM-dd")) + 1.day
+    val periods = getPeriods(adjustStart, adjustEnd, period)
+    val nPeriod = periods.length
+    val periodReports =
+      for {start <- periods} yield {
+        (start -> getPeriodReport(monitor, start, period, MonitorType.mtvAllList, filter))
+      }
+
+    import scala.collection.mutable.Map
+    val map = Map.empty[MonitorType.Value, Map[DateTime, (Option[Float], Option[String])]]
+
+    for {
+      (time, report) <- periodReports
+      t <- report.typeArray
+    } {
+      val periodMap = map.getOrElse(t.monitorType, Map.empty[DateTime, (Option[Float], Option[String])])
+      if (t.stat.avg.isDefined)
+        periodMap.put(time, (t.stat.avg, MonitorStatusFilter.statusMap.get(filter)))
+
+      map.put(t.monitorType, periodMap)
+    }
+    map
+  }
+
+  def getWeeklyReportMap(monitor: Monitor.Value, start: DateTime, end: DateTime, filter: MonitorStatusFilter.Value) = {
+    val adjustStart = DateTime.parse(adjustWeekDay(start).toString("YYYY-MM-dd"))
+
+    val adjustEnd = DateTime.parse(adjustWeekDay(end).toString("YYYY-MM-dd")) + 1.weeks
+
+    def getWeeks(current: DateTime): List[DateTime] = {
+      if (current == adjustEnd)
+        Nil
+      else
+        current :: getWeeks(current + 1.weeks)
+    }
+
+    val weeks = getWeeks(adjustStart)
+    val weeklyReports =
+      for {week <- weeks} yield {
+        (week, getPeriodReport(monitor, week, 1.weeks, MonitorType.mtvAllList, filter))
+      }
+
+    import scala.collection.mutable.Map
+    val map = Map.empty[MonitorType.Value, Map[DateTime, (Option[Float], Option[String])]]
+
+    for {
+      (week, report) <- weeklyReports
+      t <- report.typeArray
+    } {
+      val dateMap = map.getOrElse(t.monitorType, Map.empty[DateTime, (Option[Float], Option[String])])
+      dateMap.put(week, (t.stat.avg, Some(MonitorStatusFilter.statusMap(filter))))
+      map.put(t.monitorType, dateMap)
+    }
+    map
+  }
+
+  implicit val readsUserInfo: Reads[ReportInfo] =
+    ((__ \ "monitor").read[String] and (__ \ "reportType").read[String]
+      and (__ \ "startTime").read[String]) (ReportInfo.apply _)
+
+  def adjustWeekDay(date: DateTime) = {
+    import org.joda.time.DateTimeConstants._
+    if (date.getDayOfWeek == SUNDAY)
+      date
+    else
+      date - (date.getDayOfWeek).days
+  }
+
+  def getMonthlyReportMap(monitor: Monitor.Value, start: DateTime, end: DateTime, filter: MonitorStatusFilter.Value) = {
+    val adjustStart = DateTime.parse(start.toString("YYYY-MM-01"))
+    val adjustEnd = DateTime.parse(end.toString("YYYY-MM-01")) + 1.month
+
+    def getMonths(current: DateTime): List[DateTime] = {
+      if (current == adjustEnd)
+        Nil
+      else
+        current :: getMonths(current + 1.months)
+    }
+
+    val monthes = getMonths(adjustStart)
+    val monthlyReports =
+      for {month <- monthes} yield {
+        (month, getMonthlyReport(monitor, month, MonitorType.mtvAllList, filter))
+      }
+
+    import scala.collection.mutable.Map
+    val map = Map.empty[MonitorType.Value, Map[DateTime, (Option[Float], Option[String])]]
+
+    for {
+      (month, report) <- monthlyReports
+      t <- report.typeArray
+    } {
+      val dateMap = map.getOrElse(t.monitorType, Map.empty[DateTime, (Option[Float], Option[String])])
+      dateMap.put(month, (t.stat.avg, Some(MonitorStatusFilter.statusMap(filter))))
+      map.put(t.monitorType, dateMap)
+    }
+    map
   }
 
   def getMonthlyReport(monitor: Monitor.Value, startTime: DateTime, includeTypes: List[MonitorType.Value] = MonitorType.monitorReportList,
@@ -328,148 +440,17 @@ object Report extends Controller {
     MonthlyReport(typeReport.toArray)
   }
 
-  implicit val readsUserInfo: Reads[ReportInfo] =
-    ((__ \ "monitor").read[String] and (__ \ "reportType").read[String]
-      and (__ \ "startTime").read[String]) (ReportInfo.apply _)
-
-  def get8hrPeriods(start: DateTime, end: DateTime): List[DateTime] = {
+  def getPeriods(start: DateTime, endTime: DateTime, d: Period): List[DateTime] = {
     import scala.collection.mutable.ListBuffer
 
     val buf = ListBuffer[DateTime]()
     var current = start
-
-    def appendBuffer() = {
-      while (current < end) {
-        buf.append(current)
-        if ((current + 1.hour).getDayOfWeek == current.getDayOfWeek)
-          current += 1.hour
-        else
-          current = current.withMillisOfDay(0).withHourOfDay(7).plusDays(1)
-      }
-      buf.toList
+    while (current < endTime) {
+      buf.append(current)
+      current += d
     }
 
-    if (current < start.withMillisOfDay(0).withHourOfDay(7)) {
-      current = start.withMillisOfDay(0).withHourOfDay(7)
-      appendBuffer
-    } else {
-      current = start
-      appendBuffer
-    }
-  }
-
-  def getPeriodReportMap(monitor: Monitor.Value, start: DateTime, end: DateTime, filter: MonitorStatusFilter.Value, period: Period) = {
-    val adjustStart = DateTime.parse(start.toString("YYYY-MM-dd"))
-    val adjustEnd = DateTime.parse(end.toString("YYYY-MM-dd")) + 1.day
-    val periods = getPeriods(adjustStart, adjustEnd, period)
-    val nPeriod = periods.length
-    val periodReports =
-      for {start <- periods} yield {
-        (start -> getPeriodReport(monitor, start, period, MonitorType.mtvAllList, filter))
-      }
-
-    import scala.collection.mutable.Map
-    val map = Map.empty[MonitorType.Value, Map[DateTime, (Option[Float], Option[String])]]
-
-    for {
-      (time, report) <- periodReports
-      t <- report.typeArray
-    } {
-      val periodMap = map.getOrElse(t.monitorType, Map.empty[DateTime, (Option[Float], Option[String])])
-      if (t.stat.avg.isDefined)
-        periodMap.put(time, (t.stat.avg, MonitorStatusFilter.statusMap.get(filter)))
-
-      map.put(t.monitorType, periodMap)
-    }
-    map
-  }
-
-  def getPeriodReport(monitor: Monitor.Value, startTime: DateTime, period: Period, includeTypes: List[MonitorType.Value] = MonitorType.monitorReportList,
-                      filter: MonitorStatusFilter.Value = MonitorStatusFilter.All) = {
-    val endTime = startTime + period
-    val report = Record.getPeriodReport(monitor, startTime, period, includeTypes, filter)
-
-    val typeReport =
-      for {
-        t <- report.typeList.zipWithIndex
-        monitorType = t._1.monitorType
-        pos = t._2
-        typeStat = report.typeList(pos).stat
-      } yield {
-        MonitorTypeReport(monitorType, List(typeStat), typeStat)
-      }
-    IntervalReport(typeReport)
-  }
-
-  def getWeeklyReportMap(monitor: Monitor.Value, start: DateTime, end: DateTime, filter: MonitorStatusFilter.Value) = {
-    val adjustStart = DateTime.parse(adjustWeekDay(start).toString("YYYY-MM-dd"))
-
-    val adjustEnd = DateTime.parse(adjustWeekDay(end).toString("YYYY-MM-dd")) + 1.weeks
-
-    def getWeeks(current: DateTime): List[DateTime] = {
-      if (current == adjustEnd)
-        Nil
-      else
-        current :: getWeeks(current + 1.weeks)
-    }
-
-    val weeks = getWeeks(adjustStart)
-    val weeklyReports =
-      for {week <- weeks} yield {
-        (week, getPeriodReport(monitor, week, 1.weeks, MonitorType.mtvAllList, filter))
-      }
-
-    import scala.collection.mutable.Map
-    val map = Map.empty[MonitorType.Value, Map[DateTime, (Option[Float], Option[String])]]
-
-    for {
-      (week, report) <- weeklyReports
-      t <- report.typeArray
-    } {
-      val dateMap = map.getOrElse(t.monitorType, Map.empty[DateTime, (Option[Float], Option[String])])
-      dateMap.put(week, (t.stat.avg, Some(MonitorStatusFilter.statusMap(filter))))
-      map.put(t.monitorType, dateMap)
-    }
-    map
-  }
-
-  def adjustWeekDay(date: DateTime) = {
-    import org.joda.time.DateTimeConstants._
-    if (date.getDayOfWeek == SUNDAY)
-      date
-    else
-      date - (date.getDayOfWeek).days
-  }
-
-  def getMonthlyReportMap(monitor: Monitor.Value, start: DateTime, end: DateTime, filter: MonitorStatusFilter.Value) = {
-    val adjustStart = DateTime.parse(start.toString("YYYY-MM-01"))
-    val adjustEnd = DateTime.parse(end.toString("YYYY-MM-01")) + 1.month
-
-    def getMonths(current: DateTime): List[DateTime] = {
-      if (current == adjustEnd)
-        Nil
-      else
-        current :: getMonths(current + 1.months)
-    }
-
-    val monthes = getMonths(adjustStart)
-    val monthlyReports =
-      for {month <- monthes} yield {
-        (month, getMonthlyReport(monitor, month, MonitorType.mtvAllList, filter))
-      }
-
-    import scala.collection.mutable.Map
-    val map = Map.empty[MonitorType.Value, Map[DateTime, (Option[Float], Option[String])]]
-
-    for {
-      (month, report) <- monthlyReports
-      t <- report.typeArray
-    } {
-      val dateMap = map.getOrElse(t.monitorType, Map.empty[DateTime, (Option[Float], Option[String])])
-      dateMap.put(month, (t.stat.avg, Some(MonitorStatusFilter.statusMap(filter))))
-      map.put(t.monitorType, dateMap)
-    }
-    map
+    buf.toList
   }
 
   def getQuarterReportMap(monitor: Monitor.Value, start: DateTime, end: DateTime, filter: MonitorStatusFilter.Value) = {
@@ -502,6 +483,23 @@ object Report extends Controller {
       map.put(t.monitorType, dateMap)
     }
     map
+  }
+
+  def getPeriodReport(monitor: Monitor.Value, startTime: DateTime, period: Period, includeTypes: List[MonitorType.Value] = MonitorType.monitorReportList,
+                      filter: MonitorStatusFilter.Value = MonitorStatusFilter.All) = {
+    val endTime = startTime + period
+    val report = Record.getPeriodReport(monitor, startTime, period, includeTypes, filter)
+
+    val typeReport =
+      for {
+        t <- report.typeList.zipWithIndex
+        monitorType = t._1.monitorType
+        pos = t._2
+        typeStat = report.typeList(pos).stat
+      } yield {
+        MonitorTypeReport(monitorType, List(typeStat), typeStat)
+      }
+    IntervalReport(typeReport)
   }
 
   def monitorReport(monitorStr: String, reportTypeStr: String, startDateStr: String, outputTypeStr: String) = Security.Authenticated {
@@ -926,6 +924,8 @@ object Report extends Controller {
 
   }
 
+  def getDays(start: DateTime, end: DateTime) = getPeriods(start, end, 1.day)
+
   def monitorAbnormal() = Security.Authenticated {
     implicit request =>
       val userInfo = Security.getUserinfo(request).get
@@ -980,7 +980,6 @@ object Report extends Controller {
         });
   }
 
-  case class AggregateReportParam(time:Long, monitor:String, monitorType: String, action:String, state:String)
   def saveAggregateReport2 = Security.Authenticated(BodyParsers.parse.json) {
     implicit request =>
       import AggregateReport2._
@@ -994,12 +993,29 @@ object Report extends Controller {
           BadRequest(Json.obj("ok" -> false, "msg" -> JsError.toJson(error)))
         },
         entries => {
-          for(entry<-entries){
+          for (entry <- entries) {
             val monitor = Monitor.withName(entry.monitor)
             val monitorType = MonitorType.withName(entry.monitorType)
             val time = new DateTime(entry.time)
             updateAction(time, monitor, monitorType, entry.action, entry.state)
           }
+
+          val entriesByDate = entries.groupBy(entry=>new DateTime(entry.time).withMillisOfDay(0))
+          entriesByDate.foreach(kv=>{
+            val date = kv._1
+            val monitorSummaries = AggregateReport.getLatestMonitorSummary(date)
+            for(updateEntry <- kv._2){
+              monitorSummaries.foreach(monitorSummary=>{
+                if(monitorSummary.monitor == Monitor.withName(updateEntry.monitor)) {
+                  if(monitorSummary.explain.isEmpty)
+                    monitorSummary.explain = updateEntry.action
+                  else
+                    monitorSummary.explain = s"${monitorSummary.explain};${updateEntry.action}"
+                }
+              })
+            }
+            AggregateReport.updateReport(date, monitorSummaries)
+          })
           Ok(Json.obj("ok" -> true, "nEntries" -> entries.length))
         })
   }
@@ -1018,8 +1034,14 @@ object Report extends Controller {
       Ok(views.html.aggregateQuery(group.privilege))
   }
 
-  def aggregateReport(monitorStr: String, monitorTypeStr: String,
-                      startStr: String, endStr: String, outputTypeStr: String) = Security.Authenticated {
+  def abnormalSummaryQuery = Security.Authenticated {
+    implicit request =>
+      val userInfo = Security.getUserinfo(request).get
+      val group = Group.getGroup(userInfo.groupID).get
+      Ok(views.html.abnormalSummaryQuery(group.privilege))
+  }
+
+  def abnormalSummaryReport(monitorStr: String, startStr: String, endStr: String, outputTypeStr: String) = Security.Authenticated {
     implicit request =>
 
       val monitorStrArray = monitorStr.split(':')
@@ -1027,16 +1049,23 @@ object Report extends Controller {
         Monitor.withName
       }
 
-      val monitorTypeStrArray = monitorTypeStr.split(':')
-      val monitorTypes = monitorTypeStrArray.map {
-        MonitorType.withName
-      }
-
       val (start, end) =
         (DateTime.parse(startStr, DateTimeFormat.forPattern("YYYY-MM-dd")),
           DateTime.parse(endStr, DateTimeFormat.forPattern("YYYY-MM-dd")))
 
-      Ok("")
+      val summaries = AbnormalSummary.query(monitors, start, end)
+      val outputType = OutputType.withName(outputTypeStr)
+      outputType match {
+        case OutputType.html =>
+          Ok(views.html.abnormalSummaryReport(summaries))
+        case OutputType.excel=>
+          val excelFile = ExcelUtility.abnormalSummary(summaries)
+          Ok.sendFile(excelFile, fileName = _ =>
+            play.utils.UriEncoding.encodePathSegment("測站異常彙總表.xlsx", "UTF-8"),
+            onClose = () => {
+              Files.deleteIfExists(excelFile.toPath())
+            })
+      }
   }
 
   def monitorAggregateReport(dateStr: String, outputTypeStr: String) = Security.Authenticated {
@@ -1099,7 +1128,7 @@ object Report extends Controller {
         });
   }
 
-  def getAggregrateReport2(monitorStr:String, monitorTypeStr:String, startStr:String, endStr:String, outputTypeStr:String)= Security.Authenticated {
+  def getAggregrateReport2(monitorStr: String, monitorTypeStr: String, startStr: String, endStr: String, outputTypeStr: String) = Security.Authenticated {
     val monitors = monitorStr.split(":").map(Monitor.withName)
     val monitorTypes = monitorTypeStr.split(":").map(MonitorType.withName)
     val start = DateTime.parse(startStr, DateTimeFormat.forPattern("yyyy-M-d"))
@@ -1107,14 +1136,14 @@ object Report extends Controller {
     val reports = AggregateReport2.query(monitors, monitorTypes, start, end)
     val outputType = OutputType.withName(outputTypeStr)
     outputType match {
-      case OutputType.html=>
+      case OutputType.html =>
         val output = views.html.aggregateReport2(reports)
         Ok(output)
-      case OutputType.json=>
+      case OutputType.json =>
         implicit val write = Json.writes[AggregateReport2]
         Ok(Json.toJson(reports))
-      case OutputType.excel=>
-        val title="資料超限彙總表"
+      case OutputType.excel =>
+        val title = "資料超限彙總表"
         val excelFile = ExcelUtility.aggregate2List(reports, title)
         Ok.sendFile(excelFile, fileName = _ =>
           play.utils.UriEncoding.encodePathSegment(title + start.toString("YYYYMMdd") + ".xlsx", "UTF-8"),
@@ -1125,6 +1154,8 @@ object Report extends Controller {
 
 
   }
+
+  case class AggregateReportParam(time: Long, monitor: String, monitorType: String, action: String, state: String)
 
   case class MonthHourReport(hourStatArray: Array[Stat], dailyReports: Array[DailyReport], StatStat: Stat)
 

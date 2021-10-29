@@ -331,6 +331,10 @@ object Record {
     rs => rs.date
   }
 
+  def timeStatusProjection(mt:MonitorType.Value):HourRecord => (Timestamp, Option[String]) =
+    rs=>
+      (rs.date, monitorTypeProject2(mt)(rs)._2)
+
   def getFieldName(tabType: TableType.Value, mt: MonitorType.Value, recordTime: Timestamp) = {
     val name = mt.toString
     val head = name.charAt(0)

@@ -5,7 +5,7 @@ import models.ModelHelper._
 import play.api.libs.json.Json
 import scalikejdbc._
 
-case class MonitorSummary(monitor: Monitor.Value, desc: String, explain: String)
+case class MonitorSummary(monitor: Monitor.Value, desc: String, var explain: String)
 
 case class AggregateReport(date: DateTime, report: Seq[MonitorSummary])
 
@@ -161,4 +161,18 @@ object AggregateReport {
     }
   }
 
+  def getLatestMonitorSummary(date:DateTime): Seq[MonitorSummary] ={
+    val report = AggregateReport.getReportFromDb(date).getOrElse({
+      AggregateReport.newReport(date)
+      AggregateReport(date, Seq.empty[MonitorSummary])
+    })
+
+    val explainMap = Map(report.report.map { r => (r.monitor -> r.explain) }: _*)
+    val latestReport = AggregateReport(date, AggregateReport.generate(date))
+    latestReport.report.map {
+      summary =>
+        val explain = explainMap.getOrElse(summary.monitor, "")
+        MonitorSummary(summary.monitor, summary.desc, explain)
+    }
+  }
 }

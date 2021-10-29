@@ -59,9 +59,6 @@ GET      /MonitorAggregateReport/:date                                          
 GET      /PDF/MonitorAggregateReport/:date                                                           controllers.Report.monitorAggregateReport(date, outputTypeStr="pdf")
 GET      /Excel/MonitorAggregateReport/:date                                                         controllers.Report.monitorAggregateReport(date, outputTypeStr="excel")
 POST     /SaveMonitorAggregateReport/:date                                                           controllers.Report.saveMonitorAggregateReport(date)
-GET      /AggregateQuery                                                                             controllers.Report.aggregateQuery
-GET      /AggregateReport/:monitors/:monitorTypes/:start/:end                                        controllers.Report.aggregateReport(monitors, monitorTypes, start, end, outputType="html")
-GET      /Excel/AggregateReport/:monitors/:monitorTypes/:start/:end                                  controllers.Report.aggregateReport(monitors, monitorTypes, start, end, outputType="excel")
 
 GET      /HistoryQuery                                                                                  controllers.Query.history
 GET      /HistoryQueryReport/:edit/:monitor/:epaMonitor/:monitorType/:recordType/:start/:end/:mb        controllers.Query.historyReport(edit:Boolean, monitor, epaMonitor, monitorType, recordType, start, end, mb:Boolean, outputType="html")
@@ -264,6 +261,9 @@ GET      /AggregateQuery                                                        
 GET      /AggregrateReport2/:monitors/:monitorTypes/:start/:end                 controllers.Report.getAggregrateReport2(monitors, monitorTypes, start, end, outputType="html")
 GET      /Excel/AggregrateReport2/:monitors/:monitorTypes/:start/:end           controllers.Report.getAggregrateReport2(monitors, monitorTypes, start, end, outputType="excel")
 
+GET      /AbnormalSummaryQuery                                                  controllers.Report.abnormalSummaryQuery
+GET      /AbnormalSummaryReport/:monitors/:start/:end                           controllers.Report.abnormalSummaryReport(monitors, start, end, outputType="html")
+GET      /Excel/AbnormalSummaryReport/:monitors/:start/:end                     controllers.Report.abnormalSummaryReport(monitors, start, end, outputType="excel")
 #JSON
 GET      /EpaMonitors                                                                                controllers.Application.epaMonitorList
 GET      /MonitorTypeAlertInfo/:monitor         controllers.Application.getMonitorTypeAlertInfo(monitor)
