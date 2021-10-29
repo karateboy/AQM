@@ -1,17 +1,19 @@
 package controllers
-import play.api._
-import play.api.Play.current
-import org.apache.poi.openxml4j.opc._
-import org.apache.poi.xssf.usermodel._
-import controllers.Report._
-import models._
-import models.Record._
-import models.ModelHelper._
+
 import com.github.nscala_time.time.Imports._
-import java.io._
-import java.nio.file.Files
-import java.nio.file._
+import controllers.Report._
+import models.ModelHelper._
+import models.Record._
+import models._
+import org.apache.poi.openxml4j.opc._
 import org.apache.poi.ss.usermodel._
+import org.apache.poi.xssf.usermodel._
+import play.api.Play.current
+import play.api._
+
+import java.io._
+import java.nio.file._
+import scala.math.BigDecimal.RoundingMode
 
 /**
  * @author user
@@ -43,7 +45,7 @@ object ExcelUtility {
 
   def createStyle(mt: MonitorType.Value)(implicit wb: XSSFWorkbook) = {
     val prec = MonitorType.map(mt).prec
-    val format_str = if(prec != 0)
+    val format_str = if (prec != 0)
       "0." + "0" * prec
     else
       "0"
@@ -82,19 +84,18 @@ object ExcelUtility {
     import MonitorStatus._
     val info = MonitorStatus.getTagInfo(tag)
     info.statusType match {
-      case StatusType.Internal =>
-        {
-          if (isValid(tag))
-            normalStyle
-          else if (isCalbration(tag))
-            abnormalStyles(0)
-          else if (isRepairing(tag))
-            abnormalStyles(1)
-          else if (isMaintance(tag))
-            abnormalStyles(2)
-          else
-            abnormalStyles(3)
-        }
+      case StatusType.Internal => {
+        if (isValid(tag))
+          normalStyle
+        else if (isCalbration(tag))
+          abnormalStyles(0)
+        else if (isRepairing(tag))
+          abnormalStyles(1)
+        else if (isMaintance(tag))
+          abnormalStyles(2)
+        else
+          abnormalStyles(3)
+      }
       case StatusType.Auto =>
         if (SystemConfig.getConfig(SystemConfig.AutoAuditAsNormal, "True").toBoolean)
           normalStyle
@@ -112,19 +113,18 @@ object ExcelUtility {
     val titleRow = sheet.getRow(2)
     val titleCell = titleRow.getCell(0)
 
-    val fgColors =
-      {
-        val seqColors =
-          for (col <- 1 to 5)
-            yield sheet.getRow(3).getCell(col).getCellStyle.getFillForegroundXSSFColor
-        seqColors.toArray
-      }
+    val fgColors = {
+      val seqColors =
+        for (col <- 1 to 5)
+          yield sheet.getRow(3).getCell(col).getCellStyle.getFillForegroundXSSFColor
+      seqColors.toArray
+    }
 
     sheet.getRow(1).createCell(1).setCellValue(s"${start.toString("YYYY-MM-dd HH:mm")}~${end.toString("YYYY-MM-dd HH:mm")}")
     sheet.getRow(2).createCell(1).setCellValue(s"${MonitorType.map(monitorType).desp} (${MonitorType.map(monitorType).unit})")
 
     var col = 1
-    for { m <- monitors } {
+    for {m <- monitors} {
       sheet.getRow(4).createCell(col).setCellValue(s"${Monitor.map(m).name}")
       col += 1
     }
@@ -158,12 +158,14 @@ object ExcelUtility {
         if (valueOpt.isEmpty || statusOpt.isEmpty) {
           cell.setCellValue("-")
         } else {
-          val value = valueOpt.get
-          val status = statusOpt.get
-          cell.setCellValue(value)
-
-          val cellStyle = getStyle(status, normalStyle, abnormalStyles)
-          cell.setCellStyle(cellStyle)
+          for {value <- valueOpt
+               status <- statusOpt
+               }{
+            val d = BigDecimal(value.toDouble).setScale(MonitorType.map(monitorType).prec, RoundingMode.HALF_EVEN)
+            cell.setCellValue(d.toDouble)
+            val cellStyle = getStyle(status, normalStyle, abnormalStyles)
+            cell.setCellStyle(cellStyle)
+          }
         }
         col += 1
       }
@@ -195,13 +197,12 @@ object ExcelUtility {
     val titleRow = sheet.getRow(2)
     val titleCell = titleRow.getCell(0)
 
-    val fgColors =
-      {
-        val seqColors =
-          for (col <- 3 to 7)
-            yield titleRow.getCell(col).getCellStyle.getFillForegroundXSSFColor
-        seqColors.toArray
-      }
+    val fgColors = {
+      val seqColors =
+        for (col <- 3 to 7)
+          yield titleRow.getCell(col).getCellStyle.getFillForegroundXSSFColor
+      seqColors.toArray
+    }
 
     def fillMonitorDailyReport(monitor: Monitor.Value, data: DailyReport, sheetIdx: Int) = {
       val sheet = wb.getSheetAt(sheetIdx)
@@ -218,17 +219,20 @@ object ExcelUtility {
         row <- 4 to 27
         cell = sheet.getRow(row).getCell(col)
         cellData = mtRecord.dataList(row - 4)
+        prec = MonitorType.map(mtRecord.monitorType).prec
       } {
         val (date, valueOpt, statusOpt) = cellData
         if (valueOpt.isEmpty || statusOpt.isEmpty) {
           cell.setCellValue("-")
         } else {
-          val value = valueOpt.get
-          val status = statusOpt.get
-          cell.setCellValue(value)
-
-          val cellStyle = getStyle(status, normalStyle, abnormalStyles)
-          cell.setCellStyle(cellStyle)
+          for {value <- valueOpt
+               status <- statusOpt
+               }{
+            val d = BigDecimal(value.toDouble).setScale(prec, RoundingMode.HALF_EVEN)
+            cell.setCellValue(d.toDouble)
+            val cellStyle = getStyle(status, normalStyle, abnormalStyles)
+            cell.setCellStyle(cellStyle)
+          }
         }
       }
 
@@ -252,6 +256,7 @@ object ExcelUtility {
         }
       }
     }
+
     for {
       (monitor, sheetIdx) <- Monitor.mvList.zipWithIndex
       dailyReport = Record.getDailyReport(monitor, reportDate)
@@ -271,13 +276,12 @@ object ExcelUtility {
     val titleRow = sheet.getRow(2)
     val titleCell = titleRow.getCell(0)
 
-    val fgColors =
-      {
-        val seqColors =
-          for (col <- 3 to 7)
-            yield titleRow.getCell(col).getCellStyle.getFillForegroundXSSFColor
-        seqColors.toArray
-      }
+    val fgColors = {
+      val seqColors =
+        for (col <- 3 to 7)
+          yield titleRow.getCell(col).getCellStyle.getFillForegroundXSSFColor
+      seqColors.toArray
+    }
 
     titleCell.setCellValue("監測站:" + Monitor.map(monitor).name)
     sheet.getRow(1).getCell(19).setCellValue("查詢日期:" + DateTime.now.toString("YYYY/MM/dd"))
@@ -291,17 +295,20 @@ object ExcelUtility {
       row <- 4 to 27
       cell = sheet.getRow(row).getCell(col)
       cellData = mtRecord.dataList(row - 4)
+      prec = MonitorType.map(mtRecord.monitorType).prec
     } {
       val (date, valueOpt, statusOpt) = cellData
       if (valueOpt.isEmpty || statusOpt.isEmpty) {
         cell.setCellValue("-")
       } else {
-        val value = valueOpt.get
-        val status = statusOpt.get
-        cell.setCellValue(value)
-
-        val cellStyle = getStyle(status, normalStyle, abnormalStyles)
-        cell.setCellStyle(cellStyle)
+        for {value <- valueOpt
+             status <- statusOpt
+             }{
+          val d = BigDecimal(value.toDouble).setScale(prec, RoundingMode.HALF_EVEN)
+          cell.setCellValue(d.toDouble)
+          val cellStyle = getStyle(status, normalStyle, abnormalStyles)
+          cell.setCellStyle(cellStyle)
+        }
       }
     }
 
@@ -309,6 +316,7 @@ object ExcelUtility {
       col <- 1 to data.typeList.length
     } {
       val stat = data.typeList(col - 1).stat
+
       def fillOpt(vOpt: Option[Float], row: Int) {
         vOpt.fold(sheet.getRow(row).getCell(col).setCellValue("-"))(v => sheet.getRow(row).getCell(col).setCellValue(v))
       }
@@ -316,7 +324,9 @@ object ExcelUtility {
       fillOpt(stat.avg, 28)
       fillOpt(stat.max, 29)
       fillOpt(stat.min, 30)
-      fillOpt(stat.effectPercent.map { _ * 100 }, 31)
+      fillOpt(stat.effectPercent.map {
+        _ * 100
+      }, 31)
     }
 
     //Hide col not in use
@@ -336,13 +346,12 @@ object ExcelUtility {
     implicit val (reportFilePath, pkg, wb) = prepareTemplate("monthly_report.xlsx")
     val evaluator = wb.getCreationHelper().createFormulaEvaluator()
 
-    val fgColors =
-      {
-        val seqColors =
-          for (col <- 17 to 21)
-            yield wb.getSheetAt(2).getRow(2).getCell(col).getCellStyle.getFillForegroundXSSFColor
-        seqColors.toArray
-      }
+    val fgColors = {
+      val seqColors =
+        for (col <- 17 to 21)
+          yield wb.getSheetAt(2).getRow(2).getCell(col).getCellStyle.getFillForegroundXSSFColor
+      seqColors.toArray
+    }
 
     def fillEffectSheet(sheet: XSSFSheet, monthHourReport: MonthHourReport) = {
       val titleRow = sheet.getRow(2)
@@ -389,11 +398,13 @@ object ExcelUtility {
         sheet.getRow(37).getCell(col).setCellValue(nDay * 24)
         val data = monthHourReport.dailyReports flatMap { dr =>
           dr.typeList(col - 1).dataList
-        } map { _._3 }
+        } map {
+          _._3
+        }
 
         import MonitorStatus._
         val actOfGodList = data.filter { p =>
-          p.fold(false)(a=>a.startsWith("m"))
+          p.fold(false)(a => a.startsWith("m"))
         }
 
         val invalidList = data.filter { p =>
@@ -439,13 +450,12 @@ object ExcelUtility {
       sheet.getRow(1).getCell(22).setCellValue("查詢日期:" + DateTime.now.toString("YYYY/MM/dd"))
       titleRow.getCell(22).setCellValue("資料日期:" + reportDate.toString("YYYY年MM月"))
 
-      val abnormalColor =
-        {
-          val seqColors =
-            for (col <- 3 to 3)
-              yield titleRow.getCell(col).getCellStyle.getFillForegroundXSSFColor
-          seqColors.toArray
-        }
+      val abnormalColor = {
+        val seqColors =
+          for (col <- 3 to 3)
+            yield titleRow.getCell(col).getCellStyle.getFillForegroundXSSFColor
+        seqColors.toArray
+      }
 
       for {
         col <- 1 to data.typeArray.length
@@ -546,9 +556,14 @@ object ExcelUtility {
         if (valueOpt.isEmpty || statusOpt.isEmpty) {
           cell.setCellValue("-")
         } else {
-          cell.setCellValue(valueOpt.get)
-          val style = getStyle(statusOpt.get, normalStyle, abnormalStyles)
-          cell.setCellStyle(style)
+          for {value <- valueOpt
+               status <- statusOpt
+               }{
+            val d = BigDecimal(value.toDouble).setScale(MonitorType.map(mt).prec, RoundingMode.HALF_EVEN)
+            cell.setCellValue(d.toDouble)
+            val cellStyle = getStyle(status, normalStyle, abnormalStyles)
+            cell.setCellStyle(cellStyle)
+          }
         }
       }
 
@@ -695,13 +710,12 @@ object ExcelUtility {
     sheet.getRow(1).getCell(30).setCellValue("查詢日期:" + DateTime.now.toString("YYYY/MM/dd"))
     sheet.getRow(2).getCell(30).setCellValue("資料日期:" + reportDate.toString("YYYY年"))
 
-    val abnormalColor =
-      {
-        val seqColors =
-          for (col <- 3 to 3)
-            yield sheet.getRow(2).getCell(col).getCellStyle.getFillForegroundXSSFColor
-        seqColors.toArray
-      }
+    val abnormalColor = {
+      val seqColors =
+        for (col <- 3 to 3)
+          yield sheet.getRow(2).getCell(col).getCellStyle.getFillForegroundXSSFColor
+      seqColors.toArray
+    }
 
     for {
       col <- 1 to report.typeArray.length
@@ -725,6 +739,7 @@ object ExcelUtility {
           cell.setCellStyle(abnormalStyles(0))
       }
       val stat = report.typeArray(col - 1).stat
+
       def fillOpt(vOpt: Option[Float], idx: Int) {
         vOpt.fold({
           sheet.getRow(idx).getCell(col).setCellValue("-")
@@ -829,8 +844,6 @@ object ExcelUtility {
       sheet.getRow(3).getCell(2 + mtv._2 * 2).setCellValue(MonitorType.map(mtv._1).desp)
     }
 
-    import org.apache.poi.ss.usermodel._
-
     val greenStyle = sheet.getRow(31).getCell(0).getCellStyle
     val yellowStyle = sheet.getRow(31).getCell(1).getCellStyle
     val violetStyle = sheet.getRow(31).getCell(2).getCellStyle
@@ -875,6 +888,7 @@ object ExcelUtility {
   }
 
   import models.Realtime._
+
   def psiMonthlyReport(monitor: Monitor.Value, reportDate: DateTime, psiDailyList: List[PsiReport], nDays: Int) = {
     val (reportFilePath, pkg, wb) = prepareTemplate("psi_monthly.xlsx")
     val evaluator = wb.getCreationHelper().createFormulaEvaluator()
@@ -954,14 +968,13 @@ object ExcelUtility {
     sheet.getRow(1).getCell(24).setCellValue("查詢日期:" + DateTime.now.toString("YYYY/MM/dd"))
     sheet.getRow(2).getCell(24).setCellValue("資料日期:" + reportDate.toString("YYYY年MM月dd"))
 
-    val abnormalColor =
-      {
-        val seqColors =
-          for (col <- 9 to 13)
-            yield wb.getSheetAt(0).getRow(2).getCell(col).getCellStyle.getFillForegroundXSSFColor
+    val abnormalColor = {
+      val seqColors =
+        for (col <- 9 to 13)
+          yield wb.getSheetAt(0).getRow(2).getCell(col).getCellStyle.getFillForegroundXSSFColor
 
-        seqColors.toArray
-      }
+      seqColors.toArray
+    }
 
     var row = 5
     for {
@@ -1053,6 +1066,7 @@ object ExcelUtility {
   }
 
   import Calibration._
+
   def calibrationDailyReport(title: String, reportDate: DateTime, report: List[CalibrationItem], displayDate: Boolean = false) = {
     val (reportFilePath, pkg, wb) = prepareTemplate("calibration_daily.xlsx")
     val evaluator = wb.getCreationHelper().createFormulaEvaluator()
@@ -1074,6 +1088,7 @@ object ExcelUtility {
     var styleIdx = -1
     var currentMonitor: Option[Monitor.Value] = None
     var offset = -1
+
     def adjustStyleIdx(m: Monitor.Value, row: Int) = {
       if (currentMonitor != Some(m)) {
         currentMonitor = Some(m)
@@ -1098,6 +1113,7 @@ object ExcelUtility {
         cell.setCellValue(headerCell.getStringCellValue)
       }
     }
+
     def fillCell(cell: XSSFCell, v: String, idx: Int) {
       cell.setCellValue(v)
       cell.setCellStyle(styles(styleIdx)(idx))
@@ -1313,6 +1329,7 @@ object ExcelUtility {
   }
 
   import controllers.Realtime.HighchartData
+
   def exportChartData(chart: HighchartData, monitorTypes: Array[MonitorType.Value]): File = {
     val precArray = monitorTypes.map { mt => MonitorType.map(mt).prec }
     exportChartData(chart, precArray)
@@ -1340,9 +1357,10 @@ object ExcelUtility {
       }
     }
 
+    Logger.info(precArray.toList.toString)
     val styles = precArray.map { prec =>
-      val format_str = if(prec != 0)
-          "0." + "0" * prec
+      val format_str = if (prec != 0)
+        "0." + "0" * prec
       else
         "0"
 
@@ -1367,14 +1385,10 @@ object ExcelUtility {
           cell.setCellStyle(styles(col - 1))
 
           val pair = series.data(rowNo - 1)
-          if (pair.length == 2 && pair(1).isDefined) {
-            cell.setCellValue(pair(1).get)
+          for (v <- pair(1)) {
+            val d = BigDecimal(v).setScale(precArray(col - 1), RoundingMode.HALF_EVEN)
+            cell.setCellValue(d.toFloat)
           }
-          //val pOpt = series.data(rowNo-1)
-          //if(pOpt.isDefined){
-          //  cell.setCellValue(pOpt.get)
-          //}
-
         }
       }
     } else {
@@ -1396,17 +1410,16 @@ object ExcelUtility {
             val dt = new DateTime(pair(0).get.toLong)
             timeCell.setCellValue(dt.toString("YYYY/MM/dd HH:mm"))
           }
-          if (pair(1).isDefined) {
-            cell.setCellValue(pair(1).get)
+          for (v <- pair(1)) {
+            val d = BigDecimal(v).setScale(precArray(col - 1), RoundingMode.HALF_EVEN)
+            cell.setCellValue(d.toDouble)
           }
 
           if (series.status.isDefined) {
             val statusCell = thisRow.createCell(pos + 1)
             pos += 1
-            val statusOpt = series.status.get(row - 1)
-            if (statusOpt.isDefined) {
-              statusCell.setCellValue(statusOpt.get)
-            }
+            for (status <- series.status.get(row - 1))
+              statusCell.setCellValue(status)
           }
         }
       }
@@ -1464,7 +1477,9 @@ object ExcelUtility {
       }
       val totalCell = thisRow.createCell(chart.series.length + 1)
       totalCell.setCellStyle(style)
-      val total = chart.series.map { _.data(rowNo - 1)(1).get }.sum
+      val total = chart.series.map {
+        _.data(rowNo - 1)(1).get
+      }.sum
       totalCell.setCellValue(total / 100)
     }
     val totalRow = sheet.createRow(windDirList.length + 1)
@@ -1476,7 +1491,9 @@ object ExcelUtility {
       val cell = totalRow.createCell(col)
       cell.setCellStyle(style)
 
-      val total = series.data.map { _(1).get }.sum
+      val total = series.data.map {
+        _ (1).get
+      }.sum
       cell.setCellValue(total / 100)
     }
     val allTotalCell = totalRow.createCell(chart.series.length + 1)
@@ -2012,6 +2029,7 @@ object ExcelUtility {
     for (r <- report.reverse) {
       sheet.shiftRows(4, sheet.getLastRowNum, 1)
       val row = sheet.createRow(4)
+
       def fillCell(i: Int, v: String) = {
         row.createCell(i).setCellStyle(style)
         row.getCell(i).setCellValue(v)
@@ -2061,7 +2079,7 @@ object ExcelUtility {
     finishExcel(reportFilePath, pkg, wb)
   }
 
-  def monitorJournalReport(report: MonitorJournal, entries:Seq[AbnormalEntry], userList: List[User]) = {
+  def monitorJournalReport(report: MonitorJournal, entries: Seq[AbnormalEntry], userList: List[User]) = {
     val (reportFilePath, pkg, wb) = prepareTemplate("monitorJournal.xlsx")
     val evaluator = wb.getCreationHelper().createFormulaEvaluator()
 
@@ -2095,10 +2113,12 @@ object ExcelUtility {
       entry <- entries
     } {
       val row = sheet.createRow(startRow)
+
       def fillCell(i: Int, v: String) = {
         row.createCell(i).setCellStyle(style)
         row.getCell(i).setCellValue(v)
       }
+
       fillCell(0, MonitorType.map(entry.monitorType).desp)
       fillCell(1, report.date.toString("MM/dd"))
       fillCell(2, entry.invalidHours)
@@ -2113,22 +2133,23 @@ object ExcelUtility {
     val (reportFilePath, pkg, wb) = prepareTemplate("minMonthlyReport.xlsx")
     val evaluator = wb.getCreationHelper().createFormulaEvaluator()
 
-    val fgColors =
-      {
-        val sheet0 = wb.getSheetAt(0)
-        val seqColors =
-          for (col <- 1 to 5)
-            yield sheet0.getRow(1).getCell(col).getCellStyle.getFillForegroundXSSFColor
-        seqColors.toArray
-      }
+    val fgColors = {
+      val sheet0 = wb.getSheetAt(0)
+      val seqColors =
+        for (col <- 1 to 5)
+          yield sheet0.getRow(1).getCell(col).getCellStyle.getFillForegroundXSSFColor
+      seqColors.toArray
+    }
 
     callback(20)
     for ((m, idx) <- monitors.zipWithIndex) {
       val minRecords = Record.getMinRecords(m, start, start + 1.month)
       val sheet = wb.createSheet(Monitor.map(m).name)
       sheet.createRow(0).createCell(0).setCellValue("時間")
-      val timeSeries = minRecords.map { Record.timeProjection }
-      for { (time, time_idx) <- timeSeries.zipWithIndex } {
+      val timeSeries = minRecords.map {
+        Record.timeProjection
+      }
+      for {(time, time_idx) <- timeSeries.zipWithIndex} {
         val row = sheet.createRow(time_idx + 1)
         val time_cell = row.createCell(0)
         time_cell.setCellValue(time.toString("YYYY/MM/dd HH:mm"))
@@ -2138,7 +2159,9 @@ object ExcelUtility {
         (mt, mt_idx) <- Monitor.map(m).monitorTypes.zipWithIndex
         unit1 = sheet.getRow(0).createCell(mt_idx * 2 + 1).setCellValue(MonitorType.map(mt).desp)
         unit2 = sheet.getRow(0).createCell(mt_idx * 2 + 2).setCellValue("狀態碼")
-        mtRecords = minRecords.map { Record.monitorTypeProject2(mt) }
+        mtRecords = minRecords.map {
+          Record.monitorTypeProject2(mt)
+        }
         normalStyle = createStyle(mt)(wb)
         abnormalStyles = createColorStyle(fgColors, mt)(wb)
       } {
@@ -2159,12 +2182,15 @@ object ExcelUtility {
             vCell.setCellValue("-")
             sCell.setCellValue("-")
           } else {
-            val value = valueOpt.get
-            val status = statusOpt.get
-            vCell.setCellValue(value)
-            sCell.setCellValue(status)
-            val cellStyle = getStyle(status, normalStyle, abnormalStyles)
-            vCell.setCellStyle(cellStyle)
+            for {value <- valueOpt
+                 status <- statusOpt
+                 }{
+              val d = BigDecimal(value.toDouble).setScale(MonitorType.map(mt).prec, RoundingMode.HALF_EVEN)
+              vCell.setCellValue(d.toDouble)
+              val cellStyle = getStyle(status, normalStyle, abnormalStyles)
+              vCell.setCellStyle(cellStyle)
+              sCell.setCellValue(status)
+            }
           }
         }
       }
@@ -2335,12 +2361,12 @@ object ExcelUtility {
       row.createCell(9).setCellValue(ticket.executeDate.toString("MM-d"))
       if (ticket.executeDate.isBefore(DateTime.yesterday)) {
         val state =
-          if(ticket.extendDate.isEmpty)
+          if (ticket.extendDate.isEmpty)
             "已逾期"
-        else{
-          val extendDate = ticket.extendDate.get
-          s"展延(${extendDate.toString("M/d")})${ticket.extendReason.getOrElse("")}"
-        }
+          else {
+            val extendDate = ticket.extendDate.get
+            s"展延(${extendDate.toString("M/d")})${ticket.extendReason.getOrElse("")}"
+          }
         row.createCell(10).setCellValue(state)
       } else
         row.createCell(10).setCellValue("否")
@@ -2499,6 +2525,7 @@ object ExcelUtility {
   }
 
   import Maintance.PartInventory
+
   def partInventoryAlarm(partList: List[PartInventory], idMap: Map[String, Part2], title: String) = {
     val (reportFilePath, pkg, wb) = prepareTemplate("partInventoryAlarm.xlsx")
     val evaluator = wb.getCreationHelper().createFormulaEvaluator()
