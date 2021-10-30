@@ -63,6 +63,10 @@ case class EpaRecord(SiteName: String,
 
 case class EpaResult(records: Seq[EpaRecord])
 
+case class EpaNmhcRecord(SiteName: String, Concentration: Option[String],
+                         MonitorDate: String, SiteId: String)
+
+case class EpaNmhcResult(records: Seq[EpaNmhcRecord])
 
 class OpenDataReceiver extends Actor with ActorLogging {
 
@@ -116,75 +120,12 @@ class OpenDataReceiver extends Actor with ActorLogging {
 
     case GetEpaCurrentData =>
       getCurrentData(500)
-  }
+      getCurrentSingleMonitorType(s"https://data.epa.gov.tw/api/v1/aqx_p_313?format=json&limit=100&api_key=9be7b239-557b-4c10-9775-78cadfc555e9",
+        MonitorType.A296)
+      getCurrentSingleMonitorType(s"https://data.epa.gov.tw/api/v1/aqx_p_312?format=json&limit=100&api_key=9be7b239-557b-4c10-9775-78cadfc555e9",
+        MonitorType.A286)
 
 
-  def getCurrentDataXML(limit: Int) = {
-    import com.github.nscala_time.time.Imports._
-    val url = s"https://data.epa.gov.tw/api/v1/aqx_p_432?format=xml&limit=${limit}&api_key=9be7b239-557b-4c10-9775-78cadfc555e9"
-
-    val f = WS.url(url).get()
-    f onFailure (errorHandler(""))
-    for (response <- f) yield {
-      var latestRecordTime = DateTime.now() - 1.day
-
-      val epaResult = response.xml
-
-      def handleEpaRecords(records: NodeSeq) {
-        val filtered = records.filter(r => {
-          try {
-            val id = (r \ "SiteId").text
-            EpaMonitor.idMap.contains(id.toInt)
-          } catch {
-            case _: Throwable =>
-              false
-          }
-        })
-        filtered.
-          foreach({
-            record =>
-              val id = record \ "SiteId"
-              val time = record \ "PublishTime"
-              val epaMonitor = EpaMonitor.idMap(id.text.toInt)
-              val dt = DateTime.parse(time.text.trim(), DateTimeFormat.forPattern("YYYY/MM/dd HH:mm:ss"))
-              if (latestRecordTime < dt)
-                latestRecordTime = dt
-
-              val overStdCode: Int = AlarmLevel.map(AlarmLevel.Internal).code
-
-              def handle(epaTag:String, mt: MonitorType.Value): Unit ={
-                for (mtValueStr <- record \ epaTag)
-                  try {
-                    val v = mtValueStr.text.toFloat
-                    upsertEpaRecord(epaMonitor, mt, dt, v)
-                    for (internal <- EpaMonitorTypeAlert.map(epaMonitor)(mt).internal if v >= internal)
-                      EpaTicket.upsert(EpaTicket(dt, epaMonitor, mt, v, overStdCode))
-                  } catch {
-                    case _: Throwable =>
-                  }
-              }
-              handle("PM2.5", MonitorType.A215)
-              handle("PM10_AVG", MonitorType.A214)
-              handle("SO2_AVG", MonitorType.A222)
-              handle("CO", MonitorType.A224)
-              handle("O3", MonitorType.A225)
-              handle("NO2", MonitorType.A293)
-              handle("NO", MonitorType.A283)
-              handle("WindSpeed", MonitorType.C211)
-              handle("WindDir", MonitorType.C212)
-
-          })
-      }
-
-      val data: NodeSeq = response.xml \ "data"
-
-      try {
-        handleEpaRecords(data)
-      } catch {
-        case ex: Exception =>
-          Logger.error("failed to handled epaRecord", ex)
-      }
-    }
   }
 
   def getCurrentData(limit: Int) = {
@@ -219,104 +160,28 @@ class OpenDataReceiver extends Actor with ActorLogging {
                 latestRecordTime = dt
 
               val overStdCode: Int = AlarmLevel.map(AlarmLevel.Internal).code
-              for (pm25 <- record.PM25) {
-                try {
-                  val v = pm25.toFloat
-                  upsertEpaRecord(epaMonitor, MonitorType.A215, dt, v)
-                  for (internal <- EpaMonitorTypeAlert.map(epaMonitor)(MonitorType.A215).internal if v >= internal)
-                    EpaTicket.upsert(EpaTicket(dt, epaMonitor, MonitorType.A215, v, overStdCode))
-                } catch {
-                  case _: Throwable =>
-                }
+
+              def handle(epaTag: Option[String], mt: MonitorType.Value): Unit = {
+                for (mtValueStr <- epaTag)
+                  try {
+                    val v = mtValueStr.toFloat
+                    upsertEpaRecord(epaMonitor, mt, dt, v)
+                    for (internal <- EpaMonitorTypeAlert.map(epaMonitor)(mt).internal if v >= internal)
+                      EpaTicket.upsert(EpaTicket(dt, epaMonitor, mt, v, overStdCode))
+                  } catch {
+                    case _: Throwable =>
+                  }
               }
-              for (mtValueStr <- record.PM10) {
-                try {
-                  val v = mtValueStr.toFloat
-                  val mt = MonitorType.A214
-                  upsertEpaRecord(epaMonitor, mt, dt, v)
-                  for (internal <- EpaMonitorTypeAlert.map(epaMonitor)(mt).internal if v >= internal)
-                    EpaTicket.upsert(EpaTicket(dt, epaMonitor, mt, v, overStdCode))
-                } catch {
-                  case _: Throwable =>
-                }
-              }
-              for (mtValueStr <- record.SO2) {
-                try {
-                  val v = mtValueStr.toFloat
-                  val mt = MonitorType.A222
-                  upsertEpaRecord(epaMonitor, mt, dt, v)
-                  for (internal <- EpaMonitorTypeAlert.map(epaMonitor)(mt).internal if v >= internal)
-                    EpaTicket.upsert(EpaTicket(dt, epaMonitor, mt, v, overStdCode))
-                } catch {
-                  case _: Throwable =>
-                }
-              }
-              for (mtValueStr <- record.CO) {
-                try {
-                  val v = mtValueStr.toFloat
-                  val mt = MonitorType.A224
-                  upsertEpaRecord(epaMonitor, mt, dt, v)
-                  for (internal <- EpaMonitorTypeAlert.map(epaMonitor)(mt).internal if v >= internal)
-                    EpaTicket.upsert(EpaTicket(dt, epaMonitor, mt, v, overStdCode))
-                } catch {
-                  case _: Throwable =>
-                }
-              }
-              for (mtValueStr <- record.O3) {
-                try {
-                  val v = mtValueStr.toFloat
-                  val mt = MonitorType.A225
-                  upsertEpaRecord(epaMonitor, mt, dt, v)
-                  for (internal <- EpaMonitorTypeAlert.map(epaMonitor)(mt).internal if v >= internal)
-                    EpaTicket.upsert(EpaTicket(dt, epaMonitor, mt, v, overStdCode))
-                } catch {
-                  case _: Throwable =>
-                }
-              }
-              for (mtValueStr <- record.NO2) {
-                try {
-                  val v = mtValueStr.toFloat
-                  val mt = MonitorType.A293
-                  upsertEpaRecord(epaMonitor, mt, dt, v)
-                  for (internal <- EpaMonitorTypeAlert.map(epaMonitor)(mt).internal if v >= internal)
-                    EpaTicket.upsert(EpaTicket(dt, epaMonitor, mt, v, overStdCode))
-                } catch {
-                  case _: Throwable =>
-                }
-              }
-              for (mtValueStr <- record.NO) {
-                try {
-                  val v = mtValueStr.toFloat
-                  val mt = MonitorType.A283
-                  upsertEpaRecord(epaMonitor, mt, dt, v)
-                  for (internal <- EpaMonitorTypeAlert.map(epaMonitor)(mt).internal if v >= internal)
-                    EpaTicket.upsert(EpaTicket(dt, epaMonitor, mt, v, overStdCode))
-                } catch {
-                  case _: Throwable =>
-                }
-              }
-              for (mtValueStr <- record.WindSpeed) {
-                try {
-                  val v = mtValueStr.toFloat
-                  val mt = MonitorType.C211
-                  upsertEpaRecord(epaMonitor, mt, dt, v)
-                  for (internal <- EpaMonitorTypeAlert.map(epaMonitor)(mt).internal if v >= internal)
-                    EpaTicket.upsert(EpaTicket(dt, epaMonitor, mt, v, overStdCode))
-                } catch {
-                  case _: Throwable =>
-                }
-              }
-              for (mtValueStr <- record.WindDir) {
-                try {
-                  val v = mtValueStr.toFloat
-                  val mt = MonitorType.C212
-                  upsertEpaRecord(epaMonitor, mt, dt, v)
-                  for (internal <- EpaMonitorTypeAlert.map(epaMonitor)(mt).internal if v >= internal)
-                    EpaTicket.upsert(EpaTicket(dt, epaMonitor, mt, v, overStdCode))
-                } catch {
-                  case _: Throwable =>
-                }
-              }
+
+              handle(record.PM25, MonitorType.A215)
+              handle(record.PM10, MonitorType.A214)
+              handle(record.SO2, MonitorType.A222)
+              handle(record.CO, MonitorType.A224)
+              handle(record.O3, MonitorType.A225)
+              handle(record.NO2, MonitorType.A293)
+              handle(record.NO, MonitorType.A283)
+              handle(record.WindSpeed, MonitorType.C211)
+              handle(record.WindDir, MonitorType.C212)
           })
       }
 
@@ -336,7 +201,6 @@ class OpenDataReceiver extends Actor with ActorLogging {
     }
   }
 
-
   def upsertEpaRecord(m: EpaMonitor.Value, mt: MonitorType.Value, dateTime: DateTime, value: Double)
                      (implicit session: DBSession = AutoSession) = {
     val MStation = EpaMonitor.map(m)
@@ -353,6 +217,70 @@ class OpenDataReceiver extends Actor with ActorLogging {
                 VALUES(${MStation.id}, ${MDate}, ${MItem}, ${value})
               END
             """.update.apply
+  }
+
+  def getCurrentSingleMonitorType(url: String, mt: MonitorType.Value) = {
+    import com.github.nscala_time.time.Imports._
+    val f = WS.url(url).get()
+    f onFailure (errorHandler(""))
+    for (ret <- f) yield {
+      implicit val r = Json.reads[EpaNmhcRecord]
+      implicit val epaResultReads = Json.reads[EpaNmhcResult]
+      val retEpaResult = ret.json.validate[EpaNmhcResult]
+      def handleEpaRecords(records: Seq[EpaNmhcRecord]) {
+        val filtered = records.filter(r => {
+          try {
+            val id = r.SiteId
+            EpaMonitor.idMap.contains(id.toInt)
+          } catch {
+            case _: Throwable =>
+              false
+          }
+        })
+        filtered.
+          foreach({
+            record =>
+              val id = record.SiteId
+              val time = record.MonitorDate
+              val epaMonitor = EpaMonitor.idMap(id.toInt)
+              val dt = try {
+                DateTime.parse(time.trim(), DateTimeFormat.forPattern("YYYY-MM-dd HH:mm:ss"))
+              }catch{
+                case ex:IllegalArgumentException=>
+                  DateTime.parse(time.trim(), DateTimeFormat.forPattern("YYYY-MM-dd HH:mm"))
+              }
+              val overStdCode: Int = AlarmLevel.map(AlarmLevel.Internal).code
+
+              def handle(epaTag: Option[String], mt: MonitorType.Value): Unit = {
+                for (mtValueStr <- epaTag)
+                  try {
+                    val v = mtValueStr.toFloat
+                    upsertEpaRecord(epaMonitor, mt, dt, v)
+                    for (internal <- EpaMonitorTypeAlert.map(epaMonitor)(mt).internal if v >= internal)
+                      EpaTicket.upsert(EpaTicket(dt, epaMonitor, mt, v, overStdCode))
+                  } catch {
+                    case _: Throwable =>
+                  }
+              }
+
+              handle(record.Concentration, mt)
+          })
+      }
+
+      retEpaResult.fold(
+        err => {
+          Logger.error(JsError.toJson(err).toString())
+        },
+        results => {
+          try {
+            handleEpaRecords(results.records)
+          } catch {
+            case ex: Exception =>
+              Logger.error("failed to handled epaRecord", ex)
+          }
+        }
+      )
+    }
   }
 
   def getEpaHourData(start: DateTime, end: DateTime) {
@@ -519,7 +447,6 @@ class OpenDataReceiver extends Actor with ActorLogging {
       getMonthData(start.getYear(), start.getMonthOfYear(), 0)
     }
   }
-
 
   // NMHC https://data.epa.gov.tw/dataset/aqx_p_313
   // THC https://data.epa.gov.tw/dataset/aqx_p_312
