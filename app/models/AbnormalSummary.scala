@@ -9,7 +9,7 @@ case class AbnormalSummary(monitor: Monitor.Value, monitorType: MonitorType.Valu
                            abnormalType: String, duration: String, count: Int)
 
 object AbnormalSummary {
-  val abnormalStatusList = List("038", "055", "032", "M00")
+  val abnormalStatusList = List("026", "031", "032", "033", "034", "038", "055", "032", "M00")
 
   def query(monitors: Seq[Monitor.Value], start: DateTime, end: DateTime): Seq[AbnormalSummary] = {
     for {m <- monitors
@@ -37,6 +37,7 @@ object AbnormalSummary {
       val timeList: Seq[DateTime] = filtered.map(t => new DateTime(t._1.getTime))
       val timeListByDate: Map[DateTime, Seq[Imports.DateTime]] = timeList.groupBy(t => t.withMillisOfDay(0))
       val keys = timeListByDate.keys.toList.sorted
+
       def genDesc(start: Int, end: Int, list: Seq[Int]): String = {
         def output =
           if (start != end)
@@ -54,8 +55,9 @@ object AbnormalSummary {
               genDesc(start, head, tail)
         }
       }
+
       val dateSummaries: immutable.Iterable[String] =
-        for(date<-keys) yield{
+        for (date <- keys) yield {
           val hours = timeListByDate(date).sorted.map(_.getHourOfDay)
           val dateStr = date.toString("M/d")
           if (hours.isEmpty)
