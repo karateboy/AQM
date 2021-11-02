@@ -9,7 +9,7 @@ case class AbnormalSummary(monitor: Monitor.Value, monitorType: MonitorType.Valu
                            abnormalType: String, duration: String, count: Int)
 
 object AbnormalSummary {
-  val abnormalStatusList = List("026", "031", "032", "033", "034", "038", "055", "032", "M00")
+  val abnormalStatusList = List("026", "030", "031", "032", "033", "034", "035", "038", "055", "032", "M00")
 
   def query(monitors: Seq[Monitor.Value], start: DateTime, end: DateTime): Seq[AbnormalSummary] = {
     for {m <- monitors

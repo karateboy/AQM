@@ -522,7 +522,7 @@ object Ticket {
       val extendDateTime: java.sql.Timestamp = extendDate
       sql"""
         Update Ticket
-        Set [extendDate]=${extendDateTime}, [extendReason]=${extendReason}
+        Set [extendDate]=${extendDateTime}, [extendReason]=${extendReason}, [execute_date]=${extendDateTime}
         Where ID = ${ticketID}
         """.update.apply
     }

@@ -11,6 +11,7 @@ import play.api.libs.json.{JsError, JsPath, Json, Reads}
 import play.api.libs.ws._
 import scalikejdbc._
 
+import java.util.concurrent.TimeUnit
 import scala.concurrent.ExecutionContext.Implicits.global
 
 object OpenDataReceiver {
@@ -63,10 +64,10 @@ case class EpaRecord(SiteName: String,
 
 case class EpaResult(records: Seq[EpaRecord])
 
-case class EpaNmhcRecord(SiteName: String, Concentration: Option[String],
-                         MonitorDate: String, SiteId: String)
+case class MtRecord(SiteName: String, ItemId: String, Concentration: Option[String],
+                    MonitorDate: String, SiteId: String)
 
-case class EpaNmhcResult(records: Seq[EpaNmhcRecord])
+case class MtResult(records: Seq[MtRecord])
 
 class OpenDataReceiver extends Actor with ActorLogging {
 
@@ -80,7 +81,7 @@ class OpenDataReceiver extends Actor with ActorLogging {
 
   val timer1 = {
     import scala.concurrent.duration._
-    context.system.scheduler.schedule(Duration(5, SECONDS), Duration(1, HOURS), receiver, GetEpaCurrentData)
+    context.system.scheduler.schedule(FiniteDuration(5, SECONDS), FiniteDuration(30, MINUTES), receiver, GetEpaCurrentData)
   }
 
   implicit val epaRecordReads: Reads[EpaRecord] = {
@@ -119,13 +120,9 @@ class OpenDataReceiver extends Actor with ActorLogging {
       getEpaHourData(start, end)
 
     case GetEpaCurrentData =>
-      getCurrentData(500)
-      getCurrentSingleMonitorType(s"https://data.epa.gov.tw/api/v1/aqx_p_313?format=json&limit=100&api_key=9be7b239-557b-4c10-9775-78cadfc555e9",
-        MonitorType.A296)
-      getCurrentSingleMonitorType(s"https://data.epa.gov.tw/api/v1/aqx_p_312?format=json&limit=100&api_key=9be7b239-557b-4c10-9775-78cadfc555e9",
-        MonitorType.A286)
-
-
+      getCurrentCountyData("https://data.epa.gov.tw/api/v1/aqx_p_145?format=json&limit=500&api_key=9be7b239-557b-4c10-9775-78cadfc555e9")
+      getCurrentCountyData("https://data.epa.gov.tw/api/v1/aqx_p_147?format=json&limit=500&api_key=9be7b239-557b-4c10-9775-78cadfc555e9")
+      getCurrentCountyData("https://data.epa.gov.tw/api/v1/aqx_p_143?format=json&limit=500&api_key=9be7b239-557b-4c10-9775-78cadfc555e9")
   }
 
   def getCurrentData(limit: Int) = {
@@ -219,15 +216,16 @@ class OpenDataReceiver extends Actor with ActorLogging {
             """.update.apply
   }
 
-  def getCurrentSingleMonitorType(url: String, mt: MonitorType.Value) = {
+  def getCurrentCountyData(url: String) = {
     import com.github.nscala_time.time.Imports._
     val f = WS.url(url).get()
     f onFailure (errorHandler(""))
     for (ret <- f) yield {
-      implicit val r = Json.reads[EpaNmhcRecord]
-      implicit val epaResultReads = Json.reads[EpaNmhcResult]
-      val retEpaResult = ret.json.validate[EpaNmhcResult]
-      def handleEpaRecords(records: Seq[EpaNmhcRecord]) {
+      implicit val r = Json.reads[MtRecord]
+      implicit val epaResultReads = Json.reads[MtResult]
+      val retEpaResult = ret.json.validate[MtResult]
+
+      def handleEpaRecords(records: Seq[MtRecord]) {
         val filtered = records.filter(r => {
           try {
             val id = r.SiteId
@@ -245,25 +243,22 @@ class OpenDataReceiver extends Actor with ActorLogging {
               val epaMonitor = EpaMonitor.idMap(id.toInt)
               val dt = try {
                 DateTime.parse(time.trim(), DateTimeFormat.forPattern("YYYY-MM-dd HH:mm:ss"))
-              }catch{
-                case ex:IllegalArgumentException=>
+              } catch {
+                case ex: IllegalArgumentException =>
                   DateTime.parse(time.trim(), DateTimeFormat.forPattern("YYYY-MM-dd HH:mm"))
               }
               val overStdCode: Int = AlarmLevel.map(AlarmLevel.Internal).code
 
-              def handle(epaTag: Option[String], mt: MonitorType.Value): Unit = {
-                for (mtValueStr <- epaTag)
-                  try {
-                    val v = mtValueStr.toFloat
-                    upsertEpaRecord(epaMonitor, mt, dt, v)
-                    for (internal <- EpaMonitorTypeAlert.map(epaMonitor)(mt).internal if v >= internal)
-                      EpaTicket.upsert(EpaTicket(dt, epaMonitor, mt, v, overStdCode))
-                  } catch {
-                    case _: Throwable =>
-                  }
-              }
-
-              handle(record.Concentration, mt)
+              for (mtValueStr <- record.Concentration)
+                try {
+                  val v = mtValueStr.toFloat
+                  val mt = MonitorType.eapIdMap(record.ItemId.toInt)
+                  upsertEpaRecord(epaMonitor, mt, dt, v)
+                  for (internal <- EpaMonitorTypeAlert.map(epaMonitor)(mt).internal if v >= internal)
+                    EpaTicket.upsert(EpaTicket(dt, epaMonitor, mt, v, overStdCode))
+                } catch {
+                  case _: Throwable =>
+                }
           })
       }
 
