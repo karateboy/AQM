@@ -1004,16 +1004,16 @@ object Report extends Controller {
           entriesByDate.foreach(kv=>{
             val date = kv._1
             val monitorSummaries = AggregateReport.getLatestMonitorSummary(date)
-            for(updateEntry <- kv._2){
-              monitorSummaries.foreach(monitorSummary=>{
-                if(monitorSummary.monitor == Monitor.withName(updateEntry.monitor)) {
-                  if(monitorSummary.explain.isEmpty)
-                    monitorSummary.explain = updateEntry.action
-                  else
-                    monitorSummary.explain = s"${monitorSummary.explain};${updateEntry.action}"
-                }
-              })
-            }
+            monitorSummaries.foreach(monitorSummary=>{
+              val monitorUpdateActionSet = kv._2.filter(p=>Monitor.withName(p.monitor) == monitorSummary.monitor)
+                .filter(_.action != "").map(_.action).toSet
+
+              monitorSummary.explain = if(monitorUpdateActionSet.nonEmpty)
+                monitorUpdateActionSet.toList.mkString("，")+"。"
+                else
+                ""
+            })
+
             AggregateReport.updateReport(date, monitorSummaries)
           })
           Ok(Json.obj("ok" -> true, "nEntries" -> entries.length))

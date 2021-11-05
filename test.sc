@@ -1,5 +1,5 @@
 import scala.math.Ordering.OptionOrdering
-
+/*
 object test {
   println("Welcome to the Scala worksheet")
 }
@@ -20,4 +20,7 @@ implicit val ordering : OptionOrdering[Int] = new OptionOrdering[Int]{
   override def optionOrdering = Ordering[Int]
 }
 val sorted = seqA.sortBy(_._1).reverse
-sorted
+sorted */
+
+val str = "「二氧化硫」- 。"
+str.replaceFirst("\\「.*?\\。", "success")

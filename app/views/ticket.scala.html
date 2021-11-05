@@ -71,7 +71,7 @@
 							</div>
 						</div>
 					</div>
-					<div class="form-group" id="executeDate">
+					<div class="form-group" id="extendDate">
 						<label class="col-lg-1 control-label">修訂預期完成日</label>
 						<div class="col-lg-3">
 							<div class="input-group date">
@@ -165,6 +165,12 @@
 			format: 'YYYY-MM-D',
 			locale: "zh-TW"
 		});
+
+		$('input[name="extendDate"]').datetimepicker({
+			format: 'YYYY-MM-D',
+			locale: "zh-TW"
+		});
+		
 
 		$("#ticketForm").load("/Form/" + ticketId);
 

@@ -238,12 +238,24 @@ object ExcelUtility {
 
       for {
         col <- 1 to data.typeList.length
+        mtRecord = data.typeList(col - 1)
+        prec = MonitorType.map(mtRecord.monitorType).prec
       } {
         val stat = data.typeList(col - 1).stat
-        stat.avg.fold(sheet.getRow(28).getCell(col).setCellValue("-"))(avg => sheet.getRow(28).getCell(col).setCellValue(avg))
-        stat.max.fold(sheet.getRow(29).getCell(col).setCellValue("-"))(max => sheet.getRow(29).getCell(col).setCellValue(max))
-        stat.min.fold(sheet.getRow(30).getCell(col).setCellValue("-"))(min => sheet.getRow(30).getCell(col).setCellValue(min))
-        stat.effectPercent.fold(sheet.getRow(31).getCell(col).setCellValue("-"))(ef => sheet.getRow(31).getCell(col).setCellValue(ef))
+        val normalStyle = createStyle(mtRecord.monitorType)
+        def setter(v:Option[Float], rownum:Int): Unit ={
+          v.fold(sheet.getRow(rownum).getCell(col).setCellValue("-"))(v =>
+            {
+              val cell = sheet.getRow(rownum)
+                .getCell(col)
+              cell.setCellValue(BigDecimal(v.toDouble).setScale(prec, RoundingMode.HALF_EVEN).toDouble)
+              cell.setCellStyle(normalStyle)
+            })
+        }
+        setter(stat.avg, 28)
+        setter(stat.max, 29)
+        setter(stat.min, 30)
+        setter(stat.effectPercent, 31)
       }
 
       //Hide col not in use
