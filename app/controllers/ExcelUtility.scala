@@ -70,6 +70,31 @@ object ExcelUtility {
     style
   }
 
+  def createStyle(prec:Int)(implicit wb: XSSFWorkbook) = {
+    val format_str = if (prec != 0)
+      "0." + "0" * prec
+    else
+      "0"
+
+    val style = wb.createCellStyle();
+    val format = wb.createDataFormat();
+    // Create a new font and alter it.
+    val font = wb.createFont();
+    font.setFontHeightInPoints(10);
+    font.setFontName("標楷體");
+
+    style.setFont(font)
+    style.setDataFormat(format.getFormat(format_str))
+    style.setBorderBottom(BorderStyle.THIN);
+    style.setBottomBorderColor(IndexedColors.BLACK.getIndex());
+    style.setBorderLeft(BorderStyle.THIN);
+    style.setLeftBorderColor(IndexedColors.BLACK.getIndex());
+    style.setBorderRight(BorderStyle.THIN);
+    style.setRightBorderColor(IndexedColors.BLACK.getIndex());
+    style.setBorderTop(BorderStyle.THIN);
+    style.setTopBorderColor(IndexedColors.BLACK.getIndex());
+    style
+  }
   def createColorStyle(fgColors: Array[XSSFColor], mt: MonitorType.Value)(implicit wb: XSSFWorkbook) = {
     fgColors.map {
       color =>
@@ -242,20 +267,21 @@ object ExcelUtility {
         prec = MonitorType.map(mtRecord.monitorType).prec
       } {
         val stat = data.typeList(col - 1).stat
-        val normalStyle = createStyle(mtRecord.monitorType)
-        def setter(v:Option[Float], rownum:Int): Unit ={
+
+        def setter(v:Option[Float], rownum:Int, prec:Int): Unit ={
           v.fold(sheet.getRow(rownum).getCell(col).setCellValue("-"))(v =>
             {
               val cell = sheet.getRow(rownum)
                 .getCell(col)
               cell.setCellValue(BigDecimal(v.toDouble).setScale(prec, RoundingMode.HALF_EVEN).toDouble)
+              val normalStyle = createStyle(prec)
               cell.setCellStyle(normalStyle)
             })
         }
-        setter(stat.avg, 28)
-        setter(stat.max, 29)
-        setter(stat.min, 30)
-        setter(stat.effectPercent, 31)
+        setter(stat.avg, 28, 2)
+        setter(stat.max, 29, prec)
+        setter(stat.min, 30, prec)
+        setter(stat.effectPercent, 31, 2)
       }
 
       //Hide col not in use
