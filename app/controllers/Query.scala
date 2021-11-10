@@ -323,11 +323,12 @@ object Query extends Controller {
                   dt.getHourOfDay>=7
                 })
             }
-            calibrationMap = Calibration.getCalibrationMap(m, start, end)
+
             mtPairs = for {
               mt <- monitorTypes
             } yield {
               val mtRecords = if (mb) {
+                val calibrationMap = Calibration.getCalibrationMap(m, start, end)
                 records.map { rs =>
                   import Calibration._
                   if (mb && canCalibrate(mt, rs)(calibrationMap)) {

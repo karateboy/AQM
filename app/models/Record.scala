@@ -7,6 +7,8 @@ import com.github.nscala_time.time.Imports._
 import models.ModelHelper._
 import models._
 
+import scala.math.BigDecimal.RoundingMode
+
 case class Stat(
     avg: Option[Float],
     min: Option[Float],
@@ -641,7 +643,7 @@ object Record {
           validValues = projections.filter(validStat).map(t => t._2.getOrElse {
             Logger.error("#2 Unexpected Null value!")
             0f
-          })
+          }).map(v => BigDecimal(v.toDouble).setScale(MonitorType.map(mt).prec, RoundingMode.HALF_EVEN).toFloat)
           count = validValues.length
 
         } yield {
