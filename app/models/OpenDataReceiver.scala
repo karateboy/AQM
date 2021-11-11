@@ -408,6 +408,7 @@ class OpenDataReceiver extends Actor with ActorLogging {
         case ret: Int =>
           if (ret < limit) {
             Logger.info(s"Import EPA ${start.getYear()}/${start.getMonthOfYear()} complete")
+            LineNotify.notify("環保署資料擷取成功.")
           } else
             getThisMonth(skip + limit)
       })
@@ -426,6 +427,8 @@ class OpenDataReceiver extends Actor with ActorLogging {
             SystemConfig.setEpaLast(dataLast)
             if (dataLast < end)
               self ! ReloadEpaData(dataLast, end)
+            else
+              LineNotify.notify("環保署資料回補完成.")
           } else
             getMonthData(year, month, skip + limit)
         } catch {

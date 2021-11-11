@@ -270,6 +270,7 @@ GET      /MonitorTypeAlertInfo/:monitor         controllers.Application.getMonit
 POST     /MonitorTypeAlertInfo                  controllers.Application.updateMonitorTypeAlertInfo()
 GET      /EpaMonitorTypeAlert/:monitor          controllers.Application.getEpaMonitorTypeAlertInfo(monitor:Int)
 POST     /EpaMonitorTypeAlert                   controllers.Application.updateEpaMonitorTypeAlert()
+GET      /ReloadEpaData/:start/:end                                              controllers.Application.reloadEpaData(start:Long, end:Long)
 # websockets
 GET      /MinMonthlyReportSocket                                                                     controllers.Report.getMinMonthlySocket
 GET      /DownloadMinMonthlyReport/:n                                                                controllers.Report.downloadMinMontlyReport(n: Int)

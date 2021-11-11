@@ -795,10 +795,19 @@ object Application extends Controller {
         })
   }
   def getMonitorTypes()  = Security.Authenticated {
-
     val list = MonitorType.map.values.toList.sortBy(_.id)
     implicit val writes = Json.writes[MonitorType]
     implicit val write = Json.writes[MonitorTypeAlert]
     Ok(Json.toJson(list))
+  }
+
+  def reloadEpaData(start:Long, end:Long)= Security.Authenticated {
+    implicit request =>
+    val startDate = new DateTime(start).withMillisOfDay(0)
+    val endDate = new DateTime(end).withMillisOfDay(0)
+    val userInfo = Security.getUserinfo(request).get
+    LineNotify.notify(s"${userInfo.name}回補環保署資料自${startDate.toString("yyyy/MM/dd")} 至 ${endDate.toString("yyyy/MM/dd")}")
+    OpenDataReceiver.reloadEpaData(startDate, endDate)
+    Ok("")
   }
 }

@@ -15,28 +15,6 @@ object AggregateReport {
 
   val defaultExplain = Seq.empty[MonitorSummary]
 
-  def newReport(date: DateTime)(implicit session: DBSession = AutoSession) = {
-    val explain = Json.toJson(defaultExplain).toString
-    sql"""
-        Insert into AggregateReport([date],[explain])
-        values(${date.toString("YYYY-MM-dd")}, ${explain})
-        """.update.apply
-  }
-
-  def getReportFromDb(date: DateTime)(implicit session: DBSession = AutoSession) = {
-    DB readOnly { implicit session =>
-      sql"""
-        Select * 
-        From AggregateReport
-        Where date = ${date}
-        """.map {
-        r =>
-          val report = Json.parse(r.string(2)).validate[Seq[MonitorSummary]].get
-          AggregateReport(r.date(1), report)
-      }.single.apply
-    }
-  }
-
   def getReportListFromDb(start: DateTime, end: DateTime)(implicit session: DBSession = AutoSession) = {
     DB readOnly { implicit session =>
       sql"""
@@ -62,12 +40,50 @@ object AggregateReport {
     }
   }
 
+  def getLatestMonitorSummary(date: DateTime): Seq[MonitorSummary] = {
+    val report = AggregateReport.getReportFromDb(date).getOrElse({
+      AggregateReport.newReport(date)
+      AggregateReport(date, Seq.empty[MonitorSummary])
+    })
+
+    val explainMap = Map(report.report.map { r => (r.monitor -> r.explain) }: _*)
+    val latestReport = AggregateReport(date, AggregateReport.generate(date))
+    latestReport.report.map {
+      summary =>
+        val explain = explainMap.getOrElse(summary.monitor, "")
+        MonitorSummary(summary.monitor, summary.desc, explain)
+    }
+  }
+
+  def newReport(date: DateTime)(implicit session: DBSession = AutoSession) = {
+    val explain = Json.toJson(defaultExplain).toString
+    sql"""
+        Insert into AggregateReport([date],[explain])
+        values(${date.toString("YYYY-MM-dd")}, ${explain})
+        """.update.apply
+  }
+
+  def getReportFromDb(date: DateTime)(implicit session: DBSession = AutoSession) = {
+    DB readOnly { implicit session =>
+      sql"""
+        Select *
+        From AggregateReport
+        Where date = ${date}
+        """.map {
+        r =>
+          val report = Json.parse(r.string(2)).validate[Seq[MonitorSummary]].get
+          AggregateReport(r.date(1), report)
+      }.single.apply
+    }
+  }
+
   def generate(date: DateTime)(implicit session: DBSession = AutoSession) = {
     for {
       m <- Monitor.mvList
-      dailyReport = Record.getDailyReport(m, date)
     } yield {
       val dailyReport = Record.getDailyReport(m, date)
+      val instrumentAbnormalMonitorTypes = AggregateReport2.query(Seq(m), Monitor.map(m).monitorTypes, date, date + 1.day)
+        .filter(_.state == "儀器異常").map(_.monitorType).toSet.toList
 
       def getDesc = {
         val windSpeed = dailyReport.typeList.find(t => t.monitorType == MonitorType.C211).get
@@ -115,31 +131,37 @@ object AggregateReport {
               calendar.get(Calendar.HOUR_OF_DAY)
             }
             val header = s"${mCase.desp}於${genDesc(hours(0), hours(0) + 1, hours.drop(1))}時超過內控(${mtInternal}${mCase.unit})"
-            val overLaw =
-              if (MonitorTypeAlert.map(m)(t.monitorType).std_law.isDefined) {
-                if (t.monitorType == MonitorType.A214 || t.monitorType == MonitorType.A213) {
-                  if (t.stat.avg.isDefined && t.stat.avg.get > MonitorTypeAlert.map(m)(t.monitorType).std_law.get)
-                    s",日均值${t.stat.avg.get}超過法規值(${MonitorTypeAlert.map(m)(t.monitorType).std_law.get}${mCase.unit})"
-                  else {
-                    if (t.stat.avg.isDefined)
-                      s",日均值${t.stat.avg.get}未超過法規值"
-                    else
-                      s",日均值無效, 未超過法規值"
-                  }
-                } else {
-                  val overLawHr = over_hrs.filter(_._2.get >= MonitorTypeAlert.map(m)(t.monitorType).std_law.get).map {
-                    hr =>
-                      calendar.setTime(hr._1)
-                      calendar.get(Calendar.HOUR_OF_DAY)
-                  }
 
-                  if (!overLawHr.isEmpty)
-                    s",${genDesc(overLawHr(0), overLawHr(0) + 1, overLawHr.drop(1))}超過法規值(${MonitorTypeAlert.map(m)(t.monitorType).std_law.get}${mCase.unit})"
-                  else
-                    s",未超過法規值(${MonitorTypeAlert.map(m)(t.monitorType).std_law.get}${mCase.unit})"
-                }
-              } else
-                ",未超過法規值"
+            def overLaw = {
+              if (instrumentAbnormalMonitorTypes.contains(t.monitorType))
+                ""
+              else {
+                if (MonitorTypeAlert.map(m)(t.monitorType).std_law.isDefined) {
+                  if (t.monitorType == MonitorType.A214 || t.monitorType == MonitorType.A213) {
+                    if (t.stat.avg.isDefined && t.stat.avg.get > MonitorTypeAlert.map(m)(t.monitorType).std_law.get)
+                      s",日均值${t.stat.avg.get}超過法規值(${MonitorTypeAlert.map(m)(t.monitorType).std_law.get}${mCase.unit})"
+                    else {
+                      if (t.stat.avg.isDefined)
+                        s",日均值${t.stat.avg.get}未超過法規值"
+                      else
+                        s",日均值無效, 未超過法規值"
+                    }
+                  } else {
+                    val overLawHr = over_hrs.filter(_._2.get >= MonitorTypeAlert.map(m)(t.monitorType).std_law.get).map {
+                      hr =>
+                        calendar.setTime(hr._1)
+                        calendar.get(Calendar.HOUR_OF_DAY)
+                    }
+
+                    if (!overLawHr.isEmpty)
+                      s",${genDesc(overLawHr(0), overLawHr(0) + 1, overLawHr.drop(1))}超過法規值(${MonitorTypeAlert.map(m)(t.monitorType).std_law.get}${mCase.unit})"
+                    else
+                      s",未超過法規值(${MonitorTypeAlert.map(m)(t.monitorType).std_law.get}${mCase.unit})"
+                  }
+                } else
+                  ",未超過法規值"
+              }
+            }
 
             val dir = windDirOpt.map { windDir =>
               if (windDir.stat.avg.isDefined)
@@ -159,21 +181,6 @@ object AggregateReport {
       }
 
       MonitorSummary(m, getDesc, "")
-    }
-  }
-
-  def getLatestMonitorSummary(date:DateTime): Seq[MonitorSummary] ={
-    val report = AggregateReport.getReportFromDb(date).getOrElse({
-      AggregateReport.newReport(date)
-      AggregateReport(date, Seq.empty[MonitorSummary])
-    })
-
-    val explainMap = Map(report.report.map { r => (r.monitor -> r.explain) }: _*)
-    val latestReport = AggregateReport(date, AggregateReport.generate(date))
-    latestReport.report.map {
-      summary =>
-        val explain = explainMap.getOrElse(summary.monitor, "")
-        MonitorSummary(summary.monitor, summary.desc, explain)
     }
   }
 }
