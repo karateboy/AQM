@@ -89,47 +89,39 @@ object OverStdConverter {
   }
 
 
-  def convertStatus(m: Monitor.Value, tableType: TableType.Value): Unit = {
-    val now = DateTime.now()
+  def convertStatus(m: Monitor.Value, tableType: TableType.Value, start:DateTime, end:DateTime): Unit = {
     val recordList = tableType match {
       case TableType.Min =>
-        Record.getMinRecords(m, now - 3.hour, now)
+        Record.getMinRecords(m, start, end)
       case TableType.Hour =>
-        Record.getHourRecords(m, now - 3.day, now)
+        Record.getHourRecords(m, start, end)
     }
 
-    val auditStatList: Seq[AuditStat] = recordList map {
-      AuditStat
-    }
+    val auditStatList: Seq[AuditStat] = recordList map AuditStat
     for (auditStat <- auditStatList) {
-      /*
       for {
-        mt <- Monitor.map(m).monitorTypes
+        mt <- Monitor.map(m).monitorTypes if MonitorTypeAlert.map(m).contains(mt)
         (valueOpt, statusOpt) = auditStat.getValueStat(mt)
         value <- valueOpt
         status <- statusOpt if status.startsWith("01")
         mta = MonitorTypeAlert.map(m)(mt)
       } {
-        for (warn <- mta.warn) {
-          if (value >= warn)
+        def checkWarn(): Option[Boolean] =
+          for (warn <- mta.warn if value >= warn) yield {
             auditStat.setStat(mt, MonitorStatus.WARN_STAT)
-        }
+            true
+          }
 
-        for (law <- mta.std_law) {
-          if (value >= law)
+        def checkStdLaw(): Option[Boolean] =
+          for (law <- mta.std_law if value >= law) yield {
             auditStat.setStat(mt, MonitorStatus.OVER_STAT)
-        }
-      }
-       */
+            true
+          }
 
-      // FIXME workaround during final version
-      for {
-        mt <- Monitor.map(m).monitorTypes
-        (_, statusOpt) = auditStat.getValueStat(mt)
-        status <- statusOpt if status.startsWith("01")
-      } {
-        if (status == "011")
-          auditStat.setStat(mt, MonitorStatus.OVER_STAT)
+        val checkSeq: Seq[(Option[Float], () => Option[Boolean])] = Seq((mta.std_law, checkStdLaw),
+          (MonitorTypeAlert.map(m)(mt).warn, checkWarn))
+        val sorted: Seq[(Option[Float], () => Option[Boolean])] = checkSeq.sortBy(_._1).reverse
+        sorted.find(t => t._2() == Some(true))
       }
 
       if (auditStat.changed)
@@ -139,7 +131,7 @@ object OverStdConverter {
 
   case class ConvertStatus(year: Int)
 
-  case object ConvertStatus
+  case object ConvertCurrentStatus
 }
 
 case class OverStdConverter() extends Actor {
@@ -148,7 +140,7 @@ case class OverStdConverter() extends Actor {
 
   var timer: Cancellable =
     context.system.scheduler.scheduleOnce(FiniteDuration.apply(10, scala.concurrent.duration.SECONDS),
-      self, ConvertStatus)
+      self, ConvertCurrentStatus)
 
   override def receive: Receive = {
     case ConvertStatus(year) =>
@@ -159,44 +151,60 @@ case class OverStdConverter() extends Actor {
             SystemConfig.setGenerateAggregate2(false)
           }
         }
-      if(SystemConfig.getUpdatePastAggregate2) {
-      Future{
-        blocking{
-          AggregateReport2.updatePastState()
-          SystemConfig.setUpdatePastAggregate2(false)
+      if (SystemConfig.getUpdatePastAggregate2) {
+        Future {
+          blocking {
+            AggregateReport2.updatePastState()
+            SystemConfig.setUpdatePastAggregate2(false)
+          }
         }
       }
 
-      if (Ozone8Hr.hasHourTab(year)) {
+      if (Ozone8Hr.hasHourTab(year))
         Future {
           blocking {
+            Logger.info(s"Convert $year year OverStd code")
             convertStatusOfYear(year)
             SystemConfig.setConvertOverStdYear(year - 1)
             self ! ConvertStatus(year - 1)
           }
         }
-      }
-      }
-    case ConvertStatus =>
+    case ConvertCurrentStatus =>
       for {tab <- Seq(TableType.Hour, TableType.Min)
            m <- Monitor.mvList
            } {
-        convertStatus(m, tab)
+        val now = DateTime.now
+        val (start, end) = if(tab == TableType.Hour)
+          (now - 3.day, now)
+        else
+          (now - 3.hour, now)
+
+        convertStatus(m, tab, start, end)
       }
       timer = context.system.scheduler.scheduleOnce(FiniteDuration.apply(10, scala.concurrent.duration.MINUTES),
         self, ConvertStatus)
   }
 
   def convertStatusOfYear(year: Int) = {
-    val tabList = Seq(TableType.Hour, TableType.Min)
+    val tabList = Seq(TableType.Hour)
     for (tabType <- tabList) {
       Logger.info(s"convert $year $tabType data")
+      for {m <- Monitor.mvList
+           } {
+        val startOfYear = new DateTime(year, 1, 1, 0, 0)
+        val endOfYear = startOfYear + 1.year
+        convertStatus(m, tabType, startOfYear, endOfYear)
+      }
+      /*
       for {m <- Monitor.mvList
            mt <- Monitor.map(m).monitorTypes
            hasField <- checkIfHasField(tabType, year, mt) if hasField == true
            } {
-        convertOverStdToNewCode(tabType, year, m, mt)
-      }
+        val startOfYear = new DateTime(year, 1, 1)
+        val endOfYear = startOfYear + 1.year
+        convertStatus(m, tabType, startOfYear, endOfYear)
+        // convertOverStdToNewCode(tabType, year, m, mt)
+      }*/
     }
   }
 

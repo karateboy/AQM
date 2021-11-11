@@ -240,6 +240,14 @@ object Alarm {
       _map.getOrElse(ar.mItem, "未知的警告代碼:" + ar.mItem)
   }
 
+  def getMonitorType(ar: Alarm) = {
+    val tokens = ar.mItem.split("-")
+    if ((ar.code == MonitorStatus.OVER_STAT || ar.code == MonitorStatus.WARN_STAT) && tokens.length == 3)
+      Some(MonitorType.withName(tokens(0)))
+    else
+      None
+  }
+
   def getOverStdLevel(ar: Alarm): AlarmLevel.Value = {
     val tokens = ar.mItem.split("-")
     AlarmLevel.withName(tokens(2))
@@ -288,7 +296,7 @@ object Alarm {
     }.list.apply
   }
 
-  def newTicketFromAlarm(ar: Alarm, executeDate:DateTime) = {
+  def newTicketFromAlarm(ar: Alarm, executeDate: DateTime) = {
     val status = "YES"
     updateAlarmTicketState(ar.monitor, ar.mItem, new DateTime(ar.time), status)
     val ar_state =

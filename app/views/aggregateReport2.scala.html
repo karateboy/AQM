@@ -29,7 +29,11 @@
 			<td class="col-lg-1">@MonitorType.format(MonitorType.C212, e.windSpeed)</td>
 			<td class="col-lg-3"><input type="text" style="width:100%" id="@{e.monitor}_@{e.monitorType}_@e.time.getMillis"
 					value="@e.action"></td>
-			<td class="col-lg-1"><select id="state_@{e.monitor}_@{e.monitorType}_@e.time.getMillis" class="form-control">
+			<td class="col-lg-1"><select id="state_@{e.monitor}_@{e.monitorType}_@e.time.getMillis" class="form-control"
+				@if(e.state != "待確認"){
+					disabled
+				}
+				>
 					@for(state<-AggregateReport2.stateList){
 						@if(e.state == state){
 							<option value="@state" selected>@state</option>

@@ -1,19 +1,20 @@
 package controllers
 
 import com.github.nscala_time.time.Imports._
+import controllers.Application.EditData
 import controllers.PdfUtility._
 import models.Alarm.getOverStdLevel
 import models.Ticket._
 import models._
 import play.api.Logger
 import play.api.Play.current
+import play.api.data.Forms._
+import play.api.data._
 import play.api.libs.json._
 import play.api.libs.mailer._
 import play.api.mvc._
+
 import java.nio.file.Files
-import play.api.data._
-import play.api.data.Forms._
-import Application.EditData
 import scala.concurrent.ExecutionContext.Implicits.global
 
 object PartReplaceFilter extends Enumeration {
@@ -764,10 +765,6 @@ object Maintance extends Controller {
         })
   }
 
-  import Application.EditData
-  import play.api.data.Forms._
-  import play.api.data._
-
   def deletePart(id: String) = Security.Authenticated {
     Part.delete(id)
     PartUsage.deletePart(id)
@@ -1106,7 +1103,7 @@ object Maintance extends Controller {
         param => {
           for (alarmId <- param.alarmToTicketList) {
             Alarm.updateAlarmTicketState(alarmId.monitor, alarmId.mItem, new DateTime(alarmId.time), param.status)
-            for(ar<-Alarm.getAlarmOpt(alarmId.monitor, alarmId.mItem, new DateTime(alarmId.time))){
+            for (ar <- Alarm.getAlarmOpt(alarmId.monitor, alarmId.mItem, new DateTime(alarmId.time))) {
               if (param.status == "YES")
                 Alarm.newTicketFromAlarm(ar, DateTime.parse(alarmId.executeDate))
             }
@@ -1180,8 +1177,8 @@ object Maintance extends Controller {
         val isDue = if (t.extendDate.isDefined) {
           val extendDate = t.extendDate.get
           s"展延(${extendDate.toString("M/d")})${t.extendReason.getOrElse("")}"
-        }else if (t.executeDate.isBefore(DateTime.yesterday))
-            "已逾期"
+        } else if (t.executeDate.isBefore(DateTime.yesterday))
+          "已逾期"
         else
           "未逾期"
 
@@ -1291,11 +1288,38 @@ object Maintance extends Controller {
           false
       })
 
+      val list3 = list2.map(ar => {
+        val v = ar.mVal
+        val m = ar.monitor
+        val time = ar.time
+        val mt = Alarm.getMonitorType(ar).get
+
+        def checkStdLaw(): Option[Alarm.Alarm] =
+          for (stdLaw <- MonitorTypeAlert.map(m)(mt).std_law if v >= stdLaw) yield {
+            val mItem = s"${mt.toString}-${AlarmDataType.Hour}-${AlarmLevel.Law}"
+            Alarm.Alarm(m, mItem, time.toDateTime, v, MonitorStatus.OVER_STAT)
+          }
+
+        def checkWarn(): Option[Alarm.Alarm] =
+          for (warn <- MonitorTypeAlert.map(m)(mt).warn if v >= warn) yield {
+            val mItem = s"${mt.toString}-${AlarmDataType.Hour}-${AlarmLevel.Warn}"
+            Alarm.Alarm(m, mItem, time.toDateTime, v, MonitorStatus.WARN_STAT)
+          }
+
+        def checkInternal(): Option[Alarm.Alarm] =
+          for (std_internal <- MonitorTypeAlert.map(m)(mt).internal if v >= std_internal) yield {
+            val mItem = s"${mt.toString}-${AlarmDataType.Hour}-${AlarmLevel.Internal}"
+            Alarm.Alarm(m, mItem, time.toDateTime, v, MonitorStatus.WARN_STAT)
+          }
+
+        List(checkStdLaw, checkWarn, checkInternal).flatten
+      }).flatten
+
       outputType match {
         case OutputType.html =>
-          Ok(views.html.overStdAlarm(list2))
+          Ok(views.html.overStdAlarm(list3))
         case OutputType.excel =>
-          val excelFile = ExcelUtility.overStdAlarmList(list, s"超限警報查詢(${startStr}~${endStr})")
+          val excelFile = ExcelUtility.overStdAlarmList(list3, s"超限警報查詢(${startStr}~${endStr})")
           Ok.sendFile(excelFile, fileName = _ =>
             play.utils.UriEncoding.encodePathSegment("超限警報查詢" + ".xlsx", "UTF-8"),
             onClose = () => {

@@ -81,7 +81,8 @@ object AggregateReport {
 
         val descs =
           for {
-            t <- dailyReport.typeList if MonitorTypeAlert.map(m)(t.monitorType).internal.isDefined
+            t <- dailyReport.typeList if MonitorTypeAlert.map(m).contains(t.monitorType) &&
+              MonitorTypeAlert.map(m)(t.monitorType).internal.isDefined
             mCase = MonitorType.map(t.monitorType)
             mtInternal <- MonitorTypeAlert.map(m)(t.monitorType).internal
             over_hrs = t.dataList.filter(r => r._2.isDefined && r._3.isDefined && MonitorStatus.isNormalStat(r._3.get)
