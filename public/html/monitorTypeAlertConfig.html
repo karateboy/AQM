@@ -36,9 +36,8 @@
                             <th>名稱</th>
                             <th>單位</th>
                             <th>內控值</th>
-                            <th>警告值</th>
-                            <th>法規值</th>
-                            <th>小時標準</th>
+                            <th>警告值(011)</th>
+                            <th>法規值(016)</th>
                             <th>日標準</th>
                             <th>8小時平均值</th>
                             <th>24小時平均值</th>
@@ -54,8 +53,6 @@
                             </td>
                             <td><input class="form-control" v-model.number="mta.warn" @change="markDirty(mta)" /></td>
                             <td><input class="form-control" v-model.number="mta.std_law" @change="markDirty(mta)" />
-                            </td>
-                            <td><input class="form-control" v-model.number="mta.std_hour" @change="markDirty(mta)" />
                             </td>
                             <td><input class="form-control" v-model.number="mta.std_day" @change="markDirty(mta)" />
                             </td>

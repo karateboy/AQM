@@ -148,8 +148,12 @@ object MonitorStatus {
     getTagInfo(NORMAL_STAT) == getTagInfo(s)
   }
 
-  def isOver(s: String) = {
-    getTagInfo(OVER_STAT) == getTagInfo(s)
+  def isOver(s: String): Boolean = {
+    val overStatId = List(OVER_STAT, WARN_STAT).map(getTagInfo).map(_.id)
+    getTagInfo(s) match {
+      case TagInfo(_, _, id)=>
+        overStatId.contains(id)
+    }
   }
 
   def isCalbrating(s: String) = {

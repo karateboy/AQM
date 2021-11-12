@@ -1395,7 +1395,6 @@ object ExcelUtility {
       }
     }
 
-    Logger.info(precArray.toList.toString)
     val styles = precArray.map { prec =>
       val format_str = if (prec != 0)
         "0." + "0" * prec

@@ -213,7 +213,7 @@ object AggregateReport2 {
   def updatePastState() = {
     val start = DateTime.parse("2021-01-01", DateTimeFormat.forPattern("yyyy-MM-dd"))
     val ticketList = Ticket.queryTickets(start, DateTime.now)
-    Logger.info(s"ticket #=${ticketList.size}")
+
     for(t<-ticketList)
       updateStateByTicket(t)
   }

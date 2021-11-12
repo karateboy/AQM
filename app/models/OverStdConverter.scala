@@ -189,22 +189,11 @@ case class OverStdConverter() extends Actor {
     val tabList = Seq(TableType.Hour)
     for (tabType <- tabList) {
       Logger.info(s"convert $year $tabType data")
-      for {m <- Monitor.mvList
-           } {
+      for (m <- Monitor.mvList) {
         val startOfYear = new DateTime(year, 1, 1, 0, 0)
         val endOfYear = startOfYear + 1.year
         convertStatus(m, tabType, startOfYear, endOfYear)
       }
-      /*
-      for {m <- Monitor.mvList
-           mt <- Monitor.map(m).monitorTypes
-           hasField <- checkIfHasField(tabType, year, mt) if hasField == true
-           } {
-        val startOfYear = new DateTime(year, 1, 1)
-        val endOfYear = startOfYear + 1.year
-        convertStatus(m, tabType, startOfYear, endOfYear)
-        // convertOverStdToNewCode(tabType, year, m, mt)
-      }*/
     }
   }
 

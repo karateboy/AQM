@@ -10,11 +10,13 @@ object EventLog {
   val evtTypeManualAudit = 1
   val evtTypeInformAlarm = 2
   val evtTypeDueAlarm = 3
+  val evtTypeGetEpaData = 4
 
   val map = Map(
     evtTypeManualAudit -> "人工註記",
     evtTypeInformAlarm -> "警報通報",
-    evtTypeDueAlarm -> "逾期案件"
+    evtTypeDueAlarm -> "逾期案件",
+    evtTypeGetEpaData -> "擷取環保署資料"
   )
 
   def evtTypeToStr(evtType: Int) = {

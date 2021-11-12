@@ -132,36 +132,32 @@ object AggregateReport {
             }
             val header = s"${mCase.desp}於${genDesc(hours(0), hours(0) + 1, hours.drop(1))}時超過內控(${mtInternal}${mCase.unit})"
 
-            def overLaw = {
-              if (instrumentAbnormalMonitorTypes.contains(t.monitorType))
-                ""
-              else {
-                if (MonitorTypeAlert.map(m)(t.monitorType).std_law.isDefined) {
-                  if (t.monitorType == MonitorType.A214 || t.monitorType == MonitorType.A213) {
-                    if (t.stat.avg.isDefined && t.stat.avg.get > MonitorTypeAlert.map(m)(t.monitorType).std_law.get)
-                      s",日均值${t.stat.avg.get}超過法規值(${MonitorTypeAlert.map(m)(t.monitorType).std_law.get}${mCase.unit})"
-                    else {
-                      if (t.stat.avg.isDefined)
-                        s",日均值${t.stat.avg.get}未超過法規值"
-                      else
-                        s",日均值無效, 未超過法規值"
-                    }
-                  } else {
-                    val overLawHr = over_hrs.filter(_._2.get >= MonitorTypeAlert.map(m)(t.monitorType).std_law.get).map {
-                      hr =>
-                        calendar.setTime(hr._1)
-                        calendar.get(Calendar.HOUR_OF_DAY)
-                    }
-
-                    if (!overLawHr.isEmpty)
-                      s",${genDesc(overLawHr(0), overLawHr(0) + 1, overLawHr.drop(1))}超過法規值(${MonitorTypeAlert.map(m)(t.monitorType).std_law.get}${mCase.unit})"
+            val overLaw =
+              if (MonitorTypeAlert.map(m)(t.monitorType).std_law.isDefined) {
+                if (t.monitorType == MonitorType.A214 || t.monitorType == MonitorType.A213) {
+                  if (t.stat.avg.isDefined && t.stat.avg.get > MonitorTypeAlert.map(m)(t.monitorType).std_law.get)
+                    s",日均值${t.stat.avg.get}超過法規值(${MonitorTypeAlert.map(m)(t.monitorType).std_law.get}${mCase.unit})"
+                  else {
+                    if (t.stat.avg.isDefined)
+                      s",日均值${t.stat.avg.get}未超過法規值"
                     else
-                      s",未超過法規值(${MonitorTypeAlert.map(m)(t.monitorType).std_law.get}${mCase.unit})"
+                      s",日均值無效, 未超過法規值"
                   }
-                } else
-                  ",未超過法規值"
-              }
-            }
+                } else {
+                  val overLawHr = over_hrs.filter(_._2.get >= MonitorTypeAlert.map(m)(t.monitorType).std_law.get).map {
+                    hr =>
+                      calendar.setTime(hr._1)
+                      calendar.get(Calendar.HOUR_OF_DAY)
+                  }
+
+                  if (!overLawHr.isEmpty)
+                    s",${genDesc(overLawHr(0), overLawHr(0) + 1, overLawHr.drop(1))}超過法規值(${MonitorTypeAlert.map(m)(t.monitorType).std_law.get}${mCase.unit})"
+                  else
+                    s",未超過法規值(${MonitorTypeAlert.map(m)(t.monitorType).std_law.get}${mCase.unit})"
+                }
+              } else
+                ",未超過法規值"
+
 
             val dir = windDirOpt.map { windDir =>
               if (windDir.stat.avg.isDefined)
@@ -172,8 +168,12 @@ object AggregateReport {
 
             val summary = s"(最大風速${windSpeed.stat.max.getOrElse("")}m/s, 平均風向${dir}, 濃度${t.stat.min.getOrElse("")}~${t.stat.max.getOrElse("")} ${mCase.unit})"
 
-            header + overLaw + summary
+            if (instrumentAbnormalMonitorTypes.contains(t.monitorType))
+              ""
+            else
+              header + overLaw + summary
           }
+
         if (descs.length == 0)
           "本日測值未超出內控值"
         else

@@ -1280,13 +1280,7 @@ object Maintance extends Controller {
       val outputType = OutputType.withName(outputTypeStr)
 
       val list = Alarm.getAlarmOverStdList(monitors, start, end.plusDays(1))
-      val list2 = list.filter(ar => {
-        if (Alarm.isOverStd(ar)) {
-          val level = getOverStdLevel(ar)
-          levels.contains(level)
-        } else
-          false
-      })
+      val list2 = list.filter(ar => Alarm.isOverStd(ar))
 
       val list3 = list2.map(ar => {
         val v = ar.mVal
@@ -1312,7 +1306,10 @@ object Maintance extends Controller {
             Alarm.Alarm(m, mItem, time.toDateTime, v, MonitorStatus.WARN_STAT)
           }
 
-        List(checkStdLaw, checkWarn, checkInternal).flatten
+        List(checkStdLaw, checkWarn, checkInternal).flatten.filter(ar=>{
+          val level = getOverStdLevel(ar)
+          levels.contains(level)
+        })
       }).flatten
 
       outputType match {

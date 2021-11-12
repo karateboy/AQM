@@ -76,7 +76,7 @@ class OpenDataReceiver extends Actor with ActorLogging {
 
   val timer = {
     import scala.concurrent.duration._
-    context.system.scheduler.schedule(Duration(3, HOURS), Duration(3, HOURS), receiver, GetEpaHourData)
+    context.system.scheduler.schedule(Duration(1, HOURS), Duration(1, DAYS), receiver, GetEpaHourData)
   }
 
   val timer1 = {
@@ -408,7 +408,9 @@ class OpenDataReceiver extends Actor with ActorLogging {
         case ret: Int =>
           if (ret < limit) {
             Logger.info(s"Import EPA ${start.getYear()}/${start.getMonthOfYear()} complete")
-            LineNotify.notify("環保署資料擷取成功.")
+            val msg = "環保署資料擷取成功."
+            LineNotify.notify(msg)
+            EventLog.create(EventLog(DateTime.now(), EventLog.evtTypeGetEpaData, msg))
           } else
             getThisMonth(skip + limit)
       })

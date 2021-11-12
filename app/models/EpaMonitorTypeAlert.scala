@@ -46,7 +46,7 @@ object EpaMonitorTypeAlert {
 
         EpaMonitorTypeAlert(epaCase.id, mt, None)
       }
-    Logger.info(s"Epa list #=${mtaList.size}")
+
     val paramList:Seq[Seq[Any]] = mtaList map { mta =>
       Seq(
           mta.id
