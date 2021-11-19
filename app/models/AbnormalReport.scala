@@ -86,13 +86,13 @@ object AbnormalReport {
           val mtRecord = records.map { monitorTypeProject2(mt) }.zipWithIndex
           val invalidRecord =
             for {
-              r <- mtRecord
-              hr = r._2
-              data = r._1 if !(data._1.isDefined && data._2.isDefined && MonitorStatus.isNormalStat(data._2.get))
-            } yield if (data._1.isEmpty || data._2.isEmpty)
-              (hr, "資料遺失")
-            else
-              (hr, MonitorStatus.map(data._2.get).desp)
+              (data, hr) <- mtRecord if data._1.isEmpty || data._2.isEmpty || (!MonitorStatus.isNormalStat(data._2.get))
+            } yield {
+              if (data._1.isEmpty || data._2.isEmpty)
+                (hr, "資料遺失")
+              else
+                (hr, MonitorStatus.map(data._2.get).desp)
+            }
 
           def genDesc(start: Int, end: Int, status: String, list: List[(Int, String)]): String = {
             def output = {
