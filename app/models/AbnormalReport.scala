@@ -81,17 +81,18 @@ object AbnormalReport {
     import Record._
     val pairs =
       for (m <- Monitor.mvList) yield {
-        val records = Record.getHourRecords(m, date, date + 1.day)
-        def getInvalidHourDesc(mt: MonitorType.Value) = {
-          val mtRecord = records.map { monitorTypeProject2(mt) }.zipWithIndex
+        val dailyReport = Record.getDailyReport(m, date, Monitor.map(m).monitorTypes.toList, MonitorStatusFilter.All)
+
+        def getInvalidHourDesc(mtRecord: MonitorTypeRecord) = {
           val invalidRecord =
             for {
-              (data, hr) <- mtRecord if data._1.isEmpty || data._2.isEmpty || (!MonitorStatus.isNormalStat(data._2.get))
+              (time, value, status) <- mtRecord.dataList if value.isEmpty || status.isEmpty || (!MonitorStatus.isNormalStat(status.get))
+              hr = new DateTime(time.getTime).getHourOfDay
             } yield {
-              if (data._1.isEmpty || data._2.isEmpty)
+              if (value.isEmpty || status.isEmpty)
                 (hr, "資料遺失")
               else
-                (hr, MonitorStatus.map(data._2.get).desp)
+                (hr, MonitorStatus.map(status.get).desp)
             }
 
           def genDesc(start: Int, end: Int, status: String, list: List[(Int, String)]): String = {
@@ -122,8 +123,9 @@ object AbnormalReport {
 
         val l =
           for {
-            mt <- Monitor.map(m).monitorTypes
-            desc = getInvalidHourDesc(mt) if !desc.isEmpty()
+            mtRecord<-dailyReport.typeList
+            mt = mtRecord.monitorType
+            desc = getInvalidHourDesc(mtRecord) if !desc.isEmpty()
           } yield (m, mt, desc)
 
         l.toList
