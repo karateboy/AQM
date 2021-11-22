@@ -120,14 +120,14 @@ class OpenDataReceiver extends Actor with ActorLogging {
       getEpaHourData(start, end)
 
     case GetEpaCurrentData =>
-      getCurrentCountyData("https://data.epa.gov.tw/api/v1/aqx_p_145?format=json&limit=500&api_key=9be7b239-557b-4c10-9775-78cadfc555e9")
-      getCurrentCountyData("https://data.epa.gov.tw/api/v1/aqx_p_147?format=json&limit=500&api_key=9be7b239-557b-4c10-9775-78cadfc555e9")
-      getCurrentCountyData("https://data.epa.gov.tw/api/v1/aqx_p_143?format=json&limit=500&api_key=9be7b239-557b-4c10-9775-78cadfc555e9")
+      getCurrentCountyData("https://data.epa.gov.tw/api/v1/aqx_p_145?format=json&limit=500&api_key=9be7b239-557b-4c10-9775-78cadfc555e9&sort=MonitorDate desc")
+      getCurrentCountyData("https://data.epa.gov.tw/api/v1/aqx_p_147?format=json&limit=500&api_key=9be7b239-557b-4c10-9775-78cadfc555e9&&sort=MonitorDate%20desc")
+      getCurrentCountyData("https://data.epa.gov.tw/api/v1/aqx_p_143?format=json&limit=500&api_key=9be7b239-557b-4c10-9775-78cadfc555e9&&sort=MonitorDate%20desc")
   }
 
   def getCurrentData(limit: Int) = {
     import com.github.nscala_time.time.Imports._
-    val url = s"https://data.epa.gov.tw/api/v1/aqx_p_432?format=json&limit=${limit}&api_key=9be7b239-557b-4c10-9775-78cadfc555e9"
+    val url = s"https://data.epa.gov.tw/api/v1/aqx_p_432?format=json&limit=${limit}&api_key=9be7b239-557b-4c10-9775-78cadfc555e9&&sort=MonitorDate%20desc"
 
     val f = WS.url(url).get()
     f onFailure (errorHandler(""))
@@ -391,7 +391,7 @@ class OpenDataReceiver extends Actor with ActorLogging {
     }
 
     def getThisMonth(skip: Int) {
-      val url = s"https://data.epa.gov.tw/api/v1/aqx_p_15?format=xml&offset=${skip}&limit=${limit}&api_key=fa3fdec2-19b2-4108-a7f0-63ea3a9a776a"
+      val url = s"https://data.epa.gov.tw/api/v1/aqx_p_15?format=xml&offset=${skip}&limit=${limit}&api_key=fa3fdec2-19b2-4108-a7f0-63ea3a9a776a&&sort=MonitorDate%20desc"
       val future =
         WS.url(url).get().map {
           response =>

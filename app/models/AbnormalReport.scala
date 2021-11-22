@@ -87,7 +87,8 @@ object AbnormalReport {
           val invalidRecord =
             for {
               (time, value, status) <- mtRecord.dataList if value.isEmpty || status.isEmpty || (!MonitorStatus.isNormalStat(status.get))
-              hr = new DateTime(time.getTime).getHourOfDay
+              dt = new DateTime(time.getTime) if dt.isBefore(DateTime.now().minusHours(1))
+              hr = dt.getHourOfDay
             } yield {
               if (value.isEmpty || status.isEmpty)
                 (hr, "資料遺失")
