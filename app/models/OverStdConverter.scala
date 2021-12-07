@@ -103,18 +103,19 @@ object OverStdConverter {
         mt <- Monitor.map(m).monitorTypes if MonitorTypeAlert.map(m).contains(mt)
         (valueOpt, statusOpt) = auditStat.getValueStat(mt)
         value <- valueOpt
-        status <- statusOpt if status.startsWith("01")
+        status <- statusOpt if status.endsWith("10")|| status.endsWith("11")||status.endsWith("16")
         mta = MonitorTypeAlert.map(m)(mt)
       } {
+        val statusHead = status.substring(0, 1)
         def checkWarn(): Option[Boolean] =
           for (warn <- mta.warn if value >= warn) yield {
-            auditStat.setStat(mt, MonitorStatus.WARN_STAT)
+            auditStat.setStat(mt, statusHead + MonitorStatus.WARN_STAT.substring(1))
             true
           }
 
         def checkStdLaw(): Option[Boolean] =
           for (law <- mta.std_law if value >= law) yield {
-            auditStat.setStat(mt, MonitorStatus.OVER_STAT)
+            auditStat.setStat(mt, statusHead + MonitorStatus.OVER_STAT.substring(1))
             true
           }
 
