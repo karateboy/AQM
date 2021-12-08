@@ -599,6 +599,12 @@ object Application extends Controller {
             }
 
             Record.updateRecordStatus(tabType, ma.monitor, ma.monitorType, ma.time, ma.status)
+            val startTime = new DateTime(ma.time)
+            val endTime = if(tabType == TableType.Hour)
+              startTime + 1.hour
+            else
+              startTime + 1.minute
+            OverStdConverter.convertStatus(ma.monitor, tabType, startTime, endTime)
           }
 
           Ok(Json.obj("ok" -> true))
