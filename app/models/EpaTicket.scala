@@ -7,7 +7,7 @@ case class EpaTicket(time:DateTime, monitor:EpaMonitor.Value,
                      monitorType: MonitorType.Value, value:Float, overStd:Int)
 
 object EpaTicket {
-  def create()(implicit session: DBSession = AutoSession): Boolean ={
+  def create()(implicit session: DBSession = AutoSession){
     sql"""
           SELECT TABLE_NAME
           FROM INFORMATION_SCHEMA.TABLES
@@ -30,6 +30,9 @@ object EpaTicket {
             ) ON [PRIMARY]
           END
         """.execute().apply()
+    val now = DateTime.now()
+
+    regenerateEpaTickets(now - 10.day, now)
   }
 
   def mapper: WrappedResultSet => EpaTicket = {
@@ -37,7 +40,7 @@ object EpaTicket {
       MonitorType.withName(r.string(3)), r.float(4), r.int(5))
   }
 
-  def getTickets(from :DateTime)(implicit session: DBSession = AutoSession) = {
+  def getTickets(from :DateTime)(implicit session: DBSession = AutoSession): List[EpaTicket] = {
     val start: java.sql.Timestamp = from
     sql"""
          SELECT *
@@ -47,13 +50,14 @@ object EpaTicket {
          """.map(mapper).list().apply()
   }
 
-  def upsert(ticket:EpaTicket)(implicit session: DBSession = AutoSession) = {
+  def upsert(ticket:EpaTicket)(implicit session: DBSession = AutoSession): Int = {
+    val ticketTime: java.sql.Timestamp = ticket.time
     sql"""
          UPDATE [dbo].[EpaTickets]
           SET
               [Value] = ${ticket.value}
               ,[OverStd] = ${ticket.overStd}
-          WHERE [M_DateTime]= ${ticket.time.toDate} and [Monitor] = ${ticket.monitor.toString} and
+          WHERE [M_DateTime]= ${ticketTime} and [Monitor] = ${ticket.monitor.toString} and
             [MonitorType] = ${ticket.monitorType.toString}
          IF(@@ROWCOUNT = 0)
           BEGIN
@@ -71,6 +75,26 @@ object EpaTicket {
               ,${ticket.overStd})
           END
          """.update().apply()
+  }
+
+  def regenerateEpaTickets(start:DateTime, end:DateTime)(implicit session:DBSession = AutoSession): Unit = {
+    val startTime : java.sql.Timestamp = start
+    val endTime: java.sql.Timestamp = end
+    sql"""
+         DELETE [dbo].[EpaTickets]
+         WHERE [M_DateTime] >= ${startTime} and [M_DateTime] < ${endTime}
+         """.update().apply()
+
+    for{epaMonitor<- EpaMonitor.epaList
+        mt <- MonitorType.eapIdMap.values}{
+      val overStdCode: Int = AlarmLevel.map(AlarmLevel.Internal).code
+      val epaRecords = Record.getEpaHourRecord(epaMonitor, mt, start, end)
+      epaRecords.foreach(record=>{
+        if(EpaMonitorTypeAlert.map.contains(epaMonitor) && EpaMonitorTypeAlert.map(epaMonitor).contains(mt))
+          for (internal <- EpaMonitorTypeAlert.map(epaMonitor)(mt).internal if record.value >= internal)
+            EpaTicket.upsert(EpaTicket(record.time, epaMonitor, mt, record.value, overStdCode))
+      })
+    }
   }
 
 }

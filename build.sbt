@@ -54,6 +54,7 @@ mappings in Universal ++=
      
 PlayKeys.fileWatchService := play.runsupport.FileWatchService.sbt(2000)
 
-scalacOptions += "-feature"
-
-fork in run := false
+scalacOptions ++= Seq(
+  "-feature",
+  "-deprecation"
+)
