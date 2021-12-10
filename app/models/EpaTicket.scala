@@ -36,7 +36,7 @@ object EpaTicket {
   }
 
   def mapper: WrappedResultSet => EpaTicket = {
-    r=> EpaTicket(r.date(1), EpaMonitor.withName(r.string(2)),
+    r=> EpaTicket(r.timestamp(1), EpaMonitor.withName(r.string(2)),
       MonitorType.withName(r.string(3)), r.float(4), r.int(5))
   }
 
@@ -68,7 +68,7 @@ object EpaTicket {
             ,[Value]
             ,[OverStd])
             VALUES
-            (${ticket.time.toDate}
+            (${ticketTime}
               ,${ticket.monitor.toString}
               ,${ticket.monitorType.toString}
               ,${ticket.value}
