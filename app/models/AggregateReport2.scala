@@ -92,10 +92,10 @@ object AggregateReport2 {
         if(ticket.monitorType.isDefined){
           val mt = ticket.monitorType.get
           if(repairFormData.getBool(3)){
-            AggregateReport2.updateState(ticket.monitor, mt, repairTime.minusDays(7), repairTime, AggregateReport2.stateList(1))
+            AggregateReport2.updateState(ticket.monitor, mt, repairTime.withMillisOfDay(0), repairTime, AggregateReport2.stateList(1))
           }else if(repairFormData.getBool(4)){
             // 儀器正常
-            AggregateReport2.updateState(ticket.monitor, mt, repairTime.minusDays(7), repairTime, AggregateReport2.stateList(2))
+            AggregateReport2.updateState(ticket.monitor, mt, repairTime.withMillisOfDay(0), repairTime, AggregateReport2.stateList(2))
           }
         }
       }
