@@ -65,15 +65,15 @@ object Ozone8HrCalculator {
     worker ! CalculateOznoe(date)
   }
 
-  def updateCurrentOzone8Hr(): Unit ={
+  def updateCurrentOzone8Hr(): Unit = {
     for (m <- Monitor.mvList) {
       if (Monitor.map(m).monitorTypes.contains(MonitorType.A225)) {
         val now = DateTime.now
-        val hrList = Record.getHourRecords(m, DateTime.now-8.hour, now)
+        val hrList = Record.getHourRecords(m, DateTime.now - 8.hour, now)
 
         val recordTime = DateTime.now.withMillisOfDay(0).withHourOfDay(now.getHourOfDay)
-        if(hrList.nonEmpty)
-        calculateOznoe8Hr(m.toString, hrList, recordTime)
+        if (hrList.nonEmpty)
+          calculateOznoe8Hr(m.toString, hrList, recordTime)
       }
     }
   }
@@ -83,8 +83,8 @@ object Ozone8HrCalculator {
     val dataList: List[OzoneRecord] = hourRecordList
       .map(hr => OzoneRecord(hr.date.toJodaDateTime, hr.o3, hr.o3_stat))
 
-    val avgList = dataList.map(_.value).flatten
-    val avg: Option[Float] = if (avgList.nonEmpty)
+    val avgList = dataList.filter(r => r.status.contains("010") || r.status.contains("011")).map(_.value).flatten
+    val avg: Option[Float] = if (avgList.length >= 5)
       Some(avgList.sum / avgList.length)
     else
       None
@@ -109,9 +109,27 @@ object Ozone8HrCalculator {
               END
             """.update.apply
       }
+    } else {
+      DB autoCommit { implicit session =>
+        sql"""
+              UPDATE $tabName
+              SET [DP_NO] = $DP_NO
+                  ,[M_DateTime] = $recordTime
+                  ,[Value] = NULL
+                  ,[Status] = '032'
+              WHERE [DP_NO]=$DP_NO and [M_DateTime] =$recordTime;
+
+              IF(@@ROWCOUNT = 0)
+              BEGIN
+                INSERT INTO $tabName ([DP_NO], [M_DateTime], [Value], [Status])
+                VALUES($DP_NO, $recordTime, NULL, '032')
+              END
+            """.update.apply
+      }
     }
   }
 
+  /*
   def calculateOzoneOfTheSameMonth(start: DateTime, end: DateTime): Unit = {
     Logger.info(s"upsert O3 8hr ${start.getYear}/${start.getMonthOfYear()}")
     val tabName = Ozone8Hr.getTabName(start.getYear())
@@ -124,14 +142,15 @@ object Ozone8HrCalculator {
           for (i <- 0 to hrList.length - 8 if hrList(i).time.getDayOfMonth() == hrList(i).time.plusHours(7).getDayOfMonth()) yield
             hrList.slice(i, i + 8)
 
-        for {avgData <- avgList if avgData.nonEmpty
+        for {avgData <- avgList if avgData.length >=5
              head = avgData.head
-             dataList = avgData.filter(r => head.time <= r.time && r.time < head.time + 8.hour) if dataList.nonEmpty
+             dataList = avgData.filter(r => head.time <= r.time && r.time < head.time + 8.hour)
+               .filter(r=>r.status.contains("010")||r.status.contains("011")) if dataList.nonEmpty
 
              avgList = dataList.map(_.value).flatten
              } yield {
           val recordTime: java.sql.Timestamp = (head.time + 7.hour)
-          val avg: Option[Float] = if (avgList.nonEmpty)
+          val avg: Option[Float] = if (avgList.length >=5)
             Some(avgList.sum / avgList.length)
           else
             None
@@ -155,12 +174,30 @@ object Ozone8HrCalculator {
               END
             """.update.apply
             }
+          }else{
+            DB autoCommit { implicit session =>
+              sql"""
+              UPDATE $tabName
+              SET [DP_NO] = $DP_NO
+                  ,[M_DateTime] = $recordTime
+                  ,[Value] = NULL
+                  ,[Status] = '032'
+              WHERE [DP_NO]=$DP_NO and [M_DateTime] =$recordTime;
+
+              IF(@@ROWCOUNT = 0)
+              BEGIN
+                INSERT INTO $tabName ([DP_NO], [M_DateTime], [Value], [Status])
+                VALUES($DP_NO, $recordTime, NULL, '032')
+              END
+            """.update.apply
+            }
           }
         }
       }
     }
 
   }
+*/
 
   def calculateOzoneOfTheSameMonthBatch(start: DateTime, end: DateTime): Unit = {
     Logger.info(s"upsert O3 8hr ${start.getYear}/${start.getMonthOfYear()}")
@@ -178,20 +215,18 @@ object Ozone8HrCalculator {
           for {avgData <- avgList if avgData.nonEmpty
                head = avgData.head
                dataList = avgData.filter(r => head.time <= r.time && r.time < head.time + 8.hour) if dataList.nonEmpty
-               avgList = dataList.map(_.value).flatten
+               avgList = dataList.filter(r=>r.status.contains("010")||r.status.contains("011")).map(_.value).flatten
                } yield {
             val recordTime: java.sql.Timestamp = (head.time + 7.hour)
-            val avg: Option[Float] = if (avgList.nonEmpty)
+            val avg: Option[Float] = if (avgList.length >= 5)
               Some(avgList.sum / avgList.length)
             else
               None
 
             val statusMap: Map[Option[String], Int] = dataList.groupBy(_.status).mapValues(_.size)
             val status: Option[String] = statusMap.maxBy(t => t._2)._1
-            if (avg.nonEmpty && status.nonEmpty)
-              Some(Seq(DP_NO, recordTime, avg, status, DP_NO, recordTime, DP_NO, recordTime, avg, status))
-            else
-              None
+
+            Some(Seq(DP_NO, recordTime, avg, status, DP_NO, recordTime, DP_NO, recordTime, avg, status))
           }
         val updateParam: Seq[Seq[Any]] = updateParamOptions.flatten
         DB autoCommit { implicit session =>
