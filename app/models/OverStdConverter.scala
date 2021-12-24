@@ -176,9 +176,9 @@ case class OverStdConverter() extends Actor {
            } {
         val now = DateTime.now
         val (start, end) = if(tab == TableType.Hour)
-          (now - 3.day, now)
+          (now - 10.day, now)
         else
-          (now - 3.hour, now)
+          (now - 24.hour, now)
 
         convertStatus(m, tab, start, end)
       }

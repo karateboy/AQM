@@ -37,6 +37,7 @@ object MonitorStatus {
   val OVERRANGE_DATA = "032"
   val DATA_LOSS_STAT = "036"
   val MAINTANCE_STAT = "038"
+  val DATA_VALID_HIGH = "099"
   val OverInternalColor = "Blue"
   val OverLawColor = "Red"
   val NormalColor = "White"
@@ -230,7 +231,9 @@ object MonitorStatus {
 
   def isNormalStat(s: String) = {
     val tagInfo = getTagInfo(s)
-    val VALID_STATS = List(NORMAL_STAT, WARN_STAT, OVER_STAT, BELOW_STAT, CALBRATION_DIVERSION_STAT, OVERRANGE_DATA).map(getTagInfo)
+    val VALID_STATS = List(NORMAL_STAT, WARN_STAT, OVER_STAT, BELOW_STAT, CALBRATION_DIVERSION_STAT,
+      OVERRANGE_DATA,  DATA_VALID_HIGH
+    ).map(getTagInfo)
 
     tagInfo.statusType match {
       case StatusType.Internal =>
