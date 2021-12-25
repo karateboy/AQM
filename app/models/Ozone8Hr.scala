@@ -17,7 +17,7 @@ object Ozone8Hr {
     sql"""CREATE TABLE [dbo].[${tabName}](
             [DP_NO] [varchar](6) NOT NULL,
             [M_DateTime] [datetime2](7) NOT NULL,
-            [Value] [float] NOT NULL,
+            [Value] [float] NULL,
             [Status] [varchar](3) NOT NULL,
             CONSTRAINT [${pkName}] PRIMARY KEY CLUSTERED
             (
