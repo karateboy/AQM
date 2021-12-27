@@ -194,7 +194,7 @@ object Record {
         ORDER BY M_DateTime ASC
       """.map { rs=>
         HourRecord(name = rs.string(1), rs.timestamp(2),
-          o3 = Some(rs.float(3)), o3_stat = Some(rs.string(4)) ) }.list().apply()
+          o3 = rs.floatOpt(3), o3_stat = Some(rs.string(4)) ) }.list().apply()
       if (startTime.getYear == endTime.getYear)
         result
       else

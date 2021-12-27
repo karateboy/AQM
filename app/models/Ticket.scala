@@ -616,7 +616,7 @@ object Ticket {
     DB localTx { implicit session =>
       sql"""
         Update Ticket
-        Set readyToClose = 0, rejectReason = $reason
+        Set readyToClose = 0, rejectReason = $reason, execute_date = DATEADD(DAY, 2, execute_date)
         Where ID in (${id}) and submiter_id = $userId
         """.update.apply
     }
