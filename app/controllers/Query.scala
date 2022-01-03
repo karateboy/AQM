@@ -420,7 +420,7 @@ object Query extends Controller {
           mt <- monitorTypes
           timeData = timeSeq.map { time =>
             if (recordMap(m)(mt).contains(time))
-              Seq(Some(time.getMillis.toDouble), Some(recordMap(m)(mt)(time)._1.get.toDouble))
+              Seq(Some(time.getMillis.toDouble), recordMap(m)(mt)(time)._1.map(_.toDouble))
             else
               Seq(Some(time.getMillis.toDouble), None)
           }

@@ -79,6 +79,9 @@ object Ozone8HrCalculator {
   }
 
   def calculateOznoe8Hr(DP_NO: String, hourRecordList: List[HourRecord], recordTime: DateTime): Unit = {
+    if(!Ozone8Hr.hasOzone8hrTab(recordTime.getYear))
+      Ozone8Hr.createTab(recordTime.getYear)
+
     val tabName = Ozone8Hr.getTabName(recordTime.getYear())
     val dataList: List[OzoneRecord] = hourRecordList
       .map(hr => OzoneRecord(hr.date.toJodaDateTime, hr.o3, hr.o3_stat))
@@ -91,7 +94,7 @@ object Ozone8HrCalculator {
 
     if (avg.nonEmpty) {
       val statusMap: Map[Option[String], Int] = dataList.groupBy(_.status).mapValues(_.size)
-      val status: Option[String] = statusMap.maxBy(t => t._2)._1
+      val status = statusMap.maxBy(t => t._2)._1.getOrElse("032")
 
       DB autoCommit { implicit session =>
         sql"""
@@ -129,76 +132,6 @@ object Ozone8HrCalculator {
     }
   }
 
-  /*
-  def calculateOzoneOfTheSameMonth(start: DateTime, end: DateTime): Unit = {
-    Logger.info(s"upsert O3 8hr ${start.getYear}/${start.getMonthOfYear()}")
-    val tabName = Ozone8Hr.getTabName(start.getYear())
-    for (m <- Monitor.mvList) {
-      if (Monitor.map(m).monitorTypes.contains(MonitorType.A225)) {
-        val hrList: List[OzoneRecord] = Record.getHourRecords(m, start, end)
-          .map(hr => OzoneRecord(hr.date.toJodaDateTime, hr.o3, hr.o3_stat)).toList
-        val DP_NO = Monitor.map(m).id
-        val avgList: Seq[List[OzoneRecord]] =
-          for (i <- 0 to hrList.length - 8 if hrList(i).time.getDayOfMonth() == hrList(i).time.plusHours(7).getDayOfMonth()) yield
-            hrList.slice(i, i + 8)
-
-        for {avgData <- avgList if avgData.length >=5
-             head = avgData.head
-             dataList = avgData.filter(r => head.time <= r.time && r.time < head.time + 8.hour)
-               .filter(r=>r.status.contains("010")||r.status.contains("011")) if dataList.nonEmpty
-
-             avgList = dataList.map(_.value).flatten
-             } yield {
-          val recordTime: java.sql.Timestamp = (head.time + 7.hour)
-          val avg: Option[Float] = if (avgList.length >=5)
-            Some(avgList.sum / avgList.length)
-          else
-            None
-
-          val statusMap: Map[Option[String], Int] = dataList.groupBy(_.status).mapValues(_.size)
-          val status: Option[String] = statusMap.maxBy(t => t._2)._1
-          if (avg.nonEmpty) {
-            DB autoCommit { implicit session =>
-              sql"""
-              UPDATE $tabName
-              SET [DP_NO] = $DP_NO
-                  ,[M_DateTime] = $recordTime
-                  ,[Value] = $avg
-                  ,[Status] = $status
-              WHERE [DP_NO]=$DP_NO and [M_DateTime] =$recordTime;
-
-              IF(@@ROWCOUNT = 0)
-              BEGIN
-                INSERT INTO $tabName ([DP_NO], [M_DateTime], [Value], [Status])
-                VALUES($DP_NO, $recordTime, $avg, ${status})
-              END
-            """.update.apply
-            }
-          }else{
-            DB autoCommit { implicit session =>
-              sql"""
-              UPDATE $tabName
-              SET [DP_NO] = $DP_NO
-                  ,[M_DateTime] = $recordTime
-                  ,[Value] = NULL
-                  ,[Status] = '032'
-              WHERE [DP_NO]=$DP_NO and [M_DateTime] =$recordTime;
-
-              IF(@@ROWCOUNT = 0)
-              BEGIN
-                INSERT INTO $tabName ([DP_NO], [M_DateTime], [Value], [Status])
-                VALUES($DP_NO, $recordTime, NULL, '032')
-              END
-            """.update.apply
-            }
-          }
-        }
-      }
-    }
-
-  }
-*/
-
   def calculateOzoneOfTheSameMonthBatch(start: DateTime, end: DateTime): Unit = {
     Logger.info(s"upsert O3 8hr ${start.getYear}/${start.getMonthOfYear()}")
     val tabName = Ozone8Hr.getTabName(start.getYear())
@@ -224,7 +157,7 @@ object Ozone8HrCalculator {
               None
 
             val statusMap: Map[Option[String], Int] = dataList.groupBy(_.status).mapValues(_.size)
-            val status: Option[String] = statusMap.maxBy(t => t._2)._1
+            val status: String = statusMap.maxBy(t => t._2)._1.getOrElse("032")
 
             Some(Seq(DP_NO, recordTime, avg, status, DP_NO, recordTime, DP_NO, recordTime, avg, status))
           }
@@ -299,7 +232,7 @@ class Ozone8HrCalculator extends Actor {
     for (m <- Monitor.mvList if Monitor.map(m).monitorTypes.contains(MonitorType.A225)) {
       val hr = DateTime.now.getHourOfDay
       val end = DateTime.now().withMillisOfDay(0).withHourOfDay(hr)
-      val start = end - 8.hours
+      val start = end - 4.days
       val records = Record.getHourRecords(m, start, end)
       calculateOznoe8Hr(Monitor.map(m).id, records, end - 1.hour)
     }
