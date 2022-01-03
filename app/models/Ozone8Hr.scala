@@ -102,7 +102,7 @@ object Ozone8HrCalculator {
               SET [DP_NO] = $DP_NO
                   ,[M_DateTime] = $recordTime
                   ,[Value] = $avg
-                  ,[Status] = ${status.getOrElse("032")}
+                  ,[Status] = ${status}
               WHERE [DP_NO]=$DP_NO and [M_DateTime] =$recordTime;
 
               IF(@@ROWCOUNT = 0)
