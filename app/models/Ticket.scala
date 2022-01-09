@@ -614,9 +614,10 @@ object Ticket {
 
   def resumeTicket(id: List[Int], userId: Int, reason: String)(implicit session: DBSession = AutoSession) = {
     DB localTx { implicit session =>
+      val twoDayAfter :java.sql.Timestamp = DateTime.now().plusDays(2)
       sql"""
         Update Ticket
-        Set readyToClose = 0, rejectReason = $reason, execute_date = DATEADD(DAY, 2, execute_date)
+        Set readyToClose = 0, rejectReason = $reason, execute_date = $twoDayAfter
         Where ID in (${id}) and submiter_id = $userId
         """.update.apply
     }
