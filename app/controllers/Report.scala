@@ -288,7 +288,6 @@ object Report extends Controller {
     val adjustStart = DateTime.parse(start.toString("YYYY-MM-dd"))
     val adjustEnd = DateTime.parse(end.toString("YYYY-MM-dd")) + 1.day
     val periods = getPeriods(adjustStart, adjustEnd, period)
-    val nPeriod = periods.length
     val periodReports =
       for {start <- periods} yield {
         (start -> getPeriodReport(monitor, start, period, MonitorType.mtvAllList, filter))
@@ -302,9 +301,7 @@ object Report extends Controller {
       t <- report.typeArray
     } {
       val periodMap = map.getOrElse(t.monitorType, Map.empty[DateTime, (Option[Float], Option[String])])
-      if (t.stat.avg.isDefined)
-        periodMap.put(time, (t.stat.avg, MonitorStatusFilter.statusMap.get(filter)))
-
+      periodMap.put(time, (t.stat.avg, MonitorStatusFilter.statusMap.get(filter)))
       map.put(t.monitorType, periodMap)
     }
     map
@@ -486,7 +483,7 @@ object Report extends Controller {
   }
 
   def getPeriodReport(monitor: Monitor.Value, startTime: DateTime, period: Period, includeTypes: List[MonitorType.Value] = MonitorType.monitorReportList,
-                      filter: MonitorStatusFilter.Value = MonitorStatusFilter.All) = {
+                      filter: MonitorStatusFilter.Value = MonitorStatusFilter.All): IntervalReport = {
     val endTime = startTime + period
     val report = Record.getPeriodReport(monitor, startTime, period, includeTypes, filter)
 

@@ -19,6 +19,18 @@ object LineNotify {
     }
   }
 
+  def notifyEpaGroup(msg:String) = {
+    val f = WS.url("https://notify-api.line.me/api/notify").
+      withHeaders("Authorization"-> "Bearer MkcZHqxKLZ7I68TuR1p6O2NeO0ZMtPXuuJGRpiTu1vS",
+        "Content-Type"->"application/x-www-form-urlencoded")
+      .post(Map("message" -> Seq(msg)))
+
+    for(ret<-f) yield {
+      if(ret.status != 200)
+        Logger.error(ret.body)
+    }
+  }
+
   def notifyAlarm(alarm:Alarm): Unit ={
     val ar_state =
       if (alarm.mVal == 0)

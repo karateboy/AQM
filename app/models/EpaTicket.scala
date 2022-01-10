@@ -91,8 +91,10 @@ object EpaTicket {
       val epaRecords = Record.getEpaHourRecord(epaMonitor, mt, start, end)
       epaRecords.foreach(record=>{
         if(EpaMonitorTypeAlert.map.contains(epaMonitor) && EpaMonitorTypeAlert.map(epaMonitor).contains(mt))
-          for (internal <- EpaMonitorTypeAlert.map(epaMonitor)(mt).internal if record.value >= internal)
+          for (internal <- EpaMonitorTypeAlert.map(epaMonitor)(mt).internal if record.value >= internal) {
             EpaTicket.upsert(EpaTicket(record.time, epaMonitor, mt, record.value, overStdCode))
+            LineNotify.notifyEpaGroup(s"${record.time.toString("yyyy/MM/dd HH:mm")}-${EpaMonitor.map(epaMonitor).name}${MonitorType.map(mt).desp}超過內控值")
+          }
       })
     }
   }

@@ -394,15 +394,14 @@ object Query extends Controller {
           m <- monitors
           mt <- monitorTypes
           timeData = timeSeq.map { time =>
-            if (recordMap(m)(mt).contains(time) &&
-              recordMap(m)(mt)(time)._1.isDefined)
-              Seq(Some(time.getMillis.toDouble), Some(recordMap(m)(mt)(time)._1.get.toDouble))
+            if (recordMap(m)(mt).contains(time))
+              Seq(Some(time.getMillis.toDouble), recordMap(m)(mt)(time)._1.map(_.toDouble))
             else
               Seq(Some(time.getMillis.toDouble), None)
           }
           timeStatus = timeSeq.map { time =>
             if (recordMap(m)(mt).contains(time))
-              Some(recordMap(m)(mt)(time)._2.get)
+              recordMap(m)(mt)(time)._2
             else
               None
           }
@@ -426,7 +425,7 @@ object Query extends Controller {
           }
           timeStatus = timeSeq.map { time =>
             if (recordMap(m)(mt).contains(time))
-              Some(recordMap(m)(mt)(time)._2.get)
+              recordMap(m)(mt)(time)._2
             else
               None
           }

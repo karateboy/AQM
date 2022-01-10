@@ -265,7 +265,7 @@ object Ticket {
               bodyText = Some(msg),
               bodyHtml = Some(htmlMsg))
 
-            MailerPlugin.send(email)
+            //MailerPlugin.send(email)
             SmsSender.send(List(user), msg)
           }
         }
