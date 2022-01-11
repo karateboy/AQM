@@ -478,7 +478,6 @@ object Maintance extends Controller {
                   bodyHtml = Some(htmlMsg))
 
                 try {
-                  MailerPlugin.send(email)
                   SmsSender.send(List(user), msg)
                 } catch {
                   case ex: Throwable =>
@@ -898,7 +897,6 @@ object Maintance extends Controller {
         bodyHtml = Some("<html><body><p>測試信</p></body></html>"))
 
       try {
-        MailerPlugin.send(email)
         EventLog.create(EventLog(DateTime.now, EventLog.evtTypeInformAlarm, "送測試信!"))
         Ok(s"已經送信到${user.email}")
       } catch {
@@ -1032,8 +1030,13 @@ object Maintance extends Controller {
 
   def alarmNoTicketList() = Security.Authenticated {
     implicit request =>
-      val start = DateTime.now() - 14.day
-      val list = Alarm.getAlarmNoTicketList(start)
+      val now = DateTime.now()
+      val start = now - 14.day
+      val list = if(start.getYear == now.getYear)
+        Alarm.getAlarmNoTicketList(start)
+      else
+        Alarm.getAlarmNoTicketList(start) ++ Alarm.getAlarmNoTicketList(now.withDayOfYear(1).withMillisOfDay(0))
+
       val excludedList = list.filter { ar =>
         ar.code != MonitorStatus.REPAIR && ar.code != "053"
       }

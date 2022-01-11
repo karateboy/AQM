@@ -69,6 +69,5 @@ class AlarmWorker extends Actor{
       bodyHtml = Some(htmlMsg))
 
     SmsSender.send(users, msg)
-    MailerPlugin.send(email)
   }
 }
