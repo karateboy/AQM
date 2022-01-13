@@ -163,8 +163,11 @@ class OpenDataReceiver extends Actor with ActorLogging {
                   try {
                     val v = mtValueStr.toFloat
                     upsertEpaRecord(epaMonitor, mt, dt, v)
-                    for (internal <- EpaMonitorTypeAlert.map(epaMonitor)(mt).internal if v >= internal)
+                    for (internal <- EpaMonitorTypeAlert.map(epaMonitor)(mt).internal if v >= internal) {
                       EpaTicket.upsert(EpaTicket(dt, epaMonitor, mt, v, overStdCode))
+                      LineNotify.notifyEpaGroup(
+                        s"${dt.toString("yyyy/MM/dd HH:mm")}-${EpaMonitor.map(epaMonitor).name}${MonitorType.map(mt).desp}超過內控值")
+                    }
                   } catch {
                     case _: Throwable =>
                   }
@@ -254,8 +257,11 @@ class OpenDataReceiver extends Actor with ActorLogging {
                   val v = mtValueStr.toFloat
                   val mt = MonitorType.eapIdMap(record.ItemId.toInt)
                   upsertEpaRecord(epaMonitor, mt, dt, v)
-                  for (internal <- EpaMonitorTypeAlert.map(epaMonitor)(mt).internal if v >= internal)
+                  for (internal <- EpaMonitorTypeAlert.map(epaMonitor)(mt).internal if v >= internal) {
                     EpaTicket.upsert(EpaTicket(dt, epaMonitor, mt, v, overStdCode))
+                    LineNotify.notifyEpaGroup(
+                      s"${dt.toString("yyyy/MM/dd HH:mm")}-${EpaMonitor.map(epaMonitor).name}${MonitorType.map(mt).desp}超過內控值")
+                  }
                 } catch {
                   case _: Throwable =>
                 }

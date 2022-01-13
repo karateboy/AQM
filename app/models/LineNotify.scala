@@ -6,8 +6,9 @@ import play.api.Play.current
 import play.api.libs.ws.WS
 
 import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.Future
 object LineNotify {
-  def notify(msg:String)={
+  def notify(msg:String): Future[Unit] ={
     val f = WS.url("https://notify-api.line.me/api/notify").
       withHeaders("Authorization"-> s"Bearer Xdv0biY8gzKOhIsUdtNiEOhJVSPmnXiNRQfSLN8zFpa",
         "Content-Type"->"application/x-www-form-urlencoded")
@@ -19,7 +20,7 @@ object LineNotify {
     }
   }
 
-  def notifyEpaGroup(msg:String) = {
+  def notifyEpaGroup(msg:String): Future[Unit] = {
     val f = WS.url("https://notify-api.line.me/api/notify").
       withHeaders("Authorization"-> "Bearer MkcZHqxKLZ7I68TuR1p6O2NeO0ZMtPXuuJGRpiTu1vS",
         "Content-Type"->"application/x-www-form-urlencoded")

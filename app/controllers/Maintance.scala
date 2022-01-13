@@ -1488,6 +1488,11 @@ object Maintance extends Controller {
         })
   }
 
+  def testEpaLine = Security.Authenticated.async {
+    for(ret<-LineNotify.notifyEpaGroup("測試環保署群組訊息"))yield
+      Ok("")
+  }
+
   case class TicketParam(ticketType: TicketType.Value, monitors: Seq[Monitor.Value],
                          monitorTypes: Seq[MonitorType.Value], reason: String, owner: Int, executeDate: Seq[String],
                          repairType: Option[String], repairSubType: Option[String])

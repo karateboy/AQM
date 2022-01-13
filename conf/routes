@@ -279,3 +279,4 @@ GET      /DueTicketNotificationSocket                                           
 
 #TEST
 GET     /InsertStdAlarm                                                                       controllers.Maintance.insertTestStdAlarm
+GET     /TestEpaLine                                                            controllers.Maintance.testEpaLine
