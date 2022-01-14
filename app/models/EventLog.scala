@@ -37,9 +37,10 @@ object EventLog {
 
   def create(evt: EventLog)(implicit session: DBSession = AutoSession) = {
     try{
+      val tm:java.sql.Timestamp = DateTime.now
       sql"""
         Insert into eventLog(evtTime, evtType, evtDesc)
-        Values(${DateTime.now}, ${evt.evtType}, ${evt.evtDesc})
+        Values(${tm}, ${evt.evtType}, ${evt.evtDesc})
         """.update.apply
     }catch{
       case _:Throwable =>

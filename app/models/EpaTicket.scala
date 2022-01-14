@@ -50,17 +50,26 @@ object EpaTicket {
          """.map(mapper).list().apply()
   }
 
-  def upsert(ticket:EpaTicket)(implicit session: DBSession = AutoSession): Int = {
+  def upsert(ticket:EpaTicket)(implicit session: DBSession = AutoSession) = {
     val ticketTime: java.sql.Timestamp = ticket.time
-    sql"""
+
+    val ret1: Int =
+      sql"""
          UPDATE [dbo].[EpaTickets]
           SET
               [Value] = ${ticket.value}
               ,[OverStd] = ${ticket.overStd}
           WHERE [M_DateTime]= ${ticketTime} and [Monitor] = ${ticket.monitor.toString} and
             [MonitorType] = ${ticket.monitorType.toString}
-         IF(@@ROWCOUNT = 0)
-          BEGIN
+         """.update().apply()
+
+    if(ret1 != 0)
+      ret1
+
+    if(ret1 == 0){
+      LineNotify.notifyEpaGroup(
+        s"${ticket.time.toString("yyyy/MM/dd HH:mm")}-${EpaMonitor.map(ticket.monitor).name}${MonitorType.map(ticket.monitorType).desp}超過內控值")
+      sql"""
             INSERT INTO [dbo].[EpaTickets]
             ([M_DateTime]
             ,[Monitor]
@@ -73,8 +82,11 @@ object EpaTicket {
               ,${ticket.monitorType.toString}
               ,${ticket.value}
               ,${ticket.overStd})
-          END
          """.update().apply()
+    }
+
+
+
   }
 
   def regenerateEpaTickets(start:DateTime, end:DateTime)(implicit session:DBSession = AutoSession): Unit = {

@@ -165,8 +165,6 @@ class OpenDataReceiver extends Actor with ActorLogging {
                     upsertEpaRecord(epaMonitor, mt, dt, v)
                     for (internal <- EpaMonitorTypeAlert.map(epaMonitor)(mt).internal if v >= internal) {
                       EpaTicket.upsert(EpaTicket(dt, epaMonitor, mt, v, overStdCode))
-                      LineNotify.notifyEpaGroup(
-                        s"${dt.toString("yyyy/MM/dd HH:mm")}-${EpaMonitor.map(epaMonitor).name}${MonitorType.map(mt).desp}超過內控值")
                     }
                   } catch {
                     case _: Throwable =>
@@ -259,8 +257,6 @@ class OpenDataReceiver extends Actor with ActorLogging {
                   upsertEpaRecord(epaMonitor, mt, dt, v)
                   for (internal <- EpaMonitorTypeAlert.map(epaMonitor)(mt).internal if v >= internal) {
                     EpaTicket.upsert(EpaTicket(dt, epaMonitor, mt, v, overStdCode))
-                    LineNotify.notifyEpaGroup(
-                      s"${dt.toString("yyyy/MM/dd HH:mm")}-${EpaMonitor.map(epaMonitor).name}${MonitorType.map(mt).desp}超過內控值")
                   }
                 } catch {
                   case _: Throwable =>
