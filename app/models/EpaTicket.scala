@@ -32,7 +32,7 @@ object EpaTicket {
         """.execute().apply()
     val now = DateTime.now()
 
-    regenerateEpaTickets(now - 10.day, now)
+    regenerateEpaTickets(now - 15.day, now)
   }
 
   def mapper: WrappedResultSet => EpaTicket = {
@@ -50,7 +50,7 @@ object EpaTicket {
          """.map(mapper).list().apply()
   }
 
-  def upsert(ticket:EpaTicket)(implicit session: DBSession = AutoSession) = {
+  def upsert(ticket:EpaTicket, notify:Boolean = true)(implicit session: DBSession = AutoSession): Int = {
     val ticketTime: java.sql.Timestamp = ticket.time
 
     val ret1: Int =
@@ -65,9 +65,10 @@ object EpaTicket {
 
     if(ret1 != 0)
       ret1
-
-    if(ret1 == 0){
-      LineNotify.notifyEpaGroup(
+    else
+    {
+      if(notify)
+        LineNotify.notifyEpaGroup(
         s"${ticket.time.toString("yyyy/MM/dd HH:mm")}-${EpaMonitor.map(ticket.monitor).name}${MonitorType.map(ticket.monitorType).desp}超過內控值")
       sql"""
             INSERT INTO [dbo].[EpaTickets]
@@ -90,13 +91,6 @@ object EpaTicket {
   }
 
   def regenerateEpaTickets(start:DateTime, end:DateTime)(implicit session:DBSession = AutoSession): Unit = {
-    val startTime : java.sql.Timestamp = start
-    val endTime: java.sql.Timestamp = end
-    sql"""
-         DELETE [dbo].[EpaTickets]
-         WHERE [M_DateTime] >= ${startTime} and [M_DateTime] < ${endTime}
-         """.update().apply()
-
     for{epaMonitor<- EpaMonitor.epaList
         mt <- MonitorType.eapIdMap.values}{
       val overStdCode: Int = AlarmLevel.map(AlarmLevel.Internal).code
@@ -104,7 +98,7 @@ object EpaTicket {
       epaRecords.foreach(record=>{
         if(EpaMonitorTypeAlert.map.contains(epaMonitor) && EpaMonitorTypeAlert.map(epaMonitor).contains(mt))
           for (internal <- EpaMonitorTypeAlert.map(epaMonitor)(mt).internal if record.value >= internal) {
-            EpaTicket.upsert(EpaTicket(record.time, epaMonitor, mt, record.value, overStdCode))
+            EpaTicket.upsert(EpaTicket(record.time, epaMonitor, mt, record.value, overStdCode), false)
           }
       })
     }
