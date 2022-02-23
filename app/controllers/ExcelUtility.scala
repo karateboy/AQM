@@ -2263,11 +2263,8 @@ object ExcelUtility {
       }
       val sheet = wb.getSheetAt(sheetN)
       //發生時間
-      if (t.ticketType == TicketType.repair) {
-        sheet.getRow(3).getCell(1).setCellValue(t.submit_date.toString("YYYY/MM/dd HH:mm"))
-      } else {
-        sheet.getRow(3).getCell(1).setCellValue(t.executeDate.toString("YYYY/MM/dd") + " 9:00:00 AM")
-      }
+      sheet.getRow(3).getCell(1).setCellValue(t.executeDate.toString("YYYY/MM/dd") + " 9:00:00 AM")
+
       //發生地點
       sheet.getRow(4).getCell(1).setCellValue(s"台塑空氣品質監測站-${Monitor.map(t.monitor).name}")
 
@@ -2275,11 +2272,8 @@ object ExcelUtility {
       sheet.getRow(10).getCell(1).setCellValue(s"執行空氣品質監測站 - ${TicketType.map(t.ticketType)}")
 
       //結束時間
-      if (t.ticketType == TicketType.repair) {
-        sheet.getRow(12).getCell(1).setCellValue((t.submit_date + 8.hour).toString("YYYY/MM/dd HH:mm"))
-      } else {
-        sheet.getRow(12).getCell(1).setCellValue(t.executeDate.toString("YYYY/MM/dd") + " 5:00:00 PM")
-      }
+      sheet.getRow(12).getCell(1).setCellValue(t.executeDate.toString("YYYY/MM/dd") + " 5:00:00 PM")
+
       sheetN += 1
     }
     wb.setActiveSheet(0)
