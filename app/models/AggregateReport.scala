@@ -95,7 +95,7 @@ object AggregateReport {
             (9 -> "南南西"), (10 -> "西南"), (11 -> "西西南"), (12 -> "西"),
             (13 -> "西北西"), (14 -> "西北"), (15 -> "北北西"))
 
-        val descs =
+        val desc =
           for {
             t <- dailyReport.typeList if MonitorTypeAlert.map(m).contains(t.monitorType) &&
               MonitorTypeAlert.map(m)(t.monitorType).internal.isDefined
@@ -169,15 +169,15 @@ object AggregateReport {
             val summary = s"(最大風速${windSpeed.stat.max.getOrElse("")}m/s, 平均風向${dir}, 濃度${t.stat.min.getOrElse("")}~${t.stat.max.getOrElse("")} ${mCase.unit})"
 
             if (instrumentAbnormalMonitorTypes.contains(t.monitorType))
-              ""
+              header + " (儀器異常)"
             else
               header + overLaw + summary
           }
 
-        if (descs.length == 0)
+        if (desc.length == 0)
           "本日測值未超出內控值"
         else
-          descs.mkString(".")
+          desc.mkString(".")
       }
 
       MonitorSummary(m, getDesc, "")

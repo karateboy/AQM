@@ -218,7 +218,6 @@ class Ozone8HrCalculator extends Actor {
 
         Future {
           blocking {
-            //calculateOzoneOfTheSameMonth(start, end)
             calculateOzoneOfTheSameMonthBatch(start, end)
             val nextStep = start.minusMonths(1)
             SystemConfig.setOzone8HrCalculateDate(nextStep)
@@ -229,13 +228,20 @@ class Ozone8HrCalculator extends Actor {
   }
 
   def calculateCurrent() = {
+    val now = DateTime.now
+    val start: DateTime = now.withDayOfMonth(1).withMillisOfDay(0)
+    val end: DateTime = now.plusMonths(1).withMillisOfDay(0)
+
+    calculateOzoneOfTheSameMonthBatch(start, end)
+    /*
     for (m <- Monitor.mvList if Monitor.map(m).monitorTypes.contains(MonitorType.A225)) {
+      calculateOzoneOfTheSameMonthBatch()
       val hr = DateTime.now.getHourOfDay
       val end = DateTime.now().withMillisOfDay(0).withHourOfDay(hr)
       val start = end - 4.days
       val records = Record.getHourRecords(m, start, end)
       calculateOznoe8Hr(Monitor.map(m).id, records, end - 1.hour)
-    }
+    }*/
   }
 
   override def postStop(): Unit = {
