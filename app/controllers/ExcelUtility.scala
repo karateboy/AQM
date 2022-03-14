@@ -127,7 +127,10 @@ object ExcelUtility {
         else
           abnormalStyles(3)
       case StatusType.Manual =>
-        abnormalStyles(4)
+        if(info.auditRule.contains('M'))
+          abnormalStyles(4)
+        else
+          normalStyle
     }
   }
 
@@ -246,7 +249,7 @@ object ExcelUtility {
         cellData = mtRecord.dataList(row - 4)
         prec = MonitorType.map(mtRecord.monitorType).prec
       } {
-        val (date, valueOpt, statusOpt) = cellData
+        val (_, valueOpt, statusOpt) = cellData
         if (valueOpt.isEmpty || statusOpt.isEmpty) {
           cell.setCellValue("-")
         } else {

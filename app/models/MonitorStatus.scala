@@ -130,7 +130,7 @@ object MonitorStatus {
 
     tagInfo.statusType match {
       case StatusType.Internal =>
-        VALID_STATS.contains(getTagInfo(s))
+        VALID_STATS.contains(tagInfo)
       case StatusType.Auto =>
         if (SystemConfig.getConfig(SystemConfig.AutoAuditAsNormal, "True").toBoolean)
           true
