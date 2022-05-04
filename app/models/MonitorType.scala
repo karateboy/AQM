@@ -204,7 +204,6 @@ object MonitorType extends Enumeration {
       """
   }
   def getStyleStr(m: Monitor.Value, mt: MonitorType.Value, v: (Option[Float], Option[String])) = {
-    val mtCase = map(mt)
     if (v._1.isEmpty || v._2.isEmpty)
       s"Color:Black;background-color:White"
     else {
@@ -213,14 +212,14 @@ object MonitorType extends Enumeration {
 
       val internal_std = MonitorTypeAlert.map(m)(mt).internal
       val overInternal =
-        if (internal_std.isDefined && (value > internal_std.get))
+        if (internal_std.isDefined && (value >= internal_std.get))
           true
         else
           false
 
 
       val overLaw =
-        if (MonitorTypeAlert.map(m)(mt).std_law.isDefined && (value > MonitorTypeAlert.map(m)(mt).std_law.get))
+        if (MonitorTypeAlert.map(m)(mt).std_law.isDefined && (value >= MonitorTypeAlert.map(m)(mt).std_law.get))
           true
         else
           false
