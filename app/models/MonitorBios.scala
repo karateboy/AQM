@@ -108,17 +108,17 @@ object MonitorBios {
   )
   
   val A008 = MonitorBios(
-    location="東勢鄉公所(雲林縣)",
+    location="台朔環保東勢廠",
     monitor_type="一般測站",
-    address="雲林縣東勢鄉所前街3號",
+    address="雲林縣東勢鄉程南路635號",
     town="東勢鄉",
     area="48.4(平方公里)",
     density="330(人/平方公里)",
-    founded="101年12月",
+    founded="101年12月(111年2月遷站)",
     height="11公尺",
     angle="360度",
-    sample_height="15.5公尺",
-    distance="36公尺"
+    sample_height="14.5公尺",
+    distance="183公尺"
   )
   
   val A009 = MonitorBios(
