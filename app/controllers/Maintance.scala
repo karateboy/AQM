@@ -328,7 +328,11 @@ object Maintance extends Controller {
           val t = ticketOpt.get
           t.ticketType match {
             case TicketType.maintance_week =>
-              Ok(views.html.weekMaintanceForm(ID, t.getForm))
+              val newFormDate = new DateTime(2023, 2, 6, 0, 0)
+              if(t.executeDate < newFormDate)
+                Ok(views.html.weekMaintanceForm(ID, t.getForm))
+              else
+                Ok(views.html.weekMaintanceForm2(ID, t.getForm))
             case TicketType.maintance_biweek =>
               Ok(views.html.biweekForm(ID, t.getForm))
             case TicketType.maintance_month =>
