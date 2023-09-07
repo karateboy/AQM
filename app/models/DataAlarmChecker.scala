@@ -13,11 +13,11 @@ import scala.util.{Failure, Success}
 case object DataCheckFinish
 
 object AlarmDataType extends Enumeration {
-  val Hour = Value("HOUR")
-  val EightHour = Value("8Hour")
-  val Day = Value("Day")
-  val TwentyFourHour = Value("24H")
-  val Year = Value("Year")
+  val Hour: AlarmDataType.Value = Value("HOUR")
+  val EightHour: AlarmDataType.Value = Value("8Hour")
+  val Day: AlarmDataType.Value = Value("Day")
+  private val TwentyFourHour = Value("24H")
+  private val Year = Value("Year")
 
   def map(dataType: AlarmDataType.Value): String = {
     dataType match {
@@ -129,7 +129,7 @@ class DataAlarmChecker extends Actor {
                   if (otherRule.overStd)
                     Alarm.insertAlarm(ar)
 
-                  for (autoTicket <- otherRule.autoTicket if autoTicket == true && otherRule.overStd2.getOrElse(true))
+                  for (autoTicket <- otherRule.autoTicket if autoTicket && otherRule.overStd2.getOrElse(true))
                     Alarm.newTicketFromAlarm(ar, DateTime.now.plusDays(2))
                 } catch {
                   case _: Exception =>
@@ -146,7 +146,7 @@ class DataAlarmChecker extends Actor {
                   if (otherRule.overStd)
                     Alarm.insertAlarm(ar)
 
-                  for (autoTicket <- otherRule.autoTicket if autoTicket == true && otherRule.overStd2.getOrElse(true))
+                  for (autoTicket <- otherRule.autoTicket if autoTicket && otherRule.overStd2.getOrElse(true))
                     Alarm.newTicketFromAlarm(ar, DateTime.now.plusDays(2))
                 } catch {
                   case _: Exception =>
@@ -163,7 +163,7 @@ class DataAlarmChecker extends Actor {
                   if (otherRule.overStd)
                     Alarm.insertAlarm(ar)
 
-                  for (autoTicket <- otherRule.autoTicket if autoTicket == true && otherRule.overStd2.getOrElse(true))
+                  for (autoTicket <- otherRule.autoTicket if autoTicket && otherRule.overStd2.getOrElse(true))
                     Alarm.newTicketFromAlarm(ar, DateTime.now.plusDays(2))
                 } catch {
                   case _: Exception =>
@@ -175,7 +175,7 @@ class DataAlarmChecker extends Actor {
               (MonitorTypeAlert.map(m)(mt).warn, checkWarn),
               (MonitorTypeAlert.map(m)(mt).internal, checkInternal))
             val sorted: Seq[(Option[Float], () => Option[Boolean])] = checkSeq.sortBy(_._1).reverse
-            sorted.find(t => t._2() == Some(true))
+            sorted.find(t => t._2().contains(true))
           } // Normal status
 
           for {

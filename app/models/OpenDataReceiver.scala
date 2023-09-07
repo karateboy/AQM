@@ -81,9 +81,9 @@ class OpenDataReceiver extends Actor with ActorLogging {
       getEpaHourData(start, end)
 
     case GetEpaCurrentData =>
-      getCurrentCountyData("https://data.epa.gov.tw/api/v2/aqx_p_145?format=json&limit=500&api_key=1f4ca8f8-8af9-473d-852b-b8f2d575f26a&sort=MonitorDate desc")
-      getCurrentCountyData("https://data.epa.gov.tw/api/v2/aqx_p_147?format=json&limit=500&api_key=1f4ca8f8-8af9-473d-852b-b8f2d575f26a&&sort=MonitorDate%20desc")
-      getCurrentCountyData("https://data.epa.gov.tw/api/v2/aqx_p_143?format=json&limit=500&api_key=1f4ca8f8-8af9-473d-852b-b8f2d575f26a&&sort=MonitorDate%20desc")
+      getCurrentCountyData("https://data.moenv.gov.tw/api/v2/aqx_p_145?format=json&limit=500&api_key=1f4ca8f8-8af9-473d-852b-b8f2d575f26a&sort=MonitorDate desc")
+      getCurrentCountyData("https://data.moenv.gov.tw/api/v2/aqx_p_147?format=json&limit=500&api_key=1f4ca8f8-8af9-473d-852b-b8f2d575f26a&&sort=MonitorDate%20desc")
+      getCurrentCountyData("https://data.moenv.gov.tw/api/v2/aqx_p_143?format=json&limit=500&api_key=1f4ca8f8-8af9-473d-852b-b8f2d575f26a&&sort=MonitorDate%20desc")
   }
 
   def upsertEpaRecord(m: EpaMonitor.Value, mt: MonitorType.Value, dateTime: DateTime, value: Double)
@@ -280,7 +280,7 @@ class OpenDataReceiver extends Actor with ActorLogging {
     }
 
     def getThisMonth(skip: Int) {
-      val url = s"https://data.epa.gov.tw/api/v2/aqx_p_15?format=xml&offset=${skip}&limit=${limit}&api_key=1f4ca8f8-8af9-473d-852b-b8f2d575f26a&&sort=MonitorDate%20desc"
+      val url = s"https://data.moenv.gov.tw/api/v2/aqx_p_15?format=xml&offset=${skip}&limit=${limit}&api_key=1f4ca8f8-8af9-473d-852b-b8f2d575f26a&&sort=MonitorDate%20desc"
       val future =
         WS.url(url).get().map {
           response =>
@@ -306,7 +306,7 @@ class OpenDataReceiver extends Actor with ActorLogging {
     }
 
     def getMonthData(year: Int, month: Int, skip: Int) {
-      val url = f"https://data.epa.gov.tw/api/v2/aqx_p_15?format=xml&offset=$skip%d&limit=$limit&year_month=$year%d_$month%02d&api_key=1f4ca8f8-8af9-473d-852b-b8f2d575f26a"
+      val url = f"https://data.moenv.gov.tw/api/v2/aqx_p_15?format=xml&offset=$skip%d&limit=$limit&year_month=$year%d_$month%02d&api_key=1f4ca8f8-8af9-473d-852b-b8f2d575f26a"
       val f = WS.url(url).get()
       f onFailure (errorHandler())
       for (resp <- f) {
@@ -337,10 +337,10 @@ class OpenDataReceiver extends Actor with ActorLogging {
     }
   }
 
-  // NMHC https://data.epa.gov.tw/dataset/aqx_p_313
-  // THC https://data.epa.gov.tw/dataset/aqx_p_312
-  // 溫度 相對濕度 https://data.epa.gov.tw/dataset/aqx_p_35/resource/682534c9-85f8-4525-a6ca-1a3699d892a0
-  // 雨量 https://data.epa.gov.tw/dataset/aqx_p_35/resource/682534c9-85f8-4525-a6ca-1a3699d892a0
+  // NMHC https://data.moenv.gov.tw/dataset/aqx_p_313
+  // THC https://data.moenv.gov.tw/dataset/aqx_p_312
+  // 溫度 相對濕度 https://data.moenv.gov.tw/dataset/aqx_p_35/resource/682534c9-85f8-4525-a6ca-1a3699d892a0
+  // 雨量 https://data.moenv.gov.tw/dataset/aqx_p_35/resource/682534c9-85f8-4525-a6ca-1a3699d892a0
 
   override def postStop = {
     timer.cancel()
