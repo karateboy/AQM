@@ -547,7 +547,7 @@ object ExcelUtility {
       } {
         val mtCase = MonitorType.map(mt)
         val title =
-          if (!Monitor.map(monitor).monitorTypes.contains(idx))
+          if (!Monitor.map(monitor).monitorTypes.contains(mt))
             s"${Monitor.map(monitor).name}無${mtCase.desp}測項"
           else if (MonitorTypeAlert.map(monitor)(mt).std_law.isDefined)
             s"${Monitor.map(monitor).name}${mtCase.desp}小時趨勢圖 (法規:${MonitorTypeAlert.map(monitor)(mt).std_law.get}${mtCase.unit})"

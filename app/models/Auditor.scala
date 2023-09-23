@@ -274,7 +274,7 @@ object Auditor {
       if (auditConfig.monoRule.checkInvalid(record, targetStat, monitor, record.date))
         invalid = true
 
-      def checkPm10 = {
+      def checkPm10: Unit = {
         val pm10 = Record.monitorTypeProject2(A214)(record)
         if (Auditor.isOk(pm10)) {
           if (pm10._1.get > SystemConfig.getPM10Threshold()) {
@@ -284,7 +284,18 @@ object Auditor {
         }
       }
 
+      def checkPm25: Unit = {
+        val pm25 = Record.monitorTypeProject2(A215)(record)
+        if (Auditor.isOk(pm25)) {
+          if (pm25._1.get > SystemConfig.getPM10Threshold()) {
+            invalid = true
+            targetStat.setStat(A215, "M99")
+          }
+        }
+      }
+
       checkPm10
+      checkPm25
 
       //Save
       if (invalid)
