@@ -77,13 +77,13 @@ object AggregateReport {
     }
   }
 
-  def generate(date: DateTime)(implicit session: DBSession = AutoSession) = {
+  def generate(date: DateTime)(implicit session: DBSession = AutoSession): List[MonitorSummary] = {
     for {
       m <- Monitor.mvList
     } yield {
       val dailyReport = Record.getDailyReport(m, date)
       val instrumentAbnormalMonitorTypes = AggregateReport2.query(Seq(m), Monitor.map(m).monitorTypes, date, date + 1.day)
-        .filter(_.state == "儀器異常").map(_.monitorType).toSet.toList
+        .filter(_.state == "儀器異常").map(_.monitorType).distinct
 
       def getDesc = {
         val windSpeed = dailyReport.typeList.find(t => t.monitorType == MonitorType.C211).get
@@ -102,7 +102,7 @@ object AggregateReport {
             mCase = MonitorType.map(t.monitorType)
             mtInternal <- MonitorTypeAlert.map(m)(t.monitorType).internal
             over_hrs = t.dataList.filter(r => r._2.isDefined && r._3.isDefined && MonitorStatus.isNormalStat(r._3.get)
-              && r._2.get > mtInternal) if !over_hrs.isEmpty
+              && r._2.get > mtInternal) if over_hrs.nonEmpty
           } yield {
             import java.util.Calendar
             val calendar = Calendar.getInstance()

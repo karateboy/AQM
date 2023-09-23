@@ -17,7 +17,7 @@ class AlarmWorker extends Actor{
   
   def checkAlarm(startTime: DateTime)={
     val alarms = Alarm.getAlarm(Monitor.mvList, Some(MonitorStatus.alarmList), startTime, DateTime.now)
-    if(alarms.length == 0)
+    if(alarms.isEmpty)
       startTime
     else{
       val adminUserList = User.getAdminUsers()
@@ -29,12 +29,12 @@ class AlarmWorker extends Actor{
               alarmConfig.statusFilter.contains(ar.code)
           }
         }
-        if (matchedUser.length != 0){
+        if (matchedUser.nonEmpty){
           val userName = matchedUser.map { _.name}.mkString(",")
           try {
             sendAlarmEmail(matchedUser, ar)            
             EventLog.create(EventLog(DateTime.now, EventLog.evtTypeInformAlarm,
-              s"送信警告信給${userName} ${Monitor.map(ar.monitor).name}-${Alarm.getItem(ar)}-${Alarm.getReason(ar)}"))
+              s"送信警告信給$userName ${Monitor.map(ar.monitor).name}-${Alarm.getItem(ar)}-${Alarm.getReason(ar)}"))
           } catch {
             case ex: Exception =>
               Console.print(ex.toString)
