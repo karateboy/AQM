@@ -1,6 +1,5 @@
 package models
 
-import models.Alarm.Alarm
 import play.api.Logger
 import play.api.Play.current
 import play.api.libs.ws.WS
@@ -32,7 +31,7 @@ object LineNotify {
     }
   }
 
-  def notifyAlarm(alarm:Alarm): Unit ={
+  def notifyAlarm(alarm:models.Alarm.Alarm): Unit ={
     val ar_state =
       if (alarm.mVal == 0)
         "恢復正常"
