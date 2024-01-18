@@ -1,6 +1,6 @@
 package models
 
-import akka.actor.{Actor, ActorRef, Props}
+import akka.actor.{Actor, ActorRef, Cancellable, Props}
 import models.ModelHelper._
 import models.Record.HourRecord
 import play.api.Logger
@@ -11,7 +11,7 @@ import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.{Future, blocking}
 
 object Ozone8Hr {
-  def createTab(year: Int)(implicit session: DBSession = AutoSession) = {
+  def createTab(year: Int)(implicit session: DBSession = AutoSession): Boolean = {
     val tabName: SQLSyntax = getTabName(year)
     val pkName = SQLSyntax.createUnsafely(s"PK_O3_8Hr_${year}")
     sql"""CREATE TABLE [dbo].[${tabName}](
@@ -27,7 +27,7 @@ object Ozone8Hr {
        ) ON [PRIMARY]""".execute().apply()
   }
 
-  def getTabName(year: Int) = SQLSyntax.createUnsafely(s"O3_8Hr_${year}")
+  def getTabName(year: Int): SQLSyntax = SQLSyntax.createUnsafely(s"O3_8Hr_${year}")
 
   def hasOzone8hrTab(year: Int)(implicit session: DBSession = AutoSession): Boolean = {
     val list = {
@@ -62,7 +62,7 @@ object Ozone8HrCalculator {
   def start = {
     val date = SystemConfig.getOzone8HrCalculateDate
     worker = Akka.system.actorOf(Props[Ozone8HrCalculator], name = "Ozone8HrCalculator")
-    worker ! CalculateOznoe(date)
+    worker ! CalculateOzone(date)
   }
 
   def updateCurrentOzone8Hr(): Unit = {
@@ -73,24 +73,29 @@ object Ozone8HrCalculator {
 
         val recordTime = DateTime.now.withMillisOfDay(0).withHourOfDay(now.getHourOfDay)
         if (hrList.nonEmpty)
-          calculateOznoe8Hr(m.toString, hrList, recordTime)
+          calculateOzone8Hr(m.toString, hrList, recordTime)
       }
     }
   }
 
-  def calculateOznoe8Hr(DP_NO: String, hourRecordList: List[HourRecord], recordTime: DateTime): Unit = {
-    if(!Ozone8Hr.hasOzone8hrTab(recordTime.getYear))
+  private def isValidOzoneRecord(r: OzoneRecord): Boolean = {
+    val validCodes = List("10", "11", "16", "22")
+    r.status.isDefined && validCodes.contains(r.status.get.takeRight(2))
+  }
+  private def calculateOzone8Hr(DP_NO: String, hourRecordList: List[HourRecord], recordTime: DateTime): Unit = {
+    if (!Ozone8Hr.hasOzone8hrTab(recordTime.getYear))
       Ozone8Hr.createTab(recordTime.getYear)
 
-    val tabName = Ozone8Hr.getTabName(recordTime.getYear())
+    val tabName = Ozone8Hr.getTabName(recordTime.getYear)
     val dataList: List[OzoneRecord] = hourRecordList
       .map(hr => OzoneRecord(hr.date.toJodaDateTime, hr.o3, hr.o3_stat))
 
-    val avgList = dataList.filter(r => r.status.contains("010") || r.status.contains("011")).map(_.value).flatten
-    val avg: Option[Float] = if (avgList.length >= 5)
-      Some(avgList.sum / avgList.length)
-    else
-      None
+    val avgList = dataList.filter(r=>isValidOzoneRecord(r)).flatMap(_.value)
+    val avg: Option[Float] =
+      if (avgList.length >= 5)
+        Some(avgList.sum / avgList.length)
+      else
+        None
 
     if (avg.nonEmpty) {
       val statusMap: Map[Option[String], Int] = dataList.groupBy(_.status).mapValues(_.size)
@@ -132,9 +137,9 @@ object Ozone8HrCalculator {
     }
   }
 
-  def calculateOzoneOfTheSameMonthBatch(start: DateTime, end: DateTime): Unit = {
-    Logger.info(s"upsert O3 8hr ${start.getYear}/${start.getMonthOfYear()}")
-    val tabName = Ozone8Hr.getTabName(start.getYear())
+  private def calculateOzoneOfTheSameMonthBatch(start: DateTime, end: DateTime): Unit = {
+    Logger.info(s"upsert O3 8hr ${start.getYear}/${start.getMonthOfYear}")
+    val tabName = Ozone8Hr.getTabName(start.getYear)
     for (m <- Monitor.mvList) {
       if (Monitor.map(m).monitorTypes.contains(MonitorType.A225)) {
         val hrList: List[OzoneRecord] = Record.getHourRecords(m, start, end)
@@ -144,13 +149,14 @@ object Ozone8HrCalculator {
           for (i <- 0 to hrList.length - 8) yield
             hrList.slice(i, i + 8)
 
+
         val updateParamOptions: Seq[Option[Seq[Any]]] =
           for {avgData <- avgList if avgData.nonEmpty
                head = avgData.head
                dataList = avgData.filter(r => head.time <= r.time && r.time < head.time + 8.hour) if dataList.nonEmpty
-               avgList = dataList.filter(r=>r.status.contains("010")||r.status.contains("011")).map(_.value).flatten
+               avgList = dataList.filter(isValidOzoneRecord).flatMap(_.value)
                } yield {
-            val recordTime: java.sql.Timestamp = (head.time + 7.hour)
+            val recordTime: java.sql.Timestamp = head.time + 7.hour
             val avg: Option[Float] = if (avgList.length >= 5)
               Some(avgList.sum / avgList.length)
             else
@@ -183,16 +189,16 @@ object Ozone8HrCalculator {
 
   }
 
-  case class CalculateOznoe(date: DateTime)
+  private case class CalculateOzone(date: DateTime)
 
-  case object CalculateCurrent
+  private case object CalculateCurrent
 }
 
 class Ozone8HrCalculator extends Actor {
 
   import Ozone8HrCalculator._
 
-  val timer = {
+  val timer: Cancellable = {
     import scala.concurrent.duration._
     Akka.system.scheduler.schedule(Duration(5, SECONDS), Duration(10, MINUTES), self, CalculateCurrent)
   }
@@ -206,9 +212,10 @@ class Ozone8HrCalculator extends Actor {
           }
         }
       }
-    case CalculateOznoe(date) =>
+    case CalculateOzone(date) =>
+      /*
       if (!Ozone8Hr.hasHourTab(date.getYear)) {
-        Logger.info(s"Ozone 8hr reach end of beginning year ${date.getYear()}")
+        Logger.info(s"Ozone 8hr reach end of beginning year ${date.getYear}")
       } else {
         if (!Ozone8Hr.hasOzone8hrTab(date.getYear))
           Ozone8Hr.createTab(date.getYear)
@@ -221,13 +228,20 @@ class Ozone8HrCalculator extends Actor {
             calculateOzoneOfTheSameMonthBatch(start, end)
             val nextStep = start.minusMonths(1)
             SystemConfig.setOzone8HrCalculateDate(nextStep)
-            self ! CalculateOznoe(nextStep)
+            self ! CalculateOzone(nextStep)
           }
+        }
+      }*/
+      val start: DateTime = date.withDayOfMonth(1).withMillisOfDay(0)
+      val end: DateTime = DateTime.yesterday().withMillisOfDay(0)
+      Future {
+        blocking {
+          calculateOzoneOfTheSameMonthBatch(start, end)
         }
       }
   }
 
-  def calculateCurrent() = {
+  private def calculateCurrent(): Unit = {
     val now = DateTime.now
     val start: DateTime = now.withDayOfMonth(1).withMillisOfDay(0)
     val end: DateTime = now.plusMonths(1).withMillisOfDay(0)
@@ -240,7 +254,7 @@ class Ozone8HrCalculator extends Actor {
       val end = DateTime.now().withMillisOfDay(0).withHourOfDay(hr)
       val start = end - 4.days
       val records = Record.getHourRecords(m, start, end)
-      calculateOznoe8Hr(Monitor.map(m).id, records, end - 1.hour)
+      calculateOzone8Hr(Monitor.map(m).id, records, end - 1.hour)
     }*/
   }
 
