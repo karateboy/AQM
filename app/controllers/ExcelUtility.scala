@@ -95,7 +95,7 @@ object ExcelUtility {
     style.setTopBorderColor(IndexedColors.BLACK.getIndex());
     style
   }
-  def createColorStyle(fgColors: Array[XSSFColor], mt: MonitorType.Value)(implicit wb: XSSFWorkbook) = {
+   private def createColorStyle(fgColors: Array[XSSFColor], mt: MonitorType.Value)(implicit wb: XSSFWorkbook): Array[XSSFCellStyle] = {
     fgColors.map {
       color =>
         val style = createStyle(mt)
@@ -105,7 +105,7 @@ object ExcelUtility {
     }
   }
 
-  def getStyle(tag: String, normalStyle: XSSFCellStyle, abnormalStyles: Array[XSSFCellStyle]) = {
+  def getStyle(tag: String, normalStyle: XSSFCellStyle, abnormalStyles: Array[XSSFCellStyle]): XSSFCellStyle = {
     import MonitorStatus._
     val info = MonitorStatus.getTagInfo(tag)
     info.statusType match {
@@ -127,10 +127,7 @@ object ExcelUtility {
         else
           abnormalStyles(3)
       case StatusType.Manual =>
-        if(info.auditRule.contains('M'))
           abnormalStyles(4)
-        else
-          normalStyle
     }
   }
 
