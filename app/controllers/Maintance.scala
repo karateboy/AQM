@@ -1493,7 +1493,7 @@ object Maintance extends Controller {
   }
 
   def testEpaLine = Security.Authenticated.async {
-    for(ret<-LineNotify.notifyEpaGroup("測試環保署群組訊息"))yield
+    for(ret<-LineNotify.notifyEpaGroup("測試環境部群組訊息"))yield
       Ok("")
   }
 

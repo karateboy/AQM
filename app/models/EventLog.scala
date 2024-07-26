@@ -16,7 +16,7 @@ object EventLog {
     evtTypeManualAudit -> "人工註記",
     evtTypeInformAlarm -> "警報通報",
     evtTypeDueAlarm -> "逾期案件",
-    evtTypeGetEpaData -> "擷取環保署資料"
+    evtTypeGetEpaData -> "擷取環境部資料"
   )
 
   def evtTypeToStr(evtType: Int) = {

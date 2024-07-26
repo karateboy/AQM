@@ -812,7 +812,7 @@ object Application extends Controller {
     val startDate = new DateTime(start).withMillisOfDay(0)
     val endDate = new DateTime(end).withMillisOfDay(0)
     val userInfo = Security.getUserinfo(request).get
-    LineNotify.notify(s"${userInfo.name}回補環保署資料自${startDate.toString("yyyy/MM/dd")} 至 ${endDate.toString("yyyy/MM/dd")}")
+    LineNotify.notify(s"${userInfo.name}回補環境部資料自${startDate.toString("yyyy/MM/dd")} 至 ${endDate.toString("yyyy/MM/dd")}")
     OpenDataReceiver.reloadEpaData(startDate, endDate)
     Ok("")
   }

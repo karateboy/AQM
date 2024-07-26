@@ -6,7 +6,7 @@
 @(monitor:Monitor.Value, epaMonitor:EpaMonitor.Value, reportDate:DateTime, myMap:Map[MonitorType.Value, (Map[DateTime, (Option[Float], Option[String])], Stat)], epaMap: Map[MonitorType.Value, (Map[DateTime, EpaHourRecord], Stat)], hours:List[DateTime])
 
 <h3>測站比較報表</h3>
-<h4>監測站:@Monitor.map(monitor).name 環保署測站:@EpaMonitor.map(epaMonitor).name</h4>
+<h4>監測站:@Monitor.map(monitor).name 環境部測站:@EpaMonitor.map(epaMonitor).name</h4>
 <h4>日期:@reportDate.toString("yyyy年MM月dd日")</h4>
 <div class="col-lg-offset-4 col-lg-8">
 <table class="table">

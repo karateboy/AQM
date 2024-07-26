@@ -1002,7 +1002,7 @@ object ExcelUtility {
     val evaluator = wb.getCreationHelper().createFormulaEvaluator()
 
     val sheet = wb.getSheetAt(0)
-    sheet.getRow(2).getCell(0).setCellValue("測站:" + Monitor.map(monitor).name + "/環保署測站:" + EpaMonitor.map(epaMonitor).name)
+    sheet.getRow(2).getCell(0).setCellValue("測站:" + Monitor.map(monitor).name + "/環境部測站:" + EpaMonitor.map(epaMonitor).name)
     sheet.getRow(1).getCell(24).setCellValue("查詢日期:" + DateTime.now.toString("YYYY/MM/dd"))
     sheet.getRow(2).getCell(24).setCellValue("資料日期:" + reportDate.toString("YYYY年MM月dd"))
 

@@ -14,13 +14,13 @@ object EpaMonitor extends Enumeration{
   val Douliu = Value("斗六")
   
   val map=Map(
-    DaChen -> EpaMonitor("環保署大城站", 85),
-    Erlin->EpaMonitor("環保署二林站", 35),
-    Puzi->EpaMonitor("環保署朴子站", 40),
-    Lunbei->EpaMonitor("環保署崙背站", 38),
-    Taixi->EpaMonitor("環保署臺西站", 41),
-    Mailiao->EpaMonitor("環保署麥寮站", 83),
-    Douliu ->EpaMonitor("環保署斗六站", 37)
+    DaChen -> EpaMonitor("環境部大城站", 85),
+    Erlin->EpaMonitor("環境部二林站", 35),
+    Puzi->EpaMonitor("環境部朴子站", 40),
+    Lunbei->EpaMonitor("環境部崙背站", 38),
+    Taixi->EpaMonitor("環境部臺西站", 41),
+    Mailiao->EpaMonitor("環境部麥寮站", 83),
+    Douliu ->EpaMonitor("環境部斗六站", 37)
   )
   
   val idMap: Map[Int, EpaMonitor.Value] = map.map(r=>(r._2.id, r._1))
