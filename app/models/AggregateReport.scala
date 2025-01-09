@@ -102,7 +102,7 @@ object AggregateReport {
             mCase = MonitorType.map(t.monitorType)
             mtInternal <- MonitorTypeAlert.map(m)(t.monitorType).internal
             over_hrs = t.dataList.filter(r => r._2.isDefined && r._3.isDefined && MonitorStatus.isNormalStat(r._3.get)
-              && r._2.get > mtInternal) if over_hrs.nonEmpty
+              && r._2.get >= mtInternal) if over_hrs.nonEmpty
           } yield {
             import java.util.Calendar
             val calendar = Calendar.getInstance()
