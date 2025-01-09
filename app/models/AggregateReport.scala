@@ -130,12 +130,12 @@ object AggregateReport {
               calendar.setTime(hr._1)
               calendar.get(Calendar.HOUR_OF_DAY)
             }
-            val header = s"${mCase.desp}於${genDesc(hours(0), hours(0) + 1, hours.drop(1))}時超過內控(${mtInternal}${mCase.unit})"
+            val header = s"${mCase.desp}於${genDesc(hours.head, hours.head + 1, hours.drop(1))}時超過內控($mtInternal${mCase.unit})"
 
             val overLaw =
               if (MonitorTypeAlert.map(m)(t.monitorType).std_law.isDefined) {
                 if (t.monitorType == MonitorType.A214 || t.monitorType == MonitorType.A213) {
-                  if (t.stat.avg.isDefined && t.stat.avg.get > MonitorTypeAlert.map(m)(t.monitorType).std_law.get)
+                  if (t.stat.avg.isDefined && t.stat.avg.get >= MonitorTypeAlert.map(m)(t.monitorType).std_law.get)
                     s",日均值${t.stat.avg.get}超過法規值(${MonitorTypeAlert.map(m)(t.monitorType).std_law.get}${mCase.unit})"
                   else {
                     if (t.stat.avg.isDefined)
@@ -150,8 +150,8 @@ object AggregateReport {
                       calendar.get(Calendar.HOUR_OF_DAY)
                   }
 
-                  if (!overLawHr.isEmpty)
-                    s",${genDesc(overLawHr(0), overLawHr(0) + 1, overLawHr.drop(1))}超過法規值(${MonitorTypeAlert.map(m)(t.monitorType).std_law.get}${mCase.unit})"
+                  if (overLawHr.nonEmpty)
+                    s",${genDesc(overLawHr.head, overLawHr.head + 1, overLawHr.drop(1))}超過法規值(${MonitorTypeAlert.map(m)(t.monitorType).std_law.get}${mCase.unit})"
                   else
                     s",未超過法規值(${MonitorTypeAlert.map(m)(t.monitorType).std_law.get}${mCase.unit})"
                 }
