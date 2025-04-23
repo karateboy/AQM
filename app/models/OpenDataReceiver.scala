@@ -6,8 +6,7 @@ import models.ModelHelper._
 import play.api.Play.current
 import play.api._
 import play.api.libs.concurrent.Akka
-import play.api.libs.functional.syntax.{functionalCanBuildApplicative, toFunctionalBuilderOps}
-import play.api.libs.json.{JsError, JsPath, Json, Reads}
+import play.api.libs.json.{JsError, Json}
 import play.api.libs.ws._
 import scalikejdbc._
 
@@ -176,7 +175,8 @@ class OpenDataReceiver extends Actor with ActorLogging {
       val recordMap = Map.empty[EpaMonitor.Value, Map[DateTime, Map[MonitorType.Value, Double]]]
 
       def filter(dataNode: Node) = {
-        val monitorDateOpt = dataNode \ "MonitorDate".toUpperCase()
+
+        val monitorDateOpt = dataNode \ "MonitorDate".toLowerCase()
         val mDate =
           try {
             DateTime.parse(s"${monitorDateOpt.text.trim()}", DateTimeFormat.forPattern("YYYY-MM-dd HH:mm:ss"))
@@ -189,15 +189,15 @@ class OpenDataReceiver extends Actor with ActorLogging {
       }
 
       def processData(dataNode: Node) {
-        val siteName = dataNode \ "SiteName".toUpperCase()
-        val itemId = dataNode \ "ItemId".toUpperCase()
-        val monitorDateOpt = dataNode \ "MonitorDate".toUpperCase()
+        val siteName = dataNode \ "SiteName".toLowerCase()
+        val itemId = dataNode \ "ItemId".toLowerCase()
+        val monitorDateOpt = dataNode \ "MonitorDate".toLowerCase()
         val siteID = try {
-          (dataNode \ "SiteId".toUpperCase()).text.trim.toInt
+          (dataNode \ "SiteId".toLowerCase()).text.trim.toInt
         } catch {
           case _: Throwable =>
             // FIXME workaround EPA data bug!
-            (dataNode \ "SiteId".toUpperCase()).text.trim.toDouble.toInt
+            (dataNode \ "SiteId".toLowerCase()).text.trim.toDouble.toInt
         }
 
         try {
@@ -216,7 +216,7 @@ class OpenDataReceiver extends Actor with ActorLogging {
             val monitorNodeValueSeq =
               for (v <- 0 to 23) yield {
                 val monitorValue = try {
-                  Some((dataNode \ "MonitorValue%02d".format(v).toUpperCase()).text.trim().toDouble)
+                  Some((dataNode \ "MonitorValue%02d".format(v).toLowerCase()).text.trim().toDouble)
                 } catch {
                   case x: Throwable =>
                     None
