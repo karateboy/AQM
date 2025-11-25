@@ -234,10 +234,10 @@ case class DifferenceRule(
 
     for {
       mt <- monitorTypes
-      mr_record = Record.monitorTypeProject2(mt)(record) if (isOk(mr_record))
+      mr_record = Record.monitorTypeProject2(mt)(record) if isOk(mr_record)
+      v <- mr_record._1
+      (avg, std) <- avgStdMap.get(mt)
     } {
-      val v = mr_record._1.get
-      val (avg, std) = avgStdMap(mt)
       if (Math.abs(v - avg) > multiplier * std) {
         invalid = true
         val ar = Alarm.Alarm(Monitor.withName(record.name), MonitorType.map(mt).id, record.date, 1.0f, lead + "10")
