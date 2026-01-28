@@ -1,6 +1,6 @@
 package models
 
-import akka.actor.{Actor, ActorLogging, ActorRef, Props}
+import akka.actor.{Actor, ActorRef, Cancellable, Props}
 import com.github.nscala_time.time.Imports.DateTime
 import models.ModelHelper._
 import play.api.Play.current
@@ -11,12 +11,13 @@ import play.api.libs.ws._
 import scalikejdbc._
 
 import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.Future
 
 object OpenDataReceiver {
   val props = Props[OpenDataReceiver]
   var receiver: ActorRef = _
 
-  def startup() = {
+  def startup(): Unit = {
     receiver = Akka.system.actorOf(props, name = "openDataReceiver")
     Logger.info(s"OpenData receiver starts")
   }
@@ -27,9 +28,9 @@ object OpenDataReceiver {
 
   case class ReloadEpaData(start: DateTime, end: DateTime)
 
-  case object GetEpaHourData
+  private case object GetEpaHourData
 
-  case object GetEpaCurrentData
+  private case object GetEpaCurrentData
 }
 
 import java.util.Date
@@ -49,34 +50,35 @@ case class MtRecord(sitename: String, itemid: String, concentration: Option[Stri
 
 case class MtResult(records: Seq[MtRecord])
 
-class OpenDataReceiver extends Actor with ActorLogging {
+class OpenDataReceiver extends Actor {
 
   import OpenDataReceiver._
   import com.github.nscala_time.time.Imports._
 
-  val timer = {
+  private val logger = Logger(this.getClass)
+  val timer: Cancellable = {
     import scala.concurrent.duration._
     context.system.scheduler.schedule(Duration(1, HOURS), Duration(1, DAYS), receiver, GetEpaHourData)
   }
 
-  val timer1 = {
+  private val timer1 = {
     import scala.concurrent.duration._
     context.system.scheduler.schedule(FiniteDuration(5, SECONDS), FiniteDuration(30, MINUTES), receiver, GetEpaCurrentData)
   }
 
   import scala.xml._
 
-  def receive = {
+  def receive: Receive = {
     case GetEpaHourData =>
       val start = SystemConfig.getEpaLast
       val end = DateTime.now().withMillisOfDay(0)
       if (start < end) {
-        Logger.info(s"Get EpaData ${start.toString("yyyy-MM-d")} => ${end.toString("yyyy-MM-d")}")
+        logger.info(s"Get EpaData ${start.toString("yyyy-MM-d")} => ${end.toString("yyyy-MM-d")}")
         getEpaHourData(start, end)
       }
 
     case ReloadEpaData(start, end) =>
-      Logger.info(s"reload EpaData ${start.toString("yyyy-MM-d")} => ${end.toString("yyyy-MM-d")}")
+      logger.info(s"reload EpaData ${start.toString("yyyy-MM-d")} => ${end.toString("yyyy-MM-d")}")
       getEpaHourData(start, end)
 
     case GetEpaCurrentData =>
@@ -85,8 +87,8 @@ class OpenDataReceiver extends Actor with ActorLogging {
       getCurrentCountyData("https://data.moenv.gov.tw/api/v2/aqx_p_143?format=json&limit=500&api_key=1f4ca8f8-8af9-473d-852b-b8f2d575f26a&&sort=MonitorDate%20desc")
   }
 
-  def upsertEpaRecord(m: EpaMonitor.Value, mt: MonitorType.Value, dateTime: DateTime, value: Double)
-                     (implicit session: DBSession = AutoSession) = {
+  private def upsertEpaRecord(m: EpaMonitor.Value, mt: MonitorType.Value, dateTime: DateTime, value: Double)
+                             (implicit session: DBSession = AutoSession): Int = {
     val MStation = EpaMonitor.map(m)
     val MItem = MonitorType.map(mt).epa_mapping.get
     val MDate: java.sql.Timestamp = dateTime
@@ -103,14 +105,13 @@ class OpenDataReceiver extends Actor with ActorLogging {
             """.update.apply
   }
 
-  def getCurrentCountyData(url: String) = {
+  private def getCurrentCountyData(url: String): Future[Unit] = {
     import com.github.nscala_time.time.Imports._
     val f = WS.url(url).get()
     f onFailure errorHandler("")
     for (ret <- f) yield {
       implicit val r = Json.reads[MtRecord]
-      implicit val epaResultReads = Json.reads[MtResult]
-      val retEpaResult = ret.json.validate[MtResult]
+      val retEpaResult = ret.json.validate[Seq[MtRecord]]
 
       def handleEpaRecords(records: Seq[MtRecord]) {
         val filtered = records.filter(r => {
@@ -152,21 +153,21 @@ class OpenDataReceiver extends Actor with ActorLogging {
 
       retEpaResult.fold(
         err => {
-          Logger.error(JsError.toJson(err).toString())
+          logger.error(s"getCurrentCountyData- ${JsError.toJson(err)}")
         },
-        results => {
+        records => {
           try {
-            handleEpaRecords(results.records)
+            handleEpaRecords(records)
           } catch {
             case ex: Exception =>
-              Logger.error("failed to handled epaRecord", ex)
+              logger.error("failed to handled epaRecord", ex)
           }
         }
       )
     }
   }
 
-  def getEpaHourData(start: DateTime, end: DateTime) {
+  def getEpaHourData(start: DateTime, end: DateTime): Unit = {
     val limit = 500
 
     def parser(node: Elem) = {
@@ -233,7 +234,7 @@ class OpenDataReceiver extends Actor with ActorLogging {
           }
         } catch {
           case x: Throwable =>
-            Logger.error("failed", x)
+            logger.error(s"getEpaHourData ($start, $end)failed", x)
         }
       }
 
@@ -279,7 +280,7 @@ class OpenDataReceiver extends Actor with ActorLogging {
       qualifiedData.size
     }
 
-    def getThisMonth(skip: Int) {
+    def getThisMonth(skip: Int): Unit = {
       val url = s"https://data.moenv.gov.tw/api/v2/aqx_p_15?format=xml&offset=${skip}&limit=${limit}&api_key=1f4ca8f8-8af9-473d-852b-b8f2d575f26a&&sort=MonitorDate%20desc"
       val future =
         WS.url(url).get().map {
@@ -288,7 +289,7 @@ class OpenDataReceiver extends Actor with ActorLogging {
               parser(response.xml)
             } catch {
               case ex: Exception =>
-                Logger.error(ex.toString(), ex)
+                logger.error(s"getThisMonth $skip", ex)
                 throw ex
             }
         }
@@ -296,7 +297,7 @@ class OpenDataReceiver extends Actor with ActorLogging {
       future onSuccess ({
         case ret: Int =>
           if (ret < limit) {
-            Logger.info(s"Import EPA ${start.getYear()}/${start.getMonthOfYear()} complete")
+            logger.info(s"Import EPA ${start.getYear}/${start.getMonthOfYear} complete")
             val msg = "環境部資料擷取成功."
             LineNotify.notify(msg)
             EventLog.create(EventLog(DateTime.now(), EventLog.evtTypeGetEpaData, msg))
@@ -305,7 +306,7 @@ class OpenDataReceiver extends Actor with ActorLogging {
       })
     }
 
-    def getMonthData(year: Int, month: Int, skip: Int) {
+    def getMonthData(year: Int, month: Int, skip: Int): Unit = {
       val url = f"https://data.moenv.gov.tw/api/v2/aqx_p_15?format=xml&offset=$skip%d&limit=$limit&year_month=$year%d_$month%02d&api_key=1f4ca8f8-8af9-473d-852b-b8f2d575f26a"
       val f = WS.url(url).get()
       f onFailure (errorHandler())
@@ -313,7 +314,7 @@ class OpenDataReceiver extends Actor with ActorLogging {
         try {
           val updateCount = parser(resp.xml)
           if (updateCount < limit) {
-            Logger.info(f"Import EPA $year/$month%02d complete")
+            logger.info(f"Import EPA $year/$month%02d complete")
             val dataLast = new DateTime(year, month, 1, 0, 0).plusMonths(1)
             SystemConfig.setEpaLast(dataLast)
             if (dataLast < end)
@@ -324,7 +325,7 @@ class OpenDataReceiver extends Actor with ActorLogging {
             getMonthData(year, month, skip + limit)
         } catch {
           case ex: Exception =>
-            Logger.error(ex.toString(), ex)
+            logger.error(s"getMonthData $year/$month $skip", ex)
             throw ex
         }
       }
@@ -333,7 +334,7 @@ class OpenDataReceiver extends Actor with ActorLogging {
     if (start.toString("yyyy-M") == DateTime.now().toString("yyyy-M"))
       getThisMonth(0)
     else {
-      getMonthData(start.getYear(), start.getMonthOfYear(), 0)
+      getMonthData(start.getYear, start.getMonthOfYear, 0)
     }
   }
 
@@ -342,7 +343,7 @@ class OpenDataReceiver extends Actor with ActorLogging {
   // 溫度 相對濕度 https://data.moenv.gov.tw/dataset/aqx_p_35/resource/682534c9-85f8-4525-a6ca-1a3699d892a0
   // 雨量 https://data.moenv.gov.tw/dataset/aqx_p_35/resource/682534c9-85f8-4525-a6ca-1a3699d892a0
 
-  override def postStop = {
+  override def postStop: Unit = {
     timer.cancel()
     timer1.cancel()
   }
